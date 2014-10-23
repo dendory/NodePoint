@@ -6,6 +6,7 @@ css_file,https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap-theme.min
 res_path,content/files/
 allow_registrations,true
 favicon,nodepoint_logo.png
+users_post,false
 file,content/main.html
 file,content/members.html
 file,content/stream_intro.html

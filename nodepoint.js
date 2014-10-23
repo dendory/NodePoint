@@ -10,8 +10,6 @@ var query = require("querystring");
 var crypto = require('crypto');
 var fs = require('fs');
 var readline = require('readline');
-
-var config_file = "config.csv";
 var version = "0.01";
 var p, q, res, req, page_num, body;
 var cookies = {};
@@ -27,6 +25,15 @@ var pages = [];
 var pages_url = [];
 var pages_func = [];
 var files = [];
+
+//
+// Initial configuration
+//
+// Salt should be as random as possible (WARNING: Changing this will invalidate all passwords)
+var salt = "rI2z2Sjrp4G55EadpvejeTzlpjSLtaBtfMsIwe920eJvTEucnaVObzHw8F9I0wXe";
+// This is where the configuration file can be found
+var config_file = "config.csv";
+
 
 //
 // Pages
@@ -50,6 +57,14 @@ page.members = function()
 		res.write(read_content(1)); // admin.html
 		if(user == "admin")   // functions available for admins only
 		{
+			if(q['save_res'])  // upload a resource file
+			{
+			
+			}
+			if(q['upload_res'])  // upload a resource file
+			{
+				res.write("<form method='POST' enctype='multipart/form-data' action='.'><div class='alert alert-warning'><i style='float:right'> (existing files will be overwritten) </i>Resource file to upload: <input type='file' name='save_res' ></div><input type='submit' value='Upload' class='btn btn-lg btn-default'></form><br>");
+			}
 			if(q['save_file'] && q['data'] && files.indexOf(q['save_file']) != -1)  // edit one of the files in the files array
 			{
 				fs.writeFileSync(q['save_file'], q['data']);
@@ -94,12 +109,12 @@ page.members = function()
 			}
 			if(q['change'] && config[q['change']])  // change a configuration value
 			{
-				res.write("<form method='POST' action='.'><input type='hidden' name='save_change' value='" + q['change'] + "'><div class='alert alert-warning'>Enter the new value for key <b>" + q['change'] + "</b>: <input type='entry' name='data' value='" + config[q['change']] + "'></div><input type='submit' value='Save changes' class='btn btn-lg btn-default'></form><br>");
+				res.write("<form method='POST' action='.'><input type='hidden' name='save_change' value='" + q['change'] + "'><div class='alert alert-warning'>Enter the new value for <b>" + q['change'] + "</b>: <input type='entry' name='data' value='" + config[q['change']] + "'></div><input type='submit' value='Save changes' class='btn btn-lg btn-default'></form><br>");
 			}
 			if(q['randomize'] && users.indexOf(q['randomize']) != -1) // reset a user password
 			{
 				var new_pass = rand_chars(10);
-				var hashed_pass = crypto.createHash('sha256').update(new_pass).digest('hex');
+				var hashed_pass = crypto.createHash('sha256').update(new_pass + salt).digest('hex');
 				load_users();   // make sure the arrays have the latest info from file
 				passwords[users.indexOf(q['randomize'])] = hashed_pass;
 				fs.writeFileSync(config['user_file'], "");
@@ -137,6 +152,7 @@ page.members = function()
 			res.write("<tr><td>Users list</td><td>" + config['user_file'] + "</td><td><a href='./?change=user_file'>Change</a></td></tr>");
 			res.write("<tr><td>Resource path</td><td>" + config['res_path'] + "</td><td><a href='./?change=res_path'>Change</a></td></tr>");
 			res.write("<tr><td>Allow registrations</td><td>" + config['allow_registrations'] + "</td><td><a href='./?change=allow_registrations'>Change</a></td></tr>");
+			res.write("<tr><td>Users can post</td><td>" + config['users_post'] + "</td><td><a href='./?change=users_post'>Change</a></td></tr>");
 			res.write("</table></p>");
 			res.write("<h3>Users list</h3>");
 			res.write("<p><table class='table table-striped'>");
@@ -146,7 +162,7 @@ page.members = function()
 				res.write("<tr><td>" + users[i] + "</td><td>" + passwords[i] + "</td><td><a href='./?randomize=" + users[i] + "'>Reset</a></td></tr>");			
 			}
 			res.write("</table></p>");
-			res.write("<h3>Files list</h3>");
+			res.write("<h3>Content files</h3>");
 			res.write("<p><table class='table table-striped'>");
 			res.write("<tr><th>File name</th><th>Size</th><th>Edit file</th></tr>");
 			for(i=0; i<files.length; i++)
@@ -214,7 +230,7 @@ page.stream = function()
 		res.write(read_content(2)); // stream_intro.html
 		var page = parseInt(q['page']) || 0;
 		var entries = read_content(4).toString().split('\n'); // stream_pages.csv
-		if(logged_in(cookies['n'], cookies['p']) && cookies['n'] == "admin")
+		if(logged_in(cookies['n'], cookies['p']) && (cookies['n'] == "admin" || config['users_post'].toLowerCase() == "true"))
 		{
 			res.write("<a href='./?new_stream_entry=1' class='btn btn-lg btn-default pull-right'>New entry</a>"); 
 		}
@@ -330,7 +346,7 @@ page.login = function()
 		}
 		else
 		{
-			var hashed_pass = crypto.createHash('sha256').update(q['new_pass1']).digest('hex');
+			var hashed_pass = crypto.createHash('sha256').update(q['new_pass1'] + salt).digest('hex');
 			users.push(q['new_name']);
 			passwords.push(hashed_pass);
 			fs.appendFile(config['user_file'], q['new_name'] + "," + hashed_pass, function (err)
@@ -342,10 +358,10 @@ page.login = function()
 	}
 	else if(q['name'] && q['pass']) // User filled the login form
 	{
-		var hashed_pass = crypto.createHash('sha256').update(q['pass']).digest('hex');
-		if(logged_in(q['name'], hashed_pass))
+		var hashed_pass = crypto.createHash('sha256').update(q['pass'] + salt).digest('hex');
+		if(logged_in(q['name'], crypto.createHash('sha256').update(hashed_pass + req.connection.remoteAddress).digest('hex')))
 		{
-			headers(200, "text/html", [ "n=" + q['name'] + "; path=/" , "p=" + hashed_pass + "; path=/"]);
+			headers(200, "text/html", [ "n=" + q['name'] + "; path=/" , "p=" + crypto.createHash('sha256').update(hashed_pass + req.connection.remoteAddress).digest('hex') + "; path=/"]);
 			res.write("<div class='alert alert-success' role='alert'>Logged in as " + q['name'] + ".</div><p><a href='/login/?logout=1'>Logout</a></p>");
 		}
 		else
@@ -482,7 +498,7 @@ function logged_in(name, hashed_pass)
 	if(!name || !hashed_pass) { return 0; }
 	for(i = 0; i < users.length; i++)
 	{
-		if(users[i] == name && passwords[i] == hashed_pass) return 1;
+		if(users[i] == name && crypto.createHash('sha256').update(passwords[i] + req.connection.remoteAddress).digest('hex') == hashed_pass) return 1;
 	}
 	return 0;
 }
@@ -663,7 +679,7 @@ rl.on('line', function(line)
 	}
     else if (line.split(' ')[0] === "hash")
 	{
-		if(line.split(' ')[1]) { console.log(crypto.createHash('sha256').update(line.split(' ')[1]).digest('hex')); }
+		if(line.split(' ')[1]) { console.log(crypto.createHash('sha256').update(line.split(' ')[1] + salt).digest('hex')); }
 	}
 	else
 	{
