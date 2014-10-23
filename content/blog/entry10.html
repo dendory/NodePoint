@@ -1,0 +1,16 @@
+<p>Some code snippet:</p>
+<pre><code type="javascript">	var file = p.split('/res/')[1];
+	var rexp = /^[\.0-9a-zA-Z_-]+$/   // some sanitizing
+	if(rexp.test(file)) return 0;
+	if(file.length < 5 || file.length > 30) return 0;
+	var chartype;
+	file = file.substr(0, (file.length-1));
+	chartypes.forEach(function(type)
+	{
+		if(file.substr(-(type.split(':')[0].length)) == type.split(':')[0]) { chartype = type.split(':')[1]; }
+	});
+	if(!chartype) return 0;
+	if(!fs.existsSync(res_path + file))	return 0;
+	res.writeHead(200, {"Content-Type": chartype});
+	res.write(fs.readFileSync(res_path + file, [encoding='utf8']));
+</code></pre>
