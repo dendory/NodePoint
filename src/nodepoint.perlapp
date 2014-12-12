@@ -1,0 +1,33 @@
+#!C:\Program Files\ActiveState Perl Dev Kit 9.3\bin\perlapp-gui.exe
+PAP-Version: 1.0
+Packer: ..\Program Files\ActiveState Perl Dev Kit 9.3\bin\perlapp.exe
+Script: nodepoint.pl
+Cwd: C:\scripts
+Clean: 0
+Date: 2014-12-09 16:57:23
+Debug: 
+Dependent: 0
+Dyndll: 0
+Exe: Y:\www\nodepoint.exe
+Force: 1
+Gui: 0
+Hostname: patri00-ws
+Manifest: 
+No-Compress: 0
+No-Logo: 0
+Runlib: 
+Shared: none
+Tmpdir: 
+Verbose: 0
+Version-Comments: 
+Version-CompanyName: 
+Version-FileDescription: NodePoint Ticket System
+Version-FileVersion: 1.0.1
+Version-InternalName: nodepoint
+Version-LegalCopyright: (C) 2014 Patrick Lambert
+Version-LegalTrademarks: 
+Version-OriginalFilename: nodepoint
+Version-ProductName: NodePoint
+Version-ProductVersion: 1.0.1
+Warnings: 0
+Xclude: 0
