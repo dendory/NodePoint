@@ -3,6 +3,9 @@
 # NodePoint 1.0.1 - (C) 2014 Patrick Lambert - http://dendory.net/nodepoint
 # Provided under the MIT License
 #
+# To use on Windows: Change all 'Linux' for 'Windows' in this file.
+# To compile into a binary: Use PerlApp with the .perlapp file.
+#
 
 use strict;
 use Config::Linux;
