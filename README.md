@@ -10,13 +10,6 @@ Linux
 -----
 The Linux folder contains a distribution for Linux with Apache.
 
-<<<<<<< HEAD
-
 Home page
 ---------
 See: [http://dendory.net/nodepoint](http://dendory.net/nodepoint)
-=======
-## Status ##
-
-This project is in early development. You can clone or unzip it and run it with `node nodepoint.js` and the documentation will be available at `http://localhost:8080`. However, several functions will not work yet.
->>>>>>> origin/master
