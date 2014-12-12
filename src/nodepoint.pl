@@ -1,4 +1,8 @@
 #!/usr/bin/perl -w
+#
+# NodePoint 1.0.1 - (C) 2014 Patrick Lambert - http://dendory.net/nodepoint
+# Provided under the MIT License
+#
 
 use strict;
 use Config::Linux;
