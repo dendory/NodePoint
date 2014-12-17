@@ -22,7 +22,7 @@ my ($cfg, $db, $sql, $cn, $cp, $last_login);
 my $logged_user = "";
 my $logged_lvl = -1;
 my $q = new CGI;
-my $VERSION = "1.0.1";
+my $VERSION = "1.0.2";
 my %items = ("Product", "Product", "Release", "Release", "Model", "SKU/Model");
 
 # Print headers
@@ -152,6 +152,15 @@ sub to_int
 	else { return int($num); }
 }
 
+# Convert to float so it doesnt throw up on invalid numbers
+sub to_float
+{
+	my ($num) = @_;
+	if(!$num) { return 0; }
+	elsif(!looks_like_number($num)) { return 0; }
+	else { return sprintf("%.2f", ($num * 1)); }
+}
+
 # Print error messages
 sub msg
 {
@@ -262,6 +271,12 @@ sub db_check
 	$sql = $db->prepare("SELECT * FROM log WHERE 0 = 1;") or do
 	{
 		$sql = $db->prepare("CREATE TABLE log (ip TEXT, by TEXT, op TEXT, time TEXT, key INT);");
+		$sql->execute();
+	};
+	$sql->finish();
+	$sql = $db->prepare("SELECT * FROM timetracking WHERE 0 = 1;") or do
+	{
+		$sql = $db->prepare("CREATE TABLE timetracking (ticketid INT, name TEXT, spent REAL, time TEXT);");
 		$sql->execute();
 	};
 	$sql->finish();
@@ -578,7 +593,7 @@ elsif(!$cfg->load("db_address") || !$cfg->load("site_name")) # first use
 				print "<p><div class='row'><div class='col-sm-4'>Allow user registrations:</div><div class='col-sm-4'><input type='checkbox' name='allow_registrations' checked=checked></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Default access level:</div><div class='col-sm-4'><select name='default_lvl' style='width:300px'><option value=5>5 - Users management</option><option value=4>4 - Products management</option><option value=3>3 - Tickets management</option><option value=2>2 - Restricted view</option><option value=1 selected=selected>1 - Authorized users</option><option value=0>0 - Unauthorized users</option></select></div></div></p>\n";
 				print "<p>New registered users will be assigned a default access level, which can then be modified by users with the <b>5 - Users management</b> level. These are the access levels, with each rank having the lower permissions as well:</p>\n";
-				print "<table class='table table-striped'><tr><th>Level</th><th>Name</th><th>Description</th></tr><tr><td>6</td><td>NodePoint Admin</td><td>Can change basic NodePoint settings</td></tr><td>5</td><td>Users management</td><td>Can create users, reset passwords, change access levels</td></tr><tr><td>4</td><td>Products management</td><td>Can add, retire and edit products</td></tr><tr><td>3</td><td>Tickets management</td><td>Can create releases, update tickets</td></tr><tr><td>2</td><td>Restricted view</td><td>Can view restricted tickets</td></tr><tr><td>1</td><td>Authorized users</td><td>Can create tickets and comments</td></tr><tr><td>0</td><td>Unauthorized users</td><td>Can view private tickets</td></tr></table>\n";
+				print "<table class='table table-striped'><tr><th>Level</th><th>Name</th><th>Description</th></tr><tr><td>6</td><td>NodePoint Admin</td><td>Can change basic NodePoint settings</td></tr><td>5</td><td>Users management</td><td>Can create users, reset passwords, change access levels</td></tr><tr><td>4</td><td>Products management</td><td>Can add, retire and edit products</td></tr><tr><td>3</td><td>Tickets management</td><td>Can create releases, update tickets, track time</td></tr><tr><td>2</td><td>Restricted view</td><td>Can view restricted tickets and products</td></tr><tr><td>1</td><td>Authorized users</td><td>Can create tickets and comments</td></tr><tr><td>0</td><td>Unauthorized users</td><td>Can view private tickets</td></tr></table>\n";
 				my $key = join'', map +(0..9,'a'..'z','A'..'Z')[rand(10+26*2)], 1..32;
 				print "<p><div class='row'><div class='col-sm-4'>API read key:</div><div class='col-sm-4'><input type='text' style='width:300px' name='api_read' value='" . $key . "'></div></div></p>\n";
 				$key = join'', map +(0..9,'a'..'z','A'..'Z')[rand(10+26*2)], 1..32;
@@ -1011,7 +1026,7 @@ elsif($q->param('m')) # Modules
 		headers("Settings");
 		print "<p><form method='POST' action='.'><input type='hidden' name='m' value='change_lvl'><input type='hidden' name='u' value='" . sanitize_alpha($q->param('u')) . "'>Select a new access level for user <b>" . sanitize_alpha($q->param('u')) . "</b>: <select name='newlvl'><option>0</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select><br><input class='btn btn-default' type='submit' value='Change level'></form></p><br>\n";
 		print "<p>Here is a list of available NodePoint levels:</p>\n";
-		print "<table class='table table-striped'><tr><th>Level</th><th>Name</th><th>Description</th></tr><tr><td>6</td><td>NodePoint Admin</td><td>Can change basic NodePoint settings</td></tr><td>5</td><td>Users management</td><td>Can create users, reset passwords, change access levels</td></tr><tr><td>4</td><td>" . $items{"Product"} . "s management</td><td>Can add, retire and edit " . lc($items{"Product"}) . "s</td></tr><tr><td>3</td><td>Tickets management</td><td>Can create " . lc($items{"Release"}) . "s, update tickets</td></tr><tr><td>2</td><td>Restricted view</td><td>Can view restricted tickets</td></tr><tr><td>1</td><td>Authorized users</td><td>Can create tickets and comments</td></tr><tr><td>0</td><td>Unauthorized users</td><td>Can view private tickets</td></tr></table>\n";
+		print "<table class='table table-striped'><tr><th>Level</th><th>Name</th><th>Description</th></tr><tr><td>6</td><td>NodePoint Admin</td><td>Can change basic NodePoint settings</td></tr><td>5</td><td>Users management</td><td>Can create users, reset passwords, change access levels</td></tr><tr><td>4</td><td>" . $items{"Product"} . "s management</td><td>Can add, retire and edit " . lc($items{"Product"}) . "s</td></tr><tr><td>3</td><td>Tickets management</td><td>Can create " . lc($items{"Release"}) . "s, update tickets, track time</td></tr><tr><td>2</td><td>Restricted view</td><td>Can view restricted tickets and " . lc($items{"Product"}) . "s</td></tr><tr><td>1</td><td>Authorized users</td><td>Can create tickets and comments</td></tr><tr><td>0</td><td>Unauthorized users</td><td>Can view private tickets</td></tr></table>\n";
 	}
 	elsif($q->param('m') eq "reset_pass" && $logged_lvl > 4 && $q->param('u'))
 	{
@@ -1283,7 +1298,7 @@ elsif($q->param('m')) # Modules
 	}
 	elsif($q->param('m') eq "products")
 	{
-		headers("Products");
+		headers($items{"Product"} . "s");
 		if($logged_lvl > 3)  # add new product pane
 		{
 			print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Add a new " . lc($items{"Product"}) . "</h3></div><div class='panel-body'><form method='POST' action='.' enctype='multipart/form-data'>\n";
@@ -1340,6 +1355,11 @@ elsif($q->param('m')) # Modules
 			}
 			if($creator) { notify($creator, "Your ticket (" . to_int($q->param('t')) . ") has been modified", "The ticket \"" . $q->param('ticket_title') . "\" has been modified:\n\nModified by: " . $logged_user . "\nLink: " . $lnk . "\nStatus: " . sanitize_alpha($q->param('ticket_status')) . "\nResolution: " . $resolution . "\nAssigned to: " . $assigned . "\nDescription: " . $q->param('ticket_desc') . "\n\n" . $changes); }
 			msg("Ticket updated. Press <a href='./?m=tickets'>here</a> to continue.", 3);
+			if($q->param("time_spent") && to_float($q->param("time_spent")) != 0)
+			{
+				$sql = $db->prepare("INSERT INTO timetracking VALUES (?, ?, ?, ?);");
+				$sql->execute(to_int($q->param('t')), $logged_user, to_float($q->param("time_spent")), now());
+			}
 		}
 		else
 		{
@@ -1504,7 +1524,7 @@ elsif($q->param('m')) # Modules
 				else { print "<p><div class='row'><div class='col-sm-6'>Title: <b>" . $res[5] . "</b></div><div class='col-sm-6'>Link: <b><a href='" . $res[7] . "'>" . $res[7] . "</a></b></div></div></p>\n"; }
 				if($logged_lvl > 2) { print "<p>Description:<br><textarea name='ticket_desc' rows='20' style='width:95%'>" . $res[6] . "</textarea></p>\n"; }
 				else { print "<p>Description:<br><pre>" . $res[6] . "</pre></p>\n"; }
-				if($logged_lvl > 2) { print "<p><input class='btn btn-default pull-right' type='submit' value='Update ticket'></p>\n"; }
+				if($logged_lvl > 2) { print "<p>Time spent (in <b>hours</b>): <input type='text' name='time_spent' value='0'><input class='btn btn-default pull-right' type='submit' value='Update ticket'></p>\n"; }
 				print "</form>";
 				if($logged_user ne "")
 				{
@@ -1512,6 +1532,20 @@ elsif($q->param('m')) # Modules
 					else { print "<form action='.' method='POST' style='display:inline'><input type='hidden' name='m' value='follow_ticket'><input type='hidden' name='t' value='" . to_int($q->param('t')) . "'><input class='btn btn-default' type='submit' value='Follow ticket'></form>"; }
 				}
 				print "</div></div>\n";
+				if($logged_lvl > 2)
+				{
+					$sql = $db->prepare("SELECT * FROM timetracking WHERE ticketid = ? ORDER BY ROWID DESC;");
+					$sql->execute(to_int($q->param('t')));
+					print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Time breakdown</h3></div><div class='panel-body'><table class='table table-striped'><tr><th>User</th><th>Hours spent</th><th>Date</th></tr>\n";
+					my $totaltime = 0;
+					while(my @res = $sql->fetchrow_array())
+					{
+						print "<tr><td>" . $res[1] . "</td><td>" . $res[2] . "</td><td>" . $res[3] . "</td></tr>\n";
+						$totaltime += to_float($res[2]);
+					}
+					print "<tr><td><b>Total</b></td><td><b>" . $totaltime . "</b></td><td></td></tr>\n";
+					print "</table></div></div>\n";
+				}
 				print "<h3>Comments</h3>";
 				if($logged_lvl > 0 && $res[8] ne "Closed")
 				{
