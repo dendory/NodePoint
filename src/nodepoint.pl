@@ -3,7 +3,7 @@
 # NodePoint 1.0.2 - (C) 2014 Patrick Lambert - http://dendory.net/nodepoint
 # Provided under the MIT License
 #
-# To use on Windows: Change all 'Linux' for 'Windows' in this file.
+# To use on Windows: Change all 'Linux' for 'Win32' in this file.
 # To compile into a binary: Use PerlApp with the .perlapp file.
 #
 
@@ -811,6 +811,14 @@ elsif($q->param('m')) # Modules
 	{
 		headers("Settings");
 		print "<p>You are logged in as <b>" . $logged_user . "</b> and your access level is <b>" . $logged_lvl . "</b>. Press <a href='./?m=logout'>here</a> to log out.</p>\n";
+		if($logged_lvl > 2)
+		{
+			$sql = $db->prepare("SELECT * FROM timetracking WHERE name = ?;");
+			$sql->execute($logged_user);
+			my $totaltime = 0;
+			while(my @res = $sql->fetchrow_array()) { $totaltime = $totaltime + to_float($res[2]); }
+			print "<p>You have spent a total of <b>" . $totaltime . "</b> hours on tickets.</p>\n";
+		}
 		$sql = $db->prepare("SELECT * FROM users;");
 		$sql->execute();
 		while(my @res = $sql->fetchrow_array())
