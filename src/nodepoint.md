@@ -80,7 +80,7 @@ NodePoint provides an API to add and show tickets in JSON format. You can use GE
 * release_id=&lt;release id&gt;
 * title=&lt;ticket title&gt;
 * description=&lt;ticket description&gt;
-* link=&lt;related link&gt;
+* custom=&lt;custom field&gt;
 
 Need support?
 -------------
