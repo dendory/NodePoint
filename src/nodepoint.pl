@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 #
-# NodePoint 1.0.2 - (C) 2014 Patrick Lambert - http://dendory.net/nodepoint
+# NodePoint 1.0.3 - (C) 2014 Patrick Lambert - http://dendory.net/nodepoint
 # Provided under the MIT License
 #
 # To use on Windows: Change all 'Linux' for 'Win32' in this file.
@@ -8,7 +8,7 @@
 #
 
 use strict;
-use Config::Linux;
+use Config::Win32;
 use Digest::SHA qw(sha1_hex);
 use DBI;
 use CGI;
@@ -18,18 +18,23 @@ use Data::GUID;
 use File::Type;
 use Scalar::Util qw(looks_like_number);
 
-my ($cfg, $db, $sql, $cn, $cp, $last_login);
+my ($cfg, $db, $sql, $cn, $cp, $cgs, $last_login);
 my $logged_user = "";
 my $logged_lvl = -1;
 my $q = new CGI;
-my $VERSION = "1.0.2";
+my $VERSION = "1.0.3";
 my %items = ("Product", "Product", "Release", "Release", "Model", "SKU/Model");
 
 # Print headers
 sub headers
 {
 	my ($page) = @_;
-	if($cn && $cp) { print $q->header(-type => "text/html", -cookie => [$cn, $cp]); }
+	if($cn && $cp || $cgs)
+	{
+		if($cn && $cp && $cgs) { print $q->header(-type => "text/html", -cookie => [$cn, $cp, $cgs]); }
+		elsif($cgs) { print $q->header(-type => "text/html", -cookie => [$cgs]); }
+		else { print $q->header(-type => "text/html", -cookie => [$cn, $cp]); }
+	}
 	else { print $q->header(-type => "text/html"); }
 	print "<!DOCTYPE html>\n";
 	print "<html>\n";
@@ -313,6 +318,8 @@ sub save_config
 	$cfg->save("api_write", $q->param('api_write'));
 	$cfg->save("upload_folder", $q->param('upload_folder'));
 	$cfg->save("items_managed", $q->param('items_managed'));
+	$cfg->save("custom_name", $q->param('custom_name'));
+	$cfg->save("custom_type", $q->param('custom_type'));
 }
 
 # Check login credentials
@@ -436,15 +443,18 @@ sub home
 	$sql->execute();
 	while(my @res = $sql->fetchrow_array()) { $products[$res[0]] = $res[1]; }
 
-	print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Getting started</h3></div><div class='panel-body'>\n";
-	print "<p>Use the " . $items{"Product"} . "s tab to browse available " . lc($items{"Product"}) . "s along with their " . lc($items{"Release"}) . "s. You can view basic information about them and see their description. Use the Tickets tab to browse current tickets and comments. You can also change your email address and password under the Settings tab.</p>\n";
-	if($logged_lvl > 0) { print "<p>As an <span class='label label-success'>Authorised User</span>, you can also add new tickets to specific " . lc($items{"Product"}) . "s and " . lc($items{"Release"}) . "s, or comment on existing ones.</p>\n"; }
-	if($logged_lvl > 1) { print "<p>Since you have <span class='label label-success'>Restricted View</span> permission, you can also view restricted products and tickets, those not typically visible to normal users.</p>\n"; }
-	if($logged_lvl > 2) { print "<p>With <span class='label label-success'>Tickets Management</span> access, you can modify existing tickets entered by other users, such as change the status, add a resolution, or edit title and description. You can assign yourself to tickets, and you can also add new " . lc($items{"Release"}) . "s under the " . $items{"Product"} . "s tab.</p>\n"; }
-	if($logged_lvl > 3) { print "<p>As a <span class='label label-success'>" . $items{"Product"} . "s Management</span> user, you can add new " . lc($items{"Product"}) . "s, edit existing ones, or change their visibility. Archiving a product will prevent users from adding new tickets for it.</p>\n" }
-	if($logged_lvl > 4) { print "<p>With the <span class='label label-success'>Users Managemenet</span> access level, you have the ability to edit users under the Settings tab. You can reset passwords and change access levels, along with adding new users. You can also delete comments under the Tickets tab.</p>\n"; }
-	if($logged_lvl > 5) { print "<p>Since you are logged in as <span class='label label-success'>NodePoint Administrator</span>, you can edit initial settings under the Settings tab. Note that it is good practice to use a lower access user to do your daily tasks.</p>\n" }
-	print "</div></div>\n";
+	if(!$q->cookie('np_gs'))
+	{
+		print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Getting started</h3></div><div class='panel-body'>\n";
+		print "<p>Use the " . $items{"Product"} . "s tab to browse available " . lc($items{"Product"}) . "s along with their " . lc($items{"Release"}) . "s. You can view basic information about them and see their description. Use the Tickets tab to browse current tickets and comments. You can also change your email address and password under the Settings tab.</p>\n";
+		if($logged_lvl > 0) { print "<p>As an <span class='label label-success'>Authorised User</span>, you can also add new tickets to specific " . lc($items{"Product"}) . "s and " . lc($items{"Release"}) . "s, or comment on existing ones.</p>\n"; }
+		if($logged_lvl > 1) { print "<p>Since you have <span class='label label-success'>Restricted View</span> permission, you can also view restricted products and tickets, those not typically visible to normal users.</p>\n"; }
+		if($logged_lvl > 2) { print "<p>With <span class='label label-success'>Tickets Management</span> access, you can modify existing tickets entered by other users, such as change the status, add a resolution, or edit title and description. You can assign yourself to tickets, and you can also add new " . lc($items{"Release"}) . "s under the " . $items{"Product"} . "s tab.</p>\n"; }
+		if($logged_lvl > 3) { print "<p>As a <span class='label label-success'>" . $items{"Product"} . "s Management</span> user, you can add new " . lc($items{"Product"}) . "s, edit existing ones, or change their visibility. Archiving a product will prevent users from adding new tickets for it.</p>\n" }
+		if($logged_lvl > 4) { print "<p>With the <span class='label label-success'>Users Managemenet</span> access level, you have the ability to edit users under the Settings tab. You can reset passwords and change access levels, along with adding new users. You can also delete comments under the Tickets tab.</p>\n"; }
+		if($logged_lvl > 5) { print "<p>Since you are logged in as <span class='label label-success'>NodePoint Administrator</span>, you can edit initial settings under the Settings tab. Note that it is good practice to use a lower access user to do your daily tasks.</p>\n" }
+		print "</div></div>\n";
+	}
 
 	print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Tickets you created</h3></div><div class='panel-body'><table class='table table-striped'>\n";
 	print "<tr><th>ID</th><th>" . $items{"Product"} . "</th><th>" . $items{"Release"} . "</th><th>Title</th><th>Status</th><th>Date</th></tr>\n";
@@ -487,11 +497,11 @@ sub home
 # Connect to config
 eval
 {
-	$cfg = Config::Linux->new("NodePoint", "settings");
+	$cfg = Config::Win32->new("NodePoint", "settings");
 };
 if(!defined($cfg)) # Can't even use headers() if this fails.
 {
-	print "Content-type: text/html\n\nError: Could not access " . Config::Linux->type . ". Please ensure NodePoint has the proper permissions.";
+	print "Content-type: text/html\n\nError: Could not access " . Config::Win32->type . ". Please ensure NodePoint has the proper permissions.";
 	exit(0);
 };
 
@@ -529,7 +539,7 @@ if($cfg->load("items_managed"))
 if($q->param('site_name') && $q->param('db_address') && $logged_user ne "" && $logged_user eq $cfg->load('admin_name')) # Save config by admin
 {
 	headers("Settings");
-	if($q->param('site_name') && $q->param('db_address') && $q->param('admin_name') && $q->param('default_lvl') && $q->param('default_vis') && $q->param('api_write') && $q->param('api_read')) # All required values have been filled out
+	if($q->param('site_name') && $q->param('db_address') && $q->param('admin_name') && $q->param('custom_name') && $q->param('default_lvl') && $q->param('default_vis') && $q->param('api_write') && $q->param('api_read')) # All required values have been filled out
 	{
 		# Test database settings
 		$db = DBI->connect("dbi:SQLite:dbname=" . $q->param('db_address'), '', '', { RaiseError => 0, PrintError => 0 }) or do { msg("Could not verify database settings. Please hit back and try again.<br><br>" . $DBI::errstr, 0); exit(0); };
@@ -546,6 +556,7 @@ if($q->param('site_name') && $q->param('db_address') && $logged_user ne "" && $l
 		if(!$q->param('default_vis')) { $text .= "<span class='label label-danger'>Ticket visibility</span> "; }
 		if(!$q->param('api_read')) { $text .= "<span class='label label-danger'>API read key</span> "; }
 		if(!$q->param('api_write')) { $text .= "<span class='label label-danger'>API write key</span> "; }
+		if(!$q->param('custom_name')) { $text .= "<span class='label label-danger'>Custom ticket field</span> "; }
 		$text .= " Please go back and try again.";
 		msg($text, 0);
 	}
@@ -554,7 +565,7 @@ if($q->param('site_name') && $q->param('db_address') && $logged_user ne "" && $l
 elsif(!$cfg->load("db_address") || !$cfg->load("site_name")) # first use
 {
 	headers("Initial configuration");
-	if($q->param('site_name') && $q->param('db_address') && $q->param('admin_name') && $q->param('admin_pass') && $q->param('default_lvl') && $q->param('default_vis') && $q->param('api_write') && $q->param('api_read')) # All required values have been filled out
+	if($q->param('site_name') && $q->param('db_address') && $q->param('custom_name') && $q->param('admin_name') && $q->param('admin_pass') && $q->param('default_lvl') && $q->param('default_vis') && $q->param('api_write') && $q->param('api_read')) # All required values have been filled out
 	{
 		# Test database settings
 		$db = DBI->connect("dbi:SQLite:dbname=" . $q->param('db_address'), '', '', { RaiseError => 0, PrintError => 0 }) or do { msg("Could not verify database settings. Please hit back and try again.<br><br>" . $DBI::errstr, 0); exit(0); };
@@ -574,6 +585,7 @@ elsif(!$cfg->load("db_address") || !$cfg->load("site_name")) # first use
 			if(!$q->param('default_vis')) { $text .= "<span class='label label-danger'>Ticket visibility</span> "; }
 			if(!$q->param('api_read')) { $text .= "<span class='label label-danger'>API read key</span> "; }
 			if(!$q->param('api_write')) { $text .= "<span class='label label-danger'>API write key</span> "; }
+			if(!$q->param('custom_name')) { $text .= "<span class='label label-danger'>Custom ticket field</span> "; }
 			$text .= " Please go back and try again.";
 			msg($text, 0);
 		}
@@ -609,6 +621,9 @@ elsif(!$cfg->load("db_address") || !$cfg->load("site_name")) # first use
 				print "<p><div class='row'><div class='col-sm-4'>Upload folder:</div><div class='col-sm-4'><input type='text' style='width:300px' name='upload_folder' value='.." . $cfg->sep . "uploads'></div></div></p>\n";
 				print "<p>The upload folder should be a local folder with write access and is used for product images. If left empty, image uploads will be disabled.</p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Items managed:</div><div class='col-sm-4'><select style='width:300px' name='items_managed'><option selected>Products with models and releases</option><option>Projects with goals and milestones</option><option>Resources with locations and updates</option></select></div></div></p>\n";
+				print "<p><div class='row'><div class='col-sm-4'>Custom ticket field:</div><div class='col-sm-4'><input type='text' style='width:300px' name='custom_name' value='Related tickets'></div></div></p>\n";
+				print "<p><div class='row'><div class='col-sm-4'>Custom field type:</div><div class='col-sm-4'><select style='width:300px' name='custom_type'><option>Text</option><option>Link</option><option>Checkbox</option></select></div></div></p>\n";
+				
 				print "<p><input class='btn btn-default pull-right' type='submit' value='Save'></p></form>\n"; 
 			}
 			else
@@ -663,7 +678,7 @@ elsif($q->param('api')) # API calls
 				print " \"assigned_to\": \"" . $res[4] . "\",\n";
 				print " \"title\": \"" . $res[5] . "\",\n";
 				print " \"description\": \"" . $res[6] . "\",\n";
-				print " \"link\": \"" . $res[7] . "\",\n";
+				print " \"custom\": \"" . $res[7] . "\",\n";
 				print " \"status\": \"" . $res[8] . "\",\n";
 				print " \"resolution\": \"" . $res[9] . "\",\n";
 				print " \"followers\": \"" . $res[10] . "\",\n";
@@ -713,13 +728,6 @@ elsif($q->param('api')) # API calls
 			print " \"status\": \"ERR_MISSING_ARGUMENT\"\n";
 			print "}\n";
 		}
-		elsif(!$q->param('link'))
-		{
-			print "{\n";
-			print " \"message\": \"Missing 'description' argument.\",\n";
-			print " \"status\": \"ERR_MISSING_ARGUMENT\"\n";
-			print "}\n";
-		}
 		elsif(!$q->param('product_id'))
 		{
 			print "{\n";
@@ -763,8 +771,10 @@ elsif($q->param('api')) # API calls
 			}
 			else
 			{
+				my $custom = "";
+				if($q->param('custom')) { $custom = sanitize_html($q->param('custom')); }
 				$sql = $db->prepare("INSERT INTO tickets VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);");
-				$sql->execute(to_int($q->param('product_id')), sanitize_html($q->param('release_id')), "api", "", sanitize_html($q->param('title')), sanitize_html($q->param('description')), sanitize_html($q->param('link')), "New", "", "", now(), "Never");
+				$sql->execute(to_int($q->param('product_id')), sanitize_html($q->param('release_id')), "api", "", sanitize_html($q->param('title')), sanitize_html($q->param('description')), $custom, "New", "", "", now(), "Never");
 				$sql = $db->prepare("SELECT last_insert_rowid();");
 				$sql->execute();
 				my $rowid = -1;
@@ -809,6 +819,7 @@ elsif($q->param('m')) # Modules
 {
 	if($q->param('m') eq "settings" && $logged_user ne "")
 	{
+		$cgs = $q->cookie(-name => "np_gs", -value => "1");
 		headers("Settings");
 		print "<p>You are logged in as <b>" . $logged_user . "</b> and your access level is <b>" . $logged_lvl . "</b>. Press <a href='./?m=logout'>here</a> to log out.</p>\n";
 		if($logged_lvl > 2)
@@ -902,6 +913,12 @@ elsif($q->param('m')) # Modules
 			elsif($cfg->load("items_managed") eq "Resources with locations and updates") { print "<option>Products with models and releases</option><option>Projects with goals and milestones</option><option selected>Resources with locations and updates</option>"; }
 			else { print "<option selected>Products with models and releases</option><option>Projects with goals and milestones</option><option>Resources with locations and updates</option>"; }
 			print "</select></td></tr>\n";			
+			print "<tr><td>Custom ticket field</td><td><input style='width:300px' type='text' name='custom_name' value=\"" . $cfg->load("custom_name") . "\"></td></tr>\n";
+			print "<tr><td>Custom field type</td><td><select style='width:300px' name='custom_type'>";
+			if($cfg->load("custom_type") eq "Link") { print "<option>Text</option><option selected>Link</option><option>Checkbox</option>"; }
+			elsif($cfg->load("custom_type") eq "Checkbox") { print "<option>Text</option><option>Link</option><option selected>Checkbox</option>"; }
+			else { print "<option selected>Text</option><option>Link</option><option>Checkbox</option>"; }
+			print "</select></td></tr>\n";
 			print "</table>The admin password will be left unchanged if empty.<input class='btn btn-default pull-right' type='submit' value='Save settings'></form></div></div>\n";
 			print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Log (last 50 events)</h3></div><div class='panel-body'>\n";
 			print "<form style='display:inline' method='POST' action='.'><input type='hidden' name='m' value='clear_log'><input class='btn btn-default pull-right' type='submit' value='Clear log'><br></form><a name='log'></a><p>Filter log by events: <a href='./?m=settings#log'>All</a> | <a href='./?m=settings&filter_log=Failed#log'>Failed logins</a> | <a href='./?m=settings&filter_log=Success#log'>Successful logins</a> | <a href='./?m=settings&filter_log=level#log'>Level changes</a> | <a href='./?m=settings&filter_log=password#log'>Password changes</a> | <a href='./?m=settings&filter_log=user#log'>New users</a> | <a href='./?m=settings&filter_log=setting#log'>Settings updated</a></p>\n";
@@ -1349,7 +1366,7 @@ elsif($q->param('m')) # Modules
 				if($res[2] ne sanitize_html($q->param('ticket_releases'))) { $changes .= $items{"Release"} . "s: \"" . $res[2] . "\" => \"" . sanitize_html($q->param('ticket_releases')) . "\"\n"; }
 				if(trim($res[4]) ne trim($assigned)) { $changes .= "Assigned to: " . $res[4] . " => " . $assigned . "\n"; }
 				if($res[5] ne sanitize_html($q->param('ticket_title'))) { $changes .= "Title: \"" . $res[5] . "\" => \"" . sanitize_html($q->param('ticket_title')) . "\"\n"; }
-				if($res[7] ne $lnk) { $changes .= "Link: \"" . $res[7] . "\" => \"" . $lnk . "\"\n"; }
+				if($res[7] ne $lnk) { $changes .= $cfg->load('custom_name') . ": \"" . $res[7] . "\" => \"" . $lnk . "\"\n"; }
 				if($res[8] ne sanitize_alpha($q->param('ticket_status'))) { $changes .= "Status: " . $res[8] . " => " . sanitize_alpha($q->param('ticket_status')) . "\n"; }
 				if($res[9] ne $resolution) { $changes .= "Resolution: \"" . $res[9] . "\" => \"" . $resolution . "\"\n"; }			
 				@us = split(' ', $res[4]);
@@ -1359,9 +1376,9 @@ elsif($q->param('m')) # Modules
 			$sql->execute($lnk, $resolution, sanitize_alpha($q->param('ticket_status')), sanitize_html($q->param('ticket_title')), sanitize_html($q->param('ticket_desc')) . "\n\n---\nTicket modified by: " . $logged_user . "\n" . $changes, $assigned, sanitize_html($q->param('ticket_releases')), now(), to_int($q->param('t')));
 			foreach my $u (@us)
 			{
-				notify($u, "Ticket (" . to_int($q->param('t')) . ") assigned to you has been modified", "The ticket \"" . $q->param('ticket_title') . "\" has been modified:\n\nModified by: " . $logged_user . "\nLink: " . $lnk . "\nStatus: " . sanitize_alpha($q->param('ticket_status')) . "\nResolution: " . $resolution . "\nAssigned to: " . $assigned . "\nDescription: " . $q->param('ticket_desc') . "\n\n" . $changes);
+				notify($u, "Ticket (" . to_int($q->param('t')) . ") assigned to you has been modified", "The ticket \"" . $q->param('ticket_title') . "\" has been modified:\n\nModified by: " . $logged_user . "\n" . $cfg->load('custom_name') . ": " . $lnk . "\nStatus: " . sanitize_alpha($q->param('ticket_status')) . "\nResolution: " . $resolution . "\nAssigned to: " . $assigned . "\nDescription: " . $q->param('ticket_desc') . "\n\n" . $changes);
 			}
-			if($creator) { notify($creator, "Your ticket (" . to_int($q->param('t')) . ") has been modified", "The ticket \"" . $q->param('ticket_title') . "\" has been modified:\n\nModified by: " . $logged_user . "\nLink: " . $lnk . "\nStatus: " . sanitize_alpha($q->param('ticket_status')) . "\nResolution: " . $resolution . "\nAssigned to: " . $assigned . "\nDescription: " . $q->param('ticket_desc') . "\n\n" . $changes); }
+			if($creator) { notify($creator, "Your ticket (" . to_int($q->param('t')) . ") has been modified", "The ticket \"" . $q->param('ticket_title') . "\" has been modified:\n\nModified by: " . $logged_user . "\n" . $cfg->load('custom_name') . ": " . $lnk . "\nStatus: " . sanitize_alpha($q->param('ticket_status')) . "\nResolution: " . $resolution . "\nAssigned to: " . $assigned . "\nDescription: " . $q->param('ticket_desc') . "\n\n" . $changes); }
 			msg("Ticket updated. Press <a href='./?m=tickets'>here</a> to continue.", 3);
 			if($q->param("time_spent") && to_float($q->param("time_spent")) != 0)
 			{
@@ -1528,8 +1545,15 @@ elsif($q->param('m')) # Modules
 					print ">Closed</option></select></div><div class='col-sm-6'>Resolution: <input type='text' name='ticket_resolution' style='width:200px' value='" . $res[9] . "'></div></div></p>\n"; 
 				}
 				else {print "<p><div class='row'><div class='col-sm-6'>Status: <b>" . $res[8] . "</b></div><div class='col-sm-6'>Resolution: <b>" . $res[9] . "</b></div></div></p>\n"; }
-				if($logged_lvl > 2) { print "<p><div class='row'><div class='col-sm-6'>Title: <input type='text' style='width:60%' name='ticket_title' value='" . $res[5] . "'></div><div class='col-sm-6'>Link: <input type='text' style='width:60%' name='ticket_link' value='" . $res[7] . "'></div></div></p>\n"; }
-				else { print "<p><div class='row'><div class='col-sm-6'>Title: <b>" . $res[5] . "</b></div><div class='col-sm-6'>Link: <b><a href='" . $res[7] . "'>" . $res[7] . "</a></b></div></div></p>\n"; }
+				if($logged_lvl > 2) { print "<p><div class='row'><div class='col-sm-6'>Title: <input type='text' style='width:60%' name='ticket_title' value='" . $res[5] . "'></div>"; }
+				else { print "<p><div class='row'><div class='col-sm-6'>Title: <b>" . $res[5] . "</b></div>"; }
+				if($logged_lvl > 2)	{ print "<div class='col-sm-6'>" . $cfg->load('custom_name') . ": <input type='text' style='width:60%' name='ticket_link' value='" . $res[7] . "'></div></div></p>\n"; }
+				else
+				{
+					if($cfg->load('custom_type') eq "Link") { print "<div class='col-sm-6'>" . $cfg->load('custom_name') . ": <a href='" . $res[7] . "'><b>" . $res[7] . "</b></a></div></div></p>\n"; }
+					else { print "<div class='col-sm-6'>" . $cfg->load('custom_name') . ": <b>" . $res[7] . "</b></div></div></p>\n"; }
+				
+				}
 				if($logged_lvl > 2) { print "<p>Description:<br><textarea name='ticket_desc' rows='20' style='width:95%'>" . $res[6] . "</textarea></p>\n"; }
 				else { print "<p>Description:<br><pre>" . $res[6] . "</pre></p>\n"; }
 				if($logged_lvl > 2) { print "<p>Time spent (in <b>hours</b>): <input type='text' name='time_spent' value='0'><input class='btn btn-default pull-right' type='submit' value='Update ticket'></p>\n"; }
@@ -1595,13 +1619,18 @@ elsif($q->param('m')) # Modules
 			{
 				my $lnk = "";
 				if($q->param('ticket_link')) { $lnk = sanitize_html($q->param('ticket_link')); }
+				if($cfg->load('custom_type') eq "Checkbox")
+				{
+					if($lnk eq "on") { $lnk = "Yes"; }
+					else { $lnk = "No"; }
+				}
 				$sql = $db->prepare("INSERT INTO tickets VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);");
 				$sql->execute(to_int($q->param('product_id')), sanitize_html($q->param('release_id')), $logged_user, "", sanitize_html($q->param('ticket_title')), sanitize_html($q->param('ticket_desc')), $lnk, "New", "", "", now(), "Never");
 				$sql = $db->prepare("SELECT * FROM releases WHERE productid = ?;");
 				$sql->execute(to_int($q->param('product_id')));
 				while(my @res = $sql->fetchrow_array())
 				{
-					notify($res[1], "New ticket created", "A new ticket was created for one of your products:\n\nUser: " . $logged_user . "\nTitle: " . sanitize_html($q->param('ticket_title')) . "\nLink: " . $lnk . "\nDescription: " . $q->param('ticket_desc'));
+					notify($res[1], "New ticket created", "A new ticket was created for one of your products:\n\nUser: " . $logged_user . "\nTitle: " . sanitize_html($q->param('ticket_title')) . "\n" . $cfg->load('custom_name') . ": " . $lnk . "\nDescription: " . $q->param('ticket_desc'));
 				}
 				msg("Ticket successfully added. Press <a href='./?m=tickets'>here</a> to continue.", 3);
 			}
@@ -1633,7 +1662,8 @@ elsif($q->param('m')) # Modules
 			print "</select></div></div></p>\n";
 			print "<p>Ticket title: <input type='text' name='ticket_title' style='width:70%'></p>\n";
 			print "<p>Description:<br><textarea name='ticket_desc' rows='5' style='width:95%'></textarea></p>\n";
-			print "Related link: <input type='text' name='ticket_link' style='width:50%'>\n";
+			if($cfg->load('custom_type') eq "Checkbox") { print $cfg->load('custom_name') . ": <input type='checkbox' name='ticket_link'>\n"; }
+			else { print $cfg->load('custom_name') . ": <input type='text' name='ticket_link' style='width:50%'>\n"; }
 			print "<input type='hidden' name='m' value='add_ticket'><input class='btn btn-default pull-right' type='submit' value='Create ticket'></form></div></div>\n";
 			$sql = $db->prepare("SELECT ROWID,* FROM products WHERE ROWID = ?;");
 			$sql->execute(to_int($q->param('product_id')));
@@ -1729,7 +1759,10 @@ elsif($q->param('m')) # Modules
 		$sql = $db->prepare("SELECT ROWID,* FROM products;");
 		$sql->execute();
 		while(my @res = $sql->fetchrow_array()) { print "<option value=" . $res[0] . ">" . $res[1] . "</option>"; }
-		print "</select> Limit: <select name='filter_limit'><option value='50000'>50,000</option><option value='10000'>10,000</option><option value='5000'>5,000</option><option value='1000' selected>1,000</option><option value='500'>500</option><option value='100'>100</option></select><span class='pull-right'><input class='btn btn-default' type='submit' value='Filter'> <input class='btn btn-default' name='csv' type='submit' value='Export as CSV'></span></form></p><br>";
+		print "</select> Limit: <select name='filter_limit'><option value='50000'>50,000</option><option value='10000'>10,000</option><option value='5000'>5,000</option><option value='1000' selected>1,000</option><option value='500'>500</option><option value='100'>100</option></select><span class='pull-right'><input class='btn btn-default' type='submit' value='Filter'> <input class='btn btn-default' name='csv' type='submit' value='Export as CSV'></span></form></p>";
+		my $search = "";
+		if($q->param('search')) { $search = sanitize_html($q->param('search')); }
+		print "<p><form method='GET' action='.'><input type='hidden' name='m' value='tickets'>Custom search: <input type='text' name='search' value='" . $search . "' style='width:300px'> <input class='btn btn-default' type='submit' value='Search'></p>";
 		print "<table class='table table-striped'><tr><th>ID</th><th>" . $items{"Product"} . "</th><th>User</th><th>Title</th><th>Status</th><th>Date</th></tr>\n";
 		if($q->param('filter_status') && $q->param('filter_status') ne "All" && $q->param('filter_product') && $q->param('filter_product') ne "All")
 		{
@@ -1745,6 +1778,11 @@ elsif($q->param('m')) # Modules
 		{
 			$sql = $db->prepare("SELECT ROWID,* FROM tickets WHERE productid = ? ORDER BY ROWID DESC LIMIT " . $limit . ";");
 			$sql->execute(to_int($q->param('filter_product')));
+		}
+		elsif($q->param('search'))
+		{
+			$sql = $db->prepare("SELECT ROWID,* FROM tickets WHERE title LIKE ? OR description LIKE ? ORDER BY ROWID DESC LIMIT " . $limit . ";");
+			$sql->execute("%" . sanitize_html($q->param('search')) . "%", "%" . sanitize_html($q->param('search')) . "%");
 		}
 		else
 		{
