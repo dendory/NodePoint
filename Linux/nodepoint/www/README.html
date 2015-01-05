@@ -309,7 +309,7 @@ img {
 <p>Make sure <code>www/nodepoint.cgi</code> can be executed by the web server, and it has write access to <code>nodepoint.cfg</code>, <code>db/</code> and <code>uploads/</code>. </p>
 </li>
 <li>
-<p>Map a virtual host in your <code>httpd.conf</code>, or link the <em>www</em> folder, for example: <code>ln -s /var/www/html/nodepoint ~/nodepoint/www</code>.</p>
+<p>Map a virtual host in your <code>httpd.conf</code>, or link the <em>www</em> folder, for example: <code>ln -s /var/www/nodepoint ~/nodepoint/www</code> (paths may differ based on your distro).</p>
 </li>
 <li>
 <p>Access the site at <code>http://localhost/nodepoint</code> and complete the first time configuration.</p>
@@ -317,7 +317,13 @@ img {
 </ul>
 <h2>Troubleshooting</h2>
 <h3>If you get a 500 server error</h3>
-<p>Check in your server log what the likely error might be. Try to run <code>~/nodepoint/www/nodepoint.cgi</code> from a shell. If you get a <code>No such file or directory</code> you may be missing 32 bits binary support.</p>
+<p>Check in your server log what the likely error might be. Try to run <code>~/nodepoint/www/nodepoint.cgi</code> from a shell. If you get a <code>No such file or directory</code> you may be missing 32 bits binary support. In Debian you can enable 32bits support with these commands:</p>
+<pre><code>dpkg --add-architecture i386
+apt-get ia32-libs-i386
+</code></pre>
+
+<h3>You see a list of files in your browser instead of the proper interface</h3>
+<p>Make sure the <code>.htaccess</code> file is present, and that your Apache configuration allows overrides. Look for the line <code>AllowOverride All</code> in your default site configuration file.</p>
 <h3>If you get the error <code>Could not access configuration file</code></h3>
 <p>Make sure NodePoint has write access to <code>../nodepoint.cfg</code>. Make sure the file only contains one line with the text <code>dummy value</code>.</p>
 <h3>If you get the error <code>Could not access database</code></h3>
