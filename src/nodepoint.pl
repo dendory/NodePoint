@@ -456,16 +456,19 @@ sub home
 		print "</div></div>\n";
 	}
 
-	print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Tickets you created</h3></div><div class='panel-body'><table class='table table-striped'>\n";
-	print "<tr><th>ID</th><th>" . $items{"Product"} . "</th><th>" . $items{"Release"} . "</th><th>Title</th><th>Status</th><th>Date</th></tr>\n";
-	$sql = $db->prepare("SELECT ROWID,* FROM tickets WHERE status != 'Closed' ORDER BY ROWID DESC");
-	$sql->execute();
-	while(my @res = $sql->fetchrow_array())
+	if($logged_lvl > 0)
 	{
-		if($products[$res[1]] && $res[3] eq $logged_user) { print "<tr><td>" . $res[0] . "</td><td>" . $products[$res[1]] . "</td><td>" . $res[2] . "</td><td><a href='./?m=view_ticket&t=" . $res[0] . "'>" . $res[5] . "</a></td><td>" . $res[8] . "</td><td>" . $res[11] . "</td></tr>\n"; }
+		print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Tickets you created</h3></div><div class='panel-body'><table class='table table-striped'>\n";
+		print "<tr><th>ID</th><th>" . $items{"Product"} . "</th><th>" . $items{"Release"} . "</th><th>Title</th><th>Status</th><th>Date</th></tr>\n";
+		$sql = $db->prepare("SELECT ROWID,* FROM tickets WHERE status != 'Closed' ORDER BY ROWID DESC");
+		$sql->execute();
+		while(my @res = $sql->fetchrow_array())
+		{
+			if($products[$res[1]] && $res[3] eq $logged_user) { print "<tr><td>" . $res[0] . "</td><td>" . $products[$res[1]] . "</td><td>" . $res[2] . "</td><td><a href='./?m=view_ticket&t=" . $res[0] . "'>" . $res[5] . "</a></td><td>" . $res[8] . "</td><td>" . $res[11] . "</td></tr>\n"; }
+		}
+		print "</table></div></div>";
 	}
-	print "</table></div></div>";
-
+	
 	print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Tickets you follow</h3></div><div class='panel-body'><table class='table table-striped'>\n";
 	print "<tr><th>ID</th><th>" . $items{"Product"} . "</th><th>User</th><th>Title</th><th>Status</th><th>Date</th></tr>\n";
 	$sql = $db->prepare("SELECT ROWID,* FROM tickets WHERE status != 'Closed' ORDER BY ROWID DESC;");
