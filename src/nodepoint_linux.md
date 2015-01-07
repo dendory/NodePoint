@@ -18,7 +18,7 @@ Installation steps
 
 - Make sure `www/nodepoint.cgi` can be executed by the web server, and it has write access to `nodepoint.cfg`, `db/` and `uploads/`. 
 
-- Map a virtual host in your `httpd.conf`, or link the *www* folder, for example: `ln -s /var/www/html/nodepoint ~/nodepoint/www`.
+- Map a virtual host in your `httpd.conf`, or link the *www* folder, for example: `ln -s /var/www/nodepoint ~/nodepoint/www` (paths may differ based on your distro).
 
 - Access the site at `http://localhost/nodepoint` and complete the first time configuration.
 
@@ -27,7 +27,14 @@ Troubleshooting
 ---------------
 ### If you get a 500 server error ###
 
-Check in your server log what the likely error might be. Try to run `~/nodepoint/www/nodepoint.cgi` from a shell. If you get a `No such file or directory` you may be missing 32 bits binary support.
+Check in your server log what the likely error might be. Try to run `~/nodepoint/www/nodepoint.cgi` from a shell. If you get a `No such file or directory` you may be missing 32 bits binary support. In Debian you can enable 32bits support with these commands:
+
+    dpkg --add-architecture i386
+    apt-get install ia32-libs-i386
+
+### You see a list of files in your browser instead of the proper interface ###
+
+Make sure the `.htaccess` file is present, and that your Apache configuration allows overrides. Look for the line `AllowOverride All` in your default site configuration file.
 
 ### If you get the error `Could not access configuration file` ###
 
