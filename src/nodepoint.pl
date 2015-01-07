@@ -822,7 +822,7 @@ elsif($q->param('m')) # Modules
 {
 	if($q->param('m') eq "settings" && $logged_user ne "")
 	{
-		$cgs = $q->cookie(-name => "np_gs", -value => "1");
+		$cgs = $q->cookie(-name => "np_gs", -expires => '+3M', -value => "1");
 		headers("Settings");
 		print "<p>You are logged in as <b>" . $logged_user . "</b> and your access level is <b>" . $logged_lvl . "</b>. Press <a href='./?m=logout'>here</a> to log out.</p>\n";
 		if($logged_lvl > 2)
