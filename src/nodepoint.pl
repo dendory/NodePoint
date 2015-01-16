@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 #
-# NodePoint 1.0.4 - (C) 2015 Patrick Lambert - http://dendory.net/nodepoint
+# NodePoint - (C) 2015 Patrick Lambert - http://dendory.net/nodepoint
 # Provided under the MIT License
 #
 # To use on Windows: Change all 'Linux' for 'Win32' in this file.
@@ -22,7 +22,7 @@ my ($cfg, $db, $sql, $cn, $cp, $cgs, $last_login);
 my $logged_user = "";
 my $logged_lvl = -1;
 my $q = new CGI;
-my $VERSION = "1.0.4";
+my $VERSION = "1.0.5";
 my %items = ("Product", "Product", "Release", "Release", "Model", "SKU/Model");
 
 # Print headers
@@ -310,6 +310,7 @@ sub save_config
 	$cfg->save("favicon", $q->param('favicon'));
 	$cfg->save("default_vis", $q->param('default_vis'));
 	$cfg->save("default_lvl", to_int($q->param('default_lvl')));
+	$cfg->save("upload_lvl", to_int($q->param('upload_lvl')));
 	$cfg->save("allow_registrations", $q->param('allow_registrations'));    
 	$cfg->save("smtp_server", $q->param('smtp_server'));    
 	$cfg->save("smtp_port", $q->param('smtp_port'));    
@@ -622,7 +623,8 @@ elsif(!$cfg->load("db_address") || !$cfg->load("site_name")) # first use
 				print "<p><div class='row'><div class='col-sm-4'>Admin password:</div><div class='col-sm-4'><input style='width:300px' type='password' name='admin_pass'></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Public notice:</div><div class='col-sm-4'><input type='text' style='width:300px' name='motd' value='Welcome to NodePoint. Remember to be courteous when writing tickets. Contact the help desk for any problem.'></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Upload folder:</div><div class='col-sm-4'><input type='text' style='width:300px' name='upload_folder' value='.." . $cfg->sep . "uploads'></div></div></p>\n";
-				print "<p>The upload folder should be a local folder with write access and is used for product images. If left empty, image uploads will be disabled.</p>\n";
+				print "<p><div class='row'><div class='col-sm-4'>Minimum upload level:</div><div class='col-sm-4'><select name='upload_lvl' style='width:300px'><option value=5>5 - Users management</option><option value=4>4 - Products management</option><option value=3>3 - Tickets management</option><option value=2>2 - Restricted view</option><option value=1 selected=selected>1 - Authorized users</option><option value=0>0 - Unauthorized users</option></select></div></div></p>\n";
+				print "<p>The upload folder should be a local folder with write access and is used for product images and comment attachments. If left empty, uploads will be disabled.</p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Items managed:</div><div class='col-sm-4'><select style='width:300px' name='items_managed'><option selected>Products with models and releases</option><option>Projects with goals and milestones</option><option>Resources with locations and updates</option></select></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Custom ticket field:</div><div class='col-sm-4'><input type='text' style='width:300px' name='custom_name' value='Related tickets'></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Custom field type:</div><div class='col-sm-4'><select style='width:300px' name='custom_type'><option>Text</option><option>Link</option><option>Checkbox</option></select></div></div></p>\n";
@@ -906,7 +908,7 @@ elsif($q->param('m')) # Modules
 			elsif($cfg->load("default_vis") eq "Private") { print "<option>Public</option><option selected>Private</option><option>Restricted</option>"; }
 			else { print "<option selected>Public</option><option>Private</option><option>Restricted</option>"; }
 			print "</select></td></tr>\n";
-			print "<tr><td>Default access level</td><td><input style='width:300px' type='text' name='default_lvl' value=\"" . $cfg->load("default_lvl") . "\"></td></tr>\n";
+			print "<tr><td>Default access level</td><td><input style='width:300px' type='text' name='default_lvl' value=\"" . to_int($cfg->load("default_lvl")) . "\"></td></tr>\n";
 			print "<tr><td>Allow registrations</td><td><select style='width:300px' name='allow_registrations'>";
 			if($cfg->load("allow_registrations") eq "on") { print "<option selected>on</option><option>off</option>"; }
 			else { print "<option>on</option><option selected>off</option>"; }
@@ -917,6 +919,7 @@ elsif($q->param('m')) # Modules
 			print "<tr><td>SMTP port</td><td><input style='width:300px' type='text' name='smtp_port' value=\"" . $cfg->load("smtp_port") . "\"></td></tr>\n";
 			print "<tr><td>Support email</td><td><input style='width:300px' type='text' name='smtp_from' value=\"" . $cfg->load("smtp_from") . "\"></td></tr>\n";
 			print "<tr><td>Upload folder</td><td><input style='width:300px' type='text' name='upload_folder' value=\"" . $cfg->load("upload_folder") . "\"></td></tr>\n";
+			print "<tr><td>Minimum upload level</td><td><input style='width:300px' type='text' name='upload_lvl' value=\"" . to_int($cfg->load("upload_lvl")) . "\"></td></tr>\n";
 			print "<tr><td>Items managed</td><td><select style='width:300px' name='items_managed'>";
 			if($cfg->load("items_managed") eq "Projects with goals and milestones") { print "<option>Products with models and releases</option><option selected>Projects with goals and milestones</option><option>Resources with locations and updates</option>"; }
 			elsif($cfg->load("items_managed") eq "Resources with locations and updates") { print "<option>Products with models and releases</option><option>Projects with goals and milestones</option><option selected>Resources with locations and updates</option>"; }
@@ -1592,7 +1595,9 @@ elsif($q->param('m')) # Modules
 				{
 					print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Add comment</h3></div><div class='panel-body'><form method='POST' action='.' enctype='multipart/form-data'><input type='hidden' name='m' value='add_comment'><input type='hidden' name='t' value='" . to_int($q->param('t')) . "'>\n";
 					print "<p><textarea rows='4' name='comment' style='width:95%'></textarea></p>";
-					print "<p>Attach file: <input type='file' name='attach_file'><input class='btn btn-default pull-right' type='submit' value='Add comment'></p>\n";
+					print "<p>";
+					if($logged_lvl >= to_int($cfg->load('upload_lvl'))) { print "Attach file: <input type='file' name='attach_file'>"; }
+					print "<input class='btn btn-default pull-right' type='submit' value='Add comment'></p>\n";
 					print "</form></div></div>\n";
 				}
 				$sql = $db->prepare("SELECT ROWID,* FROM comments WHERE ticketid = ? ORDER BY ROWID DESC;");
