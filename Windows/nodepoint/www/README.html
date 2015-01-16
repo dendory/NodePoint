@@ -337,6 +337,79 @@ img {
 </ul>
 <h3>If you forgot your admin password</h3>
 <p>You will need to remove the initial configuration settings and recreate them in order to recover access. This configuration is stored locally on the server inside the Windows Registry. Use <code>regedit.exe</code> and navigate to <code>HKLM/SOFTWARE/Wow6432Node/NodePoint</code>.</p>
+<h2>Configuration</h2>
+<p>These are the default configuration values for NodePoint. They have to be defined during first use, and can be modified by the NodePoint Administrator later from the Settings tab.</p>
+<ul>
+<li>Database file: This is the NodePoint database file. Make sure you routinely back this file up as it contains all of the information stored by NodePoint.</li>
+<li>Admin name: The NodePoint administrator.</li>
+<li>Admin password: The password for the administrator.</li>
+<li>Site name: The name shown at the top left of the interface.</li>
+<li>Public notice: This notice is shown on every page. Leave empty to remove the notice.</li>
+<li>Bootstrap template: This is a CSS file used by NodePoint. It should be a valid Bootstrap template, or could contain extra CSS elements you wish to use. The default file is <code>default.css</code> and contains a few such elements.</li>
+<li>Favicon: This is the icon shown by web browsers in the URL bar.</li>
+<li>Ticket visibility: When set to <code>Public</code>, all tickets will be visible by logged in and guest users. When set to <code>Private</code>, people need to log in to view tickets. <code>Restricted</code> prevents people without at least the Restricted View access level from viewing others' tickets. This is a good choice for IT/Helpdesk systems.</li>
+<li>Default access level: The access level for new users. Default is 1.</li>
+<li>Allow registrations: Allow guest users to register a new account. If set to no, the only way to add new accounts is if a user with Users Management access adds one.</li>
+<li>API read key: Used for some API operations.</li>
+<li>API write key: Used for some API operations.</li>
+<li>SMTP server: The hostname for email notifications. Leave empty to disable email notifications.</li>
+<li>SMTP port: The port number for SMTP connections, defaults to 25.</li>
+<li>Support email: The email from which email notifications come from.</li>
+<li>Upload folder: Where product images and comment files are stored. Leave empty to disable uploads.</li>
+<li>Minimum upload level: The minimum access level a user must have to attach files to comments</li>
+<li>Items managed: The type of items NodePoint should manage. This is purely a UI customization.</li>
+<li>Custom ticket field: The name of the third ticket field (after 'title' and 'description'). This can be used to ask users who fill in tickets to list related tickets, or any other information relevant to your particular installation.</li>
+<li>Custom ticket type: The type of field. If <code>text</code>, then the entries will be shown as text. If <code>URL</code>, then links will be assumed. If <code>checkbox</code>, then users will have to select yes or no.</li>
+</ul>
+<h2>Users management</h2>
+<p>NodePoint provides a simple way to manage users based on their access levels. Users have a specific level, which determines what shows up to them in the interface and what they can do. They can also enter an optional email address for notifications. Email addresses must be confirmed through the sending of an automated token when they first register, if email notifications are turned on. Users also have a password which can be changed by the user under the Settings tab, or reset by someone with the Users Management level.</p>
+<p>These are the access levels used by NodePoint:</p>
+<table>
+<thead>
+<tr>
+	<th>Level</th>
+	<th>Name</th>
+	<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+	<td>6</td>
+	<td>NodePoint Admin</td>
+	<td>Can change basic NodePoint settings</td>
+</tr>
+<tr>
+	<td>5</td>
+	<td>Users management</td>
+	<td>Can create users, reset passwords, change access levels</td>
+</tr>
+<tr>
+	<td>4</td>
+	<td>Products management</td>
+	<td>Can add, retire and edit products, view statistics</td>
+</tr>
+<tr>
+	<td>3</td>
+	<td>Tickets management</td>
+	<td>Can create releases, update tickets, track time</td>
+</tr>
+<tr>
+	<td>2</td>
+	<td>Restricted view</td>
+	<td>Can view restricted tickets and products</td>
+</tr>
+<tr>
+	<td>1</td>
+	<td>Authorized users</td>
+	<td>Can create tickets and comments</td>
+</tr>
+<tr>
+	<td>0</td>
+	<td>Unauthorized users</td>
+	<td>Can view private tickets</td>
+</tr>
+</tbody>
+</table>
 <h2>API</h2>
 <p>NodePoint provides an API to add and show tickets in JSON format. You can use GET or POST arguments with the following values:</p>
 <h3>Show ticket</h3>
