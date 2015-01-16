@@ -328,6 +328,15 @@ apt-get install ia32-libs-i386
 <p>Make sure NodePoint has write access to <code>../nodepoint.cfg</code>. Make sure the file only contains one line with the text <code>dummy value</code>.</p>
 <h3>If you get the error <code>Could not access database</code></h3>
 <p>Make sure NodePoint has write access to the database, by default <code>../db/nodepoint.db</code>.</p>
+<h3>If email notifications don't work</h3>
+<p>This is typically because of permission issues. Make sure that:</p>
+<ul>
+<li>The user that NodePoint runs under has permissions to make network connections.</li>
+<li>The firewall is allowing outgoing connections.</li>
+<li>The SMTP server is accepting connections from the NodePoint server and email address you set.</li>
+</ul>
+<h3>If you forgot your admin password</h3>
+<p>Simply delete the <code>nodepoint.cfg</code> configuration file on the server and recreate it through the web interface from localhost.</p>
 <h2>API</h2>
 <p>NodePoint provides an API to add and show tickets in JSON format. You can use GET or POST arguments with the following values:</p>
 <h3>Show ticket</h3>
@@ -335,6 +344,12 @@ apt-get install ia32-libs-i386
 <li>api=show_ticket</li>
 <li>key=&lt;read key&gt;</li>
 <li>id=&lt;ticket id&gt;</li>
+</ul>
+<h3>List tickets by product</h3>
+<ul>
+<li>api=list_tickets</li>
+<li>key=&lt;read key&gt;</li>
+<li>product_id=&lt;product id&gt;</li>
 </ul>
 <h3>Add ticket</h3>
 <ul>
@@ -345,6 +360,13 @@ apt-get install ia32-libs-i386
 <li>title=&lt;ticket title&gt;</li>
 <li>description=&lt;ticket description&gt;</li>
 <li>custom=&lt;custom field&gt;</li>
+</ul>
+<h3>Add comment</h3>
+<ul>
+<li>api=add_comment</li>
+<li>key=&lt;write key&gt;</li>
+<li>id=&lt;ticket id&gt;</li>
+<li>comment=&lt;comment&gt;</li>
 </ul>
 <h2>Need support?</h2>
 <p>You can contact the author at <a href="&#x6d;a&#105;&#108;&#x74;&#111;&#x3a;&#100;&#101;&#110;&#100;&#111;&#x72;&#x79;&#x40;&#108;i&#118;&#x65;&#46;&#x63;&#x61;">&#x64;e&#110;&#x64;&#111;&#114;&#121;&#64;&#108;&#105;&#x76;&#x65;&#46;&#x63;&#97;</a></p>
