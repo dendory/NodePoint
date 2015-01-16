@@ -56,6 +56,47 @@ This is typically because of permission issues. Make sure that:
 
 Simply delete the `nodepoint.cfg` configuration file on the server and recreate it through the web interface from localhost.
 
+Configuration
+-------------
+These are the default configuration values for NodePoint. They have to be defined during first use, and can be modified by the NodePoint Administrator later from the Settings tab.
+
+* Database file: This is the NodePoint database file. Make sure you routinely back this file up as it contains all of the information stored by NodePoint.
+* Admin name: The NodePoint administrator.
+* Admin password: The password for the administrator.
+* Site name: The name shown at the top left of the interface.
+* Public notice: This notice is shown on every page. Leave empty to remove the notice.
+* Bootstrap template: This is a CSS file used by NodePoint. It should be a valid Bootstrap template, or could contain extra CSS elements you wish to use. The default file is `default.css` and contains a few such elements.
+* Favicon: This is the icon shown by web browsers in the URL bar.
+* Ticket visibility: When set to `Public`, all tickets will be visible by logged in and guest users. When set to `Private`, people need to log in to view tickets. `Restricted` prevents people without at least the Restricted View access level from viewing others' tickets. This is a good choice for IT/Helpdesk systems.
+* Default access level: The access level for new users. Default is 1.
+* Allow registrations: Allow guest users to register a new account. If set to no, the only way to add new accounts is if a user with Users Management access adds one.
+* API read key: Used for some API operations.
+* API write key: Used for some API operations.
+* SMTP server: The hostname for email notifications. Leave empty to disable email notifications.
+* SMTP port: The port number for SMTP connections, defaults to 25.
+* Support email: The email from which email notifications come from.
+* Upload folder: Where product images and comment files are stored. Leave empty to disable uploads.
+* Minimum upload level: The minimum access level a user must have to attach files to comments
+* Items managed: The type of items NodePoint should manage. This is purely a UI customization.
+* Custom ticket field: The name of the third ticket field (after 'title' and 'description'). This can be used to ask users who fill in tickets to list related tickets, or any other information relevant to your particular installation.
+* Custom ticket type: The type of field. If `text`, then the entries will be shown as text. If `URL`, then links will be assumed. If `checkbox`, then users will have to select yes or no.
+
+Users management
+----------------
+NodePoint provides a simple way to manage users based on their access levels. Users have a specific level, which determines what shows up to them in the interface and what they can do. They can also enter an optional email address for notifications. Email addresses must be confirmed through the sending of an automated token when they first register, if email notifications are turned on. Users also have a password which can be changed by the user under the Settings tab, or reset by someone with the Users Management level.
+
+These are the access levels used by NodePoint:
+
+Level | Name | Description
+------|------|----------------
+6 | NodePoint Admin|Can change basic NodePoint settings
+5 | Users management | Can create users, reset passwords, change access levels
+4 | Products management | Can add, retire and edit products, view statistics
+3 | Tickets management | Can create releases, update tickets, track time
+2 | Restricted view | Can view restricted tickets and products
+1 | Authorized users | Can create tickets and comments
+0 | Unauthorized users | Can view private tickets
+
 API
 ---
 NodePoint provides an API to add and show tickets in JSON format. You can use GET or POST arguments with the following values:
