@@ -44,6 +44,18 @@ Make sure NodePoint has write access to `../nodepoint.cfg`. Make sure the file o
 
 Make sure NodePoint has write access to the database, by default `../db/nodepoint.db`.
 
+### If email notifications don't work ###
+
+This is typically because of permission issues. Make sure that:
+
+* The user that NodePoint runs under has permissions to make network connections.
+* The firewall is allowing outgoing connections.
+* The SMTP server is accepting connections from the NodePoint server and email address you set.
+
+### If you forgot your admin password ###
+
+Simply delete the `nodepoint.cfg` configuration file on the server and recreate it through the web interface from localhost.
+
 API
 ---
 NodePoint provides an API to add and show tickets in JSON format. You can use GET or POST arguments with the following values:
@@ -53,6 +65,11 @@ NodePoint provides an API to add and show tickets in JSON format. You can use GE
 * key=&lt;read key&gt;
 * id=&lt;ticket id&gt;
 
+### List tickets by product ###
+* api=list_tickets
+* key=&lt;read key&gt;
+* product_id=&lt;product id&gt;
+
 ### Add ticket ###
 * api=add_ticket
 * key=&lt;write key&gt;
@@ -61,6 +78,12 @@ NodePoint provides an API to add and show tickets in JSON format. You can use GE
 * title=&lt;ticket title&gt;
 * description=&lt;ticket description&gt;
 * custom=&lt;custom field&gt;
+
+### Add comment ###
+* api=add_comment
+* key=&lt;write key&gt;
+* id=&lt;ticket id&gt;
+* comment=&lt;comment&gt;
 
 Need support?
 -------------
