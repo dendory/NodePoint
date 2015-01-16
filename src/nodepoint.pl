@@ -717,6 +717,53 @@ elsif($q->param('api')) # API calls
 			}
 		}
 	}
+	elsif($q->param('api') eq "list_tickets")
+	{
+		if(!$q->param('product_id'))
+		{
+			print "{\n";
+			print " \"message\": \"Missing 'product_id' argument.\",\n";
+			print " \"status\": \"ERR_MISSING_ARGUMENT\"\n";
+			print "}\n";
+		}
+		elsif(!$q->param('key'))
+		{
+			print "{\n";
+			print " \"message\": \"Missing 'key' argument.\",\n";
+			print " \"status\": \"ERR_MISSING_ARGUMENT\"\n";
+			print "}\n";
+		}
+		elsif($q->param('key') ne $cfg->load('api_read'))
+		{
+			print "{\n";
+			print " \"message\": \"Invalid 'key' value.\",\n";
+			print " \"status\": \"ERR_INVALID_KEY\"\n";
+			print "}\n";
+		}
+		else
+		{
+			print "{\n";
+			print " \"message\": \"Ticket list.\",\n";
+			print " \"status\": \"OK\",\n";
+			print " \"tickets\": [\n";
+			my $found = 0;
+			$sql = $db->prepare("SELECT ROWID,* FROM tickets WHERE productid = ?;");
+			$sql->execute(to_int($q->param('product_id')));
+			while(my @res = $sql->fetchrow_array())
+			{
+				if($found) { print ",\n"; }
+				$found = 1;
+				print "  {\n";
+				print "   \"id\": \"" . $res[0] . "\",\n";
+				print "   \"product_id\": \"" . $res[1] . "\",\n";
+				print "   \"release_id\": \"" . $res[2] . "\",\n";
+				print "   \"title\": \"" . $res[5] . "\"\n";
+				print "  }";
+			}
+			print "\n ]\n";
+			print "}\n";
+		}
+	}
 	elsif($q->param('api') eq "add_ticket")
 	{
 		if(!$q->param('title'))
@@ -789,6 +836,46 @@ elsif($q->param('api')) # API calls
 				print " \"status\": \"OK\"\n";
 				print "}\n";
 			}
+		}
+	}
+	elsif($q->param('api') eq "add_comment")
+	{
+		if(!$q->param('comment'))
+		{
+			print "{\n";
+			print " \"message\": \"Missing 'comment' argument.\",\n";
+			print " \"status\": \"ERR_MISSING_ARGUMENT\"\n";
+			print "}\n";
+		}
+		elsif(!$q->param('id'))
+		{
+			print "{\n";
+			print " \"message\": \"Missing 'id' argument.\",\n";
+			print " \"status\": \"ERR_MISSING_ARGUMENT\"\n";
+			print "}\n";
+		}
+		elsif(!$q->param('key'))
+		{
+			print "{\n";
+			print " \"message\": \"Missing 'key' argument.\",\n";
+			print " \"status\": \"ERR_MISSING_ARGUMENT\"\n";
+			print "}\n";
+		}
+		elsif($q->param('key') ne $cfg->load('api_write'))
+		{
+			print "{\n";
+			print " \"message\": \"Invalid 'key' value.\",\n";
+			print " \"status\": \"ERR_INVALID_KEY\"\n";
+			print "}\n";
+		}
+		else
+		{
+			$sql = $db->prepare("INSERT INTO comments VALUES (?, ?, ?, ?, ?, ?, ?);");
+			$sql->execute(to_int($q->param('id')), "api", sanitize_html($q->param('comment')), now(), "Never", "", "");
+			print "{\n";
+			print " \"message\": \"Comment added.\",\n";
+			print " \"status\": \"OK\"\n";
+			print "}\n";
 		}
 	}
 	else
