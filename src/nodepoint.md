@@ -73,6 +73,11 @@ NodePoint provides an API to add and show tickets in JSON format. You can use GE
 * key=&lt;read key&gt;
 * id=&lt;ticket id&gt;
 
+### List tickets by product ###
+* api=list_tickets
+* key=&lt;read key&gt;
+* product_id=&lt;product id&gt;
+
 ### Add ticket ###
 * api=add_ticket
 * key=&lt;write key&gt;
@@ -81,6 +86,12 @@ NodePoint provides an API to add and show tickets in JSON format. You can use GE
 * title=&lt;ticket title&gt;
 * description=&lt;ticket description&gt;
 * custom=&lt;custom field&gt;
+
+### Add comment ###
+* api=add_comment
+* key=&lt;write key&gt;
+* id=&lt;ticket id&gt;
+* comment=&lt;comment&gt;
 
 Need support?
 -------------
