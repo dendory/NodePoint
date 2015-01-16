@@ -1018,7 +1018,7 @@ elsif($q->param('m')) # Modules
 			elsif($cfg->load("custom_type") eq "Checkbox") { print "<option>Text</option><option>Link</option><option selected>Checkbox</option>"; }
 			else { print "<option selected>Text</option><option>Link</option><option>Checkbox</option>"; }
 			print "</select></td></tr>\n";
-			print "</table>The admin password will be left unchanged if empty.<input class='btn btn-default pull-right' type='submit' value='Save settings'></form></div></div>\n";
+			print "</table>The admin password will be left unchanged if empty.<br>See the <a href='./README.html'>README</a> file for help.<input class='btn btn-default pull-right' type='submit' value='Save settings'></form></div></div>\n";
 			print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Log (last 50 events)</h3></div><div class='panel-body'>\n";
 			print "<form style='display:inline' method='POST' action='.'><input type='hidden' name='m' value='clear_log'><input class='btn btn-default pull-right' type='submit' value='Clear log'><br></form><a name='log'></a><p>Filter log by events: <a href='./?m=settings#log'>All</a> | <a href='./?m=settings&filter_log=Failed#log'>Failed logins</a> | <a href='./?m=settings&filter_log=Success#log'>Successful logins</a> | <a href='./?m=settings&filter_log=level#log'>Level changes</a> | <a href='./?m=settings&filter_log=password#log'>Password changes</a> | <a href='./?m=settings&filter_log=user#log'>New users</a> | <a href='./?m=settings&filter_log=setting#log'>Settings updated</a></p>\n";
 			print "<table class='table table-striped'><tr><th>IP address</th><th>User</th><th>Event</th><th>Time</th></tr>\n";
