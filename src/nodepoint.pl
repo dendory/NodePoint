@@ -22,7 +22,7 @@ my ($cfg, $db, $sql, $cn, $cp, $cgs, $last_login);
 my $logged_user = "";
 my $logged_lvl = -1;
 my $q = new CGI;
-my $VERSION = "1.0.5";
+my $VERSION = "1.0.6";
 my %items = ("Product", "Product", "Release", "Release", "Model", "SKU/Model");
 
 # Print headers
@@ -315,12 +315,15 @@ sub save_config
 	$cfg->save("smtp_server", $q->param('smtp_server'));    
 	$cfg->save("smtp_port", $q->param('smtp_port'));    
 	$cfg->save("smtp_from", $q->param('smtp_from'));
+	$cfg->save("smtp_user", $q->param('smtp_user'));    
+	$cfg->save("smtp_pass", $q->param('smtp_pass'));    
 	$cfg->save("api_read", $q->param('api_read'));
 	$cfg->save("api_write", $q->param('api_write'));
 	$cfg->save("upload_folder", $q->param('upload_folder'));
 	$cfg->save("items_managed", $q->param('items_managed'));
 	$cfg->save("custom_name", $q->param('custom_name'));
 	$cfg->save("custom_type", $q->param('custom_type'));
+	$cfg->save("ext_plugin", $q->param('ext_plugin'));
 }
 
 # Check login credentials
@@ -401,6 +404,22 @@ sub now
 sub notify
 {
 	my ($u, $title, $mesg) = @_;
+	if($cfg->load('ext_plugin'))
+	{
+		my $cmd = $cfg->load('ext_plugin');
+		my $u2 = $u;
+		$u2 =~ s/"/''/g;
+		my $title2 = $title;
+		$title2 =~ s/"/''/g;
+		my $mesg2 = $mesg;
+		$mesg2 =~ s/"/''/g;		
+		$cmd =~ s/\%user\%/\"$u2\"/g;
+		$cmd =~ s/\%title\%/\"$title2\"/g;
+		$cmd =~ s/\%message\%/\"$mesg2\"/g;
+		$cmd =~ s/\n/ /g;
+		$cmd =~ s/\r/ /g;
+		system($cmd);
+	}
 	if($cfg->load('smtp_server') && $cfg->load('smtp_port') && $cfg->load('smtp_from') && $u && $title && $mesg)
 	{
 		my $lsql = $db->prepare("SELECT * FROM users;");
@@ -411,8 +430,8 @@ sub notify
 			{
 				eval
 				{
-					my $smtp = Net::SMTP->new('korriban.sithempire.local', Port => 25, Timeout => 10, Debug => 1);
-					#$smtp->auth($smtpuser, $smtppassword);
+					my $smtp = Net::SMTP->new($cfg->load('smtp_server'), Port => to_int($cfg->load('smtp_port')));
+					if($cfg->load('smtp_user') && $cfg->load('smtp_pass')) { $smtp->auth($cfg->load('smtp_user'), $cfg->load('smtp_pass')); }
 					$smtp->mail($cfg->load('smtp_from'));
 					if($smtp->to($res[2]))
 					{
@@ -427,9 +446,11 @@ sub notify
 					else
 					{
 						msg("Could not send notification email to " . $u . ", target email was rejected.", 1);
+						logevent("Email notification error: " . $smtp->message());
 					}
 				} or do {
 					msg("Could not send notification email to " . $u . ", connection to SMTP server failed.", 1);
+					logevent("Email notification error: Connection to SMTP server failed.");
 				};
 			}
 		}
@@ -617,8 +638,12 @@ elsif(!$cfg->load("db_address") || !$cfg->load("site_name")) # first use
 				print "<p>API keys can be used by external applications to read and write tickets using the JSON API.</p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>SMTP server:</div><div class='col-sm-4'><input type='text' style='width:300px' name='smtp_server' value=''></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>SMTP port:</div><div class='col-sm-4'><input type='text' style='width:300px' name='smtp_port' value='25'></div></div></p>\n";
+				print "<p><div class='row'><div class='col-sm-4'>SMTP username:</div><div class='col-sm-4'><input type='text' style='width:300px' name='smtp_user' value=''></div></div></p>\n";
+				print "<p><div class='row'><div class='col-sm-4'>SMTP password:</div><div class='col-sm-4'><input type='password' style='width:300px' name='smtp_pass' value=''></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Support email:</div><div class='col-sm-4'><input type='text' style='width:300px' name='smtp_from' value='admin\@company.com'></div></div></p>\n";
 				print "<p>If a SMTP server host name is entered, NodePoint will attempt to send an email when new tickets are created, or changes occur.</p>\n";
+				print "<p><div class='row'><div class='col-sm-4'>External notifications plugin:</div><div class='col-sm-4'><input type='text' style='width:300px' name='ext_plugin' value=''></div></div></p>\n";
+				print "<p>Notifications can be sent to an external system command. Variables accepted are: \%user\%, \%title\% and \%message\%.</p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Admin username:</div><div class='col-sm-4'><input type='text' style='width:300px' name='admin_name' value='admin'></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Admin password:</div><div class='col-sm-4'><input style='width:300px' type='password' name='admin_pass'></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Public notice:</div><div class='col-sm-4'><input type='text' style='width:300px' name='motd' value='Welcome to NodePoint. Remember to be courteous when writing tickets. Contact the help desk for any problem.'></div></div></p>\n";
@@ -764,6 +789,110 @@ elsif($q->param('api')) # API calls
 			print "}\n";
 		}
 	}
+	elsif($q->param('api') eq "verify_password")
+	{
+		if(!$q->param('user'))
+		{
+			print "{\n";
+			print " \"message\": \"Missing 'user' argument.\",\n";
+			print " \"status\": \"ERR_MISSING_ARGUMENT\"\n";
+			print "}\n";
+		}
+		elsif(!$q->param('password'))
+		{
+			print "{\n";
+			print " \"message\": \"Missing 'password' argument.\",\n";
+			print " \"status\": \"ERR_MISSING_ARGUMENT\"\n";
+			print "}\n";
+		}
+		elsif(!$q->param('key'))
+		{
+			print "{\n";
+			print " \"message\": \"Missing 'key' argument.\",\n";
+			print " \"status\": \"ERR_MISSING_ARGUMENT\"\n";
+			print "}\n";
+		}
+		elsif($q->param('key') ne $cfg->load('api_read'))
+		{
+			print "{\n";
+			print " \"message\": \"Invalid 'key' value.\",\n";
+			print " \"status\": \"ERR_INVALID_KEY\"\n";
+			print "}\n";
+		}
+		else
+		{
+			print "{\n";
+			my $found = 0;
+			$sql = $db->prepare("SELECT * FROM users WHERE name = ? AND pass = ?;");
+			$sql->execute(sanitize_alpha($q->param('user')), sha1_hex($q->param('password')));
+			while(my @res = $sql->fetchrow_array()) { $found = 1; }
+			if($found)
+			{
+				print " \"message\": \"Credentials are valid.\",\n";
+				print " \"status\": \"OK\",\n";
+			}
+			else
+			{
+				print " \"message\": \"Invalid credentials.\",\n";
+				print " \"status\": \"ERR_INVALID_CRED\",\n";
+			}
+			print "}\n";
+		}
+	}
+	elsif($q->param('api') eq "change_password")
+	{
+		if(!$q->param('user'))
+		{
+			print "{\n";
+			print " \"message\": \"Missing 'user' argument.\",\n";
+			print " \"status\": \"ERR_MISSING_ARGUMENT\"\n";
+			print "}\n";
+		}
+		elsif(!$q->param('password'))
+		{
+			print "{\n";
+			print " \"message\": \"Missing 'password' argument.\",\n";
+			print " \"status\": \"ERR_MISSING_ARGUMENT\"\n";
+			print "}\n";
+		}
+		elsif(!$q->param('key'))
+		{
+			print "{\n";
+			print " \"message\": \"Missing 'key' argument.\",\n";
+			print " \"status\": \"ERR_MISSING_ARGUMENT\"\n";
+			print "}\n";
+		}
+		elsif($q->param('key') ne $cfg->load('api_write'))
+		{
+			print "{\n";
+			print " \"message\": \"Invalid 'key' value.\",\n";
+			print " \"status\": \"ERR_INVALID_KEY\"\n";
+			print "}\n";
+		}
+		else
+		{
+			print "{\n";
+			my $found = 0;
+			$sql = $db->prepare("SELECT * FROM users WHERE name = ?;");
+			$sql->execute(sanitize_alpha($q->param('user')));
+			while(my @res = $sql->fetchrow_array()) { $found = 1; }
+			if(!$found)
+			{
+				print " \"message\": \"Invalid user name.\",\n";
+				print " \"status\": \"ERR_INVALID_CRED\",\n";
+			}
+			else
+			{
+				$sql = $db->prepare("UPDATE users SET pass = '" . sha1_hex($q->param('password')) . "' WHERE name = ?;");
+				$sql->execute(sanitize_alpha($q->param('user')));
+				$logged_user = "api";  # So logevent() records the right thing
+				logevent("Password change: " . sanitize_alpha($q->param('user')));
+				print " \"message\": \"Password changed.\",\n";
+				print " \"status\": \"OK\",\n";
+			}
+			print "}\n";
+		}
+	}
 	elsif($q->param('api') eq "add_ticket")
 	{
 		if(!$q->param('title'))
@@ -835,7 +964,60 @@ elsif($q->param('api')) # API calls
 				print " \"message\": \"Ticket " . $rowid . " added.\",\n";
 				print " \"status\": \"OK\"\n";
 				print "}\n";
+				$sql = $db->prepare("SELECT * FROM releases WHERE productid = ?;");
+				$sql->execute(to_int($q->param('product_id')));
+				while(my @res = $sql->fetchrow_array())
+				{
+					notify($res[1], "New ticket created", "A new ticket was created for one of your products:\n\nUser: api\nTitle: " . sanitize_html($q->param('title')) . "\n" . $cfg->load('custom_name') . ": " . $custom . "\nDescription: " . $q->param('description'));
+				}
 			}
+		}
+	}
+	elsif($q->param('api') eq "add_release")
+	{
+		if(!$q->param('release_id'))
+		{
+			print "{\n";
+			print " \"message\": \"Missing 'release_id' argument.\",\n";
+			print " \"status\": \"ERR_MISSING_ARGUMENT\"\n";
+			print "}\n";
+		}
+		elsif(!$q->param('product_id'))
+		{
+			print "{\n";
+			print " \"message\": \"Missing 'product_id' argument.\",\n";
+			print " \"status\": \"ERR_MISSING_ARGUMENT\"\n";
+			print "}\n";
+		}
+		elsif(!$q->param('notes'))
+		{
+			print "{\n";
+			print " \"message\": \"Missing 'notes' argument.\",\n";
+			print " \"status\": \"ERR_MISSING_ARGUMENT\"\n";
+			print "}\n";
+		}
+		elsif(!$q->param('key'))
+		{
+			print "{\n";
+			print " \"message\": \"Missing 'key' argument.\",\n";
+			print " \"status\": \"ERR_MISSING_ARGUMENT\"\n";
+			print "}\n";
+		}
+		elsif($q->param('key') ne $cfg->load('api_write'))
+		{
+			print "{\n";
+			print " \"message\": \"Invalid 'key' value.\",\n";
+			print " \"status\": \"ERR_INVALID_KEY\"\n";
+			print "}\n";
+		}
+		else
+		{
+			$sql = $db->prepare("INSERT INTO releases VALUES (?, ?, ?, ?, ?);");
+			$sql->execute(to_int($q->param('product_id')), "api", sanitize_html($q->param('release_id')), sanitize_html($q->param('notes')), now());
+			print "{\n";
+			print " \"message\": \"Release added.\",\n";
+			print " \"status\": \"OK\"\n";
+			print "}\n";
 		}
 	}
 	elsif($q->param('api') eq "add_comment")
@@ -876,6 +1058,17 @@ elsif($q->param('api')) # API calls
 			print " \"message\": \"Comment added.\",\n";
 			print " \"status\": \"OK\"\n";
 			print "}\n";
+			$sql = $db->prepare("SELECT ROWID,* FROM tickets WHERE ROWID = ?;");
+			$sql->execute(to_int($q->param('id')));
+			while(my @res = $sql->fetchrow_array())
+			{
+				my @us = split(' ', $res[4]);
+				foreach my $u (@us)
+				{
+					notify($u, "New comment to ticket (" . to_int($q->param('id')) . ") assigned to you", "A new comment was posted to a ticket assigned to you:\n\nUser: api\nComment: " . sanitize_html($q->param('comment')));
+				}
+				notify($res[3], "New comment to your ticket (" . to_int($q->param('id')) . ")", "A new comment was posted to your ticket:\n\nUser: api\nComment: " . sanitize_html($q->param('comment')));
+			}
 		}
 	}
 	else
@@ -976,7 +1169,7 @@ elsif($q->param('m')) # Modules
 		if($logged_lvl > 3)
 		{
 			print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Statistics</h3></div><div class='panel-body'>\n";
-			print "<p><form method='GET' action='.'><input type='hidden' name='m' value='stats'>Report type: <select name='report'><option value='1'>Time spent per user</option><option value='2'>Time spent per ticket</option><option value='3'>Tickets created per " . lc($items{"Product"}) . "</option><option value='4'>Tickets created per user</option><option value='5'>Tickets created per day</option><option value='6'>Tickets created per month</option><option value='7'>Tickets per status</option><option value='8'>Users per access level</option></select><span class='pull-right'><input class='btn btn-default' type='submit' value='Show'> <input class='btn btn-default' type='submit' name='csv' value='Export as CSV'></span>\n";
+			print "<p><form method='GET' action='.'><input type='hidden' name='m' value='stats'>Report type: <select name='report'><option value='1'>Time spent per user</option><option value='2'>Time spent per ticket</option><option value='3'>Tickets created per " . lc($items{"Product"}) . "</option><option value='4'>Tickets created per user</option><option value='5'>Tickets created per day</option><option value='6'>Tickets created per month</option><option value='7'>Tickets per status</option><option value='8'>Users per access level</option><option value='9'>Tickets assigned per user</option></select><span class='pull-right'><input class='btn btn-default' type='submit' value='Show'> <input class='btn btn-default' type='submit' name='csv' value='Export as CSV'></span>\n";
 			print "</form></p></div></div>\n";
 		}
 		if($logged_lvl > 5)
@@ -1004,7 +1197,10 @@ elsif($q->param('m')) # Modules
 			print "<tr><td>API write key</td><td><input style='width:300px' type='text' name='api_write' value=\"" . $cfg->load("api_write") . "\"></td></tr>\n";
 			print "<tr><td>SMTP server</td><td><input style='width:300px' type='text' name='smtp_server' value=\"" . $cfg->load("smtp_server") . "\"></td></tr>\n";
 			print "<tr><td>SMTP port</td><td><input style='width:300px' type='text' name='smtp_port' value=\"" . $cfg->load("smtp_port") . "\"></td></tr>\n";
+			print "<tr><td>SMTP username</td><td><input style='width:300px' type='text' name='smtp_user' value=\"" . $cfg->load("smtp_user") . "\"></td></tr>\n";
+			print "<tr><td>SMTP password</td><td><input style='width:300px' type='password' name='smtp_pass' value=\"" . $cfg->load("smtp_pass") . "\"></td></tr>\n";
 			print "<tr><td>Support email</td><td><input style='width:300px' type='text' name='smtp_from' value=\"" . $cfg->load("smtp_from") . "\"></td></tr>\n";
+			print "<tr><td>External notifications plugin</td><td><input style='width:300px' type='text' name='ext_plugin' value=\"" . $cfg->load("ext_plugin") . "\"></td></tr>\n";
 			print "<tr><td>Upload folder</td><td><input style='width:300px' type='text' name='upload_folder' value=\"" . $cfg->load("upload_folder") . "\"></td></tr>\n";
 			print "<tr><td>Minimum upload level</td><td><input style='width:300px' type='text' name='upload_lvl' value=\"" . to_int($cfg->load("upload_lvl")) . "\"></td></tr>\n";
 			print "<tr><td>Items managed</td><td><select style='width:300px' name='items_managed'>";
@@ -1020,7 +1216,7 @@ elsif($q->param('m')) # Modules
 			print "</select></td></tr>\n";
 			print "</table>The admin password will be left unchanged if empty.<br>See the <a href='./README.html'>README</a> file for help.<input class='btn btn-default pull-right' type='submit' value='Save settings'></form></div></div>\n";
 			print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Log (last 50 events)</h3></div><div class='panel-body'>\n";
-			print "<form style='display:inline' method='POST' action='.'><input type='hidden' name='m' value='clear_log'><input class='btn btn-default pull-right' type='submit' value='Clear log'><br></form><a name='log'></a><p>Filter log by events: <a href='./?m=settings#log'>All</a> | <a href='./?m=settings&filter_log=Failed#log'>Failed logins</a> | <a href='./?m=settings&filter_log=Success#log'>Successful logins</a> | <a href='./?m=settings&filter_log=level#log'>Level changes</a> | <a href='./?m=settings&filter_log=password#log'>Password changes</a> | <a href='./?m=settings&filter_log=user#log'>New users</a> | <a href='./?m=settings&filter_log=setting#log'>Settings updated</a></p>\n";
+			print "<form style='display:inline' method='POST' action='.'><input type='hidden' name='m' value='clear_log'><input class='btn btn-default pull-right' type='submit' value='Clear log'><br></form><a name='log'></a><p>Filter log by events: <a href='./?m=settings#log'>All</a> | <a href='./?m=settings&filter_log=Failed#log'>Failed logins</a> | <a href='./?m=settings&filter_log=Success#log'>Successful logins</a> | <a href='./?m=settings&filter_log=level#log'>Level changes</a> | <a href='./?m=settings&filter_log=password#log'>Password changes</a> | <a href='./?m=settings&filter_log=user#log'>New users</a> | <a href='./?m=settings&filter_log=setting#log'>Settings updated</a> | <a href='./?m=settings&filter_log=notification#log'>Email notifications</a></p>\n";
 			print "<table class='table table-striped'><tr><th>IP address</th><th>User</th><th>Event</th><th>Time</th></tr>\n";
 			if($q->param("filter_log"))
 			{
@@ -1099,9 +1295,9 @@ elsif($q->param('m')) # Modules
 	elsif($q->param('m') eq "change_email" && $logged_user ne "" && defined($q->param('new_email')))
 	{
 		headers("Settings");
-		if(length(sanitize_email($q->param('new_email'))) > 36)
+		if(length(sanitize_email($q->param('new_email'))) > 99)
 		{
-			msg("Email address should be less than 36 characters. Please go back and try again.", 0);
+			msg("Email address should be less than 99 characters. Please go back and try again.", 0);
 		}
 		else
 		{
@@ -1852,6 +2048,12 @@ elsif($q->param('m')) # Modules
 			else { print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Users per access level</h3></div><div class='panel-body'><table class='table table-striped'><tr><th>Access level</th><th>Users</th></tr>"; }
 			$sql = $db->prepare("SELECT level FROM users ORDER BY level;");
 		}
+		elsif(to_int($q->param('report')) == 9)
+		{
+			if($q->param('csv')) { print "User,Tickets\n"; }
+			else { print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Tickets assigned per user</h3></div><div class='panel-body'><table class='table table-striped'><tr><th>User</th><th>Tickets</th></tr>"; }
+			$sql = $db->prepare("SELECT name FROM users;");
+		}
 		else
 		{
 			if($q->param('csv')) { print "Unknown,Unknown\n"; }
@@ -1870,6 +2072,15 @@ elsif($q->param('m')) # Modules
 			{
 				if(!$results{$res[0]}) { $results{$res[0]} = 0; }
 				$results{$res[0]} += to_float($res[2]);
+			}
+			elsif(to_int($q->param('report')) == 9)
+			{
+				my $sql2 = $db->prepare("SELECT COUNT(*) FROM tickets WHERE assignedto LIKE ?;");
+				$sql2->execute("%" . $res[0] . "%");
+				while(my @res2 = $sql2->fetchrow_array())
+				{
+					if(to_int($res2[0]) > 0) { $results{$res[0]} = $res2[0]; }
+				}
 			}
 			elsif(to_int($q->param('report')) == 3)
 			{
@@ -2034,9 +2245,9 @@ elsif($q->param('new_name') && $q->param('new_pass1') && $q->param('new_pass2') 
 	{
 		msg("This user name is reserved. Please go back and try again.", 0);
 	}
-	elsif(length(sanitize_alpha($q->param('new_name'))) < 3 || length(sanitize_alpha($q->param('new_name'))) > 16 || ($q->param('new_email') && length(sanitize_alpha($q->param('new_email'))) > 36) || length($q->param('new_pass1')) < 6)
+	elsif(length(sanitize_alpha($q->param('new_name'))) < 3 || length(sanitize_alpha($q->param('new_name'))) > 16 || ($q->param('new_email') && length(sanitize_alpha($q->param('new_email'))) > 99) || length($q->param('new_pass1')) < 6)
 	{
-		msg("User names should be between 3 and 16 characters, passwords should be at least 6 characters. Please go back and try again.", 0);    
+		msg("User names should be between 3 and 16 characters, passwords should be at least 6 characters, emails less than 99 characters. Please go back and try again.", 0);    
 	}
 	else
 	{
