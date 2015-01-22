@@ -74,7 +74,10 @@ These are the default configuration values for NodePoint. They have to be define
 * API write key: Used for some API operations.
 * SMTP server: The hostname for email notifications. Leave empty to disable email notifications.
 * SMTP port: The port number for SMTP connections, defaults to 25.
+* SMTP username: User for SMTP connections, if your mail server requires authentication.
+* SMTP password: Password for SMTP connections, if your mail server requires authentication. Warning: This will be stored in plain text on the NodePoint server. It is recommended that your SMTP server restricts connections based on IP addresses instead.
 * Support email: The email from which email notifications come from.
+* External notifications plugin: Call an application or script when a notification is sent. You can use the following variables here: *%user%*, *%title%* and *%message%*. For example: `echo %message% >> ..\%user%.log`
 * Upload folder: Where product images and comment files are stored. Leave empty to disable uploads.
 * Minimum upload level: The minimum access level a user must have to attach files to comments
 * Items managed: The type of items NodePoint should manage. This is purely a UI customization.
@@ -111,6 +114,18 @@ NodePoint provides an API to add and show tickets in JSON format. You can use GE
 * key=&lt;read key&gt;
 * product_id=&lt;product id&gt;
 
+### Verify user password ###
+* api=verify_password
+* key=&lt;read key&gt;
+* user=&lt;user name&gt;
+* password=&lt;password&gt;
+
+### Change user password ###
+* api=change_password
+* key=&lt;write key&gt;
+* user=&lt;user name&gt;
+* password=&lt;password&gt;
+
 ### Add ticket ###
 * api=add_ticket
 * key=&lt;write key&gt;
@@ -125,6 +140,13 @@ NodePoint provides an API to add and show tickets in JSON format. You can use GE
 * key=&lt;write key&gt;
 * id=&lt;ticket id&gt;
 * comment=&lt;comment&gt;
+
+### Add release ###
+* api=add_release
+* key=&lt;write key&gt;
+* product_id=&lt;product id&gt;
+* release_id=&lt;release id&gt;
+* notes=&lt;notes&gt;
 
 Need support?
 -------------
