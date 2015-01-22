@@ -430,7 +430,7 @@ sub notify
 			{
 				eval
 				{
-					my $smtp = Net::SMTP->new($cfg->load('smtp_server'), Port => to_int($cfg->load('smtp_port')));
+					my $smtp = Net::SMTP->new($cfg->load('smtp_server'), Port => to_int($cfg->load('smtp_port')), Timeout => 5);
 					if($cfg->load('smtp_user') && $cfg->load('smtp_pass')) { $smtp->auth($cfg->load('smtp_user'), $cfg->load('smtp_pass')); }
 					$smtp->mail($cfg->load('smtp_from'));
 					if($smtp->to($res[2]))
