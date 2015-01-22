@@ -354,7 +354,10 @@ img {
 <li>API write key: Used for some API operations.</li>
 <li>SMTP server: The hostname for email notifications. Leave empty to disable email notifications.</li>
 <li>SMTP port: The port number for SMTP connections, defaults to 25.</li>
+<li>SMTP username: User for SMTP connections, if your mail server requires authentication.</li>
+<li>SMTP password: Password for SMTP connections, if your mail server requires authentication. Warning: This will be stored in plain text on the NodePoint server. It is recommended that your SMTP server restricts connections based on IP addresses instead.</li>
 <li>Support email: The email from which email notifications come from.</li>
+<li>External notifications plugin: Call an application or script when a notification is sent. You can use the following variables here: <em>%user%</em>, <em>%title%</em> and <em>%message%</em>. For example: <code>echo %message% &gt;&gt; ..\%user%.log</code></li>
 <li>Upload folder: Where product images and comment files are stored. Leave empty to disable uploads.</li>
 <li>Minimum upload level: The minimum access level a user must have to attach files to comments</li>
 <li>Items managed: The type of items NodePoint should manage. This is purely a UI customization.</li>
@@ -424,6 +427,20 @@ img {
 <li>key=&lt;read key&gt;</li>
 <li>product_id=&lt;product id&gt;</li>
 </ul>
+<h3>Verify user password</h3>
+<ul>
+<li>api=verify_password</li>
+<li>key=&lt;read key&gt;</li>
+<li>user=&lt;user name&gt;</li>
+<li>password=&lt;password&gt;</li>
+</ul>
+<h3>Change user password</h3>
+<ul>
+<li>api=change_password</li>
+<li>key=&lt;write key&gt;</li>
+<li>user=&lt;user name&gt;</li>
+<li>password=&lt;password&gt;</li>
+</ul>
 <h3>Add ticket</h3>
 <ul>
 <li>api=add_ticket</li>
@@ -440,6 +457,14 @@ img {
 <li>key=&lt;write key&gt;</li>
 <li>id=&lt;ticket id&gt;</li>
 <li>comment=&lt;comment&gt;</li>
+</ul>
+<h3>Add release</h3>
+<ul>
+<li>api=add_release</li>
+<li>key=&lt;write key&gt;</li>
+<li>product_id=&lt;product id&gt;</li>
+<li>release_id=&lt;release id&gt;</li>
+<li>notes=&lt;notes&gt;</li>
 </ul>
 <h2>Need support?</h2>
 <p>You can contact the author at <a href="&#x6d;a&#105;&#108;&#x74;&#111;&#x3a;&#100;&#101;&#110;&#100;&#111;&#x72;&#x79;&#x40;&#108;i&#118;&#x65;&#46;&#x63;&#x61;">&#x64;e&#110;&#x64;&#111;&#114;&#121;&#64;&#108;&#105;&#x76;&#x65;&#46;&#x63;&#97;</a></p>
