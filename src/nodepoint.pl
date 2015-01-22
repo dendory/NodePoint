@@ -17,6 +17,9 @@ use Mail::RFC822::Address qw(valid);
 use Data::GUID;
 use File::Type;
 use Scalar::Util qw(looks_like_number);
+use Net::LDAP;
+use Crypt::RC4;
+use MIME::Base64;
 
 my ($cfg, $db, $sql, $cn, $cp, $cgs, $last_login);
 my $logged_user = "";
@@ -180,15 +183,16 @@ sub msg
 sub login
 {
 	print "<center>\n";
-	if($cfg->load('allow_registrations') && $cfg->load('allow_registrations') ne 'off')
+	if($cfg->load('allow_registrations') && $cfg->load('allow_registrations') ne 'off' && !$cfg->load('ad_server'))
 	{
 		print "<div class='row'><div class='col-sm-6'>\n";
 	}
 	print "<h3>Login</h3><form method='POST' action='.'><br>\n";
+	if($cfg->load('ad_server') && $cfg->load('ad_domain')) { print "<p>Enter your " . $cfg->load('ad_domain') . " credentials.</p>"; }
 	print "<p>User name: <input type='text' name='name'></p>\n";
 	print "<p>Password: <input type='password' name='pass'></p>\n";
 	print "<p><input class='btn btn-default' type='submit' value='Login'></p></form>\n";
-	if($cfg->load('allow_registrations') && $cfg->load('allow_registrations') ne 'off')
+	if($cfg->load('allow_registrations') && $cfg->load('allow_registrations') ne 'off' && !$cfg->load('ad_server'))
 	{
 		print "</div><div class='col-sm-6'><h3>Register a new account</h3><form method='POST' action='.'><br>\n";
 		print "<p>User name: <input type='text' name='new_name'></p>\n";
@@ -324,38 +328,81 @@ sub save_config
 	$cfg->save("custom_name", $q->param('custom_name'));
 	$cfg->save("custom_type", $q->param('custom_type'));
 	$cfg->save("ext_plugin", $q->param('ext_plugin'));
+	$cfg->save("ad_server", $q->param('ad_server'));
+	$cfg->save("ad_domain", $q->param('ad_domain'));
 }
 
 # Check login credentials
 sub check_user
 {
 	my ($n, $p) = @_;
-	if($p eq $cfg->load("admin_pass") && $n eq $cfg->load("admin_name"))
+	if(sha1_hex($p) eq $cfg->load("admin_pass") && $n eq $cfg->load("admin_name"))
 	{
 		$logged_user = $cfg->load("admin_name");
 		$logged_lvl = 6;
 		$cn = $q->cookie(-name => "np_name", -value => $logged_user);
-		$cp = $q->cookie(-name => "np_key", -value => $cfg->load("admin_pass"));
+		$cp = $q->cookie(-name => "np_key", -value => encode_base64(RC4($cfg->load("api_read"), $p), ""));
 	}
-	eval
+	else
 	{
-		$sql = $db->prepare("SELECT * FROM users;");
-		$sql->execute();
-		while(my @res = $sql->fetchrow_array())
+		if($cfg->load("ad_domain") && $cfg->load("ad_server"))
 		{
-			if(rtrim($p) eq $res[1] && $n eq $res[0])
+			eval
 			{
-				$logged_user = $res[0];
-				$logged_lvl = to_int($res[3]);
-				$last_login = $res[4];
-				$sql = $db->prepare("UPDATE users SET loggedin = ? WHERE name = ?;");
-				$sql->execute(now(), $res[0]);
+				my $ldap = Net::LDAP->new($cfg->load("ad_server")) or do
+				{
+					logevent("LDAP: Could not connect to Active Directory server");
+					return;
+				};
+				my $mesg = $ldap->bind($cfg->load("ad_domain") . "\\" . $n, password=>$p);
+				if($mesg->code)
+				{
+					 logevent("LDAP: " . $mesg->error);
+					 return;
+				}
+				$logged_user = $n;
+				$logged_lvl = $cfg->load("default_lvl");
 				$cn = $q->cookie(-name => "np_name", -value => $logged_user);
-				$cp = $q->cookie(-name => "np_key", -value => $res[1]);
-				last;
-			}
+				$cp = $q->cookie(-name => "np_key", -value => encode_base64(RC4($cfg->load("api_read"), $p), ""));
+				$sql = $db->prepare("SELECT * FROM users WHERE name = ?;");
+				$sql->execute($n);
+				my $found = 0;
+				while(my @res = $sql->fetchrow_array())
+				{ 
+					$found = 1;
+					$logged_lvl = to_int($res[3]);
+					$last_login = $res[4];
+				}
+				if(!$found)
+				{
+					$sql = $db->prepare("INSERT INTO users VALUES(?, ?, ?, ?, ?, ?);");
+					$sql->execute($n, "*********", "", to_int($cfg->load('default_lvl')), now(), "");
+				}
+			}; # check silently since headers may not be set			
 		}
-	}; # check silently since headers may not be set
+		else
+		{
+			eval
+			{
+				$sql = $db->prepare("SELECT * FROM users;");
+				$sql->execute();
+				while(my @res = $sql->fetchrow_array())
+				{
+					if(sha1_hex(rtrim($p)) eq $res[1] && $n eq $res[0])
+					{
+						$logged_user = $res[0];
+						$logged_lvl = to_int($res[3]);
+						$last_login = $res[4];
+						$sql = $db->prepare("UPDATE users SET loggedin = ? WHERE name = ?;");
+						$sql->execute(now(), $res[0]);
+						$cn = $q->cookie(-name => "np_name", -value => $logged_user);
+						$cp = $q->cookie(-name => "np_key", -value => encode_base64(RC4($cfg->load("api_read"), $p), ""));
+						last;
+					}
+				}
+			}; # check silently since headers may not be set
+		}
+	}
 }
 
 # Trimming right spaces
@@ -540,7 +587,7 @@ if($cfg->load("db_address"))
 # Check cookies
 if($q->cookie('np_name') && $q->cookie('np_key'))
 {
-	check_user($q->cookie('np_name'), $q->cookie('np_key'));
+	check_user($q->cookie('np_name'), RC4($cfg->load("api_read"), decode_base64($q->cookie('np_key'))));
 }
 
 # Check items tracked
@@ -653,7 +700,9 @@ elsif(!$cfg->load("db_address") || !$cfg->load("site_name")) # first use
 				print "<p><div class='row'><div class='col-sm-4'>Items managed:</div><div class='col-sm-4'><select style='width:300px' name='items_managed'><option selected>Products with models and releases</option><option>Projects with goals and milestones</option><option>Resources with locations and updates</option></select></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Custom ticket field:</div><div class='col-sm-4'><input type='text' style='width:300px' name='custom_name' value='Related tickets'></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Custom field type:</div><div class='col-sm-4'><select style='width:300px' name='custom_type'><option>Text</option><option>Link</option><option>Checkbox</option></select></div></div></p>\n";
-				
+				print "<p><div class='row'><div class='col-sm-4'>Active Directory server:</div><div class='col-sm-4'><input type='text' style='width:300px' name='ad_server' value=''></div></div></p>\n";
+				print "<p><div class='row'><div class='col-sm-4'>Active Directory domain:</div><div class='col-sm-4'><input type='text' style='width:300px' name='ad_domain' value=''></div></div></p>\n";
+				print "<p>To validate logins against an Active Directory domain, enter your domain controller address and domain name (NT4 format) here.</p>\n";
 				print "<p><input class='btn btn-default pull-right' type='submit' value='Save'></p></form>\n"; 
 			}
 			else
@@ -1140,7 +1189,12 @@ elsif($q->param('m')) # Modules
 			print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Change email</h3></div><div class='panel-body'>\n";
 			print "<form method='POST' action='.'><input type='hidden' name='m' value='change_email'>To change your notification email address, enter a new address here. Leave empty to disable notifications:<br><input type='text' name='new_email' size='40' value='" . $email . "'> <input class='btn btn-default pull-right' type='submit' value='Change email'></form></div></div>";
 			print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Change password</h3></div><div class='panel-body'>\n";
-			print "<form method='POST' action='.'><input type='hidden' name='m' value='change_pass'>Current password: <input type='password' name='current_pass'> New password: <input type='password' name='new_pass1'> Confirm: <input type='password' name='new_pass2'> <input class='btn btn-default pull-right' type='submit' value='Change password'></form></div></div>";
+			if(!$cfg->load("ad_server"))
+			{
+				print "<form method='POST' action='.'><input type='hidden' name='m' value='change_pass'>Current password: <input type='password' name='current_pass'> New password: <input type='password' name='new_pass1'> Confirm: <input type='password' name='new_pass2'> <input class='btn btn-default pull-right' type='submit' value='Change password'></form>";
+			}
+			else { print "<p>Password management is synchronized with Active Directory.</p>"; }
+			print "</div></div>";
 		}
 		if($logged_lvl > 4)
 		{
@@ -1162,9 +1216,12 @@ elsif($q->param('m')) # Modules
 				print "<tr><td>" . $res[0] . "</td><td>" . $res[2] . "</td><td>" . $res[3] . "</td><td><a href='./?m=change_lvl&u=" . $res[0] . "'>Change access level</a></td><td><a href='./?m=reset_pass&u=" . $res[0] . "'>Reset password</a></td><td>" . $res[4] . "</td></tr>\n";
 			}
 			print "</table>\n";
-			print "<h4>Manually add a new user:</h4><form method='POST' action='.'>\n";
-			print "<div class='row'><div class='col-sm-6'>User name: <input type='text' name='new_name'></div><div class='col-sm-6'>Email address (optional): <input type='email' name='new_email'></div></div><div class='row'><div class='col-sm-6'>Password: <input type='password' name='new_pass1'></div><div class='col-sm-6'>Confirm password: <input type='password' name='new_pass2'></div></div><input class='btn btn-default pull-right' type='submit' value='Add user'></p></form>\n";
-			print "</div></div>\n";    
+			if(!$cfg->load('ad_server'))
+			{
+				print "<h4>Manually add a new user:</h4><form method='POST' action='.'>\n";
+				print "<div class='row'><div class='col-sm-6'>User name: <input type='text' name='new_name'></div><div class='col-sm-6'>Email address (optional): <input type='email' name='new_email'></div></div><div class='row'><div class='col-sm-6'>Password: <input type='password' name='new_pass1'></div><div class='col-sm-6'>Confirm password: <input type='password' name='new_pass2'></div></div><input class='btn btn-default pull-right' type='submit' value='Add user'></p></form>\n";
+			}
+			print "</div></div>\n";
 		}
 		if($logged_lvl > 3)
 		{
@@ -1214,9 +1271,11 @@ elsif($q->param('m')) # Modules
 			elsif($cfg->load("custom_type") eq "Checkbox") { print "<option>Text</option><option>Link</option><option selected>Checkbox</option>"; }
 			else { print "<option selected>Text</option><option>Link</option><option>Checkbox</option>"; }
 			print "</select></td></tr>\n";
+			print "<tr><td>Active Directory server</td><td><input style='width:300px' type='text' name='ad_server' value=\"" . $cfg->load("ad_server") . "\"></td></tr>\n";
+			print "<tr><td>Active Directory domain</td><td><input style='width:300px' type='text' name='ad_domain' value=\"" . $cfg->load("ad_domain") . "\"></td></tr>\n";
 			print "</table>The admin password will be left unchanged if empty.<br>See the <a href='./README.html'>README</a> file for help.<input class='btn btn-default pull-right' type='submit' value='Save settings'></form></div></div>\n";
 			print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Log (last 50 events)</h3></div><div class='panel-body'>\n";
-			print "<form style='display:inline' method='POST' action='.'><input type='hidden' name='m' value='clear_log'><input class='btn btn-default pull-right' type='submit' value='Clear log'><br></form><a name='log'></a><p>Filter log by events: <a href='./?m=settings#log'>All</a> | <a href='./?m=settings&filter_log=Failed#log'>Failed logins</a> | <a href='./?m=settings&filter_log=Success#log'>Successful logins</a> | <a href='./?m=settings&filter_log=level#log'>Level changes</a> | <a href='./?m=settings&filter_log=password#log'>Password changes</a> | <a href='./?m=settings&filter_log=user#log'>New users</a> | <a href='./?m=settings&filter_log=setting#log'>Settings updated</a> | <a href='./?m=settings&filter_log=notification#log'>Email notifications</a></p>\n";
+			print "<form style='display:inline' method='POST' action='.'><input type='hidden' name='m' value='clear_log'><input class='btn btn-default pull-right' type='submit' value='Clear log'><br></form><a name='log'></a><p>Filter log by events: <a href='./?m=settings#log'>All</a> | <a href='./?m=settings&filter_log=Failed#log'>Failed logins</a> | <a href='./?m=settings&filter_log=Success#log'>Successful logins</a> | <a href='./?m=settings&filter_log=level#log'>Level changes</a> | <a href='./?m=settings&filter_log=password#log'>Password changes</a> | <a href='./?m=settings&filter_log=user#log'>New users</a> | <a href='./?m=settings&filter_log=setting#log'>Settings updated</a> | <a href='./?m=settings&filter_log=notification#log'>Email notifications</a> | <a href='./?m=settings&filter_log=LDAP:#log'>Active Directory</a></p>\n";
 			print "<table class='table table-striped'><tr><th>IP address</th><th>User</th><th>Event</th><th>Time</th></tr>\n";
 			if($q->param("filter_log"))
 			{
@@ -2278,7 +2337,7 @@ elsif($q->param('new_name') && $q->param('new_pass1') && $q->param('new_pass2') 
 }
 elsif($q->param('name') && $q->param('pass')) # Process login
 {
-	check_user($q->param('name'), sha1_hex($q->param('pass')));
+	check_user($q->param('name'), $q->param('pass'));
 	if($logged_user ne "")
 	{
 		headers("Home");
