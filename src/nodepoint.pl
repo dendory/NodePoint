@@ -585,7 +585,7 @@ if($cfg->load("db_address"))
 }
 
 # Check cookies
-if($q->cookie('np_name') && $q->cookie('np_key'))
+if($q->cookie('np_name') && $q->cookie('np_key') && $cfg->load("api_read"))
 {
 	check_user($q->cookie('np_name'), RC4($cfg->load("api_read"), decode_base64($q->cookie('np_key'))));
 }

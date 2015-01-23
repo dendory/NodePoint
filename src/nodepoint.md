@@ -62,7 +62,7 @@ This is typically because of permission issues. Make sure that:
 
 ### If you forgot your admin password ###
 
-You will need to remove the initial configuration settings and recreate them in order to recover access. This configuration is stored locally on the server inside the Windows Registry. Use `regedit.exe` and navigate to `HKLM/SOFTWARE/Wow6432Node/NodePoint`.
+You will need to remove the initial configuration settings and recreate them in order to recover access. This configuration is stored locally on the server inside the Windows Registry. Use `regedit.exe` and navigate to `HKLM/SOFTWARE/NodePoint`.
 
 Configuration
 -------------
@@ -91,6 +91,8 @@ These are the default configuration values for NodePoint. They have to be define
 * Items managed: The type of items NodePoint should manage. This is purely a UI customization.
 * Custom ticket field: The name of the third ticket field (after 'title' and 'description'). This can be used to ask users who fill in tickets to list related tickets, or any other information relevant to your particular installation.
 * Custom ticket type: The type of field. If `text`, then the entries will be shown as text. If `URL`, then links will be assumed. If `checkbox`, then users will have to select yes or no.
+* Active Directory server: Enter your domain controller address to enable AD integration. Users will be created dynamically as they first log on, and passwords will be checked against AD.
+* Active Directory domain: The domain to use for AD integration (in NT4 format).
 
 Users management
 ----------------

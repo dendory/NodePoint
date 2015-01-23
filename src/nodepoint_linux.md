@@ -27,10 +27,7 @@ Troubleshooting
 ---------------
 ### If you get a 500 server error ###
 
-Check in your server log what the likely error might be. Try to run `~/nodepoint/www/nodepoint.cgi` from a shell. If you get a `No such file or directory` you may be missing 32 bits binary support. In Debian you can enable 32bits support with these commands:
-
-    dpkg --add-architecture i386
-    apt-get install ia32-libs-i386
+Check in your server log what the likely error might be. Try to run `~/nodepoint/www/nodepoint.cgi` from a shell.
 
 ### You see a list of files in your browser instead of the proper interface ###
 
@@ -83,6 +80,8 @@ These are the default configuration values for NodePoint. They have to be define
 * Items managed: The type of items NodePoint should manage. This is purely a UI customization.
 * Custom ticket field: The name of the third ticket field (after 'title' and 'description'). This can be used to ask users who fill in tickets to list related tickets, or any other information relevant to your particular installation.
 * Custom ticket type: The type of field. If `text`, then the entries will be shown as text. If `URL`, then links will be assumed. If `checkbox`, then users will have to select yes or no.
+* Active Directory server: Enter your domain controller address to enable AD integration. Users will be created dynamically as they first log on, and passwords will be checked against AD.
+* Active Directory domain: The domain to use for AD integration (in NT4 format).
 
 Users management
 ----------------

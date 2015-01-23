@@ -4,340 +4,181 @@
 <title>nodepoint</title>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <style type="text/css">
-/* GitHub stylesheet for MarkdownPad (http://markdownpad.com) */
-/* Author: Nicolas Hery - http://nicolashery.com */
-/* Version: b13fe65ca28d2e568c6ed5d7f06581183df8f2ff */
-/* Source: https://github.com/nicolahery/markdownpad-github */
-
-/* RESET
-=============================================================================*/
-
-html, body, div, span, applet, object, iframe, h1, h2, h3, h4, h5, h6, p, blockquote, pre, a, abbr, acronym, address, big, cite, code, del, dfn, em, img, ins, kbd, q, s, samp, small, strike, strong, sub, sup, tt, var, b, u, i, center, dl, dt, dd, ol, ul, li, fieldset, form, label, legend, table, caption, tbody, tfoot, thead, tr, th, td, article, aside, canvas, details, embed, figure, figcaption, footer, header, hgroup, menu, nav, output, ruby, section, summary, time, mark, audio, video {
-  margin: 0;
-  padding: 0;
-  border: 0;
+body 
+{
+	line-height: 1.4em;
+	color: black;
+	padding: 1em;
+	margin: auto;
+	max-width: 50em;
+	font-family: Verdana, Arial;
 }
-
-/* BODY
-=============================================================================*/
-
-body {
-  font-family: Helvetica, arial, freesans, clean, sans-serif;
-  font-size: 14px;
-  line-height: 1.6;
-  color: #333;
-  background-color: #fff;
-  padding: 20px;
-  max-width: 960px;
-  margin: 0 auto;
+p, ul, ol, dl, table, pre {
+	margin: 15px 0;
 }
-
-body>*:first-child {
-  margin-top: 0 !important;
+h1 
+{
+	margin-top: 0.5em;
+	margin-bottom: 0.5em;
+	font-size: 32px;
 }
-
-body>*:last-child {
-  margin-bottom: 0 !important;
+h2 
+{
+	margin-top: 1em;
+	margin-bottom: 0.5em;
+	border-bottom: 1px solid #000080 !important;
+	padding-bottom: 3px;
+	font-size: 24px;
 }
-
-/* BLOCKS
-=============================================================================*/
-
-p, blockquote, ul, ol, dl, table, pre {
-  margin: 15px 0;
+h3
+{
+	font-size: 18px;
 }
-
-/* HEADERS
-=============================================================================*/
-
-h1, h2, h3, h4, h5, h6 {
-  margin: 20px 0 10px;
-  padding: 0;
-  font-weight: bold;
-  -webkit-font-smoothing: antialiased;
+h4 
+{
+	font-style: italic;
+	color: #555555;
+	margin-bottom: 0.1em;
+	margin-top: 0.1em;
+	font-size: 14px;
 }
-
-h1 tt, h1 code, h2 tt, h2 code, h3 tt, h3 code, h4 tt, h4 code, h5 tt, h5 code, h6 tt, h6 code {
-  font-size: inherit;
+pre 
+{
+	background-color: #f8f8f8;
+	border: 1px solid #2f6fab;
+	border-radius: 3px;
+	overflow: auto;
+	padding: 5px;
+	font-family: monospace;
 }
-
-h1 {
-  font-size: 28px;
-  color: #000;
+pre code 
+{
+	background-color: inherit;
+	border: none;
+	padding: 0;
+	font-family: monospace;
+	color: #2f6fab;
 }
-
-h2 {
-  font-size: 24px;
-  border-bottom: 1px solid #ccc;
-  color: #000;
+code 
+{
+	background-color: #f8f8f8;
+	border: 1px solid #2f6fab;
+	border-radius: 3px;
+	padding: 0 0.2em;
+	font-family: monospace;
+	color: #2f6fab;
 }
-
-h3 {
-  font-size: 18px;
+a 
+{
+	text-decoration: none;	
 }
-
-h4 {
-  font-size: 16px;
+a:hover 
+{
+	text-decoration: underline;
 }
-
-h5 {
-  font-size: 14px;
+blockquote 
+{
+	border-left: 4px solid #888899;
+	padding: 0 15px;
+	color: #888899;
+	margin: 15px 15px;
+	font-family: Georgia, Helvetica;
 }
-
-h6 {
-  color: #777;
-  font-size: 14px;
+blockquote>:first-child 
+{
+	margin-top: 2px;
 }
-
-body>h2:first-child, body>h1:first-child, body>h1:first-child+h2, body>h3:first-child, body>h4:first-child, body>h5:first-child, body>h6:first-child {
-  margin-top: 0;
-  padding-top: 0;
+blockquote>:last-child 
+{
+	margin-bottom: 2px;
 }
-
-a:first-child h1, a:first-child h2, a:first-child h3, a:first-child h4, a:first-child h5, a:first-child h6 {
-  margin-top: 0;
-  padding-top: 0;
+hr 
+{
+	clear: both;
+	margin: 15px 0;
+	height: 0px;
+	overflow: hidden;
+	border: none;
+	background: transparent;
+	border-bottom: 2px solid #2f6fab;
+	padding: 0;
 }
-
-h1+p, h2+p, h3+p, h4+p, h5+p, h6+p {
-  margin-top: 10px;
+img 
+{
+	max-width: 100%
 }
-
-/* LINKS
-=============================================================================*/
-
-a {
-  color: #4183C4;
-  text-decoration: none;
+table
+{
+	border-collapse: collapse;
+	margin-left: 10px;
+	margin-bottom: 20px;
 }
-
-a:hover {
-  text-decoration: underline;
+th
+{
+	border: 1px solid #2f6fab;
+	padding: 3px 7px 2px 7px;
+	font-size: 1.1em;
+	text-align: left;
+	padding-top: 5px;
+	padding-bottom: 4px;
+	background-color: #f8f8f8;
 }
-
-/* LISTS
-=============================================================================*/
-
-ul, ol {
-  padding-left: 30px;
+td
+{
+	border: 1px solid #2f6fab;
+	padding: 3px 7px 2px 7px;
 }
-
-ul li > :first-child, 
-ol li > :first-child, 
-ul li ul:first-of-type, 
-ol li ol:first-of-type, 
-ul li ol:first-of-type, 
-ol li ul:first-of-type {
-  margin-top: 0px;
-}
-
-ul ul, ul ol, ol ol, ol ul {
-  margin-bottom: 0;
-}
-
-dl {
-  padding: 0;
-}
-
-dl dt {
-  font-size: 14px;
-  font-weight: bold;
-  font-style: italic;
-  padding: 0;
-  margin: 15px 0 5px;
-}
-
-dl dt:first-child {
-  padding: 0;
-}
-
-dl dt>:first-child {
-  margin-top: 0px;
-}
-
-dl dt>:last-child {
-  margin-bottom: 0px;
-}
-
-dl dd {
-  margin: 0 0 15px;
-  padding: 0 15px;
-}
-
-dl dd>:first-child {
-  margin-top: 0px;
-}
-
-dl dd>:last-child {
-  margin-bottom: 0px;
-}
-
-/* CODE
-=============================================================================*/
-
-pre, code, tt {
-  font-size: 12px;
-  font-family: Consolas, "Liberation Mono", Courier, monospace;
-}
-
-code, tt {
-  margin: 0 0px;
-  padding: 0px 0px;
-  border: 1px solid #eaeaea;
-  background-color: #f8f8f8;
-  border-radius: 3px;
-}
-
-pre>code {
-  margin: 0;
-  padding: 0;
-  border: none;
-  background: transparent;
-}
-
-pre {
-  background-color: #f8f8f8;
-  border: 1px solid #ccc;
-  font-size: 13px;
-  line-height: 19px;
-  overflow: auto;
-  padding: 6px 10px;
-  border-radius: 3px;
-}
-
-pre code, pre tt {
-  background-color: transparent;
-  border: none;
-}
-
-kbd {
-    -moz-border-bottom-colors: none;
-    -moz-border-left-colors: none;
-    -moz-border-right-colors: none;
-    -moz-border-top-colors: none;
-    background-color: #DDDDDD;
-    background-image: linear-gradient(#F1F1F1, #DDDDDD);
-    background-repeat: repeat-x;
-    border-color: #DDDDDD #CCCCCC #CCCCCC #DDDDDD;
-    border-image: none;
-    border-radius: 2px 2px 2px 2px;
-    border-style: solid;
-    border-width: 1px;
-    font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
-    line-height: 10px;
-    padding: 1px 4px;
-}
-
-/* QUOTES
-=============================================================================*/
-
-blockquote {
-  border-left: 4px solid #DDD;
-  padding: 0 15px;
-  color: #777;
-}
-
-blockquote>:first-child {
-  margin-top: 0px;
-}
-
-blockquote>:last-child {
-  margin-bottom: 0px;
-}
-
-/* HORIZONTAL RULES
-=============================================================================*/
-
-hr {
-  clear: both;
-  margin: 15px 0;
-  height: 0px;
-  overflow: hidden;
-  border: none;
-  background: transparent;
-  border-bottom: 4px solid #ddd;
-  padding: 0;
-}
-
-/* TABLES
-=============================================================================*/
-
-table th {
-  font-weight: bold;
-}
-
-table th, table td {
-  border: 1px solid #ccc;
-  padding: 6px 13px;
-}
-
-table tr {
-  border-top: 1px solid #ccc;
-  background-color: #fff;
-}
-
-table tr:nth-child(2n) {
-  background-color: #f8f8f8;
-}
-
-/* IMAGES
-=============================================================================*/
-
-img {
-  max-width: 100%
+ul
+{
+	list-style-type: square;
 }
 </style>
 </head>
 <body>
-<h1>NodePoint Installation (Windows version)</h1>
+<h1 id="nodepoint-installation-windows-version-">NodePoint Installation (Windows version)</h1>
 <p>NodePoint is a ticket management platform based on the Bootstrap framework. It is meant to be simple to setup and use, yet still offers many features such as user management, access levels, commenting, release tracking, email notifications and a JSON API.</p>
-<h2>Requirements</h2>
+<h2 id="requirements">Requirements</h2>
 <ul>
-<li>
-<p>A Windows host (7, 8, 10, Server 2008, Server 2012 should all work).</p>
+<li><p>A Windows host (7, 8, 10, Server 2008, Server 2012 should all work).</p>
 </li>
-<li>
-<p>IIS installed with <em>CGI</em> and <em>ISAPI Extensions</em> features.</p>
+<li><p>IIS installed with <em>CGI</em> and <em>ISAPI Extensions</em> features.</p>
 </li>
 </ul>
-<h2>Installation steps</h2>
+<h2 id="installation-steps">Installation steps</h2>
 <ul>
-<li>
-<p><a href="http://dendory.net/nodepoint">Download NodePoint</a> and unzip the folder where you need to, for example <code>C:\nodepoint</code>.</p>
+<li><p><a href="http://dendory.net/nodepoint">Download NodePoint</a> and unzip the folder where you need to, for example <code>C:\nodepoint</code>.</p>
 </li>
-<li>
-<p>Run <code>setup.bat</code>.</p>
+<li><p>Run <code>setup.bat</code>.</p>
 </li>
-<li>
-<p>Access the site and complete the first time configuration.</p>
+<li><p>Access the site and complete the first time configuration.</p>
 </li>
 </ul>
-<h2>Troubleshooting</h2>
-<h3>If setup.bat fails:</h3>
+<h2 id="troubleshooting">Troubleshooting</h2>
+<h3 id="if-setup-bat-fails-">If setup.bat fails:</h3>
 <p>Make sure you are running it as a local administrator. Make sure the file <code>%windir%\system32\inetsrv\appcmd.exe</code> exists, and that your web site is <code>Default Web Site</code>. Also run setup from the installation folder. Optionally, you may have to modify the script to suit your environment. </p>
-<h3>If you get the error <code>Could not access Registry</code>:</h3>
+<h3 id="if-you-get-the-error-could-not-access-registry-">If you get the error <code>Could not access Registry</code>:</h3>
 <p>Make sure the virtual folder has credentials that has access to the Registry. Go to <strong>Administrative Tools -&gt; IIS Manager</strong>, then select the <em>NodePoint</em> site under <em>Default Web Site</em> and go to <strong>Advanced Settings</strong>:</p>
-<p><img src="http://i.imgur.com/qk6pALz.jpg" /></p>
+<p><img src="http://i.imgur.com/qk6pALz.jpg" alt=""></p>
 <p>Once there, select a <em>Specific User</em> that has access to the Registry:</p>
-<p><img src="http://i.imgur.com/jMqJaEB.jpg" /></p>
+<p><img src="http://i.imgur.com/jMqJaEB.jpg" alt=""></p>
 <p>This can be your own user name, or you can create a dedicated user in <strong>Administrative Tools -&gt; Computer Management -&gt; Local Users and Groups</strong>. Make sure that user is part of the <em>Administrators</em> local group, and that you restart the IIS server after.</p>
-<h3>If you get the error <code>Could not access database file.</code>:</h3>
+<h3 id="if-you-get-the-error-could-not-access-database-file-">If you get the error <code>Could not access database file.</code>:</h3>
 <p>Make sure that NodePoint has Read/Write access to the database file specified in the initial configuration. By default this is <code>C:\nodepoint\db\nodepoint.db</code>. This should be the user you configured in the initial setup. You can use <em>Windows Explorer</em> to right click on the file and check under the <strong>Security</strong> tab.</p>
-<h3>If you get the error <code>The page you are requesting cannot be served because of the extension configuration.</code> or the server tries to download the file instead of executing it:</h3>
+<h3 id="if-you-get-the-error-the-page-you-are-requesting-cannot-be-served-because-of-the-extension-configuration-or-the-server-tries-to-download-the-file-instead-of-executing-it-">If you get the error <code>The page you are requesting cannot be served because of the extension configuration.</code> or the server tries to download the file instead of executing it:</h3>
 <p>Make sure you have the <em>CGI</em> and <em>ISAPI Extensions</em> IIS features installed and enable <strong>Execute</strong> under <strong>IIS Manager -&gt; Handler Mappings -&gt; CGI-exe -&gt; Edit Feature Permissions</strong>:</p>
-<p><img src="http://i.imgur.com/2Wm0Pzp.jpg" /></p>
-<h3>If you get the error <code>The page you are requesting cannot be served because of the ISAPI and CGI Restriction list settings on the Web server.</code>:</h3>
+<p><img src="http://i.imgur.com/2Wm0Pzp.jpg" alt=""></p>
+<h3 id="if-you-get-the-error-the-page-you-are-requesting-cannot-be-served-because-of-the-isapi-and-cgi-restriction-list-settings-on-the-web-server-">If you get the error <code>The page you are requesting cannot be served because of the ISAPI and CGI Restriction list settings on the Web server.</code>:</h3>
 <p>Go to <strong>IIS Manager -&gt; ISAPI and CGI Restrictions</strong> and make sure <em>NodePoint</em> is listed. If not, click on <strong>Edit Feature Settings</strong> and enable unspecified CGI modules.</p>
-<h3>If email notifications don't work</h3>
+<h3 id="if-email-notifications-don-t-work">If email notifications don&#39;t work</h3>
 <p>This is typically because of permission issues. Make sure that:</p>
 <ul>
 <li>The user that NodePoint runs under has permissions to make network connections.</li>
 <li>The firewall is allowing outgoing connections.</li>
 <li>The SMTP server is accepting connections from the NodePoint server and email address you set.</li>
 </ul>
-<h3>If you forgot your admin password</h3>
-<p>You will need to remove the initial configuration settings and recreate them in order to recover access. This configuration is stored locally on the server inside the Windows Registry. Use <code>regedit.exe</code> and navigate to <code>HKLM/SOFTWARE/Wow6432Node/NodePoint</code>.</p>
-<h2>Configuration</h2>
+<h3 id="if-you-forgot-your-admin-password">If you forgot your admin password</h3>
+<p>You will need to remove the initial configuration settings and recreate them in order to recover access. This configuration is stored locally on the server inside the Windows Registry. Use <code>regedit.exe</code> and navigate to <code>HKLM/SOFTWARE/NodePoint</code>.</p>
+<h2 id="configuration">Configuration</h2>
 <p>These are the default configuration values for NodePoint. They have to be defined during first use, and can be modified by the NodePoint Administrator later from the Settings tab.</p>
 <ul>
 <li>Database file: This is the NodePoint database file. Make sure you routinely back this file up as it contains all of the information stored by NodePoint.</li>
@@ -347,7 +188,7 @@ img {
 <li>Public notice: This notice is shown on every page. Leave empty to remove the notice.</li>
 <li>Bootstrap template: This is a CSS file used by NodePoint. It should be a valid Bootstrap template, or could contain extra CSS elements you wish to use. The default file is <code>default.css</code> and contains a few such elements.</li>
 <li>Favicon: This is the icon shown by web browsers in the URL bar.</li>
-<li>Ticket visibility: When set to <code>Public</code>, all tickets will be visible by logged in and guest users. When set to <code>Private</code>, people need to log in to view tickets. <code>Restricted</code> prevents people without at least the Restricted View access level from viewing others' tickets. This is a good choice for IT/Helpdesk systems.</li>
+<li>Ticket visibility: When set to <code>Public</code>, all tickets will be visible by logged in and guest users. When set to <code>Private</code>, people need to log in to view tickets. <code>Restricted</code> prevents people without at least the Restricted View access level from viewing others&#39; tickets. This is a good choice for IT/Helpdesk systems.</li>
 <li>Default access level: The access level for new users. Default is 1.</li>
 <li>Allow registrations: Allow guest users to register a new account. If set to no, the only way to add new accounts is if a user with Users Management access adds one.</li>
 <li>API read key: Used for some API operations.</li>
@@ -361,87 +202,89 @@ img {
 <li>Upload folder: Where product images and comment files are stored. Leave empty to disable uploads.</li>
 <li>Minimum upload level: The minimum access level a user must have to attach files to comments</li>
 <li>Items managed: The type of items NodePoint should manage. This is purely a UI customization.</li>
-<li>Custom ticket field: The name of the third ticket field (after 'title' and 'description'). This can be used to ask users who fill in tickets to list related tickets, or any other information relevant to your particular installation.</li>
+<li>Custom ticket field: The name of the third ticket field (after &#39;title&#39; and &#39;description&#39;). This can be used to ask users who fill in tickets to list related tickets, or any other information relevant to your particular installation.</li>
 <li>Custom ticket type: The type of field. If <code>text</code>, then the entries will be shown as text. If <code>URL</code>, then links will be assumed. If <code>checkbox</code>, then users will have to select yes or no.</li>
+<li>Active Directory server: Enter your domain controller address to enable AD integration. Users will be created dynamically as they first log on, and passwords will be checked against AD.</li>
+<li>Active Directory domain: The domain to use for AD integration (in NT4 format).</li>
 </ul>
-<h2>Users management</h2>
+<h2 id="users-management">Users management</h2>
 <p>NodePoint provides a simple way to manage users based on their access levels. Users have a specific level, which determines what shows up to them in the interface and what they can do. They can also enter an optional email address for notifications. Email addresses must be confirmed through the sending of an automated token when they first register, if email notifications are turned on. Users also have a password which can be changed by the user under the Settings tab, or reset by someone with the Users Management level.</p>
 <p>These are the access levels used by NodePoint:</p>
 <table>
 <thead>
 <tr>
-	<th>Level</th>
-	<th>Name</th>
-	<th>Description</th>
+<th>Level</th>
+<th>Name</th>
+<th>Description</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-	<td>6</td>
-	<td>NodePoint Admin</td>
-	<td>Can change basic NodePoint settings</td>
+<td>6</td>
+<td>NodePoint Admin</td>
+<td>Can change basic NodePoint settings</td>
 </tr>
 <tr>
-	<td>5</td>
-	<td>Users management</td>
-	<td>Can create users, reset passwords, change access levels</td>
+<td>5</td>
+<td>Users management</td>
+<td>Can create users, reset passwords, change access levels</td>
 </tr>
 <tr>
-	<td>4</td>
-	<td>Products management</td>
-	<td>Can add, retire and edit products, view statistics</td>
+<td>4</td>
+<td>Products management</td>
+<td>Can add, retire and edit products, view statistics</td>
 </tr>
 <tr>
-	<td>3</td>
-	<td>Tickets management</td>
-	<td>Can create releases, update tickets, track time</td>
+<td>3</td>
+<td>Tickets management</td>
+<td>Can create releases, update tickets, track time</td>
 </tr>
 <tr>
-	<td>2</td>
-	<td>Restricted view</td>
-	<td>Can view restricted tickets and products</td>
+<td>2</td>
+<td>Restricted view</td>
+<td>Can view restricted tickets and products</td>
 </tr>
 <tr>
-	<td>1</td>
-	<td>Authorized users</td>
-	<td>Can create tickets and comments</td>
+<td>1</td>
+<td>Authorized users</td>
+<td>Can create tickets and comments</td>
 </tr>
 <tr>
-	<td>0</td>
-	<td>Unauthorized users</td>
-	<td>Can view private tickets</td>
+<td>0</td>
+<td>Unauthorized users</td>
+<td>Can view private tickets</td>
 </tr>
 </tbody>
 </table>
-<h2>API</h2>
+<h2 id="api">API</h2>
 <p>NodePoint provides an API to add and show tickets in JSON format. You can use GET or POST arguments with the following values:</p>
-<h3>Show ticket</h3>
+<h3 id="show-ticket">Show ticket</h3>
 <ul>
 <li>api=show_ticket</li>
 <li>key=&lt;read key&gt;</li>
 <li>id=&lt;ticket id&gt;</li>
 </ul>
-<h3>List tickets by product</h3>
+<h3 id="list-tickets-by-product">List tickets by product</h3>
 <ul>
 <li>api=list_tickets</li>
 <li>key=&lt;read key&gt;</li>
 <li>product_id=&lt;product id&gt;</li>
 </ul>
-<h3>Verify user password</h3>
+<h3 id="verify-user-password">Verify user password</h3>
 <ul>
 <li>api=verify_password</li>
 <li>key=&lt;read key&gt;</li>
 <li>user=&lt;user name&gt;</li>
 <li>password=&lt;password&gt;</li>
 </ul>
-<h3>Change user password</h3>
+<h3 id="change-user-password">Change user password</h3>
 <ul>
 <li>api=change_password</li>
 <li>key=&lt;write key&gt;</li>
 <li>user=&lt;user name&gt;</li>
 <li>password=&lt;password&gt;</li>
 </ul>
-<h3>Add ticket</h3>
+<h3 id="add-ticket">Add ticket</h3>
 <ul>
 <li>api=add_ticket</li>
 <li>key=&lt;write key&gt;</li>
@@ -451,14 +294,14 @@ img {
 <li>description=&lt;ticket description&gt;</li>
 <li>custom=&lt;custom field&gt;</li>
 </ul>
-<h3>Add comment</h3>
+<h3 id="add-comment">Add comment</h3>
 <ul>
 <li>api=add_comment</li>
 <li>key=&lt;write key&gt;</li>
 <li>id=&lt;ticket id&gt;</li>
 <li>comment=&lt;comment&gt;</li>
 </ul>
-<h3>Add release</h3>
+<h3 id="add-release">Add release</h3>
 <ul>
 <li>api=add_release</li>
 <li>key=&lt;write key&gt;</li>
@@ -466,8 +309,8 @@ img {
 <li>release_id=&lt;release id&gt;</li>
 <li>notes=&lt;notes&gt;</li>
 </ul>
-<h2>Need support?</h2>
-<p>You can contact the author at <a href="&#x6d;a&#105;&#108;&#x74;&#111;&#x3a;&#100;&#101;&#110;&#100;&#111;&#x72;&#x79;&#x40;&#108;i&#118;&#x65;&#46;&#x63;&#x61;">&#x64;e&#110;&#x64;&#111;&#114;&#121;&#64;&#108;&#105;&#x76;&#x65;&#46;&#x63;&#97;</a></p>
+<h2 id="need-support-">Need support?</h2>
+<p>You can contact the author at <a href="mailto:dendory@live.ca">dendory@live.ca</a></p>
 
 </body>
 </html>
