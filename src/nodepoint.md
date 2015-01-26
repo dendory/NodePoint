@@ -14,7 +14,7 @@ Requirements
 Installation steps
 ------------------
 
-- [Download NodePoint](http://dendory.net/nodepoint) and unzip the folder where you need to, for example `C:\nodepoint`.
+- [Download NodePoint](http://nodepoint.ca) and unzip the folder where you need to, for example `C:\nodepoint`.
 
 - Run `setup.bat`.
 
@@ -161,4 +161,4 @@ NodePoint provides an API to add and show tickets in JSON format. You can use GE
 Need support?
 -------------
 
-You can contact the author at [dendory@live.ca](mailto:dendory@live.ca)
+You can contact support at [support@nodepoint.ca](mailto:support@nodepoint.ca)
