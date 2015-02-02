@@ -492,11 +492,11 @@ sub notify
 					}
 					else
 					{
-						msg("Could not send notification email to " . $u . ", target email was rejected.", 1);
+						if($logged_user ne "api") { msg("Could not send notification email to " . $u . ", target email was rejected.", 1); }
 						logevent("Email notification error: " . $smtp->message());
 					}
 				} or do {
-					msg("Could not send notification email to " . $u . ", connection to SMTP server failed.", 1);
+					if($logged_user ne "api") { msg("Could not send notification email to " . $u . ", connection to SMTP server failed.", 1); }
 					logevent("Email notification error: Connection to SMTP server failed.");
 				};
 			}
