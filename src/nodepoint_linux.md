@@ -30,7 +30,9 @@ Troubleshooting
 ---------------
 ### If you get a 500 server error ###
 
-Check in your server log what the likely error might be. Try to run `~/nodepoint/www/nodepoint.cgi` from a shell.
+Check in your server log what the likely error might be. Try to run `~/nodepoint/www/nodepoint.cgi` from a shell. If you get a `File not found` or `Bad ELF headers` error, you may not have 32bits binary support installed. On RedHat/CentOS you can get it with this command:
+
+	yum install libstdc++.i686
 
 ### You see a list of files in your browser instead of the proper interface ###
 

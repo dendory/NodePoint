@@ -321,7 +321,10 @@ img {
 </ul>
 <h2>Troubleshooting</h2>
 <h3>If you get a 500 server error</h3>
-<p>Check in your server log what the likely error might be. Try to run <code>~/nodepoint/www/nodepoint.cgi</code> from a shell.</p>
+<p>Check in your server log what the likely error might be. Try to run <code>~/nodepoint/www/nodepoint.cgi</code> from a shell. If you get a <code>File not found</code> or <code>Bad ELF headers</code> error, you may not have 32bits binary support installed. On RedHat/CentOS you can get it with this command:</p>
+<pre><code>yum install libstdc++.i686
+</code></pre>
+
 <h3>You see a list of files in your browser instead of the proper interface</h3>
 <p>Make sure the <code>.htaccess</code> file is present, and that your Apache configuration allows overrides. Look for the line <code>AllowOverride All</code> in your default site configuration file.</p>
 <h3>If you get the error <code>Could not access configuration file</code></h3>
