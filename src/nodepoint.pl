@@ -8,7 +8,7 @@
 #
 
 use strict;
-use Config::Win32;
+use Config::Linux;
 use Digest::SHA qw(sha1_hex);
 use DBI;
 use CGI;
@@ -25,7 +25,7 @@ my ($cfg, $db, $sql, $cn, $cp, $cgs, $last_login);
 my $logged_user = "";
 my $logged_lvl = -1;
 my $q = new CGI;
-my $VERSION = "1.0.6";
+my $VERSION = "1.0.7";
 my %items = ("Product", "Product", "Release", "Release", "Model", "SKU/Model");
 
 # Print headers
@@ -222,7 +222,7 @@ sub sanitize_alpha
 	my ($text) = @_;
 	if($text)
 	{
-		$text =~ s/[^A-Za-z0-9\-\_]//g;
+		$text =~ s/[^A-Za-z0-9\.\-\_]//g;
 		return $text;
 	}
 	else { return ""; }
@@ -569,11 +569,11 @@ sub home
 # Connect to config
 eval
 {
-	$cfg = Config::Win32->new("NodePoint", "settings");
+	$cfg = Config::Linux->new("NodePoint", "settings");
 };
 if(!defined($cfg)) # Can't even use headers() if this fails.
 {
-	print "Content-type: text/html\n\nError: Could not access " . Config::Win32->type . ". Please ensure NodePoint has the proper permissions.";
+	print "Content-type: text/html\n\nError: Could not access " . Config::Linux->type . ". Please ensure NodePoint has the proper permissions.";
 	exit(0);
 };
 
@@ -715,6 +715,7 @@ elsif(!$cfg->load("db_address") || !$cfg->load("site_name")) # first use
 }
 elsif($q->param('api')) # API calls
 {
+	$logged_user = "api";
 	print $q->header(-type => "text/plain");
 	if($q->param('api') eq "show_ticket")
 	{
@@ -872,9 +873,26 @@ elsif($q->param('api')) # API calls
 		{
 			print "{\n";
 			my $found = 0;
-			$sql = $db->prepare("SELECT * FROM users WHERE name = ? AND pass = ?;");
-			$sql->execute(sanitize_alpha($q->param('user')), sha1_hex($q->param('password')));
-			while(my @res = $sql->fetchrow_array()) { $found = 1; }
+			if($cfg->load("ad_domain") && $cfg->load("ad_server"))
+			{
+				my $ldap = Net::LDAP->new($cfg->load("ad_server")) or do
+				{
+					logevent("LDAP: Could not connect to Active Directory server");
+					print " \"message\": \"Could not connect to AD server.\",\n";
+					print " \"status\": \"ERR_AD_CONNECTION\",\n";
+					print "}\n";
+					exit(0);
+				};
+				my $mesg = $ldap->bind($cfg->load("ad_domain") . "\\" . sanitize_alpha($q->param('user')), password=>$q->param('password'));
+				if(!$mesg->code) { $found = 1; }
+				else { logevent("LDAP: " . $mesg->error); }
+			}
+			else
+			{
+				$sql = $db->prepare("SELECT * FROM users WHERE name = ? AND pass = ?;");
+				$sql->execute(sanitize_alpha($q->param('user')), sha1_hex($q->param('password')));
+				while(my @res = $sql->fetchrow_array()) { $found = 1; }
+			}
 			if($found)
 			{
 				print " \"message\": \"Credentials are valid.\",\n";
@@ -918,6 +936,13 @@ elsif($q->param('api')) # API calls
 			print " \"status\": \"ERR_INVALID_KEY\"\n";
 			print "}\n";
 		}
+		elsif($cfg->load("ad_server"))
+		{
+			print "{\n";
+			print " \"message\": \"Passwords are synchronized with Active Directory.\",\n";
+			print " \"status\": \"ERR_AD_ENABLED\"\n";
+			print "}\n";		
+		}
 		else
 		{
 			print "{\n";
@@ -934,7 +959,6 @@ elsif($q->param('api')) # API calls
 			{
 				$sql = $db->prepare("UPDATE users SET pass = '" . sha1_hex($q->param('password')) . "' WHERE name = ?;");
 				$sql->execute(sanitize_alpha($q->param('user')));
-				$logged_user = "api";  # So logevent() records the right thing
 				logevent("Password change: " . sanitize_alpha($q->param('user')));
 				print " \"message\": \"Password changed.\",\n";
 				print " \"status\": \"OK\",\n";
@@ -1189,11 +1213,12 @@ elsif($q->param('m')) # Modules
 			print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Change email</h3></div><div class='panel-body'>\n";
 			print "<form method='POST' action='.'><input type='hidden' name='m' value='change_email'>To change your notification email address, enter a new address here. Leave empty to disable notifications:<br><input type='text' name='new_email' size='40' value='" . $email . "'> <input class='btn btn-default pull-right' type='submit' value='Change email'></form></div></div>";
 			print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Change password</h3></div><div class='panel-body'>\n";
-			if(!$cfg->load("ad_server"))
+			if($cfg->load("ad_server")) { print "<p>Password management is synchronized with Active Directory.</p>"; }
+			elsif($logged_user eq "demo") { print "<p>The demo account cannot change its password.</p>"; }
+			else
 			{
 				print "<form method='POST' action='.'><input type='hidden' name='m' value='change_pass'>Current password: <input type='password' name='current_pass'> New password: <input type='password' name='new_pass1'> Confirm: <input type='password' name='new_pass2'> <input class='btn btn-default pull-right' type='submit' value='Change password'></form>";
 			}
-			else { print "<p>Password management is synchronized with Active Directory.</p>"; }
 			print "</div></div>";
 		}
 		if($logged_lvl > 4)
@@ -1213,7 +1238,8 @@ elsif($q->param('m')) # Modules
 			}
 			while(my @res = $sql->fetchrow_array())
 			{
-				print "<tr><td>" . $res[0] . "</td><td>" . $res[2] . "</td><td>" . $res[3] . "</td><td><a href='./?m=change_lvl&u=" . $res[0] . "'>Change access level</a></td><td><a href='./?m=reset_pass&u=" . $res[0] . "'>Reset password</a></td><td>" . $res[4] . "</td></tr>\n";
+				if($cfg->load('ad_server')) { print "<tr><td>" . $res[0] . "</td><td>" . $res[2] . "</td><td>" . $res[3] . "</td><td><a href='./?m=change_lvl&u=" . $res[0] . "'>Change access level</a></td><td>Managed by AD</td><td>" . $res[4] . "</td></tr>\n"; }
+				else { print "<tr><td>" . $res[0] . "</td><td>" . $res[2] . "</td><td>" . $res[3] . "</td><td><a href='./?m=change_lvl&u=" . $res[0] . "'>Change access level</a></td><td><a href='./?m=reset_pass&u=" . $res[0] . "'>Reset password</a></td><td>" . $res[4] . "</td></tr>\n"; }
 			}
 			print "</table>\n";
 			if(!$cfg->load('ad_server'))
@@ -1275,7 +1301,7 @@ elsif($q->param('m')) # Modules
 			print "<tr><td>Active Directory domain</td><td><input style='width:300px' type='text' name='ad_domain' value=\"" . $cfg->load("ad_domain") . "\"></td></tr>\n";
 			print "</table>The admin password will be left unchanged if empty.<br>See the <a href='./README.html'>README</a> file for help.<input class='btn btn-default pull-right' type='submit' value='Save settings'></form></div></div>\n";
 			print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Log (last 50 events)</h3></div><div class='panel-body'>\n";
-			print "<form style='display:inline' method='POST' action='.'><input type='hidden' name='m' value='clear_log'><input class='btn btn-default pull-right' type='submit' value='Clear log'><br></form><a name='log'></a><p>Filter log by events: <a href='./?m=settings#log'>All</a> | <a href='./?m=settings&filter_log=Failed#log'>Failed logins</a> | <a href='./?m=settings&filter_log=Success#log'>Successful logins</a> | <a href='./?m=settings&filter_log=level#log'>Level changes</a> | <a href='./?m=settings&filter_log=password#log'>Password changes</a> | <a href='./?m=settings&filter_log=user#log'>New users</a> | <a href='./?m=settings&filter_log=setting#log'>Settings updated</a> | <a href='./?m=settings&filter_log=notification#log'>Email notifications</a> | <a href='./?m=settings&filter_log=LDAP:#log'>Active Directory</a></p>\n";
+			print "<form style='display:inline' method='POST' action='.'><input type='hidden' name='m' value='clear_log'><input class='btn btn-default pull-right' type='submit' value='Clear log'><br></form><a name='log'></a><p>Filter log by events: <a href='./?m=settings#log'>All</a> | <a href='./?m=settings&filter_log=Failed#log'>Failed logins</a> | <a href='./?m=settings&filter_log=Success#log'>Successful logins</a> | <a href='./?m=settings&filter_log=level#log'>Level changes</a> | <a href='./?m=settings&filter_log=password#log'>Password changes</a> | <a href='./?m=settings&filter_log=new#log'>New users</a> | <a href='./?m=settings&filter_log=setting#log'>Settings updated</a> | <a href='./?m=settings&filter_log=notification#log'>Email notifications</a> | <a href='./?m=settings&filter_log=LDAP:#log'>Active Directory</a></p>\n";
 			print "<table class='table table-striped'><tr><th>IP address</th><th>User</th><th>Event</th><th>Time</th></tr>\n";
 			if($q->param("filter_log"))
 			{
@@ -1893,6 +1919,8 @@ elsif($q->param('m')) # Modules
 					print ">Invalid</option><option";
 					if($res[8] eq "Hold") { print " selected"; }
 					print ">Hold</option><option";
+					if($res[8] eq "Duplicate") { print " selected"; }
+					print ">Duplicate</option><option";
 					if($res[8] eq "Resolved") { print " selected"; }
 					print ">Resolved</option><option";
 					if($res[8] eq "Closed") { print " selected"; }
@@ -2245,7 +2273,7 @@ elsif($q->param('m')) # Modules
 		if($q->param('filter_status')) { print "(Status: " . sanitize_alpha($q->param('filter_status')) . ") "; }
 		print "(Limit: " . $limit . ") ";
 		print "</h3></div><div class='panel-body'>\n";
-		print "<p><form method='GET' action='.'><input type='hidden' name='m' value='tickets'>Filter tickets: By status: <select name='filter_status'><option>All</option><option>New</option><option>Open</option><option>Invalid</option><option>Hold</option><option>Resolved</option><option>Closed</option></select> By " . lc($items{"Product"}) . ": <select name='filter_product'><option>All</option>";
+		print "<p><form method='GET' action='.'><input type='hidden' name='m' value='tickets'>Filter tickets: By status: <select name='filter_status'><option>All</option><option>New</option><option>Open</option><option>Invalid</option><option>Duplicate</option><option>Hold</option><option>Resolved</option><option>Closed</option></select> By " . lc($items{"Product"}) . ": <select name='filter_product'><option>All</option>";
 		$sql = $db->prepare("SELECT ROWID,* FROM products;");
 		$sql->execute();
 		while(my @res = $sql->fetchrow_array()) { print "<option value=" . $res[0] . ">" . $res[1] . "</option>"; }

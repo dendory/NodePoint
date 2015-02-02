@@ -10,7 +10,6 @@ Requirements
 
 - Apache web server.
 
-
 Installation steps
 ------------------
 
@@ -22,6 +21,10 @@ Installation steps
 
 - Access the site at `http://localhost/nodepoint` and complete the first time configuration.
 
+Upgrade steps
+-------------
+
+- To upgrade from a previous NodePoint version, simply copy the `www` folder onto the old one.
 
 Troubleshooting
 ---------------
@@ -80,7 +83,7 @@ These are the default configuration values for NodePoint. They have to be define
 * Items managed: The type of items NodePoint should manage. This is purely a UI customization.
 * Custom ticket field: The name of the third ticket field (after 'title' and 'description'). This can be used to ask users who fill in tickets to list related tickets, or any other information relevant to your particular installation.
 * Custom ticket type: The type of field. If `text`, then the entries will be shown as text. If `URL`, then links will be assumed. If `checkbox`, then users will have to select yes or no.
-* Active Directory server: Enter your domain controller address to enable AD integration. Users will be created dynamically as they first log on, and passwords will be checked against AD.
+* Active Directory server: Enter your domain controller address to enable AD integration. Users will be created dynamically as they first log on, and passwords will be checked against AD using LDAP.
 * Active Directory domain: The domain to use for AD integration (in NT4 format).
 
 Users management
@@ -98,6 +101,8 @@ Level | Name | Description
 2 | Restricted view | Can view restricted tickets and products
 1 | Authorized users | Can create tickets and comments
 0 | Unauthorized users | Can view private tickets
+
+NodePoint has a few special user accounts. The *admin* account is used as product administrator and acts differently than normal user accounts. It should only be used for administrative functions. *Guest* is used to specify people who are not logged in, and cannot be registered as a user account. The name *api* refers to any change made using the JSON API. The *demo* account can be registered normally but cannot change its own password, and is meant for product demos.
 
 API
 ---
