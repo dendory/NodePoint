@@ -8,7 +8,7 @@
 #
 
 use strict;
-use Config::Win32;
+use Config::Linux;
 use Digest::SHA qw(sha1_hex);
 use DBI;
 use CGI;
@@ -569,11 +569,11 @@ sub home
 # Connect to config
 eval
 {
-	$cfg = Config::Win32->new("NodePoint", "settings");
+	$cfg = Config::Linux->new("NodePoint", "settings");
 };
 if(!defined($cfg)) # Can't even use headers() if this fails.
 {
-	print "Content-type: text/html\n\nError: Could not access " . Config::Win32->type . ". Please ensure NodePoint has the proper permissions.";
+	print "Content-type: text/html\n\nError: Could not access " . Config::Linux->type . ". Please ensure NodePoint has the proper permissions.";
 	exit(0);
 };
 
@@ -1276,6 +1276,10 @@ elsif($q->param('m')) # Modules
 			my $totaltime = 0;
 			while(my @res = $sql->fetchrow_array()) { $totaltime = $totaltime + to_float($res[2]); }
 			print "<p>You have spent a total of <b>" . $totaltime . "</b> hours on tickets.</p>\n";
+		}
+		if($logged_lvl > 5)
+		{
+			print "<div class='alert alert-info' role='alert'><b>Update:</b><iframe src='//nodepoint.ca/update/?v=" . $VERSION . "' frameborder='0' width='99%' height='55px'></iframe></div>";
 		}
 		$sql = $db->prepare("SELECT * FROM users;");
 		$sql->execute();

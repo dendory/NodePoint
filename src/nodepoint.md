@@ -142,6 +142,13 @@ NodePoint provides an API to add and show tickets in JSON format. You can use GE
 * user=&lt;user name&gt;
 * password=&lt;password&gt;
 
+### Add new user ###
+* api=add_user
+* key=&lt;write key&gt;
+* user=&lt;user name&gt;
+* password=&lt;password&gt;
+* email=&lt;email&gt;
+
 ### Add ticket ###
 * api=add_ticket
 * key=&lt;write key&gt;
