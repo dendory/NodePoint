@@ -8,7 +8,7 @@
 #
 
 use strict;
-use Config::Linux;
+use Config::Win32;
 use Digest::SHA qw(sha1_hex);
 use DBI;
 use CGI;
@@ -25,7 +25,7 @@ my ($cfg, $db, $sql, $cn, $cp, $cgs, $last_login);
 my $logged_user = "";
 my $logged_lvl = -1;
 my $q = new CGI;
-my $VERSION = "1.0.7";
+my $VERSION = "1.0.8";
 my %items = ("Product", "Product", "Release", "Release", "Model", "SKU/Model");
 
 # Print headers
@@ -126,7 +126,7 @@ sub navbar
 			print "	 <li><a href='./?m=tickets'>Tickets</a></li>\n";
 			print "	 <li><a href='./?m=settings'>Settings</a></li>\n";
 		}
-		elsif($q->param('m') && ($q->param('m') eq "settings" || $q->param('m') eq "clear_log" || $q->param('m') eq "stats" || $q->param('m') eq "change_lvl" || $q->param('m') eq "confirm_email" || $q->param('m') eq "reset_pass" || $q->param('m') eq "logout"))
+		elsif($q->param('m') && ($q->param('m') eq "settings" || $q->param('m') eq "confirm_delete" || $q->param('m') eq "clear_log" || $q->param('m') eq "stats" || $q->param('m') eq "change_lvl" || $q->param('m') eq "confirm_email" || $q->param('m') eq "reset_pass" || $q->param('m') eq "logout"))
 		{
 			print "	 <li><a href='.'>Home</a></li>\n";
 			print "	 <li><a href='./?m=products'>" . $items{"Product"} . "s</a></li>\n";
@@ -569,11 +569,11 @@ sub home
 # Connect to config
 eval
 {
-	$cfg = Config::Linux->new("NodePoint", "settings");
+	$cfg = Config::Win32->new("NodePoint", "settings");
 };
 if(!defined($cfg)) # Can't even use headers() if this fails.
 {
-	print "Content-type: text/html\n\nError: Could not access " . Config::Linux->type . ". Please ensure NodePoint has the proper permissions.";
+	print "Content-type: text/html\n\nError: Could not access " . Config::Win32->type . ". Please ensure NodePoint has the proper permissions.";
 	exit(0);
 };
 
@@ -1301,7 +1301,7 @@ elsif($q->param('m')) # Modules
 			print "<tr><td>Active Directory domain</td><td><input style='width:300px' type='text' name='ad_domain' value=\"" . $cfg->load("ad_domain") . "\"></td></tr>\n";
 			print "</table>The admin password will be left unchanged if empty.<br>See the <a href='./README.html'>README</a> file for help.<input class='btn btn-default pull-right' type='submit' value='Save settings'></form></div></div>\n";
 			print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Log (last 50 events)</h3></div><div class='panel-body'>\n";
-			print "<form style='display:inline' method='POST' action='.'><input type='hidden' name='m' value='clear_log'><input class='btn btn-default pull-right' type='submit' value='Clear log'><br></form><a name='log'></a><p>Filter log by events: <a href='./?m=settings#log'>All</a> | <a href='./?m=settings&filter_log=Failed#log'>Failed logins</a> | <a href='./?m=settings&filter_log=Success#log'>Successful logins</a> | <a href='./?m=settings&filter_log=level#log'>Level changes</a> | <a href='./?m=settings&filter_log=password#log'>Password changes</a> | <a href='./?m=settings&filter_log=new#log'>New users</a> | <a href='./?m=settings&filter_log=setting#log'>Settings updated</a> | <a href='./?m=settings&filter_log=notification#log'>Email notifications</a> | <a href='./?m=settings&filter_log=LDAP:#log'>Active Directory</a></p>\n";
+			print "<form style='display:inline' method='POST' action='.'><input type='hidden' name='m' value='clear_log'><input class='btn btn-danger pull-right' type='submit' value='Clear log'><br></form><a name='log'></a><p>Filter log by events: <a href='./?m=settings#log'>All</a> | <a href='./?m=settings&filter_log=Failed#log'>Failed logins</a> | <a href='./?m=settings&filter_log=Success#log'>Successful logins</a> | <a href='./?m=settings&filter_log=level#log'>Level changes</a> | <a href='./?m=settings&filter_log=password#log'>Password changes</a> | <a href='./?m=settings&filter_log=new#log'>New users</a> | <a href='./?m=settings&filter_log=setting#log'>Settings updated</a> | <a href='./?m=settings&filter_log=notification#log'>Email notifications</a> | <a href='./?m=settings&filter_log=LDAP:#log'>Active Directory</a> | <a href='./?m=settings&filter_log=deleted:#log'>Deletes</a></p>\n";
 			print "<table class='table table-striped'><tr><th>IP address</th><th>User</th><th>Event</th><th>Time</th></tr>\n";
 			if($q->param("filter_log"))
 			{
@@ -1476,6 +1476,7 @@ elsif($q->param('m')) # Modules
 				else { print "Description:<br><pre>" . $res[3] . "</pre>\n"; }
 				if($res[4] ne "") { print "<p><img src='./?file=" . $res[4] . "' style='max-width:95%'></p>\n"; }
 				if($logged_lvl > 3) { print "<input class='btn btn-default pull-right' type='submit' value='Update " . lc($items{"Product"}) . "'>Change " . lc($items{"Product"}) . " image: <input type='file' name='product_screenshot'></form>\n"; }
+				if($logged_user eq $cfg->load("admin_name")) { print "<form method='GET' action='.'><input type='hidden' name='m' value='confirm_delete'><input type='hidden' name='productid' value='" . to_int($q->param('p')) . "'><input type='submit' class='btn btn-danger pull-right' value='Permanently delete this " . lc($items{"Product"}) . "'></form>"; }
 				print "</div></div>\n";
 			}
 			if($logged_lvl > 2 && $vis ne "Archived")
@@ -1945,6 +1946,7 @@ elsif($q->param('m')) # Modules
 					if($res[10] =~ /\b\Q$logged_user\E\b/) { print "<form action='.' method='POST' style='display:inline'><input type='hidden' name='m' value='unfollow_ticket'><input type='hidden' name='t' value='" . to_int($q->param('t')) . "'><input class='btn btn-default' type='submit' value='Unfollow ticket'></form>"; }
 					else { print "<form action='.' method='POST' style='display:inline'><input type='hidden' name='m' value='follow_ticket'><input type='hidden' name='t' value='" . to_int($q->param('t')) . "'><input class='btn btn-default' type='submit' value='Follow ticket'></form>"; }
 				}
+				if($logged_user eq $cfg->load("admin_name")) { print "<form method='GET' action='.'><input type='hidden' name='m' value='confirm_delete'><input type='hidden' name='ticketid' value='" . to_int($q->param('t')) . "'><input type='submit' class='btn btn-danger pull-right' value='Permanently delete this ticket'></form>"; }
 				print "</div></div>\n";
 				if($logged_lvl > 2)
 				{
@@ -1984,7 +1986,7 @@ elsif($q->param('m')) # Modules
 					if($res[6] ne "" && $res[7] ne "") { print "<p>Attached file: <a href='./?file=" . $res[6] . "'>" . $res[7] . "</a></p>\n"; }
 					print "<p><span class='pull-right'>";
 					if($logged_user eq $res[2]) { print "<input class='btn btn-default' type='submit' name='action' value='Update comment'> \n"; }
-					if($logged_lvl > 4) { print "<input class='btn btn-default' type='submit' name='action' value='Delete comment'>\n"; }
+					if($logged_lvl > 4) { print "<input class='btn btn-danger' type='submit' name='action' value='Delete comment'>\n"; }
 					print "</span></p></form></div></div>\n";
 				}
 			}
@@ -2074,7 +2076,44 @@ elsif($q->param('m')) # Modules
 		}
 		else
 		{
-			msg("Product not found. Please go back and try again.", 0);
+			msg($items{"Product"} . " not found. Please go back and try again.", 0);
+		}
+	}
+	elsif($q->param('m') eq "confirm_delete" && $logged_user eq $cfg->load("admin_name") && ($q->param('productid') || $q->param('ticketid')))
+	{
+		headers("Confirm");
+		if($q->param('yes'))
+		{
+			if($q->param('productid'))
+			{
+				$sql = $db->prepare("DELETE FROM tickets WHERE productid = ?;");
+				$sql->execute(to_int($q->param('productid')));
+				$sql = $db->prepare("DELETE FROM products WHERE ROWID = ?;");
+				$sql->execute(to_int($q->param('productid')));
+				logevent("Product deleted: " . to_int($q->param('productid')));
+				msg($items{"Product"} . " " . to_int($q->param('productid')) . " and associated tickets deleted. Press <a href='./?m=products'>here</a> to continue.", 3);
+			}
+			else
+			{
+				$sql = $db->prepare("DELETE FROM tickets WHERE ROWID = ?;");
+				$sql->execute(to_int($q->param('ticketid')));
+				logevent("Ticket deleted: " . to_int($q->param('ticketid')));
+				msg("Ticket " . to_int($q->param('ticketid')) . " deleted. Press <a href='./?m=tickets'>here</a> to continue.", 3);
+			}
+		}
+		else
+		{
+			msg("This operation cannot be undone.", 1);
+			print "<p><form method='GET' action='.'><input type='hidden' name='m' value='confirm_delete'><input type='hidden' name='yes' value='1'>";
+			if($q->param('productid'))
+			{
+				print "<input type='hidden' name='productid' value='" . to_int($q->param('productid')) . "'>Are you sure you want to delete product <b>" . to_int($q->param('productid')) . "</b> and all associated tickets?";
+			}
+			else
+			{
+				print "<input type='hidden' name='ticketid' value='" . to_int($q->param('ticketid')) . "'>Are you sure you want to delete ticket <b>" . to_int($q->param('ticketid')) . "</b>?";			
+			}
+			print "<input type='submit' class='btn btn-danger pull-right' value='Confirm'></form></p>";
 		}
 	}
 	elsif($q->param('m') eq "stats" && $q->param('report') && $logged_lvl > 3)
