@@ -922,6 +922,13 @@ elsif($q->param('api')) # API calls
 			print " \"status\": \"ERR_MISSING_ARGUMENT\"\n";
 			print "}\n";
 		}
+		elsif(length($q->param('password')) < 6)
+		{
+			print "{\n";
+			print " \"message\": \"Bad length for 'password' argument (above 6 characters).\",\n";
+			print " \"status\": \"ERR_ARGUMENT_LENGTH\"\n";
+			print "}\n";
+		}
 		elsif(!$q->param('key'))
 		{
 			print "{\n";
@@ -962,6 +969,88 @@ elsif($q->param('api')) # API calls
 				logevent("Password change: " . sanitize_alpha($q->param('user')));
 				print " \"message\": \"Password changed.\",\n";
 				print " \"status\": \"OK\",\n";
+			}
+			print "}\n";
+		}
+	}
+	elsif($q->param('api') eq "add_user")
+	{
+		if(!$q->param('user'))
+		{
+			print "{\n";
+			print " \"message\": \"Missing 'user' argument.\",\n";
+			print " \"status\": \"ERR_MISSING_ARGUMENT\"\n";
+			print "}\n";
+		}
+		elsif(length(sanitize_alpha($q->param('user'))) < 3 || length(sanitize_alpha($q->param('user'))) > 16)
+		{
+			print "{\n";
+			print " \"message\": \"Bad length for 'user' argument (between 3 and 16 characters).\",\n";
+			print " \"status\": \"ERR_ARGUMENT_LENGTH\"\n";
+			print "}\n";
+		}
+		elsif(!$q->param('password'))
+		{
+			print "{\n";
+			print " \"message\": \"Missing 'password' argument.\",\n";
+			print " \"status\": \"ERR_MISSING_ARGUMENT\"\n";
+			print "}\n";
+		}
+		elsif(length($q->param('password')) < 6)
+		{
+			print "{\n";
+			print " \"message\": \"Bad length for 'password' argument (above 6 characters).\",\n";
+			print " \"status\": \"ERR_ARGUMENT_LENGTH\"\n";
+			print "}\n";
+		}
+		elsif(!$q->param('key'))
+		{
+			print "{\n";
+			print " \"message\": \"Missing 'key' argument.\",\n";
+			print " \"status\": \"ERR_MISSING_ARGUMENT\"\n";
+			print "}\n";
+		}
+		elsif($q->param('key') ne $cfg->load('api_write'))
+		{
+			print "{\n";
+			print " \"message\": \"Invalid 'key' value.\",\n";
+			print " \"status\": \"ERR_INVALID_KEY\"\n";
+			print "}\n";
+		}
+		elsif($cfg->load("ad_server"))
+		{
+			print "{\n";
+			print " \"message\": \"Users are synchronized with Active Directory.\",\n";
+			print " \"status\": \"ERR_AD_ENABLED\"\n";
+			print "}\n";		
+		}
+		else
+		{
+			print "{\n";
+			my $found = 0;
+			$sql = $db->prepare("SELECT * FROM users WHERE name = ?;");
+			$sql->execute(sanitize_alpha($q->param('user')));
+			while(my @res = $sql->fetchrow_array()) { $found = 1; }
+			if($found)
+			{
+				print " \"message\": \"User already exist.\",\n";
+				print " \"status\": \"ERR_INVALID_ARGUMENT\",\n";
+			}
+			else
+			{
+				my $confirm = join'', map +(0..9,'a'..'z','A'..'Z')[rand(10+26*2)], 1..16;
+				$sql = $db->prepare("INSERT INTO users VALUES(?, ?, ?, ?, ?, ?);");
+				print " \"message\": \"User added.\",\n";
+				print " \"status\": \"OK\",\n";
+				if($q->param('email'))
+				{ 
+					$sql->execute(sanitize_alpha($q->param('user')), sha1_hex($q->param('password')), sanitize_email($q->param('email')), to_int($cfg->load('default_lvl')), "Never", $confirm); 
+					notify(sanitize_alpha($q->param('user')), "Email confirmation", "You are receiving this email because a new user was created with this email address. Please confirm your email by logging into the NodePoint interface, and entering the following confirmation code under Settings: " . $confirm);
+					print " \"confirm\": \"" . $confirm . "\",\n";
+				}
+				else { $sql->execute(sanitize_alpha($q->param('user')), sha1_hex($q->param('password')), "", to_int($cfg->load('default_lvl')), "Never", ""); }
+				print " \"user\": \"" . sanitize_alpha($q->param('user')) . "\",\n";
+				logevent("Add new user: " . sanitize_alpha($q->param('user')));
 			}
 			print "}\n";
 		}
@@ -1398,7 +1487,7 @@ elsif($q->param('m')) # Modules
 					$sql = $db->prepare("UPDATE users SET email = '" . sanitize_email($q->param('new_email')) . "' WHERE name = ?;");
 					$sql->execute($logged_user);
 					msg("Email address updated. Press <a href='.'>here</a> to continue.", 3);
-					notify($logged_user, "Email confirmation", "Please confirm your email by logging into the NodePoint interface, and entering the following confirmation code under Settings: " . $confirm);
+					notify($logged_user, "Email confirmation", "You are receiving this email because a user was created with this email address. Please confirm your email by logging into the NodePoint interface, and entering the following confirmation code under Settings: " . $confirm);
 					last;
 				}
 			}
@@ -2360,7 +2449,7 @@ elsif($q->param('m')) # Modules
 	}
 	footers();
 }
-elsif($q->param('new_name') && $q->param('new_pass1') && $q->param('new_pass2') && ($logged_lvl > 4 || $cfg->load('allow_registrations'))) # Process registration
+elsif(!$cfg->load("ad_server") && $q->param('new_name') && $q->param('new_pass1') && $q->param('new_pass2') && ($logged_lvl > 4 || $cfg->load('allow_registrations'))) # Process registration
 {
 	headers("Registration");
 	if($q->param('new_pass1') ne $q->param('new_pass2'))
@@ -2393,7 +2482,7 @@ elsif($q->param('new_name') && $q->param('new_pass1') && $q->param('new_pass2') 
 			if($logged_user eq "") { msg("User <b>" . sanitize_alpha($q->param('new_name')) . "</b> added. Press <a href='.'>here</a> to go to the login page.", 3); }
 			else { msg("User <b>" . sanitize_alpha($q->param('new_name')) . "</b> added. Press <a href='./?m=settings'>here</a> to continue.", 3); }
 			logevent("Add new user: " . sanitize_alpha($q->param('new_name')));
-			notify(sanitize_alpha($q->param('new_name')), "Email confirmation", "Please confirm your email by logging into the NodePoint interface, and entering the following confirmation code under Settings: " . $confirm);
+			notify(sanitize_alpha($q->param('new_name')), "Email confirmation", "You are receiving this email because a new user was created with this email address. Please confirm your email by logging into the NodePoint interface, and entering the following confirmation code under Settings: " . $confirm);
 		}
 		else
 		{
