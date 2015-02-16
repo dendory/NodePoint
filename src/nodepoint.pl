@@ -8,7 +8,7 @@
 #
 
 use strict;
-use Config::Linux;
+use Config::Win32;
 use Digest::SHA qw(sha1_hex);
 use DBI;
 use CGI;
@@ -20,13 +20,17 @@ use Scalar::Util qw(looks_like_number);
 use Net::LDAP;
 use Crypt::RC4;
 use MIME::Base64;
+use Time::HiRes qw(time);
 
-my ($cfg, $db, $sql, $cn, $cp, $cgs, $last_login);
+my ($cfg, $db, $sql, $cn, $cp, $cgs, $last_login, $perf);
 my $logged_user = "";
 my $logged_lvl = -1;
 my $q = new CGI;
-my $VERSION = "1.0.8";
+my $VERSION = "1.0.9";
 my %items = ("Product", "Product", "Release", "Release", "Model", "SKU/Model");
+
+$perf = time/100;
+$perf = int(($perf - int($perf)) * 100000); # Store 2.3 digits of current unixtime, to avoid overloading a 32bits int
 
 # Print headers
 sub headers
@@ -61,7 +65,11 @@ sub headers
 # Footers
 sub footers
 {
-	print "  <div style='clear:both'></div><hr><div style='margin-top:-15px;font-size:9px;color:grey'><i>NodePoint v" . $VERSION . "</i></div></div>\n";
+	my $perf2 = time/100;
+	$perf2 = int(($perf2 - int($perf2)) * 100000); # Store 2.3 digits of current unixtime, to avoid overloading a 32bits int
+	my $perf3 = $perf2 - $perf;
+	if($perf3 < 0) { $perf3 = ($perf2 + 100000) - $perf; }
+	print "  <div style='clear:both'></div><hr><div style='margin-top:-15px;font-size:9px;color:grey'><span class='pull-right'>" . $perf3 . " ms</span><i>NodePoint v" . $VERSION . "</i></div></div>\n";
 	print " <script src='jquery.js'></script>\n";
 	print " <script src='bootstrap.js'></script>\n";
 	print " </body>\n";
@@ -298,7 +306,7 @@ sub logevent
 	eval
 	{
 		$sql = $db->prepare("INSERT INTO log VALUES (?, ?, ?, ?, ?);");
-		$sql->execute($q->remote_addr, $logged_user, $op, now(), time);
+		$sql->execute($q->remote_addr, $logged_user, $op, now(), int(time));
 	};
 }
 
@@ -569,11 +577,11 @@ sub home
 # Connect to config
 eval
 {
-	$cfg = Config::Linux->new("NodePoint", "settings");
+	$cfg = Config::Win32->new("NodePoint", "settings");
 };
 if(!defined($cfg)) # Can't even use headers() if this fails.
 {
-	print "Content-type: text/html\n\nError: Could not access " . Config::Linux->type . ". Please ensure NodePoint has the proper permissions.";
+	print "Content-type: text/html\n\nError: Could not access " . Config::Win32->type . ". Please ensure NodePoint has the proper permissions.";
 	exit(0);
 };
 
