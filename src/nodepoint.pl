@@ -2187,6 +2187,13 @@ elsif($q->param('m')) # Modules
 		{
 			if($q->param('productid'))
 			{
+				$sql = $db->prepare("SELECT ROWID FROM tickets WHERE productid = ?;");
+				$sql->execute(to_int($q->param('productid')));
+				while(my @res = $sql->fetchrow_array())
+				{
+					my $sql2 = $db->prepare("DELETE FROM comments WHERE ticketid = ?;");
+					$sql2->execute(to_int($res[0]));				
+				}
 				$sql = $db->prepare("DELETE FROM tickets WHERE productid = ?;");
 				$sql->execute(to_int($q->param('productid')));
 				$sql = $db->prepare("DELETE FROM products WHERE ROWID = ?;");
@@ -2197,6 +2204,8 @@ elsif($q->param('m')) # Modules
 			else
 			{
 				$sql = $db->prepare("DELETE FROM tickets WHERE ROWID = ?;");
+				$sql->execute(to_int($q->param('ticketid')));
+				$sql = $db->prepare("DELETE FROM comments WHERE ticketid = ?;");
 				$sql->execute(to_int($q->param('ticketid')));
 				logevent("Ticket deleted: " . to_int($q->param('ticketid')));
 				msg("Ticket " . to_int($q->param('ticketid')) . " deleted. Press <a href='./?m=tickets'>here</a> to continue.", 3);
