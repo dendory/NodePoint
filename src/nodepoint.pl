@@ -625,7 +625,7 @@ if($q->param('site_name') && $q->param('db_address') && $logged_user ne "" && $l
 		$db = DBI->connect("dbi:SQLite:dbname=" . $q->param('db_address'), '', '', { RaiseError => 0, PrintError => 0 }) or do { msg("Could not verify database settings. Please hit back and try again.<br><br>" . $DBI::errstr, 0); exit(0); };
 		db_check();
 		save_config();
-		msg("Settings updated. Press <a href='.'>here</a> to continue.", 3);
+		msg("Settings updated. Press <a href='./?m=settings'>here</a> to continue.", 3);
 		logevent("Settings updated");
 	}
 	else
@@ -1633,7 +1633,7 @@ elsif($q->param('m')) # Modules
 			{
 				$sql = $db->prepare("INSERT INTO releases VALUES (?, ?, ?, ?, ?);");
 				$sql->execute(to_int($q->param('product_id')), $logged_user, sanitize_html($q->param('release_version')), sanitize_html($q->param('release_notes')), now());
-				msg($items{"Release"} . " added. Press <a href='./?m=products'>here</a> to continue.", 3);
+				msg($items{"Release"} . " added. Press <a href='./?m=view_product&p=" . to_int($q->param('product_id')) . "'>here</a> to continue.", 3);
 			}
 		}
 	}
@@ -1791,7 +1791,7 @@ elsif($q->param('m')) # Modules
 					$sql = $db->prepare("UPDATE products SET screenshot = ? WHERE ROWID = ?;");
 					$sql->execute($screenshot, to_int($q->param('product_id')));
 				}
-				msg($items{"Product"} . " <b>" . sanitize_html($q->param('product_name')) . "</b> updated. Press <a href='./?m=products'>here</a> to continue.", 3);
+				msg($items{"Product"} . " <b>" . sanitize_html($q->param('product_name')) . "</b> updated. Press <a href='./?m=view_product&p=" . to_int($q->param('product_id')) . "'>here</a> to continue.", 3);
 			}
 		}
 		else
@@ -1861,7 +1861,7 @@ elsif($q->param('m')) # Modules
 				notify($u, "Ticket (" . to_int($q->param('t')) . ") assigned to you has been modified", "The ticket \"" . $q->param('ticket_title') . "\" has been modified:\n\nModified by: " . $logged_user . "\n" . $cfg->load('custom_name') . ": " . $lnk . "\nStatus: " . sanitize_alpha($q->param('ticket_status')) . "\nResolution: " . $resolution . "\nAssigned to: " . $assigned . "\nDescription: " . $q->param('ticket_desc') . "\n\n" . $changes);
 			}
 			if($creator) { notify($creator, "Your ticket (" . to_int($q->param('t')) . ") has been modified", "The ticket \"" . $q->param('ticket_title') . "\" has been modified:\n\nModified by: " . $logged_user . "\n" . $cfg->load('custom_name') . ": " . $lnk . "\nStatus: " . sanitize_alpha($q->param('ticket_status')) . "\nResolution: " . $resolution . "\nAssigned to: " . $assigned . "\nDescription: " . $q->param('ticket_desc') . "\n\n" . $changes); }
-			msg("Ticket updated. Press <a href='./?m=tickets'>here</a> to continue.", 3);
+			msg("Ticket updated. Press <a href='./?m=view_ticket&t=" . to_int($q->param('t')) . "'>here</a> to continue.", 3);
 			if($q->param("time_spent") && to_float($q->param("time_spent")) != 0)
 			{
 				$sql = $db->prepare("INSERT INTO timetracking VALUES (?, ?, ?, ?);");
@@ -1957,7 +1957,7 @@ elsif($q->param('m')) # Modules
 				}
 				notify($res[3], "New comment posted to your ticket (" . $res[0] . ")", "A new comment was posted to your ticket:\n\nUser: " . $logged_user . "\nComment: " . $q->param('comment') . "\nAttachment: " . $filename);
 			}			
-			msg("Comment added. Press <a href='./?m=tickets'>here</a> to continue.", 3);
+			msg("Comment added. Press <a href='./?m=view_ticket&t=" . to_int($q->param('t')) . "'>here</a> to continue.", 3);
 		}
 		else
 		{
@@ -1969,7 +1969,7 @@ elsif($q->param('m')) # Modules
 		headers("Tickets");
 		$sql = $db->prepare("UPDATE tickets SET subscribers = subscribers || ? WHERE ROWID = ?");
 		$sql->execute(" " . $logged_user, to_int($q->param('t')));
-		msg("Added you as a follower. Press <a href='./?m=tickets'>here</a> to continue.", 3);
+		msg("Added you as a follower. Press <a href='./?m=view_ticket&t=" . to_int($q->param('t')) . "'>here</a> to continue.", 3);
 	}
 	elsif($q->param('m') eq "unfollow_ticket" && $q->param('t') && $logged_user ne "")
 	{
@@ -1981,7 +1981,7 @@ elsif($q->param('m')) # Modules
 		$subs =~ s/\b$logged_user\b//g;
 		$sql = $db->prepare("UPDATE tickets SET subscribers = ? WHERE ROWID = ?");
 		$sql->execute($subs, to_int($q->param('t')));
-		msg("Removed you as a follower. Press <a href='./?m=tickets'>here</a> to continue.", 3);
+		msg("Removed you as a follower. Press <a href='./?m=view_ticket&t=" . to_int($q->param('t')) ."'>here</a> to continue.", 3);
 	}
 	elsif($q->param('m') eq "view_ticket" && $q->param('t'))
 	{
