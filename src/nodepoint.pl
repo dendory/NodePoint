@@ -26,7 +26,7 @@ my ($cfg, $db, $sql, $cn, $cp, $cgs, $last_login, $perf);
 my $logged_user = "";
 my $logged_lvl = -1;
 my $q = new CGI;
-my $VERSION = "1.0.9";
+my $VERSION = "1.1.0";
 my %items = ("Product", "Product", "Release", "Release", "Model", "SKU/Model");
 
 $perf = time/100;
@@ -104,18 +104,28 @@ sub navbar
 			print "	 <li><a href='.'>Login</a></li>\n";
 			print "	 <li class='active'><a href='./?m=products'>" . $items{"Product"} . "s</a></li>\n";
 			print "	 <li><a href='./?m=tickets'>Tickets</a></li>\n";
+			print "	 <li><a href='./?m=articles'>Articles</a></li>\n";
 		}
 		elsif($q->param('m') && ($q->param('m') eq "tickets" || $q->param('m') eq "follow_ticket" || $q->param('m') eq "unfollow_ticket" || $q->param('m') eq "update_comment" || $q->param('m') eq "add_comment" || $q->param('m') eq "new_ticket" || $q->param('m') eq "add_ticket" || $q->param('m') eq "view_ticket" || $q->param('m') eq "update_ticket"))
 		{
 			print "	 <li><a href='.'>Login</a></li>\n";
 			print "	 <li><a href='./?m=products'>" . $items{"Product"} . "s</a></li>\n";
 			print "	 <li class='active'><a href='./?m=tickets'>Tickets</a></li>\n";
+			print "	 <li><a href='./?m=articles'>Articles</a></li>\n";
+		}
+		elsif($q->param('kb') || $q->param('m') && ($q->param('m') eq "articles" || $q->param('m') eq "add_article" || $q->param('m') eq "save_article"))
+		{
+			print "	 <li><a href='.'>Login</a></li>\n";
+			print "	 <li><a href='./?m=products'>" . $items{"Product"} . "s</a></li>\n";
+			print "	 <li><a href='./?m=tickets'>Tickets</a></li>\n";
+			print "	 <li class='active'><a href='./?m=articles'>Articles</a></li>\n";
 		}
 		else
 		{
 			print "	 <li class='active'><a href='.'>Login</a></li>\n";
 			print "	 <li><a href='./?m=products'>" . $items{"Product"} . "s</a></li>\n";
 			print "	 <li><a href='./?m=tickets'>Tickets</a></li>\n";
+			print "	 <li><a href='./?m=articles'>Articles</a></li>\n";
 		}	    
 	}
 	else
@@ -125,6 +135,7 @@ sub navbar
 			print "	 <li><a href='.'>Home</a></li>\n";
 			print "	 <li><a href='./?m=products'>" . $items{"Product"} . "s</a></li>\n";
 			print "	 <li class='active'><a href='./?m=tickets'>Tickets</a></li>\n";
+			print "	 <li><a href='./?m=articles'>Articles</a></li>\n";
 			print "	 <li><a href='./?m=settings'>Settings</a></li>\n";
 		}
 		elsif($q->param('m') && ($q->param('m') eq "products" || $q->param('m') eq "add_product" ||$q->param('m') eq "view_product" || $q->param('m') eq "edit_product" || $q->param('m') eq "add_release"))
@@ -132,6 +143,7 @@ sub navbar
 			print "	 <li><a href='.'>Home</a></li>\n";
 			print "	 <li class='active'><a href='./?m=products'>" . $items{"Product"} . "s</a></li>\n";
 			print "	 <li><a href='./?m=tickets'>Tickets</a></li>\n";
+			print "	 <li><a href='./?m=articles'>Articles</a></li>\n";
 			print "	 <li><a href='./?m=settings'>Settings</a></li>\n";
 		}
 		elsif($q->param('m') && ($q->param('m') eq "settings" || $q->param('m') eq "confirm_delete" || $q->param('m') eq "clear_log" || $q->param('m') eq "stats" || $q->param('m') eq "change_lvl" || $q->param('m') eq "confirm_email" || $q->param('m') eq "reset_pass" || $q->param('m') eq "logout"))
@@ -139,13 +151,23 @@ sub navbar
 			print "	 <li><a href='.'>Home</a></li>\n";
 			print "	 <li><a href='./?m=products'>" . $items{"Product"} . "s</a></li>\n";
 			print "	 <li><a href='./?m=tickets'>Tickets</a></li>\n";
+			print "	 <li><a href='./?m=articles'>Articles</a></li>\n";
 			print "	 <li class='active'><a href='./?m=settings'>Settings</a></li>\n";
+		}
+		elsif($q->param('kb') || $q->param('m') && ($q->param('m') eq "articles" || $q->param('m') eq "add_article" || $q->param('m') eq "save_article"))
+		{
+			print "	 <li><a href='.'>Home</a></li>\n";
+			print "	 <li><a href='./?m=products'>" . $items{"Product"} . "s</a></li>\n";
+			print "	 <li><a href='./?m=tickets'>Tickets</a></li>\n";
+			print "	 <li class='active'><a href='./?m=articles'>Articles</a></li>\n";
+			print "	 <li><a href='./?m=settings'>Settings</a></li>\n";
 		}
 		else
 		{
 			print "	 <li class='active'><a href='.'>Home</a></li>\n";
 			print "	 <li><a href='./?m=products'>" . $items{"Product"} . "s</a></li>\n";
 			print "	 <li><a href='./?m=tickets'>Tickets</a></li>\n";
+			print "	 <li><a href='./?m=articles'>Articles</a></li>\n";
 			print "	 <li><a href='./?m=settings'>Settings</a></li>\n";
 		}
 	}
@@ -203,10 +225,10 @@ sub login
 	if($cfg->load('allow_registrations') && $cfg->load('allow_registrations') ne 'off' && !$cfg->load('ad_server'))
 	{
 		print "</div><div class='col-sm-6'><h3>Register a new account</h3><form method='POST' action='.'><br>\n";
-		print "<p>User name: <input type='text' name='new_name'></p>\n";
+		print "<p>User name: <input type='text' name='new_name' maxlength='16'></p>\n";
 		print "<p>Password: <input type='password' name='new_pass1'></p>\n";
 		print "<p>Confirm: <input type='password' name='new_pass2'></p>\n";
-		print "<p>Email (optional): <input type='email' name='new_email'></p>\n";
+		print "<p>Email (optional): <input type='email' name='new_email' maxlength='99'></p>\n";
 		print "<p><input class='btn btn-default' type='submit' value='Register'></p></form></div></div>\n";
 	}
 	print "</center>\n";
@@ -301,6 +323,14 @@ sub db_check
 	{
 		$sql = $db->prepare("CREATE TABLE autoassign (productid INT, user TEXT);");
 		$sql->execute();
+	};
+	$sql->finish();
+	$sql = $db->prepare("SELECT * FROM kb WHERE 0 = 1;") or do
+	{
+		$sql = $db->prepare("CREATE TABLE kb (productid INT, title TEXT, article TEXT, published INT, createdby TEXT, created TEXT, modified TEXT);");
+		$sql->execute();
+		$sql = $db->prepare("INSERT INTO kb VALUES (0, 'Using articles', 'Support articles are meant to help users understand the items managed by NodePoint. They are linked to one or all " . lc($items{"Product"}) . "s, and appear on the relevant " . lc($items{"Product"}) . " pages. Draft articles are only shown to users with access level 4 or above, and only those users can create new articles. Articles can then be used as part of ticket resolutions.', 0, 'api', ?, 'Never');");
+		$sql->execute(now());
 	};
 	$sql->finish();
 }
@@ -533,7 +563,7 @@ sub home
 		if($logged_lvl > 0) { print "<p>As an <span class='label label-success'>Authorised User</span>, you can also add new tickets to specific " . lc($items{"Product"}) . "s and " . lc($items{"Release"}) . "s, or comment on existing ones.</p>\n"; }
 		if($logged_lvl > 1) { print "<p>Since you have <span class='label label-success'>Restricted View</span> permission, you can also view restricted products and tickets, those not typically visible to normal users.</p>\n"; }
 		if($logged_lvl > 2) { print "<p>With <span class='label label-success'>Tickets Management</span> access, you can modify existing tickets entered by other users, such as change the status, add a resolution, or edit title and description. You can assign yourself to tickets, and you can also add new " . lc($items{"Release"}) . "s under the " . $items{"Product"} . "s tab.</p>\n"; }
-		if($logged_lvl > 3) { print "<p>As a <span class='label label-success'>" . $items{"Product"} . "s Management</span> user, you can add new " . lc($items{"Product"}) . "s, edit existing ones, or change their visibility, view statistics. Archiving a product will prevent users from adding new tickets for it.</p>\n" }
+		if($logged_lvl > 3) { print "<p>As a <span class='label label-success'>" . $items{"Product"} . "s Management</span> user, you can add new " . lc($items{"Product"}) . "s, edit existing ones, or change their visibility, view statistics, edit articles. Archiving a product will prevent users from adding new tickets for it.</p>\n" }
 		if($logged_lvl > 4) { print "<p>With the <span class='label label-success'>Users Managemenet</span> access level, you have the ability to edit users under the Settings tab. You can reset passwords and change access levels, along with adding new users. You can also delete comments under the Tickets tab.</p>\n"; }
 		if($logged_lvl > 5) { print "<p>Since you are logged in as <span class='label label-success'>NodePoint Administrator</span>, you can edit initial settings under the Settings tab. Note that it is good practice to use a lower access user to do your daily tasks.</p>\n" }
 		print "</div></div>\n";
@@ -691,7 +721,7 @@ elsif(!$cfg->load("db_address") || !$cfg->load("site_name")) # first use
 				print "<p><div class='row'><div class='col-sm-4'>Allow user registrations:</div><div class='col-sm-4'><input type='checkbox' name='allow_registrations' checked=checked></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Default access level:</div><div class='col-sm-4'><select name='default_lvl' style='width:300px'><option value=5>5 - Users management</option><option value=4>4 - Products management</option><option value=3>3 - Tickets management</option><option value=2>2 - Restricted view</option><option value=1 selected=selected>1 - Authorized users</option><option value=0>0 - Unauthorized users</option></select></div></div></p>\n";
 				print "<p>New registered users will be assigned a default access level, which can then be modified by users with the <b>5 - Users management</b> level. These are the access levels, with each rank having the lower permissions as well:</p>\n";
-				print "<table class='table table-striped'><tr><th>Level</th><th>Name</th><th>Description</th></tr><tr><td>6</td><td>NodePoint Admin</td><td>Can change basic NodePoint settings</td></tr><td>5</td><td>Users management</td><td>Can create users, reset passwords, change access levels</td></tr><tr><td>4</td><td>Products management</td><td>Can add, retire and edit products, view statistics</td></tr><tr><td>3</td><td>Tickets management</td><td>Can create releases, update tickets, track time</td></tr><tr><td>2</td><td>Restricted view</td><td>Can view restricted tickets and products</td></tr><tr><td>1</td><td>Authorized users</td><td>Can create tickets and comments</td></tr><tr><td>0</td><td>Unauthorized users</td><td>Can view private tickets</td></tr></table>\n";
+				print "<table class='table table-striped'><tr><th>Level</th><th>Name</th><th>Description</th></tr><tr><td>6</td><td>NodePoint Admin</td><td>Can change basic NodePoint settings</td></tr><td>5</td><td>Users management</td><td>Can create users, reset passwords, change access levels</td></tr><tr><td>4</td><td>Products management</td><td>Can add, retire and edit products, view statistics, edit articles</td></tr><tr><td>3</td><td>Tickets management</td><td>Can create releases, update tickets, track time</td></tr><tr><td>2</td><td>Restricted view</td><td>Can view restricted tickets and products</td></tr><tr><td>1</td><td>Authorized users</td><td>Can create tickets and comments</td></tr><tr><td>0</td><td>Unauthorized users</td><td>Can view private tickets</td></tr></table>\n";
 				my $key = join'', map +(0..9,'a'..'z','A'..'Z')[rand(10+26*2)], 1..32;
 				print "<p><div class='row'><div class='col-sm-4'>API read key:</div><div class='col-sm-4'><input type='text' style='width:300px' name='api_read' value='" . $key . "'></div></div></p>\n";
 				$key = join'', map +(0..9,'a'..'z','A'..'Z')[rand(10+26*2)], 1..32;
@@ -1538,7 +1568,7 @@ elsif($q->param('m')) # Modules
 		headers("Settings");
 		print "<p><form method='POST' action='.'><input type='hidden' name='m' value='change_lvl'><input type='hidden' name='u' value='" . sanitize_alpha($q->param('u')) . "'>Select a new access level for user <b>" . sanitize_alpha($q->param('u')) . "</b>: <select name='newlvl'><option>0</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select><br><input class='btn btn-default' type='submit' value='Change level'></form></p><br>\n";
 		print "<p>Here is a list of available NodePoint levels:</p>\n";
-		print "<table class='table table-striped'><tr><th>Level</th><th>Name</th><th>Description</th></tr><tr><td>6</td><td>NodePoint Admin</td><td>Can change basic NodePoint settings</td></tr><td>5</td><td>Users management</td><td>Can create users, reset passwords, change access levels</td></tr><tr><td>4</td><td>" . $items{"Product"} . "s management</td><td>Can add, retire and edit " . lc($items{"Product"}) . "s, view statistics</td></tr><tr><td>3</td><td>Tickets management</td><td>Can create " . lc($items{"Release"}) . "s, update tickets, track time</td></tr><tr><td>2</td><td>Restricted view</td><td>Can view restricted tickets and " . lc($items{"Product"}) . "s</td></tr><tr><td>1</td><td>Authorized users</td><td>Can create tickets and comments</td></tr><tr><td>0</td><td>Unauthorized users</td><td>Can view private tickets</td></tr></table>\n";
+		print "<table class='table table-striped'><tr><th>Level</th><th>Name</th><th>Description</th></tr><tr><td>6</td><td>NodePoint Admin</td><td>Can change basic NodePoint settings</td></tr><td>5</td><td>Users management</td><td>Can create users, reset passwords, change access levels</td></tr><tr><td>4</td><td>" . $items{"Product"} . "s management</td><td>Can add, retire and edit " . lc($items{"Product"}) . "s, view statistics, edit articles</td></tr><tr><td>3</td><td>Tickets management</td><td>Can create " . lc($items{"Release"}) . "s, update tickets, track time</td></tr><tr><td>2</td><td>Restricted view</td><td>Can view restricted tickets and " . lc($items{"Product"}) . "s</td></tr><tr><td>1</td><td>Authorized users</td><td>Can create tickets and comments</td></tr><tr><td>0</td><td>Unauthorized users</td><td>Can view private tickets</td></tr></table>\n";
 	}
 	elsif($q->param('m') eq "reset_pass" && $logged_lvl > 4 && $q->param('u'))
 	{
@@ -1565,6 +1595,79 @@ elsif($q->param('m')) # Modules
 			$sql->execute(to_int($q->param('p')), $logged_user);
 			msg("Removed yourself from auto-assignment. Press <a href='./?m=view_product&p=" . to_int($q->param('p')) . "'>here</a> to continue.", 3);		
 		}
+	}
+	elsif($q->param('m') eq "save_article" && defined($q->param('article')) && defined($q->param('productid')) && $q->param('id') && defined($q->param('title')) && defined($q->param('published')) && $logged_lvl > 3)
+	{
+		headers("Articles");
+		if(length(sanitize_html($q->param('title'))) < 2 || length(sanitize_html($q->param('title'))) > 50)
+		{
+			msg("The title must be between 2 and 30 characters. Please go back and try again.", 0);
+		}
+		else
+		{
+			$sql = $db->prepare("UPDATE kb SET title = ?, article = ?, published = ?, modified = ?, productid = ? WHERE ROWID = ?;");
+			$sql->execute(sanitize_html($q->param('title')), sanitize_html($q->param('article')), to_int($q->param('published')), now(), to_int($q->param('productid')), to_int($q->param('id')));
+			msg("Article <b>" . to_int($q->param('id')) . "</b> saved. Press <a href='./?m=articles'>here</a> to continue.", 3);
+		}		
+	}
+	elsif($q->param('m') eq "add_article" && $logged_lvl > 3 && defined($q->param('productid')) && defined($q->param('title')))
+	{
+		headers("Articles");
+		if(length(sanitize_html($q->param('title'))) < 2 || length(sanitize_html($q->param('title'))) > 50)
+		{
+			msg("The title must be between 2 and 30 characters. Please go back and try again.", 0);
+		}
+		else
+		{
+			$sql = $db->prepare("INSERT INTO kb VALUES (?, ?, '', 0, ?, ?, 'Never');");
+			$sql->execute(to_int($q->param('productid')), sanitize_html($q->param('title')), $logged_user, now());
+			msg("New draft article <b>" . sanitize_html($q->param('title')) . "</b> added. Press <a href='./?m=articles'>here</a> to continue.", 3);
+		}
+	}
+	elsif($q->param('m') eq "articles")
+	{
+		headers("Articles");
+		my @products;
+		my $product;
+		my $status;
+		$sql = $db->prepare("SELECT ROWID,* FROM products;");
+		$sql->execute();
+		while(my @res = $sql->fetchrow_array()) { $products[$res[0]] = $res[1]; }
+		if($logged_lvl > 3)
+		{
+			print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Add new article</h3></div><div class='panel-body'>\n";
+			print "<form action='.' method='GET'><input type='hidden' name='m' value='add_article'>Title: <input style='width:300px' type='text' name='title' maxlength='50'><br>" . $items{"Product"} . ": <select name='productid'><option value='0'>All</option>";
+			for(my $i = 1; $i < scalar(@products); $i++)
+			{
+				print "<option value='" . $i . "'>" . $products[$i] . "</option>";
+			}
+			print "<input type='submit' class='btn btn-default pull-right' value='Add article'></form></div></div>\n";
+		}
+		print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Support articles</h3></div><div class='panel-body'><table class='table table-striped'>\n";
+		if($logged_lvl > 3) { print "<tr><th>ID</th><th>" . $items{"Product"} . "</th><th>Title</th><th>Status</th><th>Last update</th></tr>"; }
+		else { print "<tr><th>ID</th><th>" . $items{"Product"} . "</th><th>Title</th><th>Last update</th></tr>"; }
+		if($logged_lvl > 3) { $sql = $db->prepare("SELECT ROWID,* FROM kb;"); }
+		else { $sql = $db->prepare("SELECT ROWID,* FROM kb WHERE published = 1;"); }
+		$sql->execute();
+		while(my @res = $sql->fetchrow_array())
+		{
+			if(to_int($res[1]) == 0) { $product = "All"; }
+			else { $product = $products[$res[1]]; }
+			if(to_int($res[4]) == 0) { $status = "Draft"; }
+			else { $status = "Published"; }			
+			if($logged_lvl > 3)
+			{
+				
+				if($res[7] eq "Never") { print "<tr><td>" . $res[0] . "</td><td>" . $product . "</td><td><a href='./?kb=" . $res[0] . "'>" . $res[2] . "</a></td><td>" . $status . "</td><td>" . $res[6] . "</td></tr>\n"; }
+				else { print "<tr><td>" . $res[0] . "</td><td>" . $product . "</td><td><a href='./?kb=" . $res[0] . "'>" . $res[2] . "</a></td><td>" . $status . "</td><td>" . $res[7] . "</td></tr>\n"; }
+			}
+			else
+			{
+				if($res[7] eq "Never") { print "<tr><td>" . $res[0] . "</td><td>" . $product . "</td><td><a href='./?kb=" . $res[0] . "'>" . $res[2] . "</a></td><td>" . $res[6] . "</td></tr>\n"; }
+				else { print "<tr><td>" . $res[0] . "</td><td>" . $product . "</td><td><a href='./?kb=" . $res[0] . "'>" . $res[2] . "</a></td><td>" . $res[7] . "</td></tr>\n"; }
+			}			
+		}
+		print "</table></div></div>\n";
 	}
 	elsif($q->param('m') eq "view_product" && $q->param('p'))
 	{
@@ -1637,6 +1740,30 @@ elsif($q->param('m')) # Modules
 				print "</table></div></div>\n";
 			}
 		}
+		print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Related articles</h3></div><div class='panel-body'><table class='table table-striped'>\n";
+		if($logged_lvl > 3) { print "<tr><th>ID</th><th>Title</th><th>Status</th><th>Last update</th></tr>"; }
+		else { print "<tr><th>ID</th><th>Title</th><th>Last update</th></tr>"; }
+		if($logged_lvl > 3) { $sql = $db->prepare("SELECT ROWID,* FROM kb WHERE (productid = ? OR productid = 0);"); }
+		else { $sql = $db->prepare("SELECT ROWID,* FROM kb WHERE published = 1 AND (productid = ? OR productid = 0);"); }
+		$sql->execute(to_int($q->param('p')));
+		my $status;
+		while(my @res = $sql->fetchrow_array())
+		{
+			if(to_int($res[4]) == 0) { $status = "Draft"; }
+			else { $status = "Published"; }			
+			if($logged_lvl > 3)
+			{
+				
+				if($res[7] eq "Never") { print "<tr><td>" . $res[0] . "</td><td><a href='./?kb=" . $res[0] . "'>" . $res[2] . "</a></td><td>" . $status . "</td><td>" . $res[6] . "</td></tr>\n"; }
+				else { print "<tr><td>" . $res[0] . "</td><td><a href='./?kb=" . $res[0] . "'>" . $res[2] . "</a></td><td>" . $status . "</td><td>" . $res[7] . "</td></tr>\n"; }
+			}
+			else
+			{
+				if($res[7] eq "Never") { print "<tr><td>" . $res[0] . "</td><td><a href='./?kb=" . $res[0] . "'>" . $res[2] . "</a></td><td>" . $res[6] . "</td></tr>\n"; }
+				else { print "<tr><td>" . $res[0] . "</td><td><a href='./?kb=" . $res[0] . "'>" . $res[2] . "</a></td><td>" . $res[7] . "</td></tr>\n"; }
+			}			
+		}
+		print "</table></div></div>\n";
 	}
 	elsif($logged_lvl > 2 && $q->param('m') eq "add_release")
 	{
@@ -2193,7 +2320,7 @@ elsif($q->param('m')) # Modules
 			$sql->execute(to_int($q->param('product_id')));
 			while(my @res = $sql->fetchrow_array()) { print "<option>" . $res[3] . "</option>"; }
 			print "</select></div></div></p>\n";
-			print "<p>Ticket title: <input type='text' name='ticket_title' style='width:70%'></p>\n";
+			print "<p>Ticket title: <input type='text' name='ticket_title' style='width:70%' maxlength='99'></p>\n";
 			print "<p>Description:<br><textarea name='ticket_desc' rows='5' style='width:95%'></textarea></p>\n";
 			if($cfg->load('custom_type') eq "Checkbox") { print $cfg->load('custom_name') . ": <input type='checkbox' name='ticket_link'>\n"; }
 			else { print $cfg->load('custom_name') . ": <input type='text' name='ticket_link' style='width:50%'>\n"; }
@@ -2519,6 +2646,48 @@ elsif($q->param('m')) # Modules
 		msg("Unknown module or access denied.", 0);
 	}
 	footers();
+}
+elsif($q->param('kb'))
+{
+	headers("Articles");
+	my @products;
+	$sql = $db->prepare("SELECT ROWID,* FROM products;");
+	$sql->execute();
+	while(my @res = $sql->fetchrow_array()) { $products[$res[0]] = $res[1]; }
+
+	$sql = $db->prepare("SELECT ROWID,* FROM kb WHERE ROWID = ?;");
+	$sql->execute(to_int($q->param('kb')));
+	while(my @res = $sql->fetchrow_array())
+	{
+		if($res[7] eq "Never") { print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'><span style='float:right'>Created: <i>" . $res[6] . "</i></span>Article " . to_int($q->param('kb')) . "</h3></div><div class='panel-body'>\n"; }
+		else { print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'><span style='float:right'>Last modified: <i>" . $res[7] . "</i></span>Article " . to_int($q->param('kb')) . "</h3></div><div class='panel-body'>\n"; }
+		if($logged_lvl > 3)
+		{
+			print "<form method='POST' action='.'><input type='hidden' name='m' value='save_article'><input type='hidden' name='id' value='" . to_int($q->param('kb')) . "'>\n";
+			print "<div class='row'><div class='col-sm-6'>Title: <input type='text' maxlength='50' style='width:300px' name='title' value='" . $res[2] . "'></div><div class='col-sm-6'>\n";
+			if(to_int($res[4]) == 0) { print "Article status: <select name='published'><option value='0' selected>Draft</option><option value='1'>Published</option></select>\n"; }
+			else { print "Article status: <select name='published'><option value='0'>Draft</option><option value='1' selected>Published</option></select>\n"; }
+			print "</div></div><p>Applies to: <select name='productid'>";
+			if($res[1] == 0) { print "<option value='0' selected>All</option>"; }
+			else { print "<option value='0'>All</option>"; }
+			for(my $i = 1; $i < scalar(@products); $i++)
+			{
+				if($res[1] == $i) { print "<option value='" . $i . "' selected>" . $products[$i] . "</option>"; }
+				else { print "<option value='" . $i . "'>" . $products[$i] . "</option>"; }
+			}
+			print "</select></p>";
+			print "<p>Description:<br><textarea name='article' rows='20' style='width:95%'>" . $res[3] . "</textarea></p>\n";
+			print "<input type='submit' class='btn btn-default pull-right' value='Save article'></form>";
+		}
+		else
+		{
+			print "<p>Title: <b>" . $res[2] . "</b></p>\n";
+			if($res[1] == 0) { print "<p>Applies to: <b>All " . lc($items{"Product"}) . "s</b></p>\n"; }
+			else { print "<p>Applies to: <b>" . $products[$res[1]] . "</b></p>\n"; }
+			print "<p>Description:<br><pre>" . $res[3] . "</pre></p>\n";
+		}
+	}
+	print "</div></div>";
 }
 elsif(!$cfg->load("ad_server") && $q->param('new_name') && $q->param('new_pass1') && $q->param('new_pass2') && ($logged_lvl > 4 || $cfg->load('allow_registrations'))) # Process registration
 {
