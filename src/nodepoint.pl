@@ -99,7 +99,7 @@ sub navbar
 	}
 	elsif($logged_user eq "")
 	{
-		if($q->param('m') && ($q->param('m') eq "products" || $q->param('m') eq "add_product" ||$q->param('m') eq "view_product" || $q->param('m') eq "edit_product" || $q->param('m') eq "add_release"))
+		if($q->param('m') && ($q->param('m') eq "products" || $q->param('m') eq "add_product" || $q->param('m') eq "auto_assign" || $q->param('m') eq "view_product" || $q->param('m') eq "edit_product" || $q->param('m') eq "add_release"))
 		{
 			print "	 <li><a href='.'>Login</a></li>\n";
 			print "	 <li class='active'><a href='./?m=products'>" . $items{"Product"} . "s</a></li>\n";
@@ -294,6 +294,12 @@ sub db_check
 	$sql = $db->prepare("SELECT * FROM timetracking WHERE 0 = 1;") or do
 	{
 		$sql = $db->prepare("CREATE TABLE timetracking (ticketid INT, name TEXT, spent REAL, time TEXT);");
+		$sql->execute();
+	};
+	$sql->finish();
+	$sql = $db->prepare("SELECT * FROM autoassign WHERE 0 = 1;") or do
+	{
+		$sql = $db->prepare("CREATE TABLE autoassign (productid INT, user TEXT);");
 		$sql->execute();
 	};
 	$sql->finish();
@@ -1544,6 +1550,22 @@ elsif($q->param('m')) # Modules
 		notify(sanitize_alpha($q->param('u')), "Password reset", "Your password has been reset by user: " . $logged_user);
 		logevent("Password change: " . sanitize_alpha($q->param('u')));
 	}
+	elsif($q->param('m') eq "auto_assign" && $q->param('p') && $q->param('a') && $logged_lvl > 2)
+	{
+		headers("Products");
+		if($q->param('a') eq "Auto-assign yourself")
+		{
+			$sql = $db->prepare("INSERT INTO autoassign VALUES (?, ?);");
+			$sql->execute(to_int($q->param('p')), $logged_user);
+			msg("Added yourself to auto-assignment. Press <a href='./?m=view_product&p=" . to_int($q->param('p')) . "'>here</a> to continue.", 3);
+		}
+		else
+		{
+			$sql = $db->prepare("DELETE FROM autoassign WHERE productid = ? AND user = ?;");
+			$sql->execute(to_int($q->param('p')), $logged_user);
+			msg("Removed yourself from auto-assignment. Press <a href='./?m=view_product&p=" . to_int($q->param('p')) . "'>here</a> to continue.", 3);		
+		}
+	}
 	elsif($q->param('m') eq "view_product" && $q->param('p'))
 	{
 		headers($items{"Product"} . "s");
@@ -1570,14 +1592,30 @@ elsif($q->param('m')) # Modules
 					if($res[5] eq "Restricted") { print " selected=selected"; }
 					print ">Restricted</option><option";
 					if($res[5] eq "Archived") { print " selected=selected"; }
-					print ">Archived</option></select></div></div>\n";
+					print ">Archived</option></select></div>\n";
 				}
-				else { print "<div class='row'><div class='col-sm-6'>" . $items{"Product"} . " visibility: <b>" . $res[5] . "</b></div></div>\n"; }
+				else { print "<div class='row'><div class='col-sm-6'>" . $items{"Product"} . " visibility: <b>" . $res[5] . "</b></div>"; }
+				print "<div class='col-sm-6'>Auto-assigned to:<b>";
+				my $sql2 = $db->prepare("SELECT user FROM autoassign WHERE productid = ?;");
+				$sql2->execute(to_int($q->param('p')));
+				while(my @res2 = $sql2->fetchrow_array()) { print " " . $res2[0]; }
+				print "</b></div></div>\n";
 				if($logged_lvl > 3) { print "Description:<br><textarea rows='10' name='product_desc' style='width:99%'>" . $res[3] . "</textarea>\n"; }
 				else { print "Description:<br><pre>" . $res[3] . "</pre>\n"; }
 				if($res[4] ne "") { print "<p><img src='./?file=" . $res[4] . "' style='max-width:95%'></p>\n"; }
 				if($logged_lvl > 3) { print "<input class='btn btn-default pull-right' type='submit' value='Update " . lc($items{"Product"}) . "'>Change " . lc($items{"Product"}) . " image: <input type='file' name='product_screenshot'></form>\n"; }
 				if($logged_user eq $cfg->load("admin_name")) { print "<form method='GET' action='.'><input type='hidden' name='m' value='confirm_delete'><input type='hidden' name='productid' value='" . to_int($q->param('p')) . "'><input type='submit' class='btn btn-danger pull-right' value='Permanently delete this " . lc($items{"Product"}) . "'></form>"; }
+				if($logged_lvl > 2)
+				{
+					my $sql2 = $db->prepare("SELECT * FROM autoassign WHERE productid = ? AND user = ?;");
+					$sql2->execute(to_int($q->param('p')), $logged_user);
+					my $found = 0;
+					while(my @res2 = $sql2->fetchrow_array()) { $found = 1; }
+					print "<p><form method='GET' action='.'><input type='hidden' name='m' value='auto_assign'><input type='hidden' name='p' value='" . to_int($q->param('p')) . "'><input class='btn btn-default' type='submit' name='a' value='";
+					if($found == 0) { print "Auto-assign yourself"; }
+					else { print "Remove auto-assignment"; }
+					print "'></form></p>";
+				}
 				print "</div></div>\n";
 			}
 			if($logged_lvl > 2 && $vis ne "Archived")
@@ -2111,13 +2149,21 @@ elsif($q->param('m')) # Modules
 					if($lnk eq "on") { $lnk = "Yes"; }
 					else { $lnk = "No"; }
 				}
+				my $assignedto = "";
+				$sql = $db->prepare("SELECT user FROM autoassign WHERE productid = ?;");
+				$sql->execute(to_int($q->param('product_id')));
+				while(my @res = $sql->fetchrow_array()) { $assignedto .= $res[0] . " "; }
 				$sql = $db->prepare("INSERT INTO tickets VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);");
-				$sql->execute(to_int($q->param('product_id')), sanitize_html($q->param('release_id')), $logged_user, "", sanitize_html($q->param('ticket_title')), sanitize_html($q->param('ticket_desc')), $lnk, "New", "", "", now(), "Never");
+				$sql->execute(to_int($q->param('product_id')), sanitize_html($q->param('release_id')), $logged_user, $assignedto, sanitize_html($q->param('ticket_title')), sanitize_html($q->param('ticket_desc')), $lnk, "New", "", "", now(), "Never");
 				$sql = $db->prepare("SELECT * FROM releases WHERE productid = ?;");
 				$sql->execute(to_int($q->param('product_id')));
 				while(my @res = $sql->fetchrow_array())
 				{
 					notify($res[1], "New ticket created", "A new ticket was created for one of your products:\n\nUser: " . $logged_user . "\nTitle: " . sanitize_html($q->param('ticket_title')) . "\n" . $cfg->load('custom_name') . ": " . $lnk . "\nDescription: " . $q->param('ticket_desc'));
+				}
+				foreach my $assign (split(' ', $assignedto))
+				{
+					notify($assign, "New ticket created", "A new ticket was created for a product assigned to you:\n\nUser: " . $logged_user . "\nTitle: " . sanitize_html($q->param('ticket_title')) . "\n" . $cfg->load('custom_name') . ": " . $lnk . "\nDescription: " . $q->param('ticket_desc'));
 				}
 				msg("Ticket successfully added. Press <a href='./?m=tickets'>here</a> to continue.", 3);
 			}
@@ -2195,6 +2241,10 @@ elsif($q->param('m')) # Modules
 					$sql2->execute(to_int($res[0]));				
 				}
 				$sql = $db->prepare("DELETE FROM tickets WHERE productid = ?;");
+				$sql->execute(to_int($q->param('productid')));
+				$sql = $db->prepare("DELETE FROM releases WHERE productid = ?;");
+				$sql->execute(to_int($q->param('productid')));
+				$sql = $db->prepare("DELETE FROM autoassign WHERE productid = ?;");
 				$sql->execute(to_int($q->param('productid')));
 				$sql = $db->prepare("DELETE FROM products WHERE ROWID = ?;");
 				$sql->execute(to_int($q->param('productid')));
