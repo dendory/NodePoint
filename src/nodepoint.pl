@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 #
-# NodePoint - (C) 2015 Patrick Lambert - http://dendory.net/nodepoint
+# NodePoint - (C) 2015 Patrick Lambert - http://nodepoint.ca
 # Provided under the MIT License
 #
 # To use on Windows: Change all 'Linux' for 'Win32' in this file.
@@ -8,7 +8,7 @@
 #
 
 use strict;
-use Config::Win32;
+use Config::Linux;
 use Digest::SHA qw(sha1_hex);
 use DBI;
 use CGI;
@@ -613,11 +613,11 @@ sub home
 # Connect to config
 eval
 {
-	$cfg = Config::Win32->new("NodePoint", "settings");
+	$cfg = Config::Linux->new("NodePoint", "settings");
 };
 if(!defined($cfg)) # Can't even use headers() if this fails.
 {
-	print "Content-type: text/html\n\nError: Could not access " . Config::Win32->type . ". Please ensure NodePoint has the proper permissions.";
+	print "Content-type: text/html\n\nError: Could not access " . Config::Linux->type . ". Please ensure NodePoint has the proper permissions.";
 	exit(0);
 };
 
@@ -1601,7 +1601,7 @@ elsif($q->param('m')) # Modules
 		headers("Articles");
 		if(length(sanitize_html($q->param('title'))) < 2 || length(sanitize_html($q->param('title'))) > 50)
 		{
-			msg("The title must be between 2 and 30 characters. Please go back and try again.", 0);
+			msg("The title must be between 2 and 50 characters. Please go back and try again.", 0);
 		}
 		else
 		{
@@ -2659,35 +2659,43 @@ elsif($q->param('kb'))
 	$sql->execute(to_int($q->param('kb')));
 	while(my @res = $sql->fetchrow_array())
 	{
-		if($res[7] eq "Never") { print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'><span style='float:right'>Created: <i>" . $res[6] . "</i></span>Article " . to_int($q->param('kb')) . "</h3></div><div class='panel-body'>\n"; }
-		else { print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'><span style='float:right'>Last modified: <i>" . $res[7] . "</i></span>Article " . to_int($q->param('kb')) . "</h3></div><div class='panel-body'>\n"; }
-		if($logged_lvl > 3)
+		if($logged_lvl > 3 || $res[4] == 1)
 		{
-			print "<form method='POST' action='.'><input type='hidden' name='m' value='save_article'><input type='hidden' name='id' value='" . to_int($q->param('kb')) . "'>\n";
-			print "<div class='row'><div class='col-sm-6'>Title: <input type='text' maxlength='50' style='width:300px' name='title' value='" . $res[2] . "'></div><div class='col-sm-6'>\n";
-			if(to_int($res[4]) == 0) { print "Article status: <select name='published'><option value='0' selected>Draft</option><option value='1'>Published</option></select>\n"; }
-			else { print "Article status: <select name='published'><option value='0'>Draft</option><option value='1' selected>Published</option></select>\n"; }
-			print "</div></div><p>Applies to: <select name='productid'>";
-			if($res[1] == 0) { print "<option value='0' selected>All</option>"; }
-			else { print "<option value='0'>All</option>"; }
-			for(my $i = 1; $i < scalar(@products); $i++)
+			if($res[7] eq "Never") { print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'><span style='float:right'>Created: <i>" . $res[6] . "</i></span>Article " . to_int($q->param('kb')) . "</h3></div><div class='panel-body'>\n"; }
+			else { print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'><span style='float:right'>Last modified: <i>" . $res[7] . "</i></span>Article " . to_int($q->param('kb')) . "</h3></div><div class='panel-body'>\n"; }
+			if($logged_lvl > 3)
 			{
-				if($res[1] == $i) { print "<option value='" . $i . "' selected>" . $products[$i] . "</option>"; }
-				else { print "<option value='" . $i . "'>" . $products[$i] . "</option>"; }
+				print "<form method='POST' action='.'><input type='hidden' name='m' value='save_article'><input type='hidden' name='id' value='" . to_int($q->param('kb')) . "'>\n";
+				print "<div class='row'><div class='col-sm-6'>Title: <input type='text' maxlength='50' style='width:300px' name='title' value='" . $res[2] . "'></div><div class='col-sm-6'>\n";
+				if(to_int($res[4]) == 0) { print "Article status: <select name='published'><option value='0' selected>Draft</option><option value='1'>Published</option></select>\n"; }
+				else { print "Article status: <select name='published'><option value='0'>Draft</option><option value='1' selected>Published</option></select>\n"; }
+				print "</div></div><p>Applies to: <select name='productid'>";
+				if($res[1] == 0) { print "<option value='0' selected>All</option>"; }
+				else { print "<option value='0'>All</option>"; }
+				for(my $i = 1; $i < scalar(@products); $i++)
+				{
+					if($res[1] == $i) { print "<option value='" . $i . "' selected>" . $products[$i] . "</option>"; }
+					else { print "<option value='" . $i . "'>" . $products[$i] . "</option>"; }
+				}
+				print "</select></p>";
+				print "<p>Description:<br><textarea name='article' rows='20' style='width:95%'>" . $res[3] . "</textarea></p>\n";
+				print "<input type='submit' class='btn btn-default pull-right' value='Save article'></form>";
 			}
-			print "</select></p>";
-			print "<p>Description:<br><textarea name='article' rows='20' style='width:95%'>" . $res[3] . "</textarea></p>\n";
-			print "<input type='submit' class='btn btn-default pull-right' value='Save article'></form>";
+			else
+			{
+				print "<p>Title: <b>" . $res[2] . "</b></p>\n";
+				if($res[1] == 0) { print "<p>Applies to: <b>All " . lc($items{"Product"}) . "s</b></p>\n"; }
+				else { print "<p>Applies to: <b>" . $products[$res[1]] . "</b></p>\n"; }
+				print "<p>Description:<br><pre>" . $res[3] . "</pre></p>\n";
+			}
 		}
 		else
 		{
-			print "<p>Title: <b>" . $res[2] . "</b></p>\n";
-			if($res[1] == 0) { print "<p>Applies to: <b>All " . lc($items{"Product"}) . "s</b></p>\n"; }
-			else { print "<p>Applies to: <b>" . $products[$res[1]] . "</b></p>\n"; }
-			print "<p>Description:<br><pre>" . $res[3] . "</pre></p>\n";
+			msg("This article is not available.", 0);
 		}
 	}
 	print "</div></div>";
+	footers();
 }
 elsif(!$cfg->load("ad_server") && $q->param('new_name') && $q->param('new_pass1') && $q->param('new_pass2') && ($logged_lvl > 4 || $cfg->load('allow_registrations'))) # Process registration
 {
