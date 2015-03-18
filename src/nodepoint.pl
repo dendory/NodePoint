@@ -26,7 +26,7 @@ my ($cfg, $db, $sql, $cn, $cp, $cgs, $last_login, $perf);
 my $logged_user = "";
 my $logged_lvl = -1;
 my $q = new CGI;
-my $VERSION = "1.1.0";
+my $VERSION = "1.1.1";
 my %items = ("Product", "Product", "Release", "Release", "Model", "SKU/Model");
 
 $perf = time/100;
@@ -1639,7 +1639,7 @@ elsif($q->param('m')) # Modules
 			print "<form action='.' method='GET'><input type='hidden' name='m' value='add_article'>Title: <input style='width:300px' type='text' name='title' maxlength='50'><br>" . $items{"Product"} . ": <select name='productid'><option value='0'>All</option>";
 			for(my $i = 1; $i < scalar(@products); $i++)
 			{
-				print "<option value='" . $i . "'>" . $products[$i] . "</option>";
+				if($products[$i]) { print "<option value='" . $i . "'>" . $products[$i] . "</option>"; }
 			}
 			print "<input type='submit' class='btn btn-default pull-right' value='Add article'></form></div></div>\n";
 		}
@@ -1652,6 +1652,7 @@ elsif($q->param('m')) # Modules
 		while(my @res = $sql->fetchrow_array())
 		{
 			if(to_int($res[1]) == 0) { $product = "All"; }
+			elsif(!$products[$res[1]]) { $product = "All"; }
 			else { $product = $products[$res[1]]; }
 			if(to_int($res[4]) == 0) { $status = "Draft"; }
 			else { $status = "Published"; }			
@@ -2674,8 +2675,11 @@ elsif($q->param('kb'))
 				else { print "<option value='0'>All</option>"; }
 				for(my $i = 1; $i < scalar(@products); $i++)
 				{
-					if($res[1] == $i) { print "<option value='" . $i . "' selected>" . $products[$i] . "</option>"; }
-					else { print "<option value='" . $i . "'>" . $products[$i] . "</option>"; }
+					if($products[$i])
+					{
+						if($res[1] == $i) { print "<option value='" . $i . "' selected>" . $products[$i] . "</option>"; }
+						else { print "<option value='" . $i . "'>" . $products[$i] . "</option>"; }
+					}
 				}
 				print "</select></p>";
 				print "<p>Description:<br><textarea name='article' rows='20' style='width:95%'>" . $res[3] . "</textarea></p>\n";
