@@ -8,7 +8,7 @@
 #
 
 use strict;
-use Config::Linux;
+use Config::Win32;
 use Digest::SHA qw(sha1_hex);
 use DBI;
 use CGI;
@@ -26,7 +26,7 @@ my ($cfg, $db, $sql, $cn, $cp, $cgs, $last_login, $perf);
 my $logged_user = "";
 my $logged_lvl = -1;
 my $q = new CGI;
-my $VERSION = "1.1.1";
+my $VERSION = "1.1.2";
 my %items = ("Product", "Product", "Release", "Release", "Model", "SKU/Model");
 
 $perf = time/100;
@@ -325,6 +325,12 @@ sub db_check
 		$sql->execute();
 	};
 	$sql->finish();
+	$sql = $db->prepare("SELECT * FROM forms WHERE 0 = 1;") or do
+	{
+		$sql = $db->prepare("CREATE TABLE forms (productid INT, formname TEXT, field0 TEXT, field0type INT, field1 TEXT, field1type INT, field2 TEXT, field2type INT, field3 TEXT, field3type INT, field4 TEXT, field4type INT, field5 TEXT, field5type INT, field6 TEXT, field6type INT, field7 TEXT, field7type INT, field8 TEXT, field8type INT, field9 TEXT, field9type INT);");
+		$sql->execute();
+	};
+	$sql->finish();
 	$sql = $db->prepare("SELECT * FROM kb WHERE 0 = 1;") or do
 	{
 		$sql = $db->prepare("CREATE TABLE kb (productid INT, title TEXT, article TEXT, published INT, createdby TEXT, created TEXT, modified TEXT);");
@@ -613,11 +619,11 @@ sub home
 # Connect to config
 eval
 {
-	$cfg = Config::Linux->new("NodePoint", "settings");
+	$cfg = Config::Win32->new("NodePoint", "settings");
 };
 if(!defined($cfg)) # Can't even use headers() if this fails.
 {
-	print "Content-type: text/html\n\nError: Could not access " . Config::Linux->type . ". Please ensure NodePoint has the proper permissions.";
+	print "Content-type: text/html\n\nError: Could not access " . Config::Win32->type . ". Please ensure NodePoint has the proper permissions.";
 	exit(0);
 };
 
@@ -1391,6 +1397,18 @@ elsif($q->param('m')) # Modules
 			print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Statistics</h3></div><div class='panel-body'>\n";
 			print "<p><form method='GET' action='.'><input type='hidden' name='m' value='stats'>Report type: <select name='report'><option value='1'>Time spent per user</option><option value='2'>Time spent per ticket</option><option value='3'>Tickets created per " . lc($items{"Product"}) . "</option><option value='4'>Tickets created per user</option><option value='5'>Tickets created per day</option><option value='6'>Tickets created per month</option><option value='7'>Tickets per status</option><option value='8'>Users per access level</option><option value='9'>Tickets assigned per user</option></select><span class='pull-right'><input class='btn btn-default' type='submit' value='Show'> <input class='btn btn-default' type='submit' name='csv' value='Export as CSV'></span>\n";
 			print "</form></p></div></div>\n";
+		}
+		if($logged_lvl > 3)
+		{
+			print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Custom forms</h3></div><div class='panel-body'>\n";
+			print "<p><table class='table table-striped'><tr><th>Assigned product</th><th>Form name</th><th>Edit</th></tr>";
+			$sql = $db->prepare("SELECT ROWID,* FROM forms;");
+			$sql->execute();
+			while(my @res = $sql->fetchrow_array())
+			{
+				print "<tr><td>" . $res[1] . "</td><td>" . $res[2] . "</td><td><a href='./?edit_form=" . $res[0] . "'>Edit</a></td></tr>\n";
+			}
+			print "</table><form method='GET' action='./'><input type='hidden' name='create_form' value='1'><input type='submit' value='Create new custom form' class='pull-right btn btn-default'></form></p></div></div>\n";
 		}
 		if($logged_lvl > 5)
 		{
