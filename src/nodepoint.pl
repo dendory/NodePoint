@@ -146,7 +146,7 @@ sub navbar
 			print "	 <li><a href='./?m=articles'>Articles</a></li>\n";
 			print "	 <li><a href='./?m=settings'>Settings</a></li>\n";
 		}
-		elsif($q->param('m') && ($q->param('m') eq "settings" || $q->param('m') eq "confirm_delete" || $q->param('m') eq "clear_log" || $q->param('m') eq "stats" || $q->param('m') eq "change_lvl" || $q->param('m') eq "confirm_email" || $q->param('m') eq "reset_pass" || $q->param('m') eq "logout"))
+		elsif($q->param('m') && ($q->param('m') eq "settings" || $q->param('m') eq "confirm_delete" || $q->param('m') eq "clear_log" || $q->param('m') eq "stats" || $q->param('m') eq "change_lvl" || $q->param('m') eq "confirm_email" || $q->param('m') eq "reset_pass" || $q->param('m') eq "logout") || $q->param('create_form') || $q->param('edit_form') || $q->param('save_form'))
 		{
 			print "	 <li><a href='.'>Home</a></li>\n";
 			print "	 <li><a href='./?m=products'>" . $items{"Product"} . "s</a></li>\n";
@@ -327,7 +327,7 @@ sub db_check
 	$sql->finish();
 	$sql = $db->prepare("SELECT * FROM forms WHERE 0 = 1;") or do
 	{
-		$sql = $db->prepare("CREATE TABLE forms (productid INT, formname TEXT, field0 TEXT, field0type INT, field1 TEXT, field1type INT, field2 TEXT, field2type INT, field3 TEXT, field3type INT, field4 TEXT, field4type INT, field5 TEXT, field5type INT, field6 TEXT, field6type INT, field7 TEXT, field7type INT, field8 TEXT, field8type INT, field9 TEXT, field9type INT);");
+		$sql = $db->prepare("CREATE TABLE forms (productid INT, formname TEXT, field0 TEXT, field0type INT, field1 TEXT, field1type INT, field2 TEXT, field2type INT, field3 TEXT, field3type INT, field4 TEXT, field4type INT, field5 TEXT, field5type INT, field6 TEXT, field6type INT, field7 TEXT, field7type INT, field8 TEXT, field8type INT, field9 TEXT, field9type INT, modified TEXT);");
 		$sql->execute();
 	};
 	$sql->finish();
@@ -1401,12 +1401,19 @@ elsif($q->param('m')) # Modules
 		if($logged_lvl > 3)
 		{
 			print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Custom forms</h3></div><div class='panel-body'>\n";
-			print "<p><table class='table table-striped'><tr><th>Assigned product</th><th>Form name</th><th>Edit</th></tr>";
+			print "<p><table class='table table-striped'><tr><th>Assigned " . lc($items{"Product"}) . "</th><th>Form name</th><th>Last update</th></tr>";
+			my @products;
+			$sql = $db->prepare("SELECT ROWID,* FROM products;");
+			$sql->execute();
+			while(my @res = $sql->fetchrow_array()) { $products[$res[0]] = $res[1]; }
 			$sql = $db->prepare("SELECT ROWID,* FROM forms;");
 			$sql->execute();
 			while(my @res = $sql->fetchrow_array())
 			{
-				print "<tr><td>" . $res[1] . "</td><td>" . $res[2] . "</td><td><a href='./?edit_form=" . $res[0] . "'>Edit</a></td></tr>\n";
+				print "<tr><td>";
+ 				if($products[$res[1]]) { print $products[$res[1]]; }
+				else { print "None"; }
+				print "</td><td><a href='./?edit_form=" . $res[0] . "'>" . $res[2] . "</a></td><td>" . $res[23] . "</td></tr>\n";
 			}
 			print "</table><form method='GET' action='./'><input type='hidden' name='create_form' value='1'><input type='submit' value='Create new custom form' class='pull-right btn btn-default'></form></p></div></div>\n";
 		}
@@ -2356,16 +2363,6 @@ elsif($q->param('m')) # Modules
 				if($res[4] ne "") { print "<p><img src='./?file=" . $res[4] . "' style='max-width:95%'></p>\n"; }
 				print "</div></div>\n";
 			}
-			$sql = $db->prepare("SELECT ROWID,* FROM tickets WHERE productid = ? ORDER BY ROWID DESC LIMIT 50;");
-			$sql->execute(to_int($q->param('product_id')));
-			print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Tickets for this " . lc($items{"Product"}) . " (last 50 entries)</h3></div><div class='panel-body'><table class='table table-striped'>\n";
-			print "<tr><th>ID</th><th>" . $items{"Release"} . "<th>User</th><th>Title</th><th>Status</th><th>Date</th></tr>\n";
-			while(my @res = $sql->fetchrow_array())
-			{
-				if(($cfg->load("default_vis") eq "Public" || ($cfg->load("default_vis") eq "Private" && $logged_lvl > -1) || ($res[3] eq $logged_user) || $logged_lvl > 1))
-				{ print "<tr><td>" . $res[0] . "</td><td>" . $res[2] . "</td><td>" . $res[3] . "</td><td><a href='./?m=view_ticket&t=" . $res[0] . "'>" . $res[5] . "</a></td><td>" . $res[8] . "</td><td>" . $res[11] . "</td></tr>\n"; }
-			}
-			print "</table></div></div>\n";
 		}
 		else
 		{
@@ -2666,6 +2663,96 @@ elsif($q->param('m')) # Modules
 	}
 	footers();
 }
+elsif(($q->param('create_form') || $q->param('edit_form') || $q->param('save_form')) && $logged_lvl > 3)
+{
+	headers("Settings");
+	if($q->param('save_form'))
+	{
+		if($q->param('form_name') && $q->param('field0') && defined($q->param('product_id')))
+		{
+			$sql = $db->prepare("UPDATE forms SET productid = 0 WHERE productid = ?;");
+			$sql->execute(to_int($q->param('product_id')));
+			if($q->param('save_form') == -1)
+			{
+				$sql = $db->prepare("INSERT INTO forms VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);");
+				$sql->execute(to_int($q->param('product_id')), sanitize_html($q->param('form_name')), sanitize_html($q->param('field0')), sanitize_html($q->param('field0type')), sanitize_html($q->param('field1')), sanitize_html($q->param('field1type')), sanitize_html($q->param('field2')), sanitize_html($q->param('field2type')), sanitize_html($q->param('field3')), sanitize_html($q->param('field3type')), sanitize_html($q->param('field4')), sanitize_html($q->param('field4type')), sanitize_html($q->param('field5')), sanitize_html($q->param('field5type')), sanitize_html($q->param('field6')), sanitize_html($q->param('field6type')), sanitize_html($q->param('field7')), sanitize_html($q->param('field7type')), sanitize_html($q->param('field8')), sanitize_html($q->param('field8type')), sanitize_html($q->param('field9')), sanitize_html($q->param('field9type')), now());
+			}
+			else
+			{
+				$sql = $db->prepare("UPDATE forms SET productid = ?, formname = ?, field0 = ?, field0type = ?, field1 = ?, field1type = ?, field2 = ?, field2type = ?, field3 = ?, field3type = ?, field4 = ?, field4type = ?, field5 = ?, field5type = ?, field6 = ?, field6type = ?, field7 = ?, field7type = ?, field8 = ?, field8type = ?, field9 = ?, field9type = ?, modified = ? WHERE ROWID = ?;");
+				$sql->execute(to_int($q->param('product_id')), sanitize_html($q->param('form_name')), sanitize_html($q->param('field0')), sanitize_html($q->param('field0type')), sanitize_html($q->param('field1')), sanitize_html($q->param('field1type')), sanitize_html($q->param('field2')), sanitize_html($q->param('field2type')), sanitize_html($q->param('field3')), sanitize_html($q->param('field3type')), sanitize_html($q->param('field4')), sanitize_html($q->param('field4type')), sanitize_html($q->param('field5')), sanitize_html($q->param('field5type')), sanitize_html($q->param('field6')), sanitize_html($q->param('field6type')), sanitize_html($q->param('field7')), sanitize_html($q->param('field7type')), sanitize_html($q->param('field8')), sanitize_html($q->param('field8type')), sanitize_html($q->param('field9')), sanitize_html($q->param('field9type')), now(), to_int($q->param('save_form')));
+			}
+			msg("Custom form saved. Press <a href='./?m=settings'>here</a> to continue.", 3);
+		}
+		else
+		{
+			my $text = "Required fields missing: ";
+			if(!$q->param('form_name')) { $text .= "<span class='label label-danger'>Form name</span> "; }
+			if(!$q->param('field0')) { $text .= "<span class='label label-danger'>Title question</span> "; }
+			if(!defined($q->param('product_id'))) { $text .= "<span class='label label-danger'>Product name</span> "; }
+			$text .= " Please go back and try again.";
+			msg($text, 0);
+		}
+	}
+	else
+	{
+		print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Custom form</h3></div><div class='panel-body'><form method='POST' action='.'>";
+		my @products;
+		$sql = $db->prepare("SELECT ROWID,* FROM products;");
+		$sql->execute();
+		while(my @res = $sql->fetchrow_array()) { $products[$res[0]] = $res[1]; }
+		my @res;
+		if(to_int($q->param('edit_form')) > 0)
+		{
+			$sql = $db->prepare("SELECT * FROM forms WHERE ROWID = ?;");
+			$sql->execute(to_int($q->param('edit_form')));
+			@res = $sql->fetchrow_array();
+			if(!$res[1]) { msg("Form does not exist.", 0); footers(); exit; }
+		}
+		print "<input type='hidden' name='save_form' value='";
+		if(to_int($q->param('edit_form')) > 0) { print to_int($q->param('edit_form')); }
+		else { print "-1"; }
+		print "'><p>Form name: <input type='text' name='form_name' style='width:400px' value='";
+		if(to_int($q->param('edit_form')) > 0) { print $res[1]; }
+		print "'></p><p>" . $items{"Product"} . " linked to this form: <select name='product_id'>";
+		if(to_int($q->param('edit_form')) > 0 && $res[0] == 0) { print "<option value='0' selected>None</option>"; }
+		else { print "<option value='0'>None</option>"; }
+		for(my $i = 1; $i < scalar(@products); $i++)
+		{
+			if($products[$i])
+			{
+				if(to_int($q->param('edit_form')) > 0 && $res[0] == $i) { print "<option value='" . $i . "' selected>" . $products[$i] . "</option>"; }
+				else { print "<option value='" . $i . "'>" . $products[$i] . "</option>"; }
+			}
+		}
+		print "</select></p><table class='table table-striped'><tr><th>Field</th><th>Question</th><th>Answer type</th></tr>";
+		for(my $i = 0; $i < 10; $i++)
+		{
+			print "<tr><td>";
+ 			if($i == 0) { print "Title"; }
+			else { print $i; }
+			print "</td><td><input type='text' style='width:300px' value='";
+			if(to_int($q->param('edit_form')) > 0) { print $res[($i*2)+2] }
+			print "' name='field" . $i . "'></td><td><select name='field" . $i . "type'><option value=0";
+			if(to_int($q->param('edit_form')) > 0) { if(to_int($res[($i*2)+3]) == 0) { print " selected"; } }
+			print ">Some text</option><option value=1";
+			if(to_int($q->param('edit_form')) > 0) { if(to_int($res[($i*2)+3]) == 1) { print " selected"; } }
+			print ">Lots of text</option><option value=2";
+			if(to_int($q->param('edit_form')) > 0) { if(to_int($res[($i*2)+3]) == 2) { print " selected"; } }
+			print ">Number</option><option value=3";
+			if(to_int($q->param('edit_form')) > 0) { if(to_int($res[($i*2)+3]) == 3) { print " selected"; } }
+			print ">Checkbox</option><option value=4";
+			if(to_int($q->param('edit_form')) > 0) { if(to_int($res[($i*2)+3]) == 4) { print " selected"; } }
+			print ">Yes / No</option><option value=5";
+			if(to_int($q->param('edit_form')) > 0) { if(to_int($res[($i*2)+3]) == 5) { print " selected"; } }
+			print ">True / False</option><option value=6";
+			if(to_int($q->param('edit_form')) > 0) { if(to_int($res[($i*2)+3]) == 6) { print " selected"; } }
+			print ">Email address</option></td></tr>";
+		}
+		print "</table><p><input type='submit' class='btn btn-default pull-right' value='Save'></p></form></div></div>";
+	}
+	footers();
+}
 elsif($q->param('kb'))
 {
 	headers("Articles");
@@ -2673,7 +2760,6 @@ elsif($q->param('kb'))
 	$sql = $db->prepare("SELECT ROWID,* FROM products;");
 	$sql->execute();
 	while(my @res = $sql->fetchrow_array()) { $products[$res[0]] = $res[1]; }
-
 	$sql = $db->prepare("SELECT ROWID,* FROM kb WHERE ROWID = ?;");
 	$sql->execute(to_int($q->param('kb')));
 	while(my @res = $sql->fetchrow_array())
