@@ -419,6 +419,9 @@ img {
 </tbody>
 </table>
 <p>NodePoint has a few special user accounts. The <em>admin</em> account is used as product administrator and acts differently than normal user accounts. It should only be used for administrative functions. <em>Guest</em> is used to specify people who are not logged in, and cannot be registered as a user account. The name <em>api</em> refers to any change made using the JSON API. The <em>demo</em> account can be registered normally but cannot change its own password, and is meant for product demos.</p>
+<h2>Forms and tickets</h2>
+<p>Users who have an access level of 1 or higher can enter tickets. The default form asks for a title, description and a custom entry type, configurable in the initial settings. Custom forms can also be designed and assigned to products by users of access level 4 and above. These custom forms can have up to 10 fields, each field can be a text area, a check box, satisfaction rating, and so on. Products that have a custom form assigned will display that form to users instead of the default one.</p>
+<p>Any logged in user can follow a ticket by clicking the proper option on the ticket's screen, which will add that ticket to their home screen for easy reference. This is meant as a way to follow an issue you are not actively working on. Users with access level 3 or higher can assign themselves to a ticket by clicking the proper checkbox on the ticket's screen. This is meant as a way to assign resources to a particular issue. Auto assignment can also be used to assign specific users to any ticket filed against a product. You can add yourself to the auto-assign list of a product by clicking the button on the product's screen.</p>
 <h2>API</h2>
 <p>NodePoint provides an API to add and show tickets in JSON format. You can use GET or POST arguments with the following values:</p>
 <h3>Show ticket</h3>

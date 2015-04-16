@@ -8,7 +8,7 @@
 #
 
 use strict;
-use Config::Win32;
+use Config::Linux;
 use Digest::SHA qw(sha1_hex);
 use DBI;
 use CGI;
@@ -619,11 +619,11 @@ sub home
 # Connect to config
 eval
 {
-	$cfg = Config::Win32->new("NodePoint", "settings");
+	$cfg = Config::Linux->new("NodePoint", "settings");
 };
 if(!defined($cfg)) # Can't even use headers() if this fails.
 {
-	print "Content-type: text/html\n\nError: Could not access " . Config::Win32->type . ". Please ensure NodePoint has the proper permissions.";
+	print "Content-type: text/html\n\nError: Could not access " . Config::Linux->type . ". Please ensure NodePoint has the proper permissions.";
 	exit(0);
 };
 
@@ -2287,9 +2287,33 @@ elsif($q->param('m')) # Modules
 	elsif($q->param('m') eq "add_ticket" && $logged_lvl > 0 && $q->param('product_id'))
 	{
 		headers("Tickets");
-		if($q->param('ticket_title') && $q->param('ticket_desc') && $q->param('release_id'))
+		my @customform;
+		my $description = "";
+		my $title;
+		$sql = $db->prepare("SELECT * FROM forms WHERE productid = ?;");
+		$sql->execute(to_int($q->param('product_id')));
+		@customform = $sql->fetchrow_array();
+		if(@customform && $q->param('field0'))
 		{
-			if(length($q->param('ticket_title')) > 99 || length($q->param('ticket_desc')) > 9999)
+			$title = $q->param('field0');
+			for(my $i = 0; $i < 10; $i++)
+			{
+				if($customform[($i*2)+2])
+				{
+					$description .= $customform[($i*2)+2] . " \t ";
+					if($q->param('field'.$i)) { $description .= $q->param('field'.$i); }
+					$description .= "\n\n"; 
+				}
+			}
+		}
+		elsif($q->param('ticket_title') && $q->param('ticket_desc'))
+		{
+			$title = $q->param('ticket_title');
+			$description = $q->param('ticket_desc')
+		}
+		if($title && $q->param('release_id'))
+		{
+			if(length($title) > 99 || length($description) > 9999)
 			{
 				msg("Ticket title must be less than 100 characters, description less than 10,000 characters. Please go back and try again.", 0);
 			}
@@ -2307,16 +2331,16 @@ elsif($q->param('m')) # Modules
 				$sql->execute(to_int($q->param('product_id')));
 				while(my @res = $sql->fetchrow_array()) { $assignedto .= $res[0] . " "; }
 				$sql = $db->prepare("INSERT INTO tickets VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);");
-				$sql->execute(to_int($q->param('product_id')), sanitize_html($q->param('release_id')), $logged_user, $assignedto, sanitize_html($q->param('ticket_title')), sanitize_html($q->param('ticket_desc')), $lnk, "New", "", "", now(), "Never");
+				$sql->execute(to_int($q->param('product_id')), sanitize_html($q->param('release_id')), $logged_user, $assignedto, sanitize_html($title), sanitize_html($description), $lnk, "New", "", "", now(), "Never");
 				$sql = $db->prepare("SELECT * FROM releases WHERE productid = ?;");
 				$sql->execute(to_int($q->param('product_id')));
 				while(my @res = $sql->fetchrow_array())
 				{
-					notify($res[1], "New ticket created", "A new ticket was created for one of your products:\n\nUser: " . $logged_user . "\nTitle: " . sanitize_html($q->param('ticket_title')) . "\n" . $cfg->load('custom_name') . ": " . $lnk . "\nDescription: " . $q->param('ticket_desc'));
+					notify($res[1], "New ticket created", "A new ticket was created for one of your products:\n\nUser: " . $logged_user . "\nTitle: " . sanitize_html($title) . "\n" . $cfg->load('custom_name') . ": " . $lnk . "\nDescription: " . sanitize_html($description));
 				}
 				foreach my $assign (split(' ', $assignedto))
 				{
-					notify($assign, "New ticket created", "A new ticket was created for a product assigned to you:\n\nUser: " . $logged_user . "\nTitle: " . sanitize_html($q->param('ticket_title')) . "\n" . $cfg->load('custom_name') . ": " . $lnk . "\nDescription: " . $q->param('ticket_desc'));
+					notify($assign, "New ticket created", "A new ticket was created for a product assigned to you:\n\nUser: " . $logged_user . "\nTitle: " . sanitize_html($title) . "\n" . $cfg->load('custom_name') . ": " . $lnk . "\nDescription: " . sanitize_html($description));
 				}
 				msg("Ticket successfully added. Press <a href='./?m=tickets'>here</a> to continue.", 3);
 			}
@@ -2324,8 +2348,11 @@ elsif($q->param('m')) # Modules
 		else
 		{
 			my $text = "Required fields missing: ";
-			if(!$q->param('ticket_title')) { $text .= "<span class='label label-danger'>Ticket title</span> "; }
-			if(!$q->param('ticket_desc')) { $text .= "<span class='label label-danger'>Ticket description</span> "; }
+			if(!$title)
+			{
+				if(@customform) { $text .= "<span class='label label-danger'>" . $customform[2] . "</span> "; }
+				else { $text .= "<span class='label label-danger'>Ticket title</span> "; }
+			}
 			if(!$q->param('release_id')) { $text .= "<span class='label label-danger'>" . $items{"Release"} . "</span> "; }
 			$text .= " Please go back and try again.";
 			msg($text, 0);
@@ -2340,16 +2367,44 @@ elsif($q->param('m')) # Modules
 		while(my @res = $sql->fetchrow_array()) { $product = $res[1]; }
 		if($product ne "")
 		{
+			my @customform;
+			$sql = $db->prepare("SELECT * FROM forms WHERE productid = ?;");
+			$sql->execute(to_int($q->param('product_id')));
+			@customform = $sql->fetchrow_array();
 			print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Create a new ticket</h3></div><div class='panel-body'><form method='POST' action='.' enctype='multipart/form-data'>\n";
-			print "<p><div class='row'><div class='col-sm-6'>" . $items{"Product"} . " name: <b>" . $product . "</b><input type='hidden' name='product_id' value='" . to_int($q->param('product_id')) . "'></div><div class='col-sm-6'>" . $items{"Release"} . ": <select name='release_id'>";
+			print "<p><div class='row'><div class='col-sm-6'>" . $items{"Product"} . " name: <b>" . $product . "</b><input type='hidden' name='product_id' value='" . to_int($q->param('product_id')) . "'></div><div class='col-sm-6' style='text-align:right'>" . $items{"Release"} . ": <select name='release_id'>";
 			$sql = $db->prepare("SELECT ROWID,* FROM releases WHERE productid = ?;");
 			$sql->execute(to_int($q->param('product_id')));
 			while(my @res = $sql->fetchrow_array()) { print "<option>" . $res[3] . "</option>"; }
-			print "</select></div></div></p>\n";
-			print "<p>Ticket title: <input type='text' name='ticket_title' style='width:70%' maxlength='99'></p>\n";
-			print "<p>Description:<br><textarea name='ticket_desc' rows='5' style='width:95%'></textarea></p>\n";
-			if($cfg->load('custom_type') eq "Checkbox") { print $cfg->load('custom_name') . ": <input type='checkbox' name='ticket_link'>\n"; }
-			else { print $cfg->load('custom_name') . ": <input type='text' name='ticket_link' style='width:50%'>\n"; }
+			print "</select></div></div></p><hr>\n";
+			if(@customform)
+			{
+				for(my $i = 0; $i < 10; $i++)
+				{
+					if($customform[($i*2)+2])
+					{
+						print "<p><div class='row'><div class='col-sm-5'>" . $customform[($i*2)+2] . "</div><div class='col-sm-7'>";
+						if(to_int($customform[($i*2)+3]) == 1) { print "<textarea style='width:99%' name='field" . $i . "' rows=4></textarea>"; }
+						elsif(to_int($customform[($i*2)+3]) == 2) { print "<input type='number' style='width:99%' name='field" . $i . "'>"; }
+						elsif(to_int($customform[($i*2)+3]) == 3) { print "<input type='checkbox' name='field" . $i . "'>"; }
+						elsif(to_int($customform[($i*2)+3]) == 4) { print "<input type='radio' name='field" . $i . "' id='field" . $i . "yes' value='Yes'><label for='field" . $i . "yes'>Yes</label> &nbsp; <input type='radio' name='field" . $i . "' id='field" . $i . "no' value='No'><label for='field" . $i . "no'>No</label>"; }
+						elsif(to_int($customform[($i*2)+3]) == 5) { print "<input type='radio' name='field" . $i . "' id='field" . $i . "true' value='True'><label for='field" . $i . "true'>True</label> &nbsp; <input type='radio' name='field" . $i . "' id='field" . $i . "false' value='False'><label for='field" . $i . "false'>False</label>"; }
+						elsif(to_int($customform[($i*2)+3]) == 6) { print "<input type='email' style='width:99%' name='field" . $i . "'>"; }
+						elsif(to_int($customform[($i*2)+3]) == 7) { print "<select style='width:99%' name='field" . $i . "'><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option></select>"; }
+						elsif(to_int($customform[($i*2)+3]) == 8) { print "<input type='text' style='width:99%' name='field" . $i . "' value='" . $ENV{REMOTE_ADDR} . "' readonly>"; }
+						elsif(to_int($customform[($i*2)+3]) == 9) { print "<select style='width:99%' name='field" . $i . "'><option>Extremely</option><option>A lot</option><option>Moderately</option><option>Slightly</option><option>Not at all</option></select>"; }
+						else { print "<input type='text' style='width:99%' name='field" . $i . "'>"; }
+						print "</div></div></p>";
+					}
+				}
+			}
+			else
+			{
+				print "<p>Ticket title: <input type='text' name='ticket_title' style='width:70%' maxlength='99'></p>\n";
+				print "<p>Description:<br><textarea name='ticket_desc' rows='5' style='width:95%'></textarea></p>\n";
+				if($cfg->load('custom_type') eq "Checkbox") { print $cfg->load('custom_name') . ": <input type='checkbox' name='ticket_link'>\n"; }
+				else { print $cfg->load('custom_name') . ": <input type='text' name='ticket_link' style='width:50%'>\n"; }
+			}
 			print "<input type='hidden' name='m' value='add_ticket'><input class='btn btn-default pull-right' type='submit' value='Create ticket'></form></div></div>\n";
 			$sql = $db->prepare("SELECT ROWID,* FROM products WHERE ROWID = ?;");
 			$sql->execute(to_int($q->param('product_id')));
@@ -2747,7 +2802,13 @@ elsif(($q->param('create_form') || $q->param('edit_form') || $q->param('save_for
 			if(to_int($q->param('edit_form')) > 0) { if(to_int($res[($i*2)+3]) == 5) { print " selected"; } }
 			print ">True / False</option><option value=6";
 			if(to_int($q->param('edit_form')) > 0) { if(to_int($res[($i*2)+3]) == 6) { print " selected"; } }
-			print ">Email address</option></td></tr>";
+			print ">Email address</option><option value=7";
+			if(to_int($q->param('edit_form')) > 0) { if(to_int($res[($i*2)+3]) == 7) { print " selected"; } }
+			print ">1 to 10</option><option value=8";
+			if(to_int($q->param('edit_form')) > 0) { if(to_int($res[($i*2)+3]) == 8) { print " selected"; } }
+			print ">IP address</option><option value=9";
+			if(to_int($q->param('edit_form')) > 0) { if(to_int($res[($i*2)+3]) == 9) { print " selected"; } }
+			print ">Satisfaction scale</option></td></tr>";
 		}
 		print "</table><p><input type='submit' class='btn btn-default pull-right' value='Save'></p></form></div></div>";
 	}
