@@ -8,7 +8,7 @@
 #
 
 use strict;
-use Config::Linux;
+use Config::Win32;
 use Digest::SHA qw(sha1_hex);
 use DBI;
 use CGI;
@@ -26,7 +26,7 @@ my ($cfg, $db, $sql, $cn, $cp, $cgs, $last_login, $perf);
 my $logged_user = "";
 my $logged_lvl = -1;
 my $q = new CGI;
-my $VERSION = "1.1.2";
+my $VERSION = "1.1.3";
 my %items = ("Product", "Product", "Release", "Release", "Model", "SKU/Model");
 
 $perf = time/100;
@@ -72,6 +72,7 @@ sub footers
 	print "  <div style='clear:both'></div><hr><div style='margin-top:-15px;font-size:9px;color:grey'><span class='pull-right'>" . $perf3 . " ms</span><i>NodePoint v" . $VERSION . "</i></div></div>\n";
 	print " <script src='jquery.js'></script>\n";
 	print " <script src='bootstrap.js'></script>\n";
+	print " <script src='validator.js'></script>\n";
 	print " </body>\n";
 	print "</html>\n";
 }
@@ -212,26 +213,29 @@ sub msg
 # Login form
 sub login
 {
-	print "<center>\n";
-	if($cfg->load('allow_registrations') && $cfg->load('allow_registrations') ne 'off' && !$cfg->load('ad_server'))
+	print "<center><div class='row'>";
+	if(!$cfg->load('allow_registrations') || $cfg->load('allow_registrations') eq 'off' || $cfg->load('ad_server'))
 	{
-		print "<div class='row'><div class='col-sm-6'>\n";
+		print "<div class='col-sm-3'>&nbsp;</div>\n";
 	}
-	print "<h3>Login</h3><form method='POST' action='.'><br>\n";
+	print "<div class='col-sm-6'>\n";
+	print "<h3>Login</h3><form data-toggle='validator' role='form' method='POST' action='.'><div class='form-group'>\n";
 	if($cfg->load('ad_server') && $cfg->load('ad_domain')) { print "<p>Enter your " . $cfg->load('ad_domain') . " credentials.</p>"; }
-	print "<p>User name: <input type='text' name='name'></p>\n";
-	print "<p>Password: <input type='password' name='pass'></p>\n";
+	print "<p><input type='text' name='name' placeholder='User name' class='form-control' data-error='User name must be between 2 and 50 characters.' data-minlength='2' maxlength='50' required></p>\n";
+	print "<p><input type='password' name='pass' placeholder='Password' class='form-control' required></p>\n";
+	print "<div class='help-block with-errors'></div></div>";
 	print "<p><input class='btn btn-default' type='submit' value='Login'></p></form>\n";
 	if($cfg->load('allow_registrations') && $cfg->load('allow_registrations') ne 'off' && !$cfg->load('ad_server'))
 	{
-		print "</div><div class='col-sm-6'><h3>Register a new account</h3><form method='POST' action='.'><br>\n";
-		print "<p>User name: <input type='text' name='new_name' maxlength='16'></p>\n";
-		print "<p>Password: <input type='password' name='new_pass1'></p>\n";
-		print "<p>Confirm: <input type='password' name='new_pass2'></p>\n";
-		print "<p>Email (optional): <input type='email' name='new_email' maxlength='99'></p>\n";
-		print "<p><input class='btn btn-default' type='submit' value='Register'></p></form></div></div>\n";
+		print "</div><div class='col-sm-6'><h3>Register a new account</h3><form data-toggle='validator' role='form' method='POST' action='.'><div class='form-group'>\n";
+		print "<p><input type='text' name='new_name' placeholder='User name' class='form-control' data-error='User name must be between 2 and 50 letters or numbers.' data-minlength='2' maxlength='50' required></p>\n";
+		print "<p><input type='password' name='new_pass1' placeholder='Password' data-minlength='6' class='form-control' id='new_pass1' required></p>\n";
+		print "<p><input type='password' name='new_pass2' class='form-control' id='inputPasswordConfirm' data-match='#new_pass1' data-match-error='Passwords do not match.' placeholder='Confirm' required></p>\n";
+		print "<p><input type='email' name='new_email' placeholder='Email (optional)' class='form-control' data-error='Must be a valid email.' maxlength='99'></p>\n";
+		print "<div class='help-block with-errors'></div></div>";
+		print "<p><input class='btn btn-default' type='submit' value='Register'></p></form>\n";
 	}
-	print "</center>\n";
+	print "</div></div></center>\n";
 }
 
 # Sanitize functions
@@ -619,11 +623,11 @@ sub home
 # Connect to config
 eval
 {
-	$cfg = Config::Linux->new("NodePoint", "settings");
+	$cfg = Config::Win32->new("NodePoint", "settings");
 };
 if(!defined($cfg)) # Can't even use headers() if this fails.
 {
-	print "Content-type: text/html\n\nError: Could not access " . Config::Linux->type . ". Please ensure NodePoint has the proper permissions.";
+	print "Content-type: text/html\n\nError: Could not access " . Config::Win32->type . ". Please ensure NodePoint has the proper permissions.";
 	exit(0);
 };
 
