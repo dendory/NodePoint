@@ -8,7 +8,7 @@
 #
 
 use strict;
-use Config::Win32;
+use Config::Linux;
 use Digest::SHA qw(sha1_hex);
 use DBI;
 use CGI;
@@ -171,6 +171,12 @@ sub navbar
 			print "	 <li><a href='./?m=articles'>Articles</a></li>\n";
 			print "	 <li><a href='./?m=settings'>Settings</a></li>\n";
 		}
+		print "   <form class='navbar-form navbar-right' method='GET' action='./'>";
+		print "    <div class='form-group'>";
+		print "     <input type='number' placeholder='Ticket ID' style='-moz-appearance:textfield;-webkit-appearance:none;' name='t' class='form-control'><input type='hidden' name='m' value='view_ticket'>";
+		print "    </div>";
+		print "    <button type='submit' class='btn btn-default'>Open</button>";
+		print "   </form>";
 	}
 	print "	 </ul>\n";
 	print "	 <ul class='nav navbar-nav navbar-right'>\n";
@@ -623,11 +629,11 @@ sub home
 # Connect to config
 eval
 {
-	$cfg = Config::Win32->new("NodePoint", "settings");
+	$cfg = Config::Linux->new("NodePoint", "settings");
 };
 if(!defined($cfg)) # Can't even use headers() if this fails.
 {
-	print "Content-type: text/html\n\nError: Could not access " . Config::Win32->type . ". Please ensure NodePoint has the proper permissions.";
+	print "Content-type: text/html\n\nError: Could not access " . Config::Linux->type . ". Please ensure NodePoint has the proper permissions.";
 	exit(0);
 };
 
@@ -1399,7 +1405,7 @@ elsif($q->param('m')) # Modules
 		if($logged_lvl > 3)
 		{
 			print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Statistics</h3></div><div class='panel-body'>\n";
-			print "<p><form method='GET' action='.'><input type='hidden' name='m' value='stats'>Report type: <select name='report'><option value='1'>Time spent per user</option><option value='2'>Time spent per ticket</option><option value='3'>Tickets created per " . lc($items{"Product"}) . "</option><option value='4'>Tickets created per user</option><option value='5'>Tickets created per day</option><option value='6'>Tickets created per month</option><option value='7'>Tickets per status</option><option value='8'>Users per access level</option><option value='9'>Tickets assigned per user</option></select><span class='pull-right'><input class='btn btn-default' type='submit' value='Show'> <input class='btn btn-default' type='submit' name='csv' value='Export as CSV'></span>\n";
+			print "<p><form method='GET' action='.'><input type='hidden' name='m' value='stats'>Report type: <select name='report'><option value='1'>Time spent per user</option><option value='2'>All time spent per ticket</option><option value='11'>Your time spent per ticket</option><option value='3'>Tickets created per " . lc($items{"Product"}) . "</option><option value='10'>New and open tickets per " . lc($items{"Product"}) . "</option><option value='4'>Tickets created per user</option><option value='5'>Tickets created per day</option><option value='6'>Tickets created per month</option><option value='7'>Tickets per status</option><option value='8'>Users per access level</option><option value='9'>Tickets assigned per user</option></select><span class='pull-right'><input class='btn btn-default' type='submit' value='Show'> <input class='btn btn-default' type='submit' name='csv' value='Export as CSV'></span>\n";
 			print "</form></p></div></div>\n";
 		}
 		if($logged_lvl > 3)
@@ -2497,14 +2503,26 @@ elsif($q->param('m')) # Modules
 		elsif(to_int($q->param('report')) == 2)
 		{
 			if($q->param('csv')) { print "\"Ticket ID\",\"Hours spent\"\n"; }
-			else { print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Time spent per ticket</h3></div><div class='panel-body'><table class='table table-striped'><tr><th>Ticket ID</th><th>Hours spent</th></tr>"; }
+			else { print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>All time spent per ticket</h3></div><div class='panel-body'><table class='table table-striped'><tr><th>Ticket ID</th><th>Hours spent</th></tr>"; }
 			$sql = $db->prepare("SELECT * FROM timetracking ORDER BY ticketid;");		
+		}
+		elsif(to_int($q->param('report')) == 11)
+		{
+			if($q->param('csv')) { print "\"Ticket ID\",\"Hours spent\"\n"; }
+			else { print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Your time spent per ticket</h3></div><div class='panel-body'><table class='table table-striped'><tr><th>Ticket ID</th><th>Hours spent</th></tr>"; }
+			$sql = $db->prepare("SELECT * FROM timetracking WHERE name == \"$logged_user\" ORDER BY ticketid;");		
 		}
 		elsif(to_int($q->param('report')) == 3)
 		{
 			if($q->param('csv')) { print $items{"Product"} . ",Tickets\n"; }
 			else { print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Tickets created per " . lc($items{"Product"}) . "</h3></div><div class='panel-body'><table class='table table-striped'><tr><th>" . $items{"Product"} . "</th><th>Tickets</th></tr>"; }
 			$sql = $db->prepare("SELECT productid FROM tickets ORDER BY productid;");
+		}
+		elsif(to_int($q->param('report')) == 10)
+		{
+			if($q->param('csv')) { print $items{"Product"} . ",Tickets\n"; }
+			else { print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>New and open tickets per " . lc($items{"Product"}) . "</h3></div><div class='panel-body'><table class='table table-striped'><tr><th>" . $items{"Product"} . "</th><th>Tickets</th></tr>"; }
+			$sql = $db->prepare("SELECT productid FROM tickets WHERE status == 'Open' OR status == 'New' ORDER BY productid;");
 		}
 		elsif(to_int($q->param('report')) == 4)
 		{
@@ -2556,7 +2574,7 @@ elsif($q->param('m')) # Modules
 				if(!$results{$res[1]}) { $results{$res[1]} = 0; }
 				$results{$res[1]} += to_float($res[2]);
 			}
-			elsif(to_int($q->param('report')) == 2)
+			elsif(to_int($q->param('report')) == 2 || to_int($q->param('report')) == 11)
 			{
 				if(!$results{$res[0]}) { $results{$res[0]} = 0; }
 				$results{$res[0]} += to_float($res[2]);
@@ -2570,7 +2588,7 @@ elsif($q->param('m')) # Modules
 					if(to_int($res2[0]) > 0) { $results{$res[0]} = $res2[0]; }
 				}
 			}
-			elsif(to_int($q->param('report')) == 3)
+			elsif(to_int($q->param('report')) == 3 || to_int($q->param('report')) == 10)
 			{
 				if(!$results{$products[to_int($res[0])]}) { $results{$products[to_int($res[0])]} = 0; }
 				$results{$products[to_int($res[0])]} ++;
