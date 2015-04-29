@@ -2338,9 +2338,9 @@ elsif($q->param('m')) # Modules
 		$sql = $db->prepare("SELECT * FROM forms WHERE productid = ?;");
 		$sql->execute(to_int($q->param('product_id')));
 		@customform = $sql->fetchrow_array();
-		if(@customform && $q->param('field0'))
+		if(@customform)
 		{
-			$title = $q->param('field0');
+			if($q->param('field0')) { $title = $q->param('field0'); }
 			for(my $i = 0; $i < 10; $i++)
 			{
 				if($customform[($i*2)+2])
@@ -2351,12 +2351,12 @@ elsif($q->param('m')) # Modules
 				}
 			}
 		}
-		elsif($q->param('ticket_title') && $q->param('ticket_desc'))
+		else
 		{
-			$title = $q->param('ticket_title');
-			$description = $q->param('ticket_desc')
-		}
-		if($title && $q->param('release_id'))
+			if($q->param('ticket_title')) {	$title = $q->param('ticket_title'); }
+			if($q->param('ticket_desc')) { $description = $q->param('ticket_desc'); }
+ 		}
+		if($title && $description && $q->param('release_id'))
 		{
 			if(length($title) > 99 || length($description) > 9999)
 			{
@@ -2398,6 +2398,7 @@ elsif($q->param('m')) # Modules
 				if(@customform) { $text .= "<span class='label label-danger'>" . $customform[2] . "</span> "; }
 				else { $text .= "<span class='label label-danger'>Ticket title</span> "; }
 			}
+			if(!$description) { $text .= "<span class='label label-danger'>Ticket description</span> "; }
 			if(!$q->param('release_id')) { $text .= "<span class='label label-danger'>" . $items{"Release"} . "</span> "; }
 			$text .= " Please go back and try again.";
 			msg($text, 0);
@@ -2713,14 +2714,14 @@ elsif($q->param('m')) # Modules
 		if($logged_lvl > 0)  # add new ticket pane
 		{
 			print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Create a new ticket</h3></div><div class='panel-body'><form method='POST' action='.'>\n";
-			print "<p>Select a " . lc($items{"Product"}) . " name: <select class='form-control' name='product_id'>";
+			print "<p><div class='row'><div class='col-sm-8'>Select a " . lc($items{"Product"}) . " name: <select class='form-control' name='product_id'>";
 			$sql = $db->prepare("SELECT ROWID,* FROM products WHERE vis != 'Archived';");
 			$sql->execute();
 			while(my @res = $sql->fetchrow_array())
 			{
 				if($logged_lvl > 1 || $res[5] ne "Restricted") { print "<option value=" . $res[0] . ">" . $res[1] . "</option>"; }
 			}
-			print "</select></p><input type='hidden' name='m' value='new_ticket'><input class='btn btn-default pull-right' type='submit' value='Next'></form></div></div>\n";
+			print "</select></div><div class='col-sm-4'><input type='hidden' name='m' value='new_ticket'><input class='btn btn-default pull-right' type='submit' value='Next'></div></div></p></form></div></div>\n";
 		}
 		print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Tickets ";
 		if($q->param('filter_product')) { print "(" . $items{"Product"} . ": " . sanitize_alpha($q->param('filter_product')) . ") "; }
