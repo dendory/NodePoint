@@ -30,7 +30,7 @@ my $VERSION = "1.1.4";
 my %items = ("Product", "Product", "Release", "Release", "Model", "SKU/Model");
 
 $perf = time/100;
-$perf = int(($perf - int($perf)) * 100000); # Store 2.3 digits of current unixtime, to avoid overloading a 32bits int
+$perf = int(($perf - int($perf)) * 100000);
 
 # Print headers
 sub headers
