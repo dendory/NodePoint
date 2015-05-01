@@ -8,7 +8,7 @@
 #
 
 use strict;
-use Config::Linux;
+use Config::Win32;
 use Digest::SHA qw(sha1_hex);
 use DBI;
 use CGI;
@@ -26,7 +26,7 @@ my ($cfg, $db, $sql, $cn, $cp, $cgs, $last_login, $perf);
 my $logged_user = "";
 my $logged_lvl = -1;
 my $q = new CGI;
-my $VERSION = "1.1.4";
+my $VERSION = "1.1.5";
 my %items = ("Product", "Product", "Release", "Release", "Model", "SKU/Model");
 
 $perf = time/100;
@@ -635,11 +635,11 @@ sub home
 # Connect to config
 eval
 {
-	$cfg = Config::Linux->new("NodePoint", "settings");
+	$cfg = Config::Win32->new("NodePoint", "settings");
 };
 if(!defined($cfg)) # Can't even use headers() if this fails.
 {
-	print "Content-type: text/html\n\nError: Could not access " . Config::Linux->type . ". Please ensure NodePoint has the proper permissions.";
+	print "Content-type: text/html\n\nError: Could not access " . Config::Win32->type . ". Please ensure NodePoint has the proper permissions.";
 	exit(0);
 };
 
@@ -670,6 +670,12 @@ if($cfg->load("items_managed"))
 		$items{"Product"} = "Resource";
 		$items{"Model"} = "Location";
 		$items{"Release"} = "Update";
+	}
+	elsif($cfg->load("items_managed") eq "Applications with platforms and versions")
+	{
+		$items{"Product"} = "Application";
+		$items{"Model"} = "Platform";
+		$items{"Release"} = "Version";
 	}
 }
 	
@@ -763,7 +769,7 @@ elsif(!$cfg->load("db_address") || !$cfg->load("site_name")) # first use
 				print "<p><div class='row'><div class='col-sm-4'>Upload folder:</div><div class='col-sm-4'><input type='text' style='width:300px' name='upload_folder' value='.." . $cfg->sep . "uploads'></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Minimum upload level:</div><div class='col-sm-4'><select name='upload_lvl' style='width:300px'><option value=5>5 - Users management</option><option value=4>4 - Products management</option><option value=3>3 - Tickets management</option><option value=2>2 - Restricted view</option><option value=1 selected=selected>1 - Authorized users</option><option value=0>0 - Unauthorized users</option></select></div></div></p>\n";
 				print "<p>The upload folder should be a local folder with write access and is used for product images and comment attachments. If left empty, uploads will be disabled.</p>\n";
-				print "<p><div class='row'><div class='col-sm-4'>Items managed:</div><div class='col-sm-4'><select style='width:300px' name='items_managed'><option selected>Products with models and releases</option><option>Projects with goals and milestones</option><option>Resources with locations and updates</option></select></div></div></p>\n";
+				print "<p><div class='row'><div class='col-sm-4'>Items managed:</div><div class='col-sm-4'><select style='width:300px' name='items_managed'><option selected>Products with models and releases</option><option>Projects with goals and milestones</option><option>Resources with locations and updates</option><option>Applications with platforms and versions</option></select></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Custom ticket field:</div><div class='col-sm-4'><input type='text' style='width:300px' name='custom_name' value='Related tickets'></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Custom field type:</div><div class='col-sm-4'><select style='width:300px' name='custom_type'><option>Text</option><option>Link</option><option>Checkbox</option></select></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Active Directory server:</div><div class='col-sm-4'><input type='text' style='width:300px' name='ad_server' value=''></div></div></p>\n";
@@ -1464,9 +1470,10 @@ elsif($q->param('m')) # Modules
 			print "<tr><td>Upload folder</td><td><input class='form-control' type='text' name='upload_folder' value=\"" . $cfg->load("upload_folder") . "\"></td></tr>\n";
 			print "<tr><td>Minimum upload level</td><td><input class='form-control' type='text' name='upload_lvl' value=\"" . to_int($cfg->load("upload_lvl")) . "\"></td></tr>\n";
 			print "<tr><td>Items managed</td><td><select class='form-control' name='items_managed'>";
-			if($cfg->load("items_managed") eq "Projects with goals and milestones") { print "<option>Products with models and releases</option><option selected>Projects with goals and milestones</option><option>Resources with locations and updates</option>"; }
-			elsif($cfg->load("items_managed") eq "Resources with locations and updates") { print "<option>Products with models and releases</option><option>Projects with goals and milestones</option><option selected>Resources with locations and updates</option>"; }
-			else { print "<option selected>Products with models and releases</option><option>Projects with goals and milestones</option><option>Resources with locations and updates</option>"; }
+			if($cfg->load("items_managed") eq "Projects with goals and milestones") { print "<option>Products with models and releases</option><option selected>Projects with goals and milestones</option><option>Resources with locations and updates</option><option>Applications with platforms and versions</option>"; }
+			elsif($cfg->load("items_managed") eq "Resources with locations and updates") { print "<option>Products with models and releases</option><option>Projects with goals and milestones</option><option selected>Resources with locations and updates</option><option>Applications with platforms and versions</option>"; }
+			elsif($cfg->load("items_managed") eq "Applications with platforms and versions") { print "<option>Products with models and releases</option><option>Projects with goals and milestones</option><option>Resources with locations and updates</option><option selected>Applications with platforms and versions</option>"; }
+			else { print "<option selected>Products with models and releases</option><option>Projects with goals and milestones</option><option>Resources with locations and updates</option><option>Applications with platforms and versions</option>"; }
 			print "</select></td></tr>\n";			
 			print "<tr><td>Custom ticket field</td><td><input class='form-control' type='text' name='custom_name' value=\"" . $cfg->load("custom_name") . "\"></td></tr>\n";
 			print "<tr><td>Custom field type</td><td><select class='form-control' name='custom_type'>";

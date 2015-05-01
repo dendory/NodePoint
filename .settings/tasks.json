@@ -1,0 +1,7 @@
+{
+	"command": "perlapp",
+	"windows": {
+		"command": "perlapp"
+	},
+	"args": ["src\\nodepoint.perlapp"]
+}
