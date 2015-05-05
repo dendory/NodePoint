@@ -1443,7 +1443,7 @@ elsif($q->param('m')) # Modules
 			print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Initial settings</h3></div><div class='panel-body'>\n";
 			print "<form method='POST' action='.'><table class='table table-striped'><tr><th>Setting</th><th>Value</th></tr>\n";
 			print "<tr><td>Database file</td><td><input class='form-control' type='text' name='db_address' value=\"" .  $cfg->load("db_address") . "\"></td></tr>\n";
-			print "<tr><td>Admin name</td><td><input class='form-control' type='text' name='admin_name' value=\"" .  $cfg->load("admin_name") . "\"></td></tr>\n";
+			print "<tr><td>Admin name</td><td><input class='form-control' type='text' name='admin_name' value=\"" .  $cfg->load("admin_name") . "\" readonly></td></tr>\n";
 			print "<tr><td>Admin password</td><td><input class='form-control' type='password' name='admin_pass' value=''></td></tr>\n";
 			print "<tr><td>Site name</td><td><input class='form-control' type='text' name='site_name' value=\"" . $cfg->load("site_name") . "\"></td></tr>\n";
 			print "<tr><td>Public notice</td><td><input class='form-control' type='text' name='motd' value=\"" . $cfg->load("motd") . "\"></td></tr>\n";
