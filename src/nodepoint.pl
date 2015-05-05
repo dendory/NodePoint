@@ -1417,7 +1417,7 @@ elsif($q->param('m')) # Modules
 		if($logged_lvl > 3)
 		{
 			print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Statistics</h3></div><div class='panel-body'>\n";
-			print "<p><form method='GET' action='.'><div class='row'><div class='col-sm-6'><input type='hidden' name='m' value='stats'>Report type: <select class='form-control' name='report'><option value='1'>Time spent per user</option><option value='2'>All time spent per ticket</option><option value='11'>Your time spent per ticket</option><option value='3'>Tickets created per " . lc($items{"Product"}) . "</option><option value='10'>New and open tickets per " . lc($items{"Product"}) . "</option><option value='4'>Tickets created per user</option><option value='5'>Tickets created per day</option><option value='6'>Tickets created per month</option><option value='7'>Tickets per status</option><option value='8'>Users per access level</option><option value='9'>Tickets assigned per user</option></select></div><div class='col-sm-6'><span class='pull-right'><input class='btn btn-default' type='submit' value='Show'> &nbsp; <input class='btn btn-default' type='submit' name='csv' value='Export as CSV'></span></div></div></form></p></div><div class='help-block with-errors'></div></div>\n";
+			print "<p><form method='GET' action='.'><div class='row'><div class='col-sm-6'><input type='hidden' name='m' value='stats'>Report type: <select class='form-control' name='report'><option value='1'>Time spent per user</option><option value='2'>All time spent per ticket</option><option value='11'>Your time spent per ticket</option><option value='3'>Tickets created per " . lc($items{"Product"}) . "</option><option value='10'>New and open tickets per " . lc($items{"Product"}) . "</option><option value='4'>Tickets created per user</option><option value='5'>Tickets created per day</option><option value='6'>Tickets created per month</option><option value='7'>Tickets per status</option><option value='8'>Users per access level</option><option value='9'>Tickets assigned per user</option><option value='12'>Comment file attachments</option></select></div><div class='col-sm-6'><span class='pull-right'><input class='btn btn-default' type='submit' value='Show'> &nbsp; <input class='btn btn-default' type='submit' name='csv' value='Export as CSV'></span></div></div></form></p></div><div class='help-block with-errors'></div></div>\n";
 		}
 		if($logged_lvl > 3)
 		{
@@ -2603,6 +2603,12 @@ elsif($q->param('m')) # Modules
 			else { print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Tickets assigned per user</h3></div><div class='panel-body'><table class='table table-striped'><tr><th>User</th><th>Tickets</th></tr>"; }
 			$sql = $db->prepare("SELECT name FROM users;");
 		}
+		elsif(to_int($q->param('report')) == 12)
+		{
+			if($q->param('csv')) { print "Filename,GUID\n"; }
+			else { print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Comment file attachments</h3></div><div class='panel-body'><table class='table table-striped'><tr><th>Filename</th><th>GUID</th></tr>"; }
+			$sql = $db->prepare("SELECT file,filename FROM comments WHERE file != '';");
+		}
 		else
 		{
 			if($q->param('csv')) { print "Unknown,Unknown\n"; }
@@ -2616,6 +2622,10 @@ elsif($q->param('m')) # Modules
 			{
 				if(!$results{$res[1]}) { $results{$res[1]} = 0; }
 				$results{$res[1]} += to_float($res[2]);
+			}
+			elsif(to_int($q->param('report')) == 12)
+			{
+				$results{$res[1]} = $res[0];
 			}
 			elsif(to_int($q->param('report')) == 2 || to_int($q->param('report')) == 11)
 			{
