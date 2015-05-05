@@ -389,6 +389,7 @@ sub save_config
 	$cfg->save("smtp_pass", $q->param('smtp_pass'));    
 	$cfg->save("api_read", $q->param('api_read'));
 	$cfg->save("api_write", $q->param('api_write'));
+	$cfg->save("api_imp", $q->param('api_imp'));
 	$cfg->save("upload_folder", $q->param('upload_folder'));
 	$cfg->save("items_managed", $q->param('items_managed'));
 	$cfg->save("custom_name", $q->param('custom_name'));
@@ -683,7 +684,7 @@ if($cfg->load("items_managed"))
 if($q->param('site_name') && $q->param('db_address') && $logged_user ne "" && $logged_user eq $cfg->load('admin_name')) # Save config by admin
 {
 	headers("Settings");
-	if($q->param('site_name') && $q->param('db_address') && $q->param('admin_name') && $q->param('custom_name') && $q->param('default_lvl') && $q->param('default_vis') && $q->param('api_write') && $q->param('api_read')) # All required values have been filled out
+	if($q->param('site_name') && $q->param('db_address') && $q->param('admin_name') && $q->param('custom_name') && $q->param('default_lvl') && $q->param('default_vis') && $q->param('api_write') &&  $q->param('api_imp') && $q->param('api_read')) # All required values have been filled out
 	{
 		# Test database settings
 		$db = DBI->connect("dbi:SQLite:dbname=" . $q->param('db_address'), '', '', { RaiseError => 0, PrintError => 0 }) or do { msg("Could not verify database settings. Please hit back and try again.<br><br>" . $DBI::errstr, 0); exit(0); };
@@ -700,6 +701,7 @@ if($q->param('site_name') && $q->param('db_address') && $logged_user ne "" && $l
 		if(!$q->param('default_vis')) { $text .= "<span class='label label-danger'>Ticket visibility</span> "; }
 		if(!$q->param('api_read')) { $text .= "<span class='label label-danger'>API read key</span> "; }
 		if(!$q->param('api_write')) { $text .= "<span class='label label-danger'>API write key</span> "; }
+		if(!$q->param('api_imp')) { $text .= "<span class='label label-danger'>Allow user impersonation</span> "; }
 		if(!$q->param('custom_name')) { $text .= "<span class='label label-danger'>Custom ticket field</span> "; }
 		$text .= " Please go back and try again.";
 		msg($text, 0);
@@ -709,7 +711,7 @@ if($q->param('site_name') && $q->param('db_address') && $logged_user ne "" && $l
 elsif(!$cfg->load("db_address") || !$cfg->load("site_name")) # first use
 {
 	headers("Initial configuration");
-	if($q->param('site_name') && $q->param('db_address') && $q->param('custom_name') && $q->param('admin_name') && $q->param('admin_pass') && $q->param('default_lvl') && $q->param('default_vis') && $q->param('api_write') && $q->param('api_read')) # All required values have been filled out
+	if($q->param('site_name') && $q->param('db_address') && $q->param('custom_name') && $q->param('admin_name') && $q->param('admin_pass') && $q->param('default_lvl') && $q->param('default_vis') && $q->param('api_write') && $q->param('api_imp') && $q->param('api_read')) # All required values have been filled out
 	{
 		# Test database settings
 		$db = DBI->connect("dbi:SQLite:dbname=" . $q->param('db_address'), '', '', { RaiseError => 0, PrintError => 0 }) or do { msg("Could not verify database settings. Please hit back and try again.<br><br>" . $DBI::errstr, 0); exit(0); };
@@ -729,6 +731,7 @@ elsif(!$cfg->load("db_address") || !$cfg->load("site_name")) # first use
 			if(!$q->param('default_vis')) { $text .= "<span class='label label-danger'>Ticket visibility</span> "; }
 			if(!$q->param('api_read')) { $text .= "<span class='label label-danger'>API read key</span> "; }
 			if(!$q->param('api_write')) { $text .= "<span class='label label-danger'>API write key</span> "; }
+			if(!$q->param('api_imp')) { $text .= "<span class='label label-danger'>Allow user impersonation</span> "; }
 			if(!$q->param('custom_name')) { $text .= "<span class='label label-danger'>Custom ticket field</span> "; }
 			$text .= " Please go back and try again.";
 			msg($text, 0);
@@ -754,6 +757,7 @@ elsif(!$cfg->load("db_address") || !$cfg->load("site_name")) # first use
 				print "<p><div class='row'><div class='col-sm-4'>API read key:</div><div class='col-sm-4'><input type='text' style='width:300px' name='api_read' value='" . $key . "'></div></div></p>\n";
 				$key = join'', map +(0..9,'a'..'z','A'..'Z')[rand(10+26*2)], 1..32;
 				print "<p><div class='row'><div class='col-sm-4'>API write key:</div><div class='col-sm-4'><input type='text' style='width:300px' name='api_write' value='" . $key . "'></div></div></p>\n";
+				print "<p><div class='row'><div class='col-sm-4'>Allow user impersonation:</div><div class='col-sm-4'><input type='checkbox' name='api_imp'></div></div></p>\n";
 				print "<p>API keys can be used by external applications to read and write tickets using the JSON API.</p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>SMTP server:</div><div class='col-sm-4'><input type='text' style='width:300px' name='smtp_server' value=''></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>SMTP port:</div><div class='col-sm-4'><input type='text' style='width:300px' name='smtp_port' value='25'></div></div></p>\n";
@@ -1171,6 +1175,13 @@ elsif($q->param('api')) # API calls
 			print " \"status\": \"ERR_INVALID_KEY\"\n";
 			print "}\n";
 		}
+		elsif(lc($cfg->load('api_imp')) ne "on" && $q->param('from_user'))
+		{
+			print "{\n";
+			print " \"message\": \"User impersonation is not on.\",\n";
+			print " \"status\": \"ERR_INVALID_ARGUMENT\"\n";
+			print "}\n";		
+		}
 		else
 		{
 			my $found = 0;
@@ -1187,9 +1198,11 @@ elsif($q->param('api')) # API calls
 			else
 			{
 				my $custom = "";
+				my $from_user = "api";
+				if(lc($cfg->load('api_imp')) eq "on" && $q->param('from_user')) { $from_user = sanitize_alpha($q->param('from_user')); }
 				if($q->param('custom')) { $custom = sanitize_html($q->param('custom')); }
 				$sql = $db->prepare("INSERT INTO tickets VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);");
-				$sql->execute(to_int($q->param('product_id')), sanitize_html($q->param('release_id')), "api", "", sanitize_html($q->param('title')), sanitize_html($q->param('description')), $custom, "New", "", "", now(), "Never");
+				$sql->execute(to_int($q->param('product_id')), sanitize_html($q->param('release_id')), $from_user, "", sanitize_html($q->param('title')), sanitize_html($q->param('description')), $custom, "New", "", "", now(), "Never");
 				$sql = $db->prepare("SELECT last_insert_rowid();");
 				$sql->execute();
 				my $rowid = -1;
@@ -1461,6 +1474,10 @@ elsif($q->param('m')) # Modules
 			print "</select></td></tr>\n";
 			print "<tr><td>API read key</td><td><input class='form-control' type='text' name='api_read' value=\"" . $cfg->load("api_read") . "\"></td></tr>\n";
 			print "<tr><td>API write key</td><td><input class='form-control' type='text' name='api_write' value=\"" . $cfg->load("api_write") . "\"></td></tr>\n";
+			print "<tr><td>Allow user impersonation</td><td><select class='form-control' name='api_imp'>";
+			if($cfg->load("api_imp") eq "on") { print "<option selected>on</option><option>off</option>"; }
+			else { print "<option>on</option><option selected>off</option>"; }
+			print "</select></td></tr>\n";
 			print "<tr><td>SMTP server</td><td><input class='form-control' type='text' name='smtp_server' value=\"" . $cfg->load("smtp_server") . "\"></td></tr>\n";
 			print "<tr><td>SMTP port</td><td><input class='form-control' type='text' name='smtp_port' value=\"" . $cfg->load("smtp_port") . "\"></td></tr>\n";
 			print "<tr><td>SMTP username</td><td><input class='form-control' type='text' name='smtp_user' value=\"" . $cfg->load("smtp_user") . "\"></td></tr>\n";
