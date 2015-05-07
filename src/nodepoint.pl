@@ -712,7 +712,7 @@ if($q->param('site_name') && $q->param('db_address') && $logged_user ne "" && $l
 elsif(!$cfg->load("db_address") || !$cfg->load("site_name")) # first use
 {
 	headers("Initial configuration");
-	if($q->param('site_name') && $q->param('db_address') && $q->param('custom_name') && $q->param('admin_name') && $q->param('admin_pass') && $q->param('default_lvl') && $q->param('default_vis') && $q->param('api_write') && $q->param('api_imp') && $q->param('api_read')) # All required values have been filled out
+	if($q->param('site_name') && $q->param('db_address') && $q->param('custom_name') && $q->param('admin_name') && $q->param('admin_pass') && $q->param('default_lvl') && $q->param('default_vis') && $q->param('api_write') && $q->param('api_read')) # All required values have been filled out
 	{
 		# Test database settings
 		$db = DBI->connect("dbi:SQLite:dbname=" . $q->param('db_address'), '', '', { RaiseError => 0, PrintError => 0 }) or do { msg("Could not verify database settings. Please hit back and try again.<br><br>" . $DBI::errstr, 0); exit(0); };
@@ -732,7 +732,6 @@ elsif(!$cfg->load("db_address") || !$cfg->load("site_name")) # first use
 			if(!$q->param('default_vis')) { $text .= "<span class='label label-danger'>Ticket visibility</span> "; }
 			if(!$q->param('api_read')) { $text .= "<span class='label label-danger'>API read key</span> "; }
 			if(!$q->param('api_write')) { $text .= "<span class='label label-danger'>API write key</span> "; }
-			if(!$q->param('api_imp')) { $text .= "<span class='label label-danger'>Allow user impersonation</span> "; }
 			if(!$q->param('custom_name')) { $text .= "<span class='label label-danger'>Custom ticket field</span> "; }
 			$text .= " Please go back and try again.";
 			msg($text, 0);
