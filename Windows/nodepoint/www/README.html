@@ -321,15 +321,15 @@ img {
 <p>Make sure you are running it as a local administrator. Make sure the file <code>%windir%\system32\inetsrv\appcmd.exe</code> exists, and that your web site is <code>Default Web Site</code>. Also run setup from the installation folder. Optionally, you may have to modify the script to suit your environment. </p>
 <h3>If you get the error <code>Could not access Registry</code>:</h3>
 <p>Make sure the virtual folder has credentials that has access to the Registry. Go to <strong>Administrative Tools -&gt; IIS Manager</strong>, then select the <em>NodePoint</em> site under <em>Default Web Site</em> and go to <strong>Advanced Settings</strong>:</p>
-<p><img src="http://i.imgur.com/qk6pALz.jpg" /></p>
+<p><img src="https://i.imgur.com/qk6pALz.jpg" /></p>
 <p>Once there, select a <em>Specific User</em> that has access to the Registry:</p>
-<p><img src="http://i.imgur.com/jMqJaEB.jpg" /></p>
+<p><img src="https://i.imgur.com/jMqJaEB.jpg" /></p>
 <p>This can be your own user name, or you can create a dedicated user in <strong>Administrative Tools -&gt; Computer Management -&gt; Local Users and Groups</strong>. Make sure that user is part of the <em>Administrators</em> local group, and that you restart the IIS server after.</p>
 <h3>If you get the error <code>Could not access database file.</code>:</h3>
 <p>Make sure that NodePoint has Read/Write access to the database file specified in the initial configuration. By default this is <code>C:\nodepoint\db\nodepoint.db</code>. This should be the user you configured in the initial setup. You can use <em>Windows Explorer</em> to right click on the file and check under the <strong>Security</strong> tab.</p>
 <h3>If you get the error <code>The page you are requesting cannot be served because of the extension configuration.</code> or the server tries to download the file instead of executing it:</h3>
 <p>Make sure you have the <em>CGI</em> and <em>ISAPI Extensions</em> IIS features installed and enable <strong>Execute</strong> under <strong>IIS Manager -&gt; Handler Mappings -&gt; CGI-exe -&gt; Edit Feature Permissions</strong>:</p>
-<p><img src="http://i.imgur.com/2Wm0Pzp.jpg" /></p>
+<p><img src="https://i.imgur.com/2Wm0Pzp.jpg" /></p>
 <h3>If you get the error <code>The page you are requesting cannot be served because of the ISAPI and CGI Restriction list settings on the Web server.</code>:</h3>
 <p>Go to <strong>IIS Manager -&gt; ISAPI and CGI Restrictions</strong> and make sure <em>NodePoint</em> is listed. If not, click on <strong>Edit Feature Settings</strong> and enable unspecified CGI modules.</p>
 <h3>If email notifications don't work</h3>
