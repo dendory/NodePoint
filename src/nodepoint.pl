@@ -8,7 +8,7 @@
 #
 
 use strict;
-use Config::Win32;
+use Config::Linux;
 use Digest::SHA qw(sha1_hex);
 use DBI;
 use CGI;
@@ -583,10 +583,11 @@ sub home
 	{
 		print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Getting started</h3></div><div class='panel-body'>\n";
 		print "<p>Use the " . $items{"Product"} . "s tab to browse available " . lc($items{"Product"}) . "s along with their " . lc($items{"Release"}) . "s. You can view basic information about them and see their description. Use the Tickets tab to browse current tickets and comments. You can also change your email address and password under the Settings tab.</p>\n";
-		if($logged_lvl > 0) { print "<p>As an <span class='label label-success'>Authorised User</span>, you can also add new tickets to specific " . lc($items{"Product"}) . "s and " . lc($items{"Release"}) . "s, or comment on existing ones.</p>\n"; }
-		if($logged_lvl > 1) { print "<p>Since you have <span class='label label-success'>Restricted View</span> permission, you can also view restricted products and tickets, those not typically visible to normal users.</p>\n"; }
-		if($logged_lvl > 2) { print "<p>With <span class='label label-success'>Tickets Management</span> access, you can modify existing tickets entered by other users, such as change the status, add a resolution, or edit title and description. You can assign yourself to tickets, and you can also add new " . lc($items{"Release"}) . "s under the " . $items{"Product"} . "s tab.</p>\n"; }
-		if($logged_lvl > 3) { print "<p>As a <span class='label label-success'>" . $items{"Product"} . "s Management</span> user, you can add new " . lc($items{"Product"}) . "s, edit existing ones, or change their visibility, view statistics, edit articles. Archiving a product will prevent users from adding new tickets for it.</p>\n" }
+		print "<p>Your current access level is <b>" . $logged_lvl . "</b>. This gives you the following permissions:</p>\n";
+		if($logged_lvl > 0) { print "<p>As an <span class='label label-success'>Authorized User</span>, you can add new tickets to specific " . lc($items{"Product"}) . "s and " . lc($items{"Release"}) . "s, or comment on existing ones.</p>\n"; }
+		if($logged_lvl > 1) { print "<p>Since you have <span class='label label-success'>Restricted View</span> permission, you can view statistics and view restricted products and tickets, those which may not be visible to normal users.</p>\n"; }
+		if($logged_lvl > 2) { print "<p>With <span class='label label-success'>Tickets Management</span> access, you can modify existing tickets entered by other users, such as change the status, add a resolution, or edit title and description. You can assign yourself to tickets, auto-assign to " . lc($items{"Product"}) . "s, and you can also add new " . lc($items{"Release"}) . "s under the " . $items{"Product"} . "s tab.</p>\n"; }
+		if($logged_lvl > 3) { print "<p>As a <span class='label label-success'>" . $items{"Product"} . "s Management</span> user, you can add new " . lc($items{"Product"}) . "s, edit existing ones, or change their visibility, edit articles. Archiving a product will prevent users from adding new tickets for it.</p>\n" }
 		if($logged_lvl > 4) { print "<p>With the <span class='label label-success'>Users Managemenet</span> access level, you have the ability to edit users under the Settings tab. You can reset passwords and change access levels, along with adding new users. You can also delete comments under the Tickets tab.</p>\n"; }
 		if($logged_lvl > 5) { print "<p>Since you are logged in as <span class='label label-success'>NodePoint Administrator</span>, you can edit initial settings under the Settings tab. Note that it is good practice to use a lower access user to do your daily tasks.</p>\n" }
 		print "</div></div>\n";
@@ -636,11 +637,11 @@ sub home
 # Connect to config
 eval
 {
-	$cfg = Config::Win32->new("NodePoint", "settings");
+	$cfg = Config::Linux->new("NodePoint", "settings");
 };
 if(!defined($cfg)) # Can't even use headers() if this fails.
 {
-	print "Content-type: text/html\n\nError: Could not access " . Config::Win32->type . ". Please ensure NodePoint has the proper permissions.";
+	print "Content-type: text/html\n\nError: Could not access " . Config::Linux->type . ". Please ensure NodePoint has the proper permissions.";
 	exit(0);
 };
 
@@ -752,7 +753,7 @@ elsif(!$cfg->load("db_address") || !$cfg->load("site_name")) # first use
 				print "<p><div class='row'><div class='col-sm-4'>Allow user registrations:</div><div class='col-sm-4'><input type='checkbox' name='allow_registrations' checked=checked></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Default access level:</div><div class='col-sm-4'><select name='default_lvl' style='width:300px'><option value=5>5 - Users management</option><option value=4>4 - Products management</option><option value=3>3 - Tickets management</option><option value=2>2 - Restricted view</option><option value=1 selected=selected>1 - Authorized users</option><option value=0>0 - Unauthorized users</option></select></div></div></p>\n";
 				print "<p>New registered users will be assigned a default access level, which can then be modified by users with the <b>5 - Users management</b> level. These are the access levels, with each rank having the lower permissions as well:</p>\n";
-				print "<table class='table table-striped'><tr><th>Level</th><th>Name</th><th>Description</th></tr><tr><td>6</td><td>NodePoint Admin</td><td>Can change basic NodePoint settings</td></tr><td>5</td><td>Users management</td><td>Can create users, reset passwords, change access levels</td></tr><tr><td>4</td><td>Products management</td><td>Can add, retire and edit products, view statistics, edit articles</td></tr><tr><td>3</td><td>Tickets management</td><td>Can create releases, update tickets, track time</td></tr><tr><td>2</td><td>Restricted view</td><td>Can view restricted tickets and products</td></tr><tr><td>1</td><td>Authorized users</td><td>Can create tickets and comments</td></tr><tr><td>0</td><td>Unauthorized users</td><td>Can view private tickets</td></tr></table>\n";
+				print "<table class='table table-striped'><tr><th>Level</th><th>Name</th><th>Description</th></tr><tr><td>6</td><td>NodePoint Admin</td><td>Can change basic NodePoint settings</td></tr><td>5</td><td>Users management</td><td>Can create users, reset passwords, change access levels</td></tr><tr><td>4</td><td>Products management</td><td>Can add, retire and edit products, edit articles</td></tr><tr><td>3</td><td>Tickets management</td><td>Can create releases, update tickets, track time</td></tr><tr><td>2</td><td>Restricted view</td><td>Can view statistics, restricted tickets and products</td></tr><tr><td>1</td><td>Authorized users</td><td>Can create tickets and comments</td></tr><tr><td>0</td><td>Unauthorized users</td><td>Can view private tickets</td></tr></table>\n";
 				my $key = join'', map +(0..9,'a'..'z','A'..'Z')[rand(10+26*2)], 1..32;
 				print "<p><div class='row'><div class='col-sm-4'>API read key:</div><div class='col-sm-4'><input type='text' style='width:300px' name='api_read' value='" . $key . "'></div></div></p>\n";
 				$key = join'', map +(0..9,'a'..'z','A'..'Z')[rand(10+26*2)], 1..32;
@@ -1427,10 +1428,56 @@ elsif($q->param('m')) # Modules
 			}
 			print "</div></div>\n";
 		}
-		if($logged_lvl > 3)
+		if($logged_lvl > 1)
 		{
 			print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Statistics</h3></div><div class='panel-body'>\n";
-			print "<p><form method='GET' action='.'><div class='row'><div class='col-sm-6'><input type='hidden' name='m' value='stats'>Report type: <select class='form-control' name='report'><option value='1'>Time spent per user</option><option value='2'>All time spent per ticket</option><option value='11'>Your time spent per ticket</option><option value='3'>Tickets created per " . lc($items{"Product"}) . "</option><option value='10'>New and open tickets per " . lc($items{"Product"}) . "</option><option value='4'>Tickets created per user</option><option value='5'>Tickets created per day</option><option value='6'>Tickets created per month</option><option value='7'>Tickets per status</option><option value='8'>Users per access level</option><option value='9'>Tickets assigned per user</option><option value='12'>Comment file attachments</option></select></div><div class='col-sm-6'><span class='pull-right'><input class='btn btn-default' type='submit' value='Show'> &nbsp; <input class='btn btn-default' type='submit' name='csv' value='Export as CSV'></span></div></div></form></p></div><div class='help-block with-errors'></div></div>\n";
+			print "<p><div class='row'><div class='col-sm-6'><center><h4>Number of tickets created</h4></center><canvas id='graph0'></canvas></div><div class='col-sm-6'><center><h4>Overall status distribution</h4></center><canvas id='graph1'></canvas></div></div></p>\n";
+			print "<script src='Chart.min.js'></script><script>Chart.defaults.global.responsive = true; var data0 = { ";
+			$sql = $db->prepare("SELECT created FROM tickets ORDER BY ROWID DESC;");
+			$sql->execute();
+			my $i = -1;
+			my @labels = ('', '', '', '', '', '', '');
+			my @points = (0, 0, 0, 0, 0, 0, 0);
+			my $curwd = "-1";
+			while(my @res = $sql->fetchrow_array())
+			{ 
+				my ($weekday, $month, $day, $hms, $year) = split(' ', $res[0]);
+				if($curwd ne $month . " " . $day)
+				{
+					$i++;
+					$curwd = $month . " " . $day;
+				} 
+				$labels[$i] = $month . " " . $day;
+				$points[$i]++;
+				if($i > 6) { last; }
+			}			
+			print "labels: ['" . $labels[6] . "', '" . $labels[5] . "', '" . $labels[4] . "', '" . $labels[3] . "', '" . $labels[2] . "', '" . $labels[1] . "', '" . $labels[0] . "'], datasets: [{ label: 'Tickets created by day', fillColor: '#F2FBFC', strokeColor: '#97BBCC', pointColor: '#97BBCC', pointStrokeColor: '#A7CBDC', pointHighlightFill: '#A7CBDC', pointHighlightStroke: '#97BBCC', data: [" . $points[6] . "," . $points[5] . "," . $points[4] . "," . $points[3] . "," . $points[2] . "," . $points[1] . "," . $points[0] . "] }]}; var ctx0 = document.getElementById('graph0').getContext('2d'); new Chart(ctx0).Line(data0); var data1 = [{ value: ";
+			$sql = $db->prepare("SELECT COUNT(*) FROM tickets WHERE status = 'New';");
+			$sql->execute();
+			while(my @res = $sql->fetchrow_array()) { print $res[0]; }
+			print ", color:'#87ABBC', highlight: '#97BBCC', label: 'New' }, { value: ";
+			$sql = $db->prepare("SELECT COUNT(*) FROM tickets WHERE status = 'Open';");
+			$sql->execute();
+			while(my @res = $sql->fetchrow_array()) { print $res[0]; }
+			print ", color:'#EFC193', highlight: '#FFD1A3', label: 'Open' }, { value: ";
+			$sql = $db->prepare("SELECT COUNT(*) FROM tickets WHERE status = 'Invalid';");
+			$sql->execute();
+			while(my @res = $sql->fetchrow_array()) { print $res[0]; }
+			print ", color:'#CDA5EF', highlight: '#DDB5FF', label: 'Invalid' }, { value: ";
+			$sql = $db->prepare("SELECT COUNT(*) FROM tickets WHERE status = 'Hold';");
+			$sql->execute();
+			while(my @res = $sql->fetchrow_array()) { print $res[0]; }
+			print ", color:'#EF8B9C', highlight: '#FF9BAC', label: 'Hold' }, { value: ";
+			$sql = $db->prepare("SELECT COUNT(*) FROM tickets WHERE status = 'Duplicate';");
+			$sql->execute();
+			while(my @res = $sql->fetchrow_array()) { print $res[0]; }
+			print ", color:'#A3D589', highlight: '#B3E599', label: 'Duplicate' }, { value: ";
+			$sql = $db->prepare("SELECT COUNT(*) FROM tickets WHERE status = 'Resolved';");
+			$sql->execute();
+			while(my @res = $sql->fetchrow_array()) { print $res[0]; }
+			print ", color:'#DDDFA0', highlight: '#EDEFB0', label: 'Resolved' }";
+			print "]; var ctx1 = document.getElementById('graph1').getContext('2d'); new Chart(ctx1).Pie(data1);</script>\n";
+			print "<hr><p><form method='GET' action='.'><div class='row'><div class='col-sm-6'><input type='hidden' name='m' value='stats'>Report type: <select class='form-control' name='report'><option value='1'>Time spent per user</option><option value='2'>All time spent per ticket</option><option value='11'>Your time spent per ticket</option><option value='3'>Tickets created per " . lc($items{"Product"}) . "</option><option value='10'>New and open tickets per " . lc($items{"Product"}) . "</option><option value='4'>Tickets created per user</option><option value='5'>Tickets created per day</option><option value='6'>Tickets created per month</option><option value='7'>Tickets per status</option><option value='8'>Users per access level</option><option value='9'>Tickets assigned per user</option><option value='12'>Comment file attachments</option></select></div><div class='col-sm-6'><span class='pull-right'><input class='btn btn-default' type='submit' value='Show report'> &nbsp; <input class='btn btn-default' type='submit' name='csv' value='Export as CSV'></span></div></div></form></p></div><div class='help-block with-errors'></div></div>\n";
 		}
 		if($logged_lvl > 3)
 		{
@@ -1632,7 +1679,7 @@ elsif($q->param('m')) # Modules
 		headers("Settings");
 		print "<p><form method='POST' action='.'><input type='hidden' name='m' value='change_lvl'><input type='hidden' name='u' value='" . sanitize_alpha($q->param('u')) . "'>Select a new access level for user <b>" . sanitize_alpha($q->param('u')) . "</b>: <select name='newlvl'><option>0</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select><br><input class='btn btn-default' type='submit' value='Change level'></form></p><br>\n";
 		print "<p>Here is a list of available NodePoint levels:</p>\n";
-		print "<table class='table table-striped'><tr><th>Level</th><th>Name</th><th>Description</th></tr><tr><td>6</td><td>NodePoint Admin</td><td>Can change basic NodePoint settings</td></tr><td>5</td><td>Users management</td><td>Can create users, reset passwords, change access levels</td></tr><tr><td>4</td><td>" . $items{"Product"} . "s management</td><td>Can add, retire and edit " . lc($items{"Product"}) . "s, view statistics, edit articles</td></tr><tr><td>3</td><td>Tickets management</td><td>Can create " . lc($items{"Release"}) . "s, update tickets, track time</td></tr><tr><td>2</td><td>Restricted view</td><td>Can view restricted tickets and " . lc($items{"Product"}) . "s</td></tr><tr><td>1</td><td>Authorized users</td><td>Can create tickets and comments</td></tr><tr><td>0</td><td>Unauthorized users</td><td>Can view private tickets</td></tr></table>\n";
+		print "<table class='table table-striped'><tr><th>Level</th><th>Name</th><th>Description</th></tr><tr><td>6</td><td>NodePoint Admin</td><td>Can change basic NodePoint settings</td></tr><td>5</td><td>Users management</td><td>Can create users, reset passwords, change access levels</td></tr><tr><td>4</td><td>" . $items{"Product"} . "s management</td><td>Can add, retire and edit " . lc($items{"Product"}) . "s, edit articles</td></tr><tr><td>3</td><td>Tickets management</td><td>Can create " . lc($items{"Release"}) . "s, update tickets, track time</td></tr><tr><td>2</td><td>Restricted view</td><td>Can view statistics, restricted tickets and " . lc($items{"Product"}) . "s</td></tr><tr><td>1</td><td>Authorized users</td><td>Can create tickets and comments</td></tr><tr><td>0</td><td>Unauthorized users</td><td>Can view private tickets</td></tr></table>\n";
 	}
 	elsif($q->param('m') eq "reset_pass" && $logged_lvl > 4 && $q->param('u'))
 	{
@@ -2300,7 +2347,7 @@ elsif($q->param('m')) # Modules
 					$sql = $db->prepare("SELECT ROWID,title FROM kb WHERE published = 1 AND (productid = ? OR productid = 0);");
 					$sql->execute(to_int($res[1]));
 					while(my @res2 = $sql->fetchrow_array()) { print "<option value=" . $res2[0] . ">" . $res2[1] . "</option>"; }
-					print "</select></div><div class='col-sm-4'><input class='btn btn-default' type='submit' value='Link article to this ticket'></form></div></div>";
+					print "</select></div><div class='col-sm-4'><input class='btn btn-default' type='submit' value='Link article to this ticket'></form></div></div><br>";
 				}
 				if($logged_user ne "")
 				{
@@ -2309,7 +2356,7 @@ elsif($q->param('m')) # Modules
 				}
 				if($logged_user eq $cfg->load("admin_name")) { print "<form method='GET' action='.'><input type='hidden' name='m' value='confirm_delete'><input type='hidden' name='ticketid' value='" . to_int($q->param('t')) . "'><input type='submit' class='btn btn-danger pull-right' value='Permanently delete this ticket'></form>"; }
 				print "</div></div>\n";
-				if($logged_lvl > 2)
+				if($logged_lvl > 1)
 				{
 					$sql = $db->prepare("SELECT * FROM timetracking WHERE ticketid = ? ORDER BY ROWID DESC;");
 					$sql->execute(to_int($q->param('t')));
@@ -2544,7 +2591,7 @@ elsif($q->param('m')) # Modules
 			print "<input type='submit' class='btn btn-danger pull-right' value='Confirm'></form></p>";
 		}
 	}
-	elsif($q->param('m') eq "stats" && $q->param('report') && $logged_lvl > 3)
+	elsif($q->param('m') eq "stats" && $q->param('report') && $logged_lvl > 1)
 	{
 		my %results;
 		my $totalresults = 0;
@@ -2949,7 +2996,11 @@ elsif($q->param('kb'))
 				else { print "<p>Applies to: <b>" . $products[$res[1]] . "</b></p>\n"; }
 				print "<p>Description:<br><pre>" . $res[3] . "</pre></p>\n";
 			}
-			print "</div></div>";
+			print "<p>Tickets linked to this article: ";
+			$sql = $db->prepare("SELECT DISTINCT ticketid FROM kblink WHERE kb = ? ORDER BY ticketid ASC;");
+			$sql->execute(to_int($q->param('kb')));
+			while(my @res2 = $sql->fetchrow_array()) { print "<a href='./?m=view_ticket&t=" . $res2[0] . "'>" . $res2[0] . "</a> "; }
+			print "</p></div></div>";
 		}
 		else
 		{
