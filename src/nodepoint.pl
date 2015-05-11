@@ -8,7 +8,7 @@
 #
 
 use strict;
-use Config::Linux;
+use Config::Win32;
 use Digest::SHA qw(sha1_hex);
 use DBI;
 use CGI;
@@ -26,7 +26,7 @@ my ($cfg, $db, $sql, $cn, $cp, $cgs, $last_login, $perf);
 my $logged_user = "";
 my $logged_lvl = -1;
 my $q = new CGI;
-my $VERSION = "1.1.5";
+my $VERSION = "1.1.6";
 my %items = ("Product", "Product", "Release", "Release", "Model", "SKU/Model");
 
 $perf = time/100;
@@ -637,11 +637,11 @@ sub home
 # Connect to config
 eval
 {
-	$cfg = Config::Linux->new("NodePoint", "settings");
+	$cfg = Config::Win32->new("NodePoint", "settings");
 };
 if(!defined($cfg)) # Can't even use headers() if this fails.
 {
-	print "Content-type: text/html\n\nError: Could not access " . Config::Linux->type . ". Please ensure NodePoint has the proper permissions.";
+	print "Content-type: text/html\n\nError: Could not access " . Config::Win32->type . ". Please ensure NodePoint has the proper permissions.";
 	exit(0);
 };
 
@@ -1552,7 +1552,7 @@ elsif($q->param('m')) # Modules
 			print "<table class='table table-striped'><tr><th>IP address</th><th>User</th><th>Event</th><th>Time</th></tr>\n";
 			if($q->param("filter_log"))
 			{
-				$sql = $db->prepare("SELECT * FROM log DESC WHERE op LIKE ? ORDER BY key LIMIT 50;");
+				$sql = $db->prepare("SELECT * FROM log DESC WHERE op LIKE ? ORDER BY key DESC LIMIT 50;");
 				$sql->execute("%" . sanitize_alpha($q->param("filter_log")) . "%");
 			}
 			else
