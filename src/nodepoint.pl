@@ -8,7 +8,7 @@
 #
 
 use strict;
-use Config::Win32;
+use Config::Linux;
 use Digest::SHA qw(sha1_hex);
 use DBI;
 use CGI;
@@ -637,11 +637,11 @@ sub home
 # Connect to config
 eval
 {
-	$cfg = Config::Win32->new("NodePoint", "settings");
+	$cfg = Config::Linux->new("NodePoint", "settings");
 };
 if(!defined($cfg)) # Can't even use headers() if this fails.
 {
-	print "Content-type: text/html\n\nError: Could not access " . Config::Win32->type . ". Please ensure NodePoint has the proper permissions.";
+	print "Content-type: text/html\n\nError: Could not access " . Config::Linux->type . ". Please ensure NodePoint has the proper permissions.";
 	exit(0);
 };
 
@@ -1746,7 +1746,7 @@ elsif($q->param('m')) # Modules
 		if($logged_lvl > 3)
 		{
 			print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Add a new article</h3></div><div class='panel-body'>\n";
-			print "<p><div class='row'><div class='col-sm-6'><input type='hidden' name='m' value='add_article'><input placeholder='Title' class='form-control' type='text' name='title' maxlength='50'></div><div class='col-sm-6'><select class='form-control' name='productid'><option value='0'>All " . lc($items{"Product"}) . "s</option>";
+			print "<form method='GET' action='.'><p><div class='row'><div class='col-sm-6'><input type='hidden' name='m' value='add_article'><input placeholder='Title' class='form-control' type='text' name='title' maxlength='50'></div><div class='col-sm-6'><select class='form-control' name='productid'><option value='0'>All " . lc($items{"Product"}) . "s</option>";
 			for(my $i = 1; $i < scalar(@products); $i++)
 			{
 				if($products[$i]) { print "<option value='" . $i . "'>" . $products[$i] . "</option>"; }
