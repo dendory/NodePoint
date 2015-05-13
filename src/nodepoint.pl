@@ -8,7 +8,7 @@
 #
 
 use strict;
-use Config::Linux;
+use Config::Win32;
 use Digest::SHA qw(sha1_hex);
 use DBI;
 use CGI;
@@ -26,7 +26,7 @@ my ($cfg, $db, $sql, $cn, $cp, $cgs, $last_login, $perf);
 my $logged_user = "";
 my $logged_lvl = -1;
 my $q = new CGI;
-my $VERSION = "1.1.6";
+my $VERSION = "1.2.0";
 my %items = ("Product", "Product", "Release", "Release", "Model", "SKU/Model");
 
 $perf = time/100;
@@ -104,29 +104,29 @@ sub navbar
 		{
 			print "	 <li><a href='.'>Login</a></li>\n";
 			print "	 <li class='active'><a href='./?m=products'>" . $items{"Product"} . "s</a></li>\n";
-			print "	 <li><a href='./?m=tickets'>Tickets</a></li>\n";
-			print "	 <li><a href='./?m=articles'>Articles</a></li>\n";
+			if($cfg->load('comp_tickets') eq "on") { print "	 <li><a href='./?m=tickets'>Tickets</a></li>\n"; }
+			if($cfg->load('comp_articles') eq "on") { print "	 <li><a href='./?m=articles'>Articles</a></li>\n"; }
 		}
 		elsif($q->param('m') && ($q->param('m') eq "tickets" || $q->param('m') eq "follow_ticket" || $q->param('m') eq "unfollow_ticket" || $q->param('m') eq "update_comment" || $q->param('m') eq "add_comment" || $q->param('m') eq "new_ticket" || $q->param('m') eq "add_ticket" || $q->param('m') eq "view_ticket" || $q->param('m') eq "update_ticket"))
 		{
 			print "	 <li><a href='.'>Login</a></li>\n";
 			print "	 <li><a href='./?m=products'>" . $items{"Product"} . "s</a></li>\n";
-			print "	 <li class='active'><a href='./?m=tickets'>Tickets</a></li>\n";
-			print "	 <li><a href='./?m=articles'>Articles</a></li>\n";
+			if($cfg->load('comp_tickets') eq "on") { print "	 <li class='active'><a href='./?m=tickets'>Tickets</a></li>\n"; }
+			if($cfg->load('comp_articles') eq "on") { print "	 <li><a href='./?m=articles'>Articles</a></li>\n"; }
 		}
 		elsif($q->param('kb') || $q->param('m') && ($q->param('m') eq "articles" || $q->param('m') eq "add_article" || $q->param('m') eq "save_article" || $q->param('m') eq "link_article"))
 		{
 			print "	 <li><a href='.'>Login</a></li>\n";
 			print "	 <li><a href='./?m=products'>" . $items{"Product"} . "s</a></li>\n";
-			print "	 <li><a href='./?m=tickets'>Tickets</a></li>\n";
-			print "	 <li class='active'><a href='./?m=articles'>Articles</a></li>\n";
+			if($cfg->load('comp_tickets') eq "on") { print "	 <li><a href='./?m=tickets'>Tickets</a></li>\n"; }
+			if($cfg->load('comp_articles') eq "on") { print "	 <li class='active'><a href='./?m=articles'>Articles</a></li>\n"; }
 		}
 		else
 		{
 			print "	 <li class='active'><a href='.'>Login</a></li>\n";
 			print "	 <li><a href='./?m=products'>" . $items{"Product"} . "s</a></li>\n";
-			print "	 <li><a href='./?m=tickets'>Tickets</a></li>\n";
-			print "	 <li><a href='./?m=articles'>Articles</a></li>\n";
+			if($cfg->load('comp_tickets') eq "on") { print "	 <li><a href='./?m=tickets'>Tickets</a></li>\n"; }
+			if($cfg->load('comp_articles') eq "on") { print "	 <li><a href='./?m=articles'>Articles</a></li>\n"; }
 		}	    
 	}
 	else
@@ -135,48 +135,65 @@ sub navbar
 		{
 			print "	 <li><a href='.'>Home</a></li>\n";
 			print "	 <li><a href='./?m=products'>" . $items{"Product"} . "s</a></li>\n";
-			print "	 <li class='active'><a href='./?m=tickets'>Tickets</a></li>\n";
-			print "	 <li><a href='./?m=articles'>Articles</a></li>\n";
+			if($cfg->load('comp_tickets') eq "on") { print "	 <li class='active'><a href='./?m=tickets'>Tickets</a></li>\n"; }
+			if($cfg->load('comp_articles') eq "on") { print "	 <li><a href='./?m=articles'>Articles</a></li>\n"; }
+			if($cfg->load('comp_items') eq "on") { print "	 <li><a href='./?m=items'>Items</a></li>\n"; }
 			print "	 <li><a href='./?m=settings'>Settings</a></li>\n";
 		}
 		elsif($q->param('m') && ($q->param('m') eq "products" || $q->param('m') eq "add_product" ||$q->param('m') eq "view_product" || $q->param('m') eq "edit_product" || $q->param('m') eq "add_release"))
 		{
 			print "	 <li><a href='.'>Home</a></li>\n";
 			print "	 <li class='active'><a href='./?m=products'>" . $items{"Product"} . "s</a></li>\n";
-			print "	 <li><a href='./?m=tickets'>Tickets</a></li>\n";
-			print "	 <li><a href='./?m=articles'>Articles</a></li>\n";
+			if($cfg->load('comp_tickets') eq "on") { print "	 <li><a href='./?m=tickets'>Tickets</a></li>\n"; }
+			if($cfg->load('comp_articles') eq "on") { print "	 <li><a href='./?m=articles'>Articles</a></li>\n"; }
+			if($cfg->load('comp_items') eq "on") { print "	 <li><a href='./?m=items'>Items</a></li>\n"; }
 			print "	 <li><a href='./?m=settings'>Settings</a></li>\n";
 		}
 		elsif($q->param('m') && ($q->param('m') eq "settings" || $q->param('m') eq "confirm_delete" || $q->param('m') eq "clear_log" || $q->param('m') eq "stats" || $q->param('m') eq "change_lvl" || $q->param('m') eq "confirm_email" || $q->param('m') eq "reset_pass" || $q->param('m') eq "logout") || $q->param('create_form') || $q->param('edit_form') || $q->param('save_form'))
 		{
 			print "	 <li><a href='.'>Home</a></li>\n";
 			print "	 <li><a href='./?m=products'>" . $items{"Product"} . "s</a></li>\n";
-			print "	 <li><a href='./?m=tickets'>Tickets</a></li>\n";
-			print "	 <li><a href='./?m=articles'>Articles</a></li>\n";
+			if($cfg->load('comp_tickets') eq "on") { print "	 <li><a href='./?m=tickets'>Tickets</a></li>\n"; }
+			if($cfg->load('comp_articles') eq "on") { print "	 <li><a href='./?m=articles'>Articles</a></li>\n"; }
+			if($cfg->load('comp_items') eq "on") { print "	 <li><a href='./?m=items'>Items</a></li>\n"; }
 			print "	 <li class='active'><a href='./?m=settings'>Settings</a></li>\n";
 		}
 		elsif($q->param('kb') || $q->param('m') && ($q->param('m') eq "articles" || $q->param('m') eq "add_article" || $q->param('m') eq "save_article" || $q->param('m') eq "link_article" || $q->param('m') eq "unlink_article"))
 		{
 			print "	 <li><a href='.'>Home</a></li>\n";
 			print "	 <li><a href='./?m=products'>" . $items{"Product"} . "s</a></li>\n";
-			print "	 <li><a href='./?m=tickets'>Tickets</a></li>\n";
-			print "	 <li class='active'><a href='./?m=articles'>Articles</a></li>\n";
+			if($cfg->load('comp_tickets') eq "on") { print "	 <li><a href='./?m=tickets'>Tickets</a></li>\n"; }
+			if($cfg->load('comp_articles') eq "on") { print "	 <li class='active'><a href='./?m=articles'>Articles</a></li>\n"; }
+			if($cfg->load('comp_items') eq "on") { print "	 <li><a href='./?m=items'>Items</a></li>\n"; }
+			print "	 <li><a href='./?m=settings'>Settings</a></li>\n";
+		}
+		elsif($q->param('m') && ($q->param('m') eq "items" || $q->param('m') eq "checkout" || $q->param('m') eq "checkin" || $q->param('m') eq "save_item" || $q->param('m') eq "create_item" || $q->param('m') eq "edit_item"))
+		{
+			print "	 <li><a href='.'>Home</a></li>\n";
+			print "	 <li><a href='./?m=products'>" . $items{"Product"} . "s</a></li>\n";
+			if($cfg->load('comp_tickets') eq "on") { print "	 <li><a href='./?m=tickets'>Tickets</a></li>\n"; }
+			if($cfg->load('comp_articles') eq "on") { print "	 <li><a href='./?m=articles'>Articles</a></li>\n"; }
+			if($cfg->load('comp_items') eq "on") { print "	 <li class='active'><a href='./?m=items'>Items</a></li>\n"; }
 			print "	 <li><a href='./?m=settings'>Settings</a></li>\n";
 		}
 		else
 		{
 			print "	 <li class='active'><a href='.'>Home</a></li>\n";
 			print "	 <li><a href='./?m=products'>" . $items{"Product"} . "s</a></li>\n";
-			print "	 <li><a href='./?m=tickets'>Tickets</a></li>\n";
-			print "	 <li><a href='./?m=articles'>Articles</a></li>\n";
+			if($cfg->load('comp_tickets') eq "on") { print "	 <li><a href='./?m=tickets'>Tickets</a></li>\n"; }
+			if($cfg->load('comp_articles') eq "on") { print "	 <li><a href='./?m=articles'>Articles</a></li>\n"; }
+			if($cfg->load('comp_items') eq "on") { print "	 <li><a href='./?m=items'>Items</a></li>\n"; }
 			print "	 <li><a href='./?m=settings'>Settings</a></li>\n";
 		}
-		print "   <form class='navbar-form navbar-right' method='GET' action='./'>";
-		print "    <div class='form-group'>";
-		print "     <input type='number' placeholder='Ticket ID' style='-moz-appearance:textfield;-webkit-appearance:none;' name='t' class='form-control'><input type='hidden' name='m' value='view_ticket'>";
-		print "    </div>";
-		print "    <button type='submit' class='btn btn-primary'>Open</button>";
-		print "   </form>";
+		if($cfg->load('comp_tickets') eq "on") 
+		{ 
+			print "   <form class='navbar-form navbar-right' method='GET' action='./'>";
+			print "    <div class='form-group'>";
+			print "     <input type='number' placeholder='Ticket ID' style='-moz-appearance:textfield;-webkit-appearance:none;' name='t' class='form-control'><input type='hidden' name='m' value='view_ticket'>";
+			print "    </div>";
+			print "    <button type='submit' class='btn btn-primary'>Open</button>";
+			print "   </form>";
+		}
 	}
 	print "	 </ul>\n";
 	print "	 <ul class='nav navbar-nav navbar-right'>\n";
@@ -397,6 +414,9 @@ sub save_config
 	$cfg->save("ext_plugin", $q->param('ext_plugin'));
 	$cfg->save("ad_server", $q->param('ad_server'));
 	$cfg->save("ad_domain", $q->param('ad_domain'));
+	$cfg->save("comp_tickets", $q->param('comp_tickets'));
+	$cfg->save("comp_articles", $q->param('comp_articles'));
+	$cfg->save("comp_items", $q->param('comp_items'));
 }
 
 # Check login credentials
@@ -593,7 +613,7 @@ sub home
 		print "</div></div>\n";
 	}
 
-	if($logged_lvl > 0)
+	if($logged_lvl > 0 && $cfg->load('comp_tickets') eq "on")
 	{
 		print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Tickets you created</h3></div><div class='panel-body'><table class='table table-striped'>\n";
 		print "<tr><th>ID</th><th>" . $items{"Product"} . "</th><th>" . $items{"Release"} . "</th><th>Title</th><th>Status</th><th>Date</th></tr>\n";
@@ -606,17 +626,20 @@ sub home
 		print "</table></div></div>";
 	}
 	
-	print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Tickets you follow</h3></div><div class='panel-body'><table class='table table-striped'>\n";
-	print "<tr><th>ID</th><th>" . $items{"Product"} . "</th><th>User</th><th>Title</th><th>Status</th><th>Date</th></tr>\n";
-	$sql = $db->prepare("SELECT ROWID,* FROM tickets WHERE status != 'Closed' ORDER BY ROWID DESC;");
-	$sql->execute();
-	while(my @res = $sql->fetchrow_array())
+	if($cfg->load('comp_tickets') eq "on")
 	{
-		if($products[$res[1]] && $res[10] =~ /\b$logged_user\b/) { print "<tr><td>" . $res[0] . "</td><td>" . $products[$res[1]] . "</td><td>" . $res[3] . "</td><td><a href='./?m=view_ticket&t=" . $res[0] . "'>" . $res[5] . "</a></td><td>" . $res[8] . "</td><td>" . $res[11] . "</td></tr>\n"; }
+		print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Tickets you follow</h3></div><div class='panel-body'><table class='table table-striped'>\n";
+		print "<tr><th>ID</th><th>" . $items{"Product"} . "</th><th>User</th><th>Title</th><th>Status</th><th>Date</th></tr>\n";
+		$sql = $db->prepare("SELECT ROWID,* FROM tickets WHERE status != 'Closed' ORDER BY ROWID DESC;");
+		$sql->execute();
+		while(my @res = $sql->fetchrow_array())
+		{
+			if($products[$res[1]] && $res[10] =~ /\b$logged_user\b/) { print "<tr><td>" . $res[0] . "</td><td>" . $products[$res[1]] . "</td><td>" . $res[3] . "</td><td><a href='./?m=view_ticket&t=" . $res[0] . "'>" . $res[5] . "</a></td><td>" . $res[8] . "</td><td>" . $res[11] . "</td></tr>\n"; }
+		}
+		print "</table></div></div>";
 	}
-	print "</table></div></div>";
-
-	if($logged_lvl > 2)
+	
+	if($logged_lvl > 2 && $cfg->load('comp_tickets') eq "on")
 	{
 		print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Tickets assigned to you</h3></div><div class='panel-body'><table class='table table-striped'>\n";
 		print "<tr><th>ID</th><th>" . $items{"Product"} . "</th><th>User</th><th>Title</th><th>Status</th><th>Date</th></tr>\n";
@@ -637,11 +660,11 @@ sub home
 # Connect to config
 eval
 {
-	$cfg = Config::Linux->new("NodePoint", "settings");
+	$cfg = Config::Win32->new("NodePoint", "settings");
 };
 if(!defined($cfg)) # Can't even use headers() if this fails.
 {
-	print "Content-type: text/html\n\nError: Could not access " . Config::Linux->type . ". Please ensure NodePoint has the proper permissions.";
+	print "Content-type: text/html\n\nError: Could not access " . Config::Win32->type . ". Please ensure NodePoint has the proper permissions.";
 	exit(0);
 };
 
@@ -685,7 +708,7 @@ if($cfg->load("items_managed"))
 if($q->param('site_name') && $q->param('db_address') && $logged_user ne "" && $logged_user eq $cfg->load('admin_name')) # Save config by admin
 {
 	headers("Settings");
-	if($q->param('site_name') && $q->param('db_address') && $q->param('admin_name') && $q->param('custom_name') && $q->param('default_lvl') && $q->param('default_vis') && $q->param('api_write') &&  $q->param('api_imp') && $q->param('api_read')) # All required values have been filled out
+	if($q->param('site_name') && $q->param('db_address') && $q->param('admin_name') && $q->param('custom_name') && $q->param('default_lvl') && $q->param('default_vis') && $q->param('api_write') &&  $q->param('api_imp') && $q->param('api_read') && $q->param('comp_tickets') && $q->param('comp_articles') && $q->param('comp_items')) # All required values have been filled out
 	{
 		# Test database settings
 		$db = DBI->connect("dbi:SQLite:dbname=" . $q->param('db_address'), '', '', { RaiseError => 0, PrintError => 0 }) or do { msg("Could not verify database settings. Please hit back and try again.<br><br>" . $DBI::errstr, 0); exit(0); };
@@ -704,6 +727,9 @@ if($q->param('site_name') && $q->param('db_address') && $logged_user ne "" && $l
 		if(!$q->param('api_write')) { $text .= "<span class='label label-danger'>API write key</span> "; }
 		if(!$q->param('api_imp')) { $text .= "<span class='label label-danger'>Allow user impersonation</span> "; }
 		if(!$q->param('custom_name')) { $text .= "<span class='label label-danger'>Custom ticket field</span> "; }
+		if(!$q->param('comp_tickets')) { $text .= "<span class='label label-danger'>Component: Tickets</span> "; }
+		if(!$q->param('comp_articles')) { $text .= "<span class='label label-danger'>Component: Articles</span> "; }
+		if(!$q->param('comp_items')) { $text .= "<span class='label label-danger'>Component: Items</span> "; }
 		$text .= " Please go back and try again.";
 		msg($text, 0);
 	}
@@ -779,6 +805,10 @@ elsif(!$cfg->load("db_address") || !$cfg->load("site_name")) # first use
 				print "<p><div class='row'><div class='col-sm-4'>Active Directory server:</div><div class='col-sm-4'><input type='text' style='width:300px' name='ad_server' value=''></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Active Directory domain:</div><div class='col-sm-4'><input type='text' style='width:300px' name='ad_domain' value=''></div></div></p>\n";
 				print "<p>To validate logins against an Active Directory domain, enter your domain controller address and domain name (NT4 format) here.</p>\n";
+				print "<p>Select which major components of NodePoint you want to activate:</p>";
+				print "<p><div class='row'><div class='col-sm-4'>Component: Tickets Management</div><div class='col-sm-4'><input type='checkbox' name='comp_tickets' checked></div></div></p>\n";
+				print "<p><div class='row'><div class='col-sm-4'>Component: Support Articles</div><div class='col-sm-4'><input type='checkbox' name='comp_articles' checked></div></div></p>\n";
+				print "<p><div class='row'><div class='col-sm-4'>Component: Items Tracking</div><div class='col-sm-4'><input type='checkbox' name='comp_items' checked></div></div></p>\n";
 				print "<p><input class='btn btn-primary pull-right' type='submit' value='Save'></p></form>\n"; 
 			}
 			else
@@ -1546,6 +1576,18 @@ elsif($q->param('m')) # Modules
 			print "</select></td></tr>\n";
 			print "<tr><td>Active Directory server</td><td><input class='form-control' type='text' name='ad_server' value=\"" . $cfg->load("ad_server") . "\"></td></tr>\n";
 			print "<tr><td>Active Directory domain</td><td><input class='form-control' type='text' name='ad_domain' value=\"" . $cfg->load("ad_domain") . "\"></td></tr>\n";
+			print "<tr><td>Component: Tickets Management</td><td><select class='form-control' name='comp_tickets'>";
+			if($cfg->load("comp_tickets") eq "on") { print "<option selected>on</option><option>off</option>"; }
+			else { print "<option>on</option><option selected>off</option>"; }
+			print "</select></td></tr>\n";
+			print "<tr><td>Component: Support Articles</td><td><select class='form-control' name='comp_articles'>";
+			if($cfg->load("comp_articles") eq "on") { print "<option selected>on</option><option>off</option>"; }
+			else { print "<option>on</option><option selected>off</option>"; }
+			print "</select></td></tr>\n";
+			print "<tr><td>Component: Items Tracking</td><td><select class='form-control' name='comp_items'>";
+			if($cfg->load("comp_items") eq "on") { print "<option selected>on</option><option>off</option>"; }
+			else { print "<option>on</option><option selected>off</option>"; }
+			print "</select></td></tr>\n";
 			print "</table>The admin password will be left unchanged if empty.<br>See the <a href='./README.html'>README</a> file for help.<input class='btn btn-primary pull-right' type='submit' value='Save settings'></form></div></div>\n";
 			print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Log (last 50 events)</h3></div><div class='panel-body'>\n";
 			print "<form style='display:inline' method='POST' action='.'><input type='hidden' name='m' value='clear_log'><input class='btn btn-danger pull-right' type='submit' value='Clear log'><br></form><a name='log'></a><p>Filter log by events:<br><a href='./?m=settings#log'>All</a> | <a href='./?m=settings&filter_log=Failed#log'>Failed logins</a> | <a href='./?m=settings&filter_log=Success#log'>Successful logins</a> | <a href='./?m=settings&filter_log=level#log'>Level changes</a> | <a href='./?m=settings&filter_log=password#log'>Password changes</a> | <a href='./?m=settings&filter_log=new#log'>New users</a> | <a href='./?m=settings&filter_log=setting#log'>Settings updated</a> | <a href='./?m=settings&filter_log=notification#log'>Email notifications</a> | <a href='./?m=settings&filter_log=LDAP:#log'>Active Directory</a> | <a href='./?m=settings&filter_log=deleted:#log'>Deletes</a></p>\n";
@@ -1851,30 +1893,33 @@ elsif($q->param('m')) # Modules
 				print "</table></div></div>\n";
 			}
 		}
-		print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Related articles</h3></div><div class='panel-body'><table class='table table-striped'>\n";
-		if($logged_lvl > 3) { print "<tr><th>ID</th><th>Title</th><th>Status</th><th>Last update</th></tr>"; }
-		else { print "<tr><th>ID</th><th>Title</th><th>Last update</th></tr>"; }
-		if($logged_lvl > 3) { $sql = $db->prepare("SELECT ROWID,* FROM kb WHERE (productid = ? OR productid = 0);"); }
-		else { $sql = $db->prepare("SELECT ROWID,* FROM kb WHERE published = 1 AND (productid = ? OR productid = 0);"); }
-		$sql->execute(to_int($q->param('p')));
-		my $status;
-		while(my @res = $sql->fetchrow_array())
+		if($cfg->load('comp_articles') eq "on")
 		{
-			if(to_int($res[4]) == 0) { $status = "Draft"; }
-			else { $status = "Published"; }			
-			if($logged_lvl > 3)
+			print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Related articles</h3></div><div class='panel-body'><table class='table table-striped'>\n";
+			if($logged_lvl > 3) { print "<tr><th>ID</th><th>Title</th><th>Status</th><th>Last update</th></tr>"; }
+			else { print "<tr><th>ID</th><th>Title</th><th>Last update</th></tr>"; }
+			if($logged_lvl > 3) { $sql = $db->prepare("SELECT ROWID,* FROM kb WHERE (productid = ? OR productid = 0);"); }
+			else { $sql = $db->prepare("SELECT ROWID,* FROM kb WHERE published = 1 AND (productid = ? OR productid = 0);"); }
+			$sql->execute(to_int($q->param('p')));
+			my $status;
+			while(my @res = $sql->fetchrow_array())
 			{
-				
-				if($res[7] eq "Never") { print "<tr><td>" . $res[0] . "</td><td><a href='./?kb=" . $res[0] . "'>" . $res[2] . "</a></td><td>" . $status . "</td><td>" . $res[6] . "</td></tr>\n"; }
-				else { print "<tr><td>" . $res[0] . "</td><td><a href='./?kb=" . $res[0] . "'>" . $res[2] . "</a></td><td>" . $status . "</td><td>" . $res[7] . "</td></tr>\n"; }
+				if(to_int($res[4]) == 0) { $status = "Draft"; }
+				else { $status = "Published"; }			
+				if($logged_lvl > 3)
+				{
+					
+					if($res[7] eq "Never") { print "<tr><td>" . $res[0] . "</td><td><a href='./?kb=" . $res[0] . "'>" . $res[2] . "</a></td><td>" . $status . "</td><td>" . $res[6] . "</td></tr>\n"; }
+					else { print "<tr><td>" . $res[0] . "</td><td><a href='./?kb=" . $res[0] . "'>" . $res[2] . "</a></td><td>" . $status . "</td><td>" . $res[7] . "</td></tr>\n"; }
+				}
+				else
+				{
+					if($res[7] eq "Never") { print "<tr><td>" . $res[0] . "</td><td><a href='./?kb=" . $res[0] . "'>" . $res[2] . "</a></td><td>" . $res[6] . "</td></tr>\n"; }
+					else { print "<tr><td>" . $res[0] . "</td><td><a href='./?kb=" . $res[0] . "'>" . $res[2] . "</a></td><td>" . $res[7] . "</td></tr>\n"; }
+				}			
 			}
-			else
-			{
-				if($res[7] eq "Never") { print "<tr><td>" . $res[0] . "</td><td><a href='./?kb=" . $res[0] . "'>" . $res[2] . "</a></td><td>" . $res[6] . "</td></tr>\n"; }
-				else { print "<tr><td>" . $res[0] . "</td><td><a href='./?kb=" . $res[0] . "'>" . $res[2] . "</a></td><td>" . $res[7] . "</td></tr>\n"; }
-			}			
+			print "</table></div></div>\n";
 		}
-		print "</table></div></div>\n";
 	}
 	elsif($logged_lvl > 2 && $q->param('m') eq "add_release")
 	{
@@ -2292,11 +2337,16 @@ elsif($q->param('m')) # Modules
 				while(my @res2 = $sql->fetchrow_array()) { $product = $res2[1]; }
 				print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Ticket " . to_int($q->param('t')) . "</h3></div><div class='panel-body'>";
 				if($logged_lvl > 2) { print "<form method='POST' action='.'><input type='hidden' name='m' value='update_ticket'><input type='hidden' name='t' value='" . to_int($q->param('t')) . "'>\n"; }
-				print "<p><div class='row'><div class='col-sm-6'>" . $items{"Product"} . ": <b>" . $product . "</b></div><div class='col-sm-6'>Linked articles: ";
-				$sql = $db->prepare("SELECT DISTINCT kb FROM kblink WHERE ticketid = ?;");
-				$sql->execute(to_int($q->param('t')));
-				while(my @res2 = $sql->fetchrow_array()) { print "<a href='./?kb=" . $res2[0] . "'>" . $res2[0] . "</a> "; }
-				print "</div></div></p>";
+				print "<p><div class='row'><div class='col-sm-6'>" . $items{"Product"} . ": <b>" . $product . "</b></div>";
+				if($cfg->load('comp_articles') eq "on")
+				{
+					print "<div class='col-sm-6'>Linked articles: ";
+					$sql = $db->prepare("SELECT DISTINCT kb FROM kblink WHERE ticketid = ?;");
+					$sql->execute(to_int($q->param('t')));
+					while(my @res2 = $sql->fetchrow_array()) { print "<a href='./?kb=" . $res2[0] . "'>" . $res2[0] . "</a> "; }
+					print "</div>";
+				}
+					print "</div></p>";
 				print "<p><div class='row'><div class='col-sm-6'>Created by: <b>" . $res[3] . "</b></div><div class='col-sm-6'>Created on: <b>" . $res[11] . "</b></div></div></p>\n";
 				print "<p><div class='row'><input type='hidden' name='ticket_assigned' value='" . $res[4] . "'><div class='col-sm-6'>Assigned to: <b>" . $res[4] . "</b>";
 				if($logged_lvl > 2)
@@ -2340,7 +2390,7 @@ elsif($q->param('m')) # Modules
 				if($logged_lvl > 2) { print "<p>Description:<br><textarea class='form-control' name='ticket_desc' rows='20'>" . $res[6] . "</textarea></p>\n"; }
 				else { print "<p>Description:<br><pre>" . $res[6] . "</pre></p>\n"; }
 				if($logged_lvl > 2) { print "<p><div class='row'><div class='col-sm-6'>Time spent (in <b>hours</b>): <input type='text' name='time_spent' class='form-control' value='0'></div><div class='col-sm-6'><input class='btn btn-primary pull-right' type='submit' value='Update ticket'></div></div></p></form><hr>\n"; }
-				if($logged_lvl > 1)
+				if($logged_lvl > 1 && $cfg->load('comp_articles') eq "on")
 				{
 					print "<div class='row'><div class='col-sm-8'><form method='GET' action='./'><input type='hidden' name='m' value='link_article'><input type='hidden' name='ticketid' value='" . to_int($q->param('t')) . "'><select class='form-control' name='articleid'>";
 					$sql = $db->prepare("SELECT ROWID,title FROM kb WHERE published = 1 AND (productid = ? OR productid = 0);");
@@ -2753,7 +2803,11 @@ elsif($q->param('m')) # Modules
 		$sql->execute(to_int($q->param('ticketid')), to_int($q->param('articleid')));
 		msg("Ticket <b>" . to_int($q->param('ticketid')) . "</b> unlinked. Press <a href='./?kb=" . to_int($q->param('articleid')) . "'>here</a> to continue.", 3);
 	}
-	elsif($q->param('m') eq "tickets")
+	elsif($q->param('m') eq "items" && $cfg->load('comp_items') eq "on")
+	{
+		headers("Items");
+	}
+	elsif($q->param('m') eq "tickets" && $cfg->load('comp_tickets') eq "on")
 	{
 		my $limit = 1000;
 		if($q->param('filter_limit')) { $limit = to_int($q->param('filter_limit')); }
@@ -2959,7 +3013,7 @@ elsif(($q->param('create_form') || $q->param('edit_form') || $q->param('save_for
 	}
 	footers();
 }
-elsif($q->param('kb'))
+elsif($q->param('kb') && $cfg->load('comp_articles') eq "on")
 {
 	headers("Articles");
 	my @products;
@@ -3002,24 +3056,28 @@ elsif($q->param('kb'))
 				else { print "<p>Applies to: <b>" . $products[$res[1]] . "</b></p>\n"; }
 				print "<p>Description:<br><pre>" . $res[3] . "</pre></p>\n";
 			}
-			print "</p></div></div><div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Active tickets linked to this article</h3></div><div class='panel-body'>\n";
-			print "<table class='table table-striped'><tr><th>ID</th><th>Title</th><th>Status</th>";
-			if($logged_lvl > 3) { print "<th>Unlink</th>"; }
-			print "</tr>\n";
-			$sql = $db->prepare("SELECT DISTINCT ticketid FROM kblink WHERE kb = ? ORDER BY ticketid DESC;");
-			$sql->execute(to_int($q->param('kb')));
-			while(my @res2 = $sql->fetchrow_array())
+			print "</p></div></div>";
+			if($cfg->load('comp_tickets') eq "on")
 			{
-				my $sql2 = $db->prepare("SELECT title,status ticketid FROM tickets WHERE ROWID = ? AND status != 'Closed';");
-				$sql2->execute(to_int($res2[0]));
-				while(my @res3 = $sql2->fetchrow_array())
+				print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Active tickets linked to this article</h3></div><div class='panel-body'>\n";
+				print "<table class='table table-striped'><tr><th>ID</th><th>Title</th><th>Status</th>";
+				if($logged_lvl > 3) { print "<th>Unlink</th>"; }
+				print "</tr>\n";
+				$sql = $db->prepare("SELECT DISTINCT ticketid FROM kblink WHERE kb = ? ORDER BY ticketid DESC;");
+				$sql->execute(to_int($q->param('kb')));
+				while(my @res2 = $sql->fetchrow_array())
 				{
-					print "<tr><td>" . $res2[0] . "</td><td><a href='./?m=view_ticket&t=" . $res2[0] . "'>" . $res3[0] . "</a></td><td>" . $res3[1] . "</td>";
-					if($logged_lvl > 3) { print "<td><a href='./?m=unlink_article&articleid=" . to_int($q->param('kb')) . "&ticketid=" . $res2[0] . "'>Unlink</a></td>"; }
-					print "</tr>\n";
-				} 
+					my $sql2 = $db->prepare("SELECT title,status ticketid FROM tickets WHERE ROWID = ? AND status != 'Closed';");
+					$sql2->execute(to_int($res2[0]));
+					while(my @res3 = $sql2->fetchrow_array())
+					{
+						print "<tr><td>" . $res2[0] . "</td><td><a href='./?m=view_ticket&t=" . $res2[0] . "'>" . $res3[0] . "</a></td><td>" . $res3[1] . "</td>";
+						if($logged_lvl > 3) { print "<td><a href='./?m=unlink_article&articleid=" . to_int($q->param('kb')) . "&ticketid=" . $res2[0] . "'>Unlink</a></td>"; }
+						print "</tr>\n";
+					} 
+				}
+				print "</table></div></div>\n";
 			}
-			print "</table></div></div>\n";
 		}
 		else
 		{
