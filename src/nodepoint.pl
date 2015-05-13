@@ -100,26 +100,37 @@ sub navbar
 	}
 	elsif($logged_user eq "")
 	{
-		if($q->param('m') && ($q->param('m') eq "products" || $q->param('m') eq "add_product" || $q->param('m') eq "auto_assign" || $q->param('m') eq "view_product" || $q->param('m') eq "edit_product" || $q->param('m') eq "add_release"))
+		if($q->param('m') && $q->param('m') eq "products")
 		{
 			print "	 <li><a href='.'>Login</a></li>\n";
 			print "	 <li class='active'><a href='./?m=products'>" . $items{"Product"} . "s</a></li>\n";
 			if($cfg->load('comp_tickets') eq "on") { print "	 <li><a href='./?m=tickets'>Tickets</a></li>\n"; }
 			if($cfg->load('comp_articles') eq "on") { print "	 <li><a href='./?m=articles'>Articles</a></li>\n"; }
+			if($cfg->load('comp_items') eq "on") { print "	 <li><a href='./?m=items'>Items</a></li>\n"; }
 		}
-		elsif($q->param('m') && ($q->param('m') eq "tickets" || $q->param('m') eq "follow_ticket" || $q->param('m') eq "unfollow_ticket" || $q->param('m') eq "update_comment" || $q->param('m') eq "add_comment" || $q->param('m') eq "new_ticket" || $q->param('m') eq "add_ticket" || $q->param('m') eq "view_ticket" || $q->param('m') eq "update_ticket"))
+		elsif($q->param('m') && $q->param('m') eq "tickets")
 		{
 			print "	 <li><a href='.'>Login</a></li>\n";
 			print "	 <li><a href='./?m=products'>" . $items{"Product"} . "s</a></li>\n";
 			if($cfg->load('comp_tickets') eq "on") { print "	 <li class='active'><a href='./?m=tickets'>Tickets</a></li>\n"; }
 			if($cfg->load('comp_articles') eq "on") { print "	 <li><a href='./?m=articles'>Articles</a></li>\n"; }
+			if($cfg->load('comp_items') eq "on") { print "	 <li><a href='./?m=items'>Items</a></li>\n"; }
 		}
-		elsif($q->param('kb') || $q->param('m') && ($q->param('m') eq "articles" || $q->param('m') eq "add_article" || $q->param('m') eq "save_article" || $q->param('m') eq "link_article"))
+		elsif($q->param('kb') || ($q->param('m') && $q->param('m') eq "articles"))
 		{
 			print "	 <li><a href='.'>Login</a></li>\n";
 			print "	 <li><a href='./?m=products'>" . $items{"Product"} . "s</a></li>\n";
 			if($cfg->load('comp_tickets') eq "on") { print "	 <li><a href='./?m=tickets'>Tickets</a></li>\n"; }
 			if($cfg->load('comp_articles') eq "on") { print "	 <li class='active'><a href='./?m=articles'>Articles</a></li>\n"; }
+			if($cfg->load('comp_items') eq "on") { print "	 <li><a href='./?m=items'>Items</a></li>\n"; }
+		}
+		elsif($q->param('m') && $q->param('m') eq "items")
+		{
+			print "	 <li><a href='.'>Login</a></li>\n";
+			print "	 <li><a href='./?m=products'>" . $items{"Product"} . "s</a></li>\n";
+			if($cfg->load('comp_tickets') eq "on") { print "	 <li><a href='./?m=tickets'>Tickets</a></li>\n"; }
+			if($cfg->load('comp_articles') eq "on") { print "	 <li><a href='./?m=articles'>Articles</a></li>\n"; }
+			if($cfg->load('comp_items') eq "on") { print "	 <li class='active'><a href='./?m=items'>Items</a></li>\n"; }		
 		}
 		else
 		{
@@ -127,6 +138,7 @@ sub navbar
 			print "	 <li><a href='./?m=products'>" . $items{"Product"} . "s</a></li>\n";
 			if($cfg->load('comp_tickets') eq "on") { print "	 <li><a href='./?m=tickets'>Tickets</a></li>\n"; }
 			if($cfg->load('comp_articles') eq "on") { print "	 <li><a href='./?m=articles'>Articles</a></li>\n"; }
+			if($cfg->load('comp_items') eq "on") { print "	 <li><a href='./?m=items'>Items</a></li>\n"; }		
 		}	    
 	}
 	else
@@ -372,6 +384,12 @@ sub db_check
 		$sql->execute();
 	};
 	$sql->finish();
+	$sql = $db->prepare("SELECT * FROM escalate WHERE 0 = 1;") or do
+	{
+		$sql = $db->prepare("CREATE TABLE escalate (ticketid INT, user TEXT);");
+		$sql->execute();
+	};
+	$sql->finish();
 }
 
 # Log an event
@@ -598,6 +616,19 @@ sub home
 	$sql = $db->prepare("SELECT ROWID,* FROM products;");
 	$sql->execute();
 	while(my @res = $sql->fetchrow_array()) { $products[$res[0]] = $res[1]; }
+
+	if($q->param('delete_notify') && $logged_user ne "")
+	{
+		$sql = $db->prepare("DELETE FROM escalate WHERE user = ? AND ticketid = ?;");
+		$sql->execute($logged_user, to_int($q->param('delete_notify')));
+	}
+
+	if($logged_user ne "")
+	{
+		$sql = $db->prepare("SELECT DISTINCT ticketid FROM escalate WHERE user = ?;");
+		$sql->execute($logged_user);
+		while(my @res = $sql->fetchrow_array()) { msg("<span class='pull-right'><a href='./?delete_notify=" . $res[0] . "'>Clear</a></span>Ticket <a href='./?m=view_ticket&t=" . $res[0] . "'>" . $res[0] . "</a> requires your attention.", 2); }
+	}
 
 	if(!$q->cookie('np_gs'))
 	{
@@ -2188,6 +2219,12 @@ elsif($q->param('m')) # Modules
 				$sql = $db->prepare("INSERT INTO timetracking VALUES (?, ?, ?, ?);");
 				$sql->execute(to_int($q->param('t')), $logged_user, to_float($q->param("time_spent")), now());
 			}
+			if($q->param("notify_user"))
+			{
+				$sql = $db->prepare("INSERT INTO escalate VALUES (?, ?);");
+				$sql->execute(to_int($q->param('t')), sanitize_alpha($q->param('notify_user')));
+				notify(sanitize_alpha($q->param('notify_user')), "Ticket (" . to_int($q->param('t')) . ") requires your attention", "The ticket \"" . $q->param('ticket_title') . "\" has been modified:\n\nModified by: " . $logged_user . "\n" . $cfg->load('custom_name') . ": " . $lnk . "\nStatus: " . sanitize_alpha($q->param('ticket_status')) . "\nResolution: " . $resolution . "\nAssigned to: " . $assigned . "\nDescription: " . $q->param('ticket_desc') . "\n\n" . $changes);
+			}
 		}
 		else
 		{
@@ -2389,21 +2426,21 @@ elsif($q->param('m')) # Modules
 				else { print "<p>Title: <b>" . $res[5] . "</b></p>"; }
 				if($logged_lvl > 2) { print "<p>Description:<br><textarea class='form-control' name='ticket_desc' rows='20'>" . $res[6] . "</textarea></p>\n"; }
 				else { print "<p>Description:<br><pre>" . $res[6] . "</pre></p>\n"; }
-				if($logged_lvl > 2) { print "<p><div class='row'><div class='col-sm-6'>Time spent (in <b>hours</b>): <input type='text' name='time_spent' class='form-control' value='0'></div><div class='col-sm-6'><input class='btn btn-primary pull-right' type='submit' value='Update ticket'></div></div></p></form><hr>\n"; }
+				if($logged_lvl > 2) { print "<p><div class='row'><div class='col-sm-4'>Time spent (in <b>hours</b>): <input type='text' name='time_spent' class='form-control' value='0'></div><div class='col-sm-4'>Notify user: <input type='text' name='notify_user' class='form-control' value=''></div><div class='col-sm-4'><input class='btn btn-primary pull-right' type='submit' value='Update ticket'></div></div></p></form><hr>\n"; }
 				if($logged_lvl > 1 && $cfg->load('comp_articles') eq "on")
 				{
 					print "<div class='row'><div class='col-sm-8'><form method='GET' action='./'><input type='hidden' name='m' value='link_article'><input type='hidden' name='ticketid' value='" . to_int($q->param('t')) . "'><select class='form-control' name='articleid'>";
 					$sql = $db->prepare("SELECT ROWID,title FROM kb WHERE published = 1 AND (productid = ? OR productid = 0);");
 					$sql->execute(to_int($res[1]));
 					while(my @res2 = $sql->fetchrow_array()) { print "<option value=" . $res2[0] . ">" . $res2[1] . "</option>"; }
-					print "</select></div><div class='col-sm-4'><input class='btn btn-primary' type='submit' value='Link article to this ticket'></form></div></div><br>";
+					print "</select></div><div class='col-sm-4'><input class='btn btn-primary pull-right' type='submit' value='Link article to this ticket'></form></div></div><hr>";
 				}
 				if($logged_user ne "")
 				{
 					if($res[10] =~ /\b\Q$logged_user\E\b/) { print "<form action='.' method='POST' style='display:inline'><input type='hidden' name='m' value='unfollow_ticket'><input type='hidden' name='t' value='" . to_int($q->param('t')) . "'><input class='btn btn-primary' type='submit' value='Unfollow ticket'></form>"; }
 					else { print "<form action='.' method='POST' style='display:inline'><input type='hidden' name='m' value='follow_ticket'><input type='hidden' name='t' value='" . to_int($q->param('t')) . "'><input class='btn btn-primary' type='submit' value='Follow ticket'></form>"; }
 				}
-				if($logged_user eq $cfg->load("admin_name")) { print "<form method='GET' action='.'><input type='hidden' name='m' value='confirm_delete'><input type='hidden' name='ticketid' value='" . to_int($q->param('t')) . "'><input type='submit' class='btn btn-danger pull-right' value='Permanently delete this ticket'></form>"; }
+				if($logged_user eq $cfg->load("admin_name")) { print "<span class='pull-right'><form method='GET' action='.'><input type='hidden' name='m' value='confirm_delete'><input type='hidden' name='ticketid' value='" . to_int($q->param('t')) . "'><input type='submit' class='btn btn-danger' value='Permanently delete this ticket'></form></span>"; }
 				print "</div></div>\n";
 				if($logged_lvl > 1)
 				{
@@ -2424,10 +2461,9 @@ elsif($q->param('m')) # Modules
 				{
 					print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Add comment</h3></div><div class='panel-body'><form method='POST' action='.' enctype='multipart/form-data'><input type='hidden' name='m' value='add_comment'><input type='hidden' name='t' value='" . to_int($q->param('t')) . "'>\n";
 					print "<p><textarea class='form-control' rows='4' name='comment'></textarea></p>";
-					print "<p>";
+					print "<p><input class='btn btn-primary pull-right' type='submit' value='Add comment'>";
 					if($logged_lvl >= to_int($cfg->load('upload_lvl'))) { print "Attach file: <input type='file' name='attach_file'>"; }
-					print "<input class='btn btn-primary pull-right' type='submit' value='Add comment'></p>\n";
-					print "</form></div></div>\n";
+					print "</p></form></div></div>\n";
 				}
 				$sql = $db->prepare("SELECT ROWID,* FROM comments WHERE ticketid = ? ORDER BY ROWID DESC;");
 				$sql->execute(to_int($q->param('t')));
