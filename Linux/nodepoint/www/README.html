@@ -312,7 +312,7 @@ img {
 <p>Map a virtual host in your <code>httpd.conf</code>, or link the <em>www</em> folder, for example: <code>ln -s /var/www/nodepoint ~/nodepoint/www</code> (paths may differ based on your distro).</p>
 </li>
 <li>
-<p>Access the site at <code>http://localhost/nodepoint</code> and complete the first time configuration.</p>
+<p>Access the site from localhost (e.g. <code>http://localhost/nodepoint</code>) and complete the first time configuration.</p>
 </li>
 </ul>
 <h2>Upgrade steps</h2>
@@ -420,6 +420,7 @@ img {
 <h2>Forms and tickets</h2>
 <p>Users who have an access level of 1 or higher can enter tickets. The default form asks for a title, description and a custom entry type, configurable in the initial settings. Custom forms can also be designed and assigned to products by users of access level 4 and above. These custom forms can have up to 10 fields, each field can be a text area, a check box, satisfaction rating, and so on. Products that have a custom form assigned will display that form to users instead of the default one.</p>
 <p>Any logged in user can follow a ticket by clicking the proper option on the ticket's screen, which will add that ticket to their home screen for easy reference. This is meant as a way to follow an issue you are not actively working on. Users with access level 3 or higher can assign themselves to a ticket by clicking the proper checkbox on the ticket's screen. This is meant as a way to assign resources to a particular issue. Auto assignment can also be used to assign specific users to any ticket filed against a product. You can add yourself to the auto-assign list of a product by clicking the button on the product's screen.</p>
+<p>Users with at least access level 2 can link articles to tickets. These can be used to assign related documentation to issues, or as categories. Linked tickets (except closed ones) are listed on the article's page, which makes it easy to track which tickets are assigned to a specific article. Users with access level 3 or above can modify tickets. When a ticket is modified, the description is updated to show who modified it, and what parameters were changed, such as the title, description, status and resolution. Open tickets do not require a resolution, but every other status does. Users can also track the time they spent on the issue, which will be added to the time table for that ticket. Corrections can be made by entering negative values. Finally, custom users can be notified that they need to take a look at the ticket. This notification will be sent by email (if email notifications are configured and the user has a confirmed email address) along with a notice on their home page the next time they log on.</p>
 <h2>API</h2>
 <p>NodePoint provides an API to add and show tickets in JSON format. You can use GET or POST arguments with the following values:</p>
 <h3>Show ticket</h3>

@@ -28,6 +28,7 @@ my $logged_lvl = -1;
 my $q = new CGI;
 my $VERSION = "1.2.0";
 my %items = ("Product", "Product", "Release", "Release", "Model", "SKU/Model");
+my @itemtypes = ("None");
 
 $perf = time/100;
 $perf = int(($perf - int($perf)) * 100000);
@@ -387,6 +388,12 @@ sub db_check
 	$sql = $db->prepare("SELECT * FROM escalate WHERE 0 = 1;") or do
 	{
 		$sql = $db->prepare("CREATE TABLE escalate (ticketid INT, user TEXT);");
+		$sql->execute();
+	};
+	$sql->finish();
+	$sql = $db->prepare("SELECT * FROM items WHERE 0 = 1;") or do
+	{
+		$sql = $db->prepare("CREATE TABLE items (type INT, name TEXT, description TEXT, avail INT, total INT, status INT, createdby TEXT, created TEXT, modified TEXT);");
 		$sql->execute();
 	};
 	$sql->finish();
@@ -2207,7 +2214,7 @@ elsif($q->param('m')) # Modules
 				$creator = $res[3];
 			}
 			$sql = $db->prepare("UPDATE tickets SET link = ?, resolution = ?, status = ?, title = ?, description = ?, assignedto = ?, releaseid = ?, modified = ? WHERE ROWID = ?;");
-			$sql->execute($lnk, $resolution, sanitize_alpha($q->param('ticket_status')), sanitize_html($q->param('ticket_title')), sanitize_html($q->param('ticket_desc')) . "\n\n---\nTicket modified by: " . $logged_user . "\n" . $changes, $assigned, sanitize_html($q->param('ticket_releases')), now(), to_int($q->param('t')));
+			$sql->execute($lnk, $resolution, sanitize_alpha($q->param('ticket_status')), sanitize_html($q->param('ticket_title')), sanitize_html($q->param('ticket_desc')) . "\n\n--- " . now() . " ---\nTicket modified by: " . $logged_user . "\n" . $changes, $assigned, sanitize_html($q->param('ticket_releases')), now(), to_int($q->param('t')));
 			foreach my $u (@us)
 			{
 				notify($u, "Ticket (" . to_int($q->param('t')) . ") assigned to you has been modified", "The ticket \"" . $q->param('ticket_title') . "\" has been modified:\n\nModified by: " . $logged_user . "\n" . $cfg->load('custom_name') . ": " . $lnk . "\nStatus: " . sanitize_alpha($q->param('ticket_status')) . "\nResolution: " . $resolution . "\nAssigned to: " . $assigned . "\nDescription: " . $q->param('ticket_desc') . "\n\n" . $changes);
@@ -2842,6 +2849,19 @@ elsif($q->param('m')) # Modules
 	elsif($q->param('m') eq "items" && $cfg->load('comp_items') eq "on")
 	{
 		headers("Items");
+		print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>List of items</h3></div><div class='panel-body'><table class='table table-striped'><tr><th>ID</th><th>Type</th><th>Name</th><th>Quantity</th><th>Actions</th></tr>\n";
+		$sql = $db->prepare("SELECT ROWID,* FROM items;");
+		$sql->execute();
+		while(my @res = $sql->fetchrow_array())
+		{
+		 print "<tr><td>" . $res[0] . "</td><td>" . $itemtypes[$res[1]] . "</td><td>" . $res[2] . "</td><td>" . $res[4] . " / " . $res[5] . "</td><td>";
+		 if($logged_lvl > 0 && $res[6] == 0 && to_int($res[4]) > 0) { print "<form method='GET' action='.'><input type='hidden' name='m' value='checkout_item'><input type='hidden' name='item' value='" . $res[0] . "'><input type='submit' class='btn btn-normal' value='Checkout'></form>"; }
+		 elsif($logged_lvl > 0 && $res[6] == 1 && to_int($res[4]) > 0) { print "<form method='GET' action='.'><input type='hidden' name='m' value='request_item'><input type='hidden' name='item' value='" . $res[0] . "'><input type='submit' class='btn btn-normal' value='Request'></form>"; }
+		 elsif($logged_lvl > 0) { print "<input type='submit' class='btn btn-normal' value='Unavailable' disabled>"; }
+		 if($logged_lvl > 3) { print "<form method='GET' action='.'><input type='hidden' name='m' value='delete_item'><input type='hidden' name='item' value='" . $res[0] . "'><input type='submit' class='btn btn-danger' value='Delete'></form>"; }
+		 print "</td></tr>\n";
+		}
+		print "</table></div></div>\n";
 	}
 	elsif($q->param('m') eq "tickets" && $cfg->load('comp_tickets') eq "on")
 	{
