@@ -61,6 +61,7 @@ sub headers
 	navbar();
 	print "  <div class='container'>\n";
 	if($cfg->load("motd")) { print "<div class='well'>" . $cfg->load("motd") . "</div>\n"; }
+	if($logged_lvl > 5 && $cfg->load('comp_tickets') ne "on" && $cfg->load('comp_articles') ne "on" && $cfg->load('comp_time') ne "on") { msg("All components are turned off. Enable the ones you need in Settings.", 1); }
 }
 
 # Footers
@@ -107,7 +108,6 @@ sub navbar
 			print "	 <li class='active'><a href='./?m=products'>" . $items{"Product"} . "s</a></li>\n";
 			if($cfg->load('comp_tickets') eq "on") { print "	 <li><a href='./?m=tickets'>Tickets</a></li>\n"; }
 			if($cfg->load('comp_articles') eq "on") { print "	 <li><a href='./?m=articles'>Articles</a></li>\n"; }
-			if($cfg->load('comp_items') eq "on") { print "	 <li><a href='./?m=items'>Items</a></li>\n"; }
 		}
 		elsif($q->param('m') && $q->param('m') eq "tickets")
 		{
@@ -115,7 +115,6 @@ sub navbar
 			print "	 <li><a href='./?m=products'>" . $items{"Product"} . "s</a></li>\n";
 			if($cfg->load('comp_tickets') eq "on") { print "	 <li class='active'><a href='./?m=tickets'>Tickets</a></li>\n"; }
 			if($cfg->load('comp_articles') eq "on") { print "	 <li><a href='./?m=articles'>Articles</a></li>\n"; }
-			if($cfg->load('comp_items') eq "on") { print "	 <li><a href='./?m=items'>Items</a></li>\n"; }
 		}
 		elsif($q->param('kb') || ($q->param('m') && $q->param('m') eq "articles"))
 		{
@@ -123,7 +122,6 @@ sub navbar
 			print "	 <li><a href='./?m=products'>" . $items{"Product"} . "s</a></li>\n";
 			if($cfg->load('comp_tickets') eq "on") { print "	 <li><a href='./?m=tickets'>Tickets</a></li>\n"; }
 			if($cfg->load('comp_articles') eq "on") { print "	 <li class='active'><a href='./?m=articles'>Articles</a></li>\n"; }
-			if($cfg->load('comp_items') eq "on") { print "	 <li><a href='./?m=items'>Items</a></li>\n"; }
 		}
 		elsif($q->param('m') && $q->param('m') eq "items")
 		{
@@ -131,7 +129,6 @@ sub navbar
 			print "	 <li><a href='./?m=products'>" . $items{"Product"} . "s</a></li>\n";
 			if($cfg->load('comp_tickets') eq "on") { print "	 <li><a href='./?m=tickets'>Tickets</a></li>\n"; }
 			if($cfg->load('comp_articles') eq "on") { print "	 <li><a href='./?m=articles'>Articles</a></li>\n"; }
-			if($cfg->load('comp_items') eq "on") { print "	 <li class='active'><a href='./?m=items'>Items</a></li>\n"; }		
 		}
 		else
 		{
@@ -139,7 +136,6 @@ sub navbar
 			print "	 <li><a href='./?m=products'>" . $items{"Product"} . "s</a></li>\n";
 			if($cfg->load('comp_tickets') eq "on") { print "	 <li><a href='./?m=tickets'>Tickets</a></li>\n"; }
 			if($cfg->load('comp_articles') eq "on") { print "	 <li><a href='./?m=articles'>Articles</a></li>\n"; }
-			if($cfg->load('comp_items') eq "on") { print "	 <li><a href='./?m=items'>Items</a></li>\n"; }		
 		}	    
 	}
 	else
@@ -150,7 +146,6 @@ sub navbar
 			print "	 <li><a href='./?m=products'>" . $items{"Product"} . "s</a></li>\n";
 			if($cfg->load('comp_tickets') eq "on") { print "	 <li class='active'><a href='./?m=tickets'>Tickets</a></li>\n"; }
 			if($cfg->load('comp_articles') eq "on") { print "	 <li><a href='./?m=articles'>Articles</a></li>\n"; }
-			if($cfg->load('comp_items') eq "on") { print "	 <li><a href='./?m=items'>Items</a></li>\n"; }
 			print "	 <li><a href='./?m=settings'>Settings</a></li>\n";
 		}
 		elsif($q->param('m') && ($q->param('m') eq "products" || $q->param('m') eq "add_product" ||$q->param('m') eq "view_product" || $q->param('m') eq "edit_product" || $q->param('m') eq "add_release"))
@@ -159,7 +154,6 @@ sub navbar
 			print "	 <li class='active'><a href='./?m=products'>" . $items{"Product"} . "s</a></li>\n";
 			if($cfg->load('comp_tickets') eq "on") { print "	 <li><a href='./?m=tickets'>Tickets</a></li>\n"; }
 			if($cfg->load('comp_articles') eq "on") { print "	 <li><a href='./?m=articles'>Articles</a></li>\n"; }
-			if($cfg->load('comp_items') eq "on") { print "	 <li><a href='./?m=items'>Items</a></li>\n"; }
 			print "	 <li><a href='./?m=settings'>Settings</a></li>\n";
 		}
 		elsif($q->param('m') && ($q->param('m') eq "settings" || $q->param('m') eq "confirm_delete" || $q->param('m') eq "clear_log" || $q->param('m') eq "stats" || $q->param('m') eq "change_lvl" || $q->param('m') eq "confirm_email" || $q->param('m') eq "reset_pass" || $q->param('m') eq "logout") || $q->param('create_form') || $q->param('edit_form') || $q->param('save_form'))
@@ -168,7 +162,6 @@ sub navbar
 			print "	 <li><a href='./?m=products'>" . $items{"Product"} . "s</a></li>\n";
 			if($cfg->load('comp_tickets') eq "on") { print "	 <li><a href='./?m=tickets'>Tickets</a></li>\n"; }
 			if($cfg->load('comp_articles') eq "on") { print "	 <li><a href='./?m=articles'>Articles</a></li>\n"; }
-			if($cfg->load('comp_items') eq "on") { print "	 <li><a href='./?m=items'>Items</a></li>\n"; }
 			print "	 <li class='active'><a href='./?m=settings'>Settings</a></li>\n";
 		}
 		elsif($q->param('kb') || $q->param('m') && ($q->param('m') eq "articles" || $q->param('m') eq "add_article" || $q->param('m') eq "save_article" || $q->param('m') eq "link_article" || $q->param('m') eq "unlink_article"))
@@ -177,7 +170,6 @@ sub navbar
 			print "	 <li><a href='./?m=products'>" . $items{"Product"} . "s</a></li>\n";
 			if($cfg->load('comp_tickets') eq "on") { print "	 <li><a href='./?m=tickets'>Tickets</a></li>\n"; }
 			if($cfg->load('comp_articles') eq "on") { print "	 <li class='active'><a href='./?m=articles'>Articles</a></li>\n"; }
-			if($cfg->load('comp_items') eq "on") { print "	 <li><a href='./?m=items'>Items</a></li>\n"; }
 			print "	 <li><a href='./?m=settings'>Settings</a></li>\n";
 		}
 		elsif($q->param('m') && ($q->param('m') eq "items" || $q->param('m') eq "checkout" || $q->param('m') eq "checkin" || $q->param('m') eq "save_item" || $q->param('m') eq "create_item" || $q->param('m') eq "edit_item"))
@@ -186,7 +178,6 @@ sub navbar
 			print "	 <li><a href='./?m=products'>" . $items{"Product"} . "s</a></li>\n";
 			if($cfg->load('comp_tickets') eq "on") { print "	 <li><a href='./?m=tickets'>Tickets</a></li>\n"; }
 			if($cfg->load('comp_articles') eq "on") { print "	 <li><a href='./?m=articles'>Articles</a></li>\n"; }
-			if($cfg->load('comp_items') eq "on") { print "	 <li class='active'><a href='./?m=items'>Items</a></li>\n"; }
 			print "	 <li><a href='./?m=settings'>Settings</a></li>\n";
 		}
 		else
@@ -195,7 +186,6 @@ sub navbar
 			print "	 <li><a href='./?m=products'>" . $items{"Product"} . "s</a></li>\n";
 			if($cfg->load('comp_tickets') eq "on") { print "	 <li><a href='./?m=tickets'>Tickets</a></li>\n"; }
 			if($cfg->load('comp_articles') eq "on") { print "	 <li><a href='./?m=articles'>Articles</a></li>\n"; }
-			if($cfg->load('comp_items') eq "on") { print "	 <li><a href='./?m=items'>Items</a></li>\n"; }
 			print "	 <li><a href='./?m=settings'>Settings</a></li>\n";
 		}
 		if($cfg->load('comp_tickets') eq "on") 
@@ -391,12 +381,6 @@ sub db_check
 		$sql->execute();
 	};
 	$sql->finish();
-	$sql = $db->prepare("SELECT * FROM items WHERE 0 = 1;") or do
-	{
-		$sql = $db->prepare("CREATE TABLE items (type INT, name TEXT, description TEXT, avail INT, total INT, status INT, createdby TEXT, created TEXT, modified TEXT);");
-		$sql->execute();
-	};
-	$sql->finish();
 }
 
 # Log an event
@@ -441,7 +425,7 @@ sub save_config
 	$cfg->save("ad_domain", $q->param('ad_domain'));
 	$cfg->save("comp_tickets", $q->param('comp_tickets'));
 	$cfg->save("comp_articles", $q->param('comp_articles'));
-	$cfg->save("comp_items", $q->param('comp_items'));
+	$cfg->save("comp_time", $q->param('comp_time'));
 }
 
 # Check login credentials
@@ -746,7 +730,7 @@ if($cfg->load("items_managed"))
 if($q->param('site_name') && $q->param('db_address') && $logged_user ne "" && $logged_user eq $cfg->load('admin_name')) # Save config by admin
 {
 	headers("Settings");
-	if($q->param('site_name') && $q->param('db_address') && $q->param('admin_name') && $q->param('custom_name') && $q->param('default_lvl') && $q->param('default_vis') && $q->param('api_write') &&  $q->param('api_imp') && $q->param('api_read') && $q->param('comp_tickets') && $q->param('comp_articles') && $q->param('comp_items')) # All required values have been filled out
+	if($q->param('site_name') && $q->param('db_address') && $q->param('admin_name') && $q->param('custom_name') && $q->param('default_lvl') && $q->param('default_vis') && $q->param('api_write') &&  $q->param('api_imp') && $q->param('api_read') && $q->param('comp_tickets') && $q->param('comp_articles') && $q->param('comp_time')) # All required values have been filled out
 	{
 		# Test database settings
 		$db = DBI->connect("dbi:SQLite:dbname=" . $q->param('db_address'), '', '', { RaiseError => 0, PrintError => 0 }) or do { msg("Could not verify database settings. Please hit back and try again.<br><br>" . $DBI::errstr, 0); exit(0); };
@@ -765,9 +749,9 @@ if($q->param('site_name') && $q->param('db_address') && $logged_user ne "" && $l
 		if(!$q->param('api_write')) { $text .= "<span class='label label-danger'>API write key</span> "; }
 		if(!$q->param('api_imp')) { $text .= "<span class='label label-danger'>Allow user impersonation</span> "; }
 		if(!$q->param('custom_name')) { $text .= "<span class='label label-danger'>Custom ticket field</span> "; }
-		if(!$q->param('comp_tickets')) { $text .= "<span class='label label-danger'>Component: Tickets</span> "; }
-		if(!$q->param('comp_articles')) { $text .= "<span class='label label-danger'>Component: Articles</span> "; }
-		if(!$q->param('comp_items')) { $text .= "<span class='label label-danger'>Component: Items</span> "; }
+		if(!$q->param('comp_tickets')) { $text .= "<span class='label label-danger'>Component: Tickets management</span> "; }
+		if(!$q->param('comp_articles')) { $text .= "<span class='label label-danger'>Component: Support articles</span> "; }
+		if(!$q->param('comp_time')) { $text .= "<span class='label label-danger'>Component: Time tracking</span> "; }
 		$text .= " Please go back and try again.";
 		msg($text, 0);
 	}
@@ -846,7 +830,7 @@ elsif(!$cfg->load("db_address") || !$cfg->load("site_name")) # first use
 				print "<p>Select which major components of NodePoint you want to activate:</p>";
 				print "<p><div class='row'><div class='col-sm-4'>Component: Tickets Management</div><div class='col-sm-4'><input type='checkbox' name='comp_tickets' checked></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Component: Support Articles</div><div class='col-sm-4'><input type='checkbox' name='comp_articles' checked></div></div></p>\n";
-				print "<p><div class='row'><div class='col-sm-4'>Component: Items Tracking</div><div class='col-sm-4'><input type='checkbox' name='comp_items' checked></div></div></p>\n";
+				print "<p><div class='row'><div class='col-sm-4'>Component: Time Tracking</div><div class='col-sm-4'><input type='checkbox' name='comp_time' checked></div></div></p>\n";
 				print "<p><input class='btn btn-primary pull-right' type='submit' value='Save'></p></form>\n"; 
 			}
 			else
@@ -1459,7 +1443,7 @@ elsif($q->param('m')) # Modules
 		$cgs = $q->cookie(-name => "np_gs", -expires => '+3M', -value => "1");
 		headers("Settings");
 		print "<p>You are logged in as <b>" . $logged_user . "</b> and your access level is <b>" . $logged_lvl . "</b>. Press <a href='./?m=logout'>here</a> to log out.</p>\n";
-		if($logged_lvl > 2)
+		if($logged_lvl > 2 && $cfg->load('comp_time') eq "on")
 		{
 			$sql = $db->prepare("SELECT * FROM timetracking WHERE name = ?;");
 			$sql->execute($logged_user);
@@ -1535,55 +1519,61 @@ elsif($q->param('m')) # Modules
 		if($logged_lvl > 1)
 		{
 			print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Statistics</h3></div><div class='panel-body'>\n";
-			print "<p><div class='row'><div class='col-sm-6'><center><h4>Number of tickets created</h4></center><canvas id='graph0'></canvas></div><div class='col-sm-6'><center><h4>Overall status distribution</h4></center><canvas id='graph1'></canvas></div></div></p>\n";
-			print "<script src='Chart.min.js'></script><script>Chart.defaults.global.responsive = true; var data0 = { ";
-			$sql = $db->prepare("SELECT created FROM tickets ORDER BY ROWID DESC;");
-			$sql->execute();
-			my $i = -1;
-			my @labels = ('', '', '', '', '', '', '');
-			my @points = (0, 0, 0, 0, 0, 0, 0);
-			my $curwd = "-1";
-			while(my @res = $sql->fetchrow_array())
-			{ 
-				my ($weekday, $month, $day, $hms, $year) = split(' ', $res[0]);
-				if($curwd ne $month . " " . $day)
-				{
-					$i++;
-					$curwd = $month . " " . $day;
-				} 
-				$labels[$i] = $month . " " . $day;
-				$points[$i]++;
-				if($i > 6) { last; }
-			}			
-			print "labels: ['" . $labels[6] . "', '" . $labels[5] . "', '" . $labels[4] . "', '" . $labels[3] . "', '" . $labels[2] . "', '" . $labels[1] . "', '" . $labels[0] . "'], datasets: [{ label: 'Tickets created by day', fillColor: '#F2FBFC', strokeColor: '#97BBCC', pointColor: '#97BBCC', pointStrokeColor: '#A7CBDC', pointHighlightFill: '#A7CBDC', pointHighlightStroke: '#97BBCC', data: [" . $points[6] . "," . $points[5] . "," . $points[4] . "," . $points[3] . "," . $points[2] . "," . $points[1] . "," . $points[0] . "] }]}; var ctx0 = document.getElementById('graph0').getContext('2d'); new Chart(ctx0).Line(data0); var data1 = [{ value: ";
-			$sql = $db->prepare("SELECT COUNT(*) FROM tickets WHERE status = 'New';");
-			$sql->execute();
-			while(my @res = $sql->fetchrow_array()) { print $res[0]; }
-			print ", color:'#87ABBC', highlight: '#97BBCC', label: 'New' }, { value: ";
-			$sql = $db->prepare("SELECT COUNT(*) FROM tickets WHERE status = 'Open';");
-			$sql->execute();
-			while(my @res = $sql->fetchrow_array()) { print $res[0]; }
-			print ", color:'#EFC193', highlight: '#FFD1A3', label: 'Open' }, { value: ";
-			$sql = $db->prepare("SELECT COUNT(*) FROM tickets WHERE status = 'Invalid';");
-			$sql->execute();
-			while(my @res = $sql->fetchrow_array()) { print $res[0]; }
-			print ", color:'#CDA5EF', highlight: '#DDB5FF', label: 'Invalid' }, { value: ";
-			$sql = $db->prepare("SELECT COUNT(*) FROM tickets WHERE status = 'Hold';");
-			$sql->execute();
-			while(my @res = $sql->fetchrow_array()) { print $res[0]; }
-			print ", color:'#EF8B9C', highlight: '#FF9BAC', label: 'Hold' }, { value: ";
-			$sql = $db->prepare("SELECT COUNT(*) FROM tickets WHERE status = 'Duplicate';");
-			$sql->execute();
-			while(my @res = $sql->fetchrow_array()) { print $res[0]; }
-			print ", color:'#A3D589', highlight: '#B3E599', label: 'Duplicate' }, { value: ";
-			$sql = $db->prepare("SELECT COUNT(*) FROM tickets WHERE status = 'Resolved';");
-			$sql->execute();
-			while(my @res = $sql->fetchrow_array()) { print $res[0]; }
-			print ", color:'#DDDFA0', highlight: '#EDEFB0', label: 'Resolved' }";
-			print "]; var ctx1 = document.getElementById('graph1').getContext('2d'); new Chart(ctx1).Pie(data1);</script>\n";
-			print "<hr><p><form method='GET' action='.'><div class='row'><div class='col-sm-6'><input type='hidden' name='m' value='stats'>Report type: <select class='form-control' name='report'><option value='1'>Time spent per user</option><option value='2'>All time spent per ticket</option><option value='11'>Your time spent per ticket</option><option value='3'>Tickets created per " . lc($items{"Product"}) . "</option><option value='10'>New and open tickets per " . lc($items{"Product"}) . "</option><option value='4'>Tickets created per user</option><option value='5'>Tickets created per day</option><option value='6'>Tickets created per month</option><option value='7'>Tickets per status</option><option value='8'>Users per access level</option><option value='9'>Tickets assigned per user</option><option value='12'>Comment file attachments</option></select></div><div class='col-sm-6'><span class='pull-right'><input class='btn btn-primary' type='submit' value='Show report'> &nbsp; <input class='btn btn-primary' type='submit' name='csv' value='Export as CSV'></span></div></div></form></p></div><div class='help-block with-errors'></div></div>\n";
+			if($cfg->load('comp_tickets') eq "on")
+			{
+				print "<p><div class='row'><div class='col-sm-6'><center><h4>Number of tickets created</h4></center><canvas id='graph0'></canvas></div><div class='col-sm-6'><center><h4>Overall status distribution</h4></center><canvas id='graph1'></canvas></div></div></p>\n";
+				print "<script src='Chart.min.js'></script><script>Chart.defaults.global.responsive = true; var data0 = { ";
+				$sql = $db->prepare("SELECT created FROM tickets ORDER BY ROWID DESC;");
+				$sql->execute();
+				my $i = -1;
+				my @labels = ('', '', '', '', '', '', '');
+				my @points = (0, 0, 0, 0, 0, 0, 0);
+				my $curwd = "-1";
+				while(my @res = $sql->fetchrow_array())
+				{ 
+					my ($weekday, $month, $day, $hms, $year) = split(' ', $res[0]);
+					if($curwd ne $month . " " . $day)
+					{
+						$i++;
+						$curwd = $month . " " . $day;
+					} 
+					$labels[$i] = $month . " " . $day;
+					$points[$i]++;
+					if($i > 6) { last; }
+				}			
+				print "labels: ['" . $labels[6] . "', '" . $labels[5] . "', '" . $labels[4] . "', '" . $labels[3] . "', '" . $labels[2] . "', '" . $labels[1] . "', '" . $labels[0] . "'], datasets: [{ label: 'Tickets created by day', fillColor: '#F2FBFC', strokeColor: '#97BBCC', pointColor: '#97BBCC', pointStrokeColor: '#A7CBDC', pointHighlightFill: '#A7CBDC', pointHighlightStroke: '#97BBCC', data: [" . $points[6] . "," . $points[5] . "," . $points[4] . "," . $points[3] . "," . $points[2] . "," . $points[1] . "," . $points[0] . "] }]}; var ctx0 = document.getElementById('graph0').getContext('2d'); new Chart(ctx0).Line(data0); var data1 = [{ value: ";
+				$sql = $db->prepare("SELECT COUNT(*) FROM tickets WHERE status = 'New';");
+				$sql->execute();
+				while(my @res = $sql->fetchrow_array()) { print $res[0]; }
+				print ", color:'#87ABBC', highlight: '#97BBCC', label: 'New' }, { value: ";
+				$sql = $db->prepare("SELECT COUNT(*) FROM tickets WHERE status = 'Open';");
+				$sql->execute();
+				while(my @res = $sql->fetchrow_array()) { print $res[0]; }
+				print ", color:'#EFC193', highlight: '#FFD1A3', label: 'Open' }, { value: ";
+				$sql = $db->prepare("SELECT COUNT(*) FROM tickets WHERE status = 'Invalid';");
+				$sql->execute();
+				while(my @res = $sql->fetchrow_array()) { print $res[0]; }
+				print ", color:'#CDA5EF', highlight: '#DDB5FF', label: 'Invalid' }, { value: ";
+				$sql = $db->prepare("SELECT COUNT(*) FROM tickets WHERE status = 'Hold';");
+				$sql->execute();
+				while(my @res = $sql->fetchrow_array()) { print $res[0]; }
+				print ", color:'#EF8B9C', highlight: '#FF9BAC', label: 'Hold' }, { value: ";
+				$sql = $db->prepare("SELECT COUNT(*) FROM tickets WHERE status = 'Duplicate';");
+				$sql->execute();
+				while(my @res = $sql->fetchrow_array()) { print $res[0]; }
+				print ", color:'#A3D589', highlight: '#B3E599', label: 'Duplicate' }, { value: ";
+				$sql = $db->prepare("SELECT COUNT(*) FROM tickets WHERE status = 'Resolved';");
+				$sql->execute();
+				while(my @res = $sql->fetchrow_array()) { print $res[0]; }
+				print ", color:'#DDDFA0', highlight: '#EDEFB0', label: 'Resolved' }";
+				print "]; var ctx1 = document.getElementById('graph1').getContext('2d'); new Chart(ctx1).Pie(data1);</script><hr>\n";
+			}
+			print "<p><form method='GET' action='.'><div class='row'><div class='col-sm-6'><input type='hidden' name='m' value='stats'>Report type: <select class='form-control' name='report'>";
+			if($cfg->load('comp_time') eq "on") { print "<option value='1'>Time spent per user</option><option value='2'>All time spent per ticket</option><option value='11'>Your time spent per ticket</option>"; }
+			if($cfg->load('comp_tickets') eq "on") { print "<option value='3'>Tickets created per " . lc($items{"Product"}) . "</option><option value='10'>New and open tickets per " . lc($items{"Product"}) . "</option><option value='4'>Tickets created per user</option><option value='5'>Tickets created per day</option><option value='6'>Tickets created per month</option><option value='7'>Tickets per status</option><option value='9'>Tickets assigned per user</option><option value='12'>Comment file attachments</option>"; }
+			print "<option value='8'>Users per access level</option></select></div><div class='col-sm-6'><span class='pull-right'><input class='btn btn-primary' type='submit' value='Show report'> &nbsp; <input class='btn btn-primary' type='submit' name='csv' value='Export as CSV'></span></div></div></form></p></div><div class='help-block with-errors'></div></div>\n";
 		}
-		if($logged_lvl > 3)
+		if($logged_lvl > 3 && $cfg->load('comp_tickets') eq "on")
 		{
 			print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Custom forms</h3></div><div class='panel-body'>\n";
 			print "<p><table class='table table-striped'><tr><th>Assigned " . lc($items{"Product"}) . "</th><th>Form name</th><th>Last update</th></tr>";
@@ -1659,22 +1649,22 @@ elsif($q->param('m')) # Modules
 			if($cfg->load("comp_articles") eq "on") { print "<option selected>on</option><option>off</option>"; }
 			else { print "<option>on</option><option selected>off</option>"; }
 			print "</select></td></tr>\n";
-			print "<tr><td>Component: Items Tracking</td><td><select class='form-control' name='comp_items'>";
-			if($cfg->load("comp_items") eq "on") { print "<option selected>on</option><option>off</option>"; }
+			print "<tr><td>Component: Time Tracking</td><td><select class='form-control' name='comp_time'>";
+			if($cfg->load("comp_time") eq "on") { print "<option selected>on</option><option>off</option>"; }
 			else { print "<option>on</option><option selected>off</option>"; }
 			print "</select></td></tr>\n";
 			print "</table>The admin password will be left unchanged if empty.<br>See the <a href='./README.html'>README</a> file for help.<input class='btn btn-primary pull-right' type='submit' value='Save settings'></form></div></div>\n";
-			print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Log (last 50 events)</h3></div><div class='panel-body'>\n";
+			print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Log (last 200 events)</h3></div><div class='panel-body'>\n";
 			print "<form style='display:inline' method='POST' action='.'><input type='hidden' name='m' value='clear_log'><input class='btn btn-danger pull-right' type='submit' value='Clear log'><br></form><a name='log'></a><p>Filter log by events:<br><a href='./?m=settings#log'>All</a> | <a href='./?m=settings&filter_log=Failed#log'>Failed logins</a> | <a href='./?m=settings&filter_log=Success#log'>Successful logins</a> | <a href='./?m=settings&filter_log=level#log'>Level changes</a> | <a href='./?m=settings&filter_log=password#log'>Password changes</a> | <a href='./?m=settings&filter_log=new#log'>New users</a> | <a href='./?m=settings&filter_log=setting#log'>Settings updated</a> | <a href='./?m=settings&filter_log=notification#log'>Email notifications</a> | <a href='./?m=settings&filter_log=LDAP:#log'>Active Directory</a> | <a href='./?m=settings&filter_log=deleted:#log'>Deletes</a></p>\n";
 			print "<table class='table table-striped'><tr><th>IP address</th><th>User</th><th>Event</th><th>Time</th></tr>\n";
 			if($q->param("filter_log"))
 			{
-				$sql = $db->prepare("SELECT * FROM log DESC WHERE op LIKE ? ORDER BY key DESC LIMIT 50;");
+				$sql = $db->prepare("SELECT * FROM log DESC WHERE op LIKE ? ORDER BY key DESC LIMIT 200;");
 				$sql->execute("%" . sanitize_alpha($q->param("filter_log")) . "%");
 			}
 			else
 			{
-				$sql = $db->prepare("SELECT * FROM log ORDER BY key DESC LIMIT 50;");
+				$sql = $db->prepare("SELECT * FROM log ORDER BY key DESC LIMIT 200;");
 				$sql->execute();
 			}
 			while(my @res = $sql->fetchrow_array())
@@ -2470,7 +2460,14 @@ elsif($q->param('m')) # Modules
 				else { print "<p>Title: <b>" . $res[5] . "</b></p>"; }
 				if($logged_lvl > 2) { print "<p>Description:<br><textarea class='form-control' name='ticket_desc' rows='20'>" . $res[6] . "</textarea></p>\n"; }
 				else { print "<p>Description:<br><pre>" . $res[6] . "</pre></p>\n"; }
-				if($logged_lvl > 2) { print "<p><div class='row'><div class='col-sm-4'>Time spent (in <b>hours</b>): <input type='text' name='time_spent' class='form-control' value='0'></div><div class='col-sm-4'>Notify user: <input type='text' name='notify_user' class='form-control' value=''></div><div class='col-sm-4'><input class='btn btn-primary pull-right' type='submit' value='Update ticket'></div></div></p></form><hr>\n"; }
+				if($logged_lvl > 2)
+				{ 
+					print "<p><div class='row'>";
+					if($cfg->load('comp_time') eq "on") { print "<div class='col-sm-4'>Time spent (in <b>hours</b>): <input type='text' name='time_spent' class='form-control' value='0'></div>"; }
+					print "<div class='col-sm-4'>Notify user: <input type='text' name='notify_user' class='form-control' value=''></div>";
+					if($cfg->load('comp_time') ne "on") { print "<div class='col-sm-4'></div>"; }
+					print "<div class='col-sm-4'><input class='btn btn-primary pull-right' type='submit' value='Update ticket'></div></div></p></form><hr>\n"; 
+				}
 				if($logged_lvl > 1 && $cfg->load('comp_articles') eq "on")
 				{
 					print "<div class='row'><div class='col-sm-8'><form method='GET' action='./'><input type='hidden' name='m' value='link_article'><input type='hidden' name='ticketid' value='" . to_int($q->param('t')) . "'><select class='form-control' name='articleid'>";
@@ -2486,7 +2483,7 @@ elsif($q->param('m')) # Modules
 				}
 				if($logged_user eq $cfg->load("admin_name")) { print "<span class='pull-right'><form method='GET' action='.'><input type='hidden' name='m' value='confirm_delete'><input type='hidden' name='ticketid' value='" . to_int($q->param('t')) . "'><input type='submit' class='btn btn-danger' value='Permanently delete this ticket'></form></span>"; }
 				print "</div></div>\n";
-				if($logged_lvl > 1)
+				if($logged_lvl > 1 && $cfg->load('comp_time') eq "on")
 				{
 					$sql = $db->prepare("SELECT * FROM timetracking WHERE ticketid = ? ORDER BY ROWID DESC;");
 					$sql->execute(to_int($q->param('t')));
@@ -2882,23 +2879,6 @@ elsif($q->param('m')) # Modules
 		$sql = $db->prepare("DELETE FROM kblink WHERE ticketid = ? AND kb = ?;");
 		$sql->execute(to_int($q->param('ticketid')), to_int($q->param('articleid')));
 		msg("Ticket <b>" . to_int($q->param('ticketid')) . "</b> unlinked. Press <a href='./?kb=" . to_int($q->param('articleid')) . "'>here</a> to continue.", 3);
-	}
-	elsif($q->param('m') eq "items" && $cfg->load('comp_items') eq "on")
-	{
-		headers("Items");
-		print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>List of items</h3></div><div class='panel-body'><table class='table table-striped'><tr><th>ID</th><th>Type</th><th>Name</th><th>Quantity</th><th>Actions</th></tr>\n";
-		$sql = $db->prepare("SELECT ROWID,* FROM items;");
-		$sql->execute();
-		while(my @res = $sql->fetchrow_array())
-		{
-		 print "<tr><td>" . $res[0] . "</td><td>" . $itemtypes[$res[1]] . "</td><td>" . $res[2] . "</td><td>" . $res[4] . " / " . $res[5] . "</td><td>";
-		 if($logged_lvl > 0 && $res[6] == 0 && to_int($res[4]) > 0) { print "<form method='GET' action='.'><input type='hidden' name='m' value='checkout_item'><input type='hidden' name='item' value='" . $res[0] . "'><input type='submit' class='btn btn-normal' value='Checkout'></form>"; }
-		 elsif($logged_lvl > 0 && $res[6] == 1 && to_int($res[4]) > 0) { print "<form method='GET' action='.'><input type='hidden' name='m' value='request_item'><input type='hidden' name='item' value='" . $res[0] . "'><input type='submit' class='btn btn-normal' value='Request'></form>"; }
-		 elsif($logged_lvl > 0) { print "<input type='submit' class='btn btn-normal' value='Unavailable' disabled>"; }
-		 if($logged_lvl > 3) { print "<form method='GET' action='.'><input type='hidden' name='m' value='delete_item'><input type='hidden' name='item' value='" . $res[0] . "'><input type='submit' class='btn btn-danger' value='Delete'></form>"; }
-		 print "</td></tr>\n";
-		}
-		print "</table></div></div>\n";
 	}
 	elsif($q->param('m') eq "tickets" && $cfg->load('comp_tickets') eq "on")
 	{
