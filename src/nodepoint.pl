@@ -21,6 +21,7 @@ use Net::LDAP;
 use Crypt::RC4;
 use MIME::Base64;
 use Time::HiRes qw(time);
+use Time::Piece;
 
 my ($cfg, $db, $sql, $cn, $cp, $cgs, $last_login, $perf);
 my $logged_user = "";
@@ -224,6 +225,20 @@ sub to_float
 	if(!$num) { return 0; }
 	elsif(!looks_like_number($num)) { return 0; }
 	else { return sprintf("%.2f", ($num * 1)); }
+}
+
+# Compares 'month day, year' strings 
+sub by_date
+{
+    my ($ta, $tb) = map Time::Piece->strptime($_, '%b %d, %Y'), $a, $b;
+    $ta <=> $tb;
+}
+
+# Compares 'month year' strings 
+sub by_month
+{
+    my ($ta, $tb) = map Time::Piece->strptime($_, '%b %Y'), $a, $b;
+    $ta <=> $tb;
 }
 
 # Print error messages
@@ -1570,6 +1585,7 @@ elsif($q->param('m')) # Modules
 			}
 			print "<p><form method='GET' action='.'><div class='row'><div class='col-sm-6'><input type='hidden' name='m' value='stats'>Report type: <select class='form-control' name='report'>";
 			if($cfg->load('comp_time') eq "on") { print "<option value='1'>Time spent per user</option><option value='2'>All time spent per ticket</option><option value='11'>Your time spent per ticket</option>"; }
+			if($cfg->load('comp_articles') eq "on") { print "<option value='13'>Tickets linked per article</option>"; }
 			if($cfg->load('comp_tickets') eq "on") { print "<option value='3'>Tickets created per " . lc($items{"Product"}) . "</option><option value='10'>New and open tickets per " . lc($items{"Product"}) . "</option><option value='4'>Tickets created per user</option><option value='5'>Tickets created per day</option><option value='6'>Tickets created per month</option><option value='7'>Tickets per status</option><option value='9'>Tickets assigned per user</option><option value='12'>Comment file attachments</option>"; }
 			print "<option value='8'>Users per access level</option></select></div><div class='col-sm-6'><span class='pull-right'><input class='btn btn-primary' type='submit' value='Show report'> &nbsp; <input class='btn btn-primary' type='submit' name='csv' value='Export as CSV'></span></div></div></form></p></div><div class='help-block with-errors'></div></div>\n";
 		}
@@ -2379,7 +2395,7 @@ elsif($q->param('m')) # Modules
 		headers("Tickets");
 		$sql = $db->prepare("UPDATE tickets SET subscribers = subscribers || ? WHERE ROWID = ?");
 		$sql->execute(" " . $logged_user, to_int($q->param('t')));
-		msg("Added you as a follower. Press <a href='./?m=view_ticket&t=" . to_int($q->param('t')) . "'>here</a> to continue.", 3);
+		msg("Ticket <b>" . to_int($q->param('t')) . "</b> added to your home page. Press <a href='./?m=view_ticket&t=" . to_int($q->param('t')) . "'>here</a> to continue.", 3);
 	}
 	elsif($q->param('m') eq "unfollow_ticket" && $q->param('t') && $logged_user ne "")
 	{
@@ -2391,7 +2407,7 @@ elsif($q->param('m')) # Modules
 		$subs =~ s/\b$logged_user\b//g;
 		$sql = $db->prepare("UPDATE tickets SET subscribers = ? WHERE ROWID = ?");
 		$sql->execute($subs, to_int($q->param('t')));
-		msg("Removed you as a follower. Press <a href='./?m=view_ticket&t=" . to_int($q->param('t')) ."'>here</a> to continue.", 3);
+		msg("Removed ticket <b>" . to_int($q->param('t')) . "</b> from your home page. Press <a href='./?m=view_ticket&t=" . to_int($q->param('t')) ."'>here</a> to continue.", 3);
 	}
 	elsif($q->param('m') eq "view_ticket" && $q->param('t'))
 	{
@@ -2751,6 +2767,12 @@ elsif($q->param('m')) # Modules
 			else { print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Tickets created per " . lc($items{"Product"}) . "</h3></div><div class='panel-body'><table class='table table-striped'><tr><th>" . $items{"Product"} . "</th><th>Tickets</th></tr>"; }
 			$sql = $db->prepare("SELECT productid FROM tickets ORDER BY productid;");
 		}
+		elsif(to_int($q->param('report')) == 13)
+		{
+			if($q->param('csv')) { print "Article,Tickets\n"; }
+			else { print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Tickets linked per article</h3></div><div class='panel-body'><table class='table table-striped'><tr><th>Article</th><th>Tickets</th></tr>"; }
+			$sql = $db->prepare("SELECT DISTINCT kb,ticketid FROM kblink ORDER BY kb;");
+		}
 		elsif(to_int($q->param('report')) == 10)
 		{
 			if($q->param('csv')) { print $items{"Product"} . ",Tickets\n"; }
@@ -2836,7 +2858,7 @@ elsif($q->param('m')) # Modules
 				if(!$results{$products[to_int($res[0])]}) { $results{$products[to_int($res[0])]} = 0; }
 				$results{$products[to_int($res[0])]} ++;
 			}
-			elsif(to_int($q->param('report')) == 4 || to_int($q->param('report')) == 7 || to_int($q->param('report')) == 8)
+			elsif(to_int($q->param('report')) == 4 || to_int($q->param('report')) == 7 || to_int($q->param('report')) == 8 || to_int($q->param('report')) == 13)
 			{
 				if(!$results{$res[0]}) { $results{$res[0]} = 0; }
 				$results{$res[0]} ++;
@@ -2856,12 +2878,43 @@ elsif($q->param('m')) # Modules
 				$results{$r} ++;
 			}
 		}
-		while(my ($k, $v) = each(%results))
+		if(to_int($q->param('report')) == 2 || to_int($q->param('report')) == 8 || to_int($q->param('report')) == 11 || to_int($q->param('report')) == 13)
 		{
-			if($q->param('csv')) { print "\"" . $k . "\"," . $v . "\n"; }
-			else { print "<tr><td>" . $k . "</td><td>" . $v . "</td></tr>"; }
-			$totalresults += to_float($v);
+			foreach my $k (sort {$a <=> $b} keys(%results)) # numeric sorting
+			{
+				if($q->param('csv')) { print "\"" . $k . "\"," . $results{$k} . "\n"; }
+				else { print "<tr><td>" . $k . "</td><td>" . $results{$k} . "</td></tr>"; }
+				$totalresults += to_float($results{$k});
+			}
 		}
+		elsif(to_int($q->param('report')) == 5)
+		{
+			foreach my $k (sort by_date keys(%results)) # date sorting
+			{
+				if($q->param('csv')) { print "\"" . $k . "\"," . $results{$k} . "\n"; }
+				else { print "<tr><td>" . $k . "</td><td>" . $results{$k} . "</td></tr>"; }
+				$totalresults += to_float($results{$k});
+			}		
+		}
+		elsif(to_int($q->param('report')) == 6)
+		{
+			foreach my $k (sort by_month keys(%results)) # month sorting
+			{
+				if($q->param('csv')) { print "\"" . $k . "\"," . $results{$k} . "\n"; }
+				else { print "<tr><td>" . $k . "</td><td>" . $results{$k} . "</td></tr>"; }
+				$totalresults += to_float($results{$k});
+			}		
+		}
+		else
+		{
+			foreach my $k (sort(keys(%results))) # alphabetical sorting
+			{
+				if($q->param('csv')) { print "\"" . $k . "\"," . $results{$k} . "\n"; }
+				else { print "<tr><td>" . $k . "</td><td>" . $results{$k} . "</td></tr>"; }
+				$totalresults += to_float($results{$k});
+			}
+		}
+		
 		if($q->param('csv'))
 		{
 			print "Total," . $totalresults . "\n";
