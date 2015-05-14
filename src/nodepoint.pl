@@ -598,7 +598,7 @@ sub notify
 						$smtp->datasend("From: " . $cfg->load('smtp_from') . "\n");
 						$smtp->datasend("To: " . $res[2] . "\n");
 						$smtp->datasend("Subject: NodePoint - " . $title . "\n\n");
-						$smtp->datasend($mesg . "\n");
+						$smtp->datasend($mesg . "\n\nThis is an automated message from " . $cfg->load('site_name') . ". To disable notifications, log into your account and remove the email under Settings.\n");
 						$smtp->datasend();
 						$smtp->quit;
 					}
@@ -977,6 +977,43 @@ elsif($q->param('api')) # API calls
 				print "   \"product_id\": \"" . $res[1] . "\",\n";
 				print "   \"release_id\": \"" . $res[2] . "\",\n";
 				print "   \"title\": \"" . $res[5] . "\"\n";
+				print "  }";
+			}
+			print "\n ]\n";
+			print "}\n";
+		}
+	}
+	elsif($q->param('api') eq "list_users")
+	{
+		if(!$q->param('key'))
+		{
+			print "{\n";
+			print " \"message\": \"Missing 'key' argument.\",\n";
+			print " \"status\": \"ERR_MISSING_ARGUMENT\"\n";
+			print "}\n";
+		}
+		elsif($q->param('key') ne $cfg->load('api_read'))
+		{
+			print "{\n";
+			print " \"message\": \"Invalid 'key' value.\",\n";
+			print " \"status\": \"ERR_INVALID_KEY\"\n";
+			print "}\n";
+		}
+		else
+		{
+			print "{\n";
+			print " \"message\": \"Users list.\",\n";
+			print " \"status\": \"OK\",\n";
+			print " \"users\": [\n";
+			$sql = $db->prepare("SELECT name FROM users;");
+			$sql->execute();
+			my $found = 0;
+			while(my @res = $sql->fetchrow_array())
+			{
+				if($found) { print ",\n"; }
+				$found = 1;
+				print "  {\n";
+				print "   \"name\": \"" . $res[0] . "\",\n";
 				print "  }";
 			}
 			print "\n ]\n";
