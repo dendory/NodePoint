@@ -149,7 +149,7 @@ sub navbar
 			if($cfg->load('comp_articles') eq "on") { print "	 <li><a href='./?m=articles'>Articles</a></li>\n"; }
 			print "	 <li><a href='./?m=settings'>Settings</a></li>\n";
 		}
-		elsif($q->param('m') && ($q->param('m') eq "products" || $q->param('m') eq "add_product" ||$q->param('m') eq "view_product" || $q->param('m') eq "edit_product" || $q->param('m') eq "add_release"))
+		elsif($q->param('m') && ($q->param('m') eq "products" || $q->param('m') eq "add_product" ||$q->param('m') eq "view_product" || $q->param('m') eq "edit_product" || $q->param('m') eq "add_release" || $q->param('m') eq "delete_release"))
 		{
 			print "	 <li><a href='.'>Home</a></li>\n";
 			print "	 <li class='active'><a href='./?m=products'>" . $items{"Product"} . "s</a></li>\n";
@@ -1958,18 +1958,22 @@ elsif($q->param('m')) # Modules
 			if($logged_lvl > 2 && $vis ne "Archived")
 			{
 				print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Add " . lc($items{"Release"}) . " to this " . lc($items{"Product"}) . "</h3></div><div class='panel-body'><form method='POST' action='.'>\n";
-				print "<input type='hidden' name='m' value='add_release'><input type='hidden' name='product_id' value='" . to_int($q->param('p')) . "'><div class='row'><div class='col-sm-4'>" . $items{"Release"} . ": <input type='text' class='form-control' name='release_version'></div><div class='col-sm-6'>Notes: <input type='text' name='release_notes' class='form-control'></div></div><input class='btn btn-primary pull-right' type='submit' value='Add " . lc($items{"Release"}) . "'>\n";
-				print "</div></div>\n";    
+				print "<input type='hidden' name='m' value='add_release'><input type='hidden' name='product_id' value='" . to_int($q->param('p')) . "'><div class='row'><div class='col-sm-4'>" . $items{"Release"} . ": <input type='text' class='form-control' name='release_version'></div><div class='col-sm-6'>Notes or link: <input type='text' name='release_notes' class='form-control'></div></div><input class='btn btn-primary pull-right' type='submit' value='Add " . lc($items{"Release"}) . "'></form></div></div>\n";    
 			}
 			if($vis eq "Public" || ($vis eq "Private" && $logged_user ne "") || ($vis eq "Restricted" && $logged_lvl > 1) || $logged_lvl > 3)
 			{
 				print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>" . $items{"Release"} . "s</h3></div><div class='panel-body'><table class='table table-striped'>\n";
 				print "<tr><th>" . $items{"Release"} . "</th><th>User</th><th>Notes</th><th>Date</th></tr>\n";
-				$sql = $db->prepare("SELECT * FROM releases WHERE productid = ?;");
+				$sql = $db->prepare("SELECT ROWID,* FROM releases WHERE productid = ?;");
 				$sql->execute(to_int($q->param('p')));
 				while(my @res = $sql->fetchrow_array())
 				{
-					print "<tr><td>" . $res[2] . "</td><td>" . $res[1] . "</td><td>" . $res[3] . "</td><td>" .  $res[4] . "</td></tr>\n";
+					print "<tr><td>" . $res[3] . "</td><td>" . $res[2] . "</td><td>";
+					if(lc(substr($res[4], 0, 4)) eq "http") { print "<a href='" . $res[4] . "'>" . $res[4] . "</a>"; }
+					else { print $res[4]; }
+					print "</td><td>" .  $res[5];
+					if($logged_lvl > 3) { print "<span class='pull-right'><form method='GET' action='.'><input type='hidden' name='product_id' value='" . to_int($q->param('p')) . "'><input type='hidden' name='m' value='delete_release'><input type='hidden' name='release_id' value='" . $res[0] . "'><input class='btn btn-danger' type='submit' value='Delete'></form></span>"; } 
+					print "</td></tr>\n";
 				}
 				print "</table></div></div>\n";
 			}
@@ -2001,6 +2005,24 @@ elsif($q->param('m')) # Modules
 			}
 			print "</table></div></div>\n";
 		}
+	}
+	elsif($logged_lvl > 2 && $q->param('m') eq "delete_release")
+	{
+		headers($items{"Product"} . "s");
+		if(!$q->param('release_id') || !$q->param('product_id'))
+		{
+			my $text = "Required fields missing: ";
+			if(!$q->param('product_id')) { $text .= "<span class='label label-danger'>" . $items{"Product"} . " ID</span> "; }
+			if(!$q->param('release_id')) { $text .= "<span class='label label-danger'>" . $items{"Release"} . " ID</span> "; }
+			$text .= " Please go back and try again.";
+			msg($text, 0);	    
+		}
+		else
+		{
+			$sql = $db->prepare("DELETE FROM releases WHERE productid = ? AND ROWID = ?;");
+			$sql->execute(to_int($q->param('product_id')), to_int($q->param('release_id')));
+			msg($items{"Release"} . " deleted from " . lc($items{"Product"}) . " <b>" . to_int($q->param('product_id')) . "</b>. Press <a href='./?m=view_product&p=" . to_int($q->param('product_id')) . "'>here</a> to continue.", 3);
+		}	
 	}
 	elsif($logged_lvl > 2 && $q->param('m') eq "add_release")
 	{
@@ -2252,7 +2274,8 @@ elsif($q->param('m')) # Modules
 				if($res[5] ne sanitize_html($q->param('ticket_title'))) { $changes .= "Title: \"" . $res[5] . "\" => \"" . sanitize_html($q->param('ticket_title')) . "\"\n"; }
 				if($res[7] ne $lnk) { $changes .= $cfg->load('custom_name') . ": \"" . $res[7] . "\" => \"" . $lnk . "\"\n"; }
 				if($res[8] ne sanitize_alpha($q->param('ticket_status'))) { $changes .= "Status: " . $res[8] . " => " . sanitize_alpha($q->param('ticket_status')) . "\n"; }
-				if($res[9] ne $resolution) { $changes .= "Resolution: \"" . $res[9] . "\" => \"" . $resolution . "\"\n"; }			
+				if($res[9] ne $resolution) { $changes .= "Resolution: \"" . $res[9] . "\" => \"" . $resolution . "\"\n"; }
+				if($q->param("notify_user")) { $changes .= "Notified user: " . sanitize_alpha($q->param('notify_user')) . "\n"; }
 				@us = split(' ', $res[4]);
 				$creator = $res[3];
 			}
@@ -2269,7 +2292,7 @@ elsif($q->param('m')) # Modules
 				$sql = $db->prepare("INSERT INTO timetracking VALUES (?, ?, ?, ?);");
 				$sql->execute(to_int($q->param('t')), $logged_user, to_float($q->param("time_spent")), now());
 			}
-			if($q->param("notify_user"))
+			if($q->param("notify_user") && sanitize_alpha($q->param('notify_user')) ne "")
 			{
 				$sql = $db->prepare("INSERT INTO escalate VALUES (?, ?);");
 				$sql->execute(to_int($q->param('t')), sanitize_alpha($q->param('notify_user')));
