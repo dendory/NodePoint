@@ -8,7 +8,7 @@
 #
 
 use strict;
-use Config::Linux;
+use Config::Win32;
 use Digest::SHA qw(sha1_hex);
 use DBI;
 use CGI;
@@ -697,11 +697,11 @@ sub home
 # Connect to config
 eval
 {
-	$cfg = Config::Linux->new("NodePoint", "settings");
+	$cfg = Config::Win32->new("NodePoint", "settings");
 };
 if(!defined($cfg)) # Can't even use headers() if this fails.
 {
-	print "Content-type: text/html\n\nError: Could not access " . Config::Linux->type . ". Please ensure NodePoint has the proper permissions.";
+	print "Content-type: text/html\n\nError: Could not access " . Config::Win32->type . ". Please ensure NodePoint has the proper permissions.";
 	exit(0);
 };
 
@@ -1004,7 +1004,7 @@ elsif($q->param('api')) # API calls
 			print " \"message\": \"Users list.\",\n";
 			print " \"status\": \"OK\",\n";
 			print " \"users\": [\n";
-			$sql = $db->prepare("SELECT name FROM users;");
+			$sql = $db->prepare("SELECT name,email FROM users;");
 			$sql->execute();
 			my $found = 0;
 			while(my @res = $sql->fetchrow_array())
@@ -1013,6 +1013,7 @@ elsif($q->param('api')) # API calls
 				$found = 1;
 				print "  {\n";
 				print "   \"name\": \"" . $res[0] . "\",\n";
+				print "   \"email\": \"" . $res[1] . "\"\n";
 				print "  }";
 			}
 			print "\n ]\n";
