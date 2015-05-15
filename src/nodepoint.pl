@@ -919,7 +919,7 @@ elsif($q->param('api')) # API calls
 					print "   \"id\": \"" . $res2[0] . "\",\n";
 					print "   \"name\": \"" . $res2[2] . "\",\n";
 					print "   \"comment\": \"" . $res2[3] . "\",\n";
-					print "   \"created_on\": \"" . $res2[4] . "\"\n";
+					print "   \"created_on\": \"" . $res2[4] . "\",\n";
 					print "   \"modified_on\": \"" . $res2[5] . "\"\n";
 					print "  }";
 				}
@@ -1060,7 +1060,7 @@ elsif($q->param('api')) # API calls
 				{
 					logevent("LDAP: Could not connect to Active Directory server");
 					print " \"message\": \"Could not connect to AD server.\",\n";
-					print " \"status\": \"ERR_AD_CONNECTION\",\n";
+					print " \"status\": \"ERR_AD_CONNECTION\"\n";
 					print "}\n";
 					exit(0);
 				};
@@ -1077,12 +1077,12 @@ elsif($q->param('api')) # API calls
 			if($found)
 			{
 				print " \"message\": \"Credentials are valid.\",\n";
-				print " \"status\": \"OK\",\n";
+				print " \"status\": \"OK\"\n";
 			}
 			else
 			{
 				print " \"message\": \"Invalid credentials.\",\n";
-				print " \"status\": \"ERR_INVALID_CRED\",\n";
+				print " \"status\": \"ERR_INVALID_CRED\"\n";
 			}
 			print "}\n";
 		}
@@ -1141,7 +1141,7 @@ elsif($q->param('api')) # API calls
 			if(!$found)
 			{
 				print " \"message\": \"Invalid user name.\",\n";
-				print " \"status\": \"ERR_INVALID_CRED\",\n";
+				print " \"status\": \"ERR_INVALID_CRED\"\n";
 			}
 			else
 			{
@@ -1149,7 +1149,7 @@ elsif($q->param('api')) # API calls
 				$sql->execute(sanitize_alpha($q->param('user')));
 				logevent("Password change: " . sanitize_alpha($q->param('user')));
 				print " \"message\": \"Password changed.\",\n";
-				print " \"status\": \"OK\",\n";
+				print " \"status\": \"OK\"\n";
 			}
 			print "}\n";
 		}
@@ -1215,14 +1215,14 @@ elsif($q->param('api')) # API calls
 			if($found)
 			{
 				print " \"message\": \"User already exist.\",\n";
-				print " \"status\": \"ERR_INVALID_ARGUMENT\",\n";
+				print " \"status\": \"ERR_INVALID_ARGUMENT\"\n";
 			}
 			else
 			{
 				my $confirm = join'', map +(0..9,'a'..'z','A'..'Z')[rand(10+26*2)], 1..16;
 				$sql = $db->prepare("INSERT INTO users VALUES(?, ?, ?, ?, ?, ?);");
 				print " \"message\": \"User added.\",\n";
-				print " \"status\": \"OK\",\n";
+				print " \"status\": \"OK\"\n";
 				if($q->param('email'))
 				{ 
 					$sql->execute(sanitize_alpha($q->param('user')), sha1_hex($q->param('password')), sanitize_email($q->param('email')), to_int($cfg->load('default_lvl')), "Never", $confirm); 
