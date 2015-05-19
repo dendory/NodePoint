@@ -27,7 +27,7 @@ my ($cfg, $db, $sql, $cn, $cp, $cgs, $last_login, $perf);
 my $logged_user = "";
 my $logged_lvl = -1;
 my $q = new CGI;
-my $VERSION = "1.2.0";
+my $VERSION = "1.2.1";
 my %items = ("Product", "Product", "Release", "Release", "Model", "SKU/Model");
 my @itemtypes = ("None");
 
@@ -1004,7 +1004,7 @@ elsif($q->param('api')) # API calls
 			print " \"message\": \"Users list.\",\n";
 			print " \"status\": \"OK\",\n";
 			print " \"users\": [\n";
-			$sql = $db->prepare("SELECT name,email FROM users;");
+			$sql = $db->prepare("SELECT name,email,level FROM users;");
 			$sql->execute();
 			my $found = 0;
 			while(my @res = $sql->fetchrow_array())
@@ -1013,6 +1013,7 @@ elsif($q->param('api')) # API calls
 				$found = 1;
 				print "  {\n";
 				print "   \"name\": \"" . $res[0] . "\",\n";
+				print "   \"access_level\": \"" . $res[2] . "\",\n";
 				print "   \"email\": \"" . $res[1] . "\"\n";
 				print "  }";
 			}
