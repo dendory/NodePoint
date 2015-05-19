@@ -1347,7 +1347,7 @@ elsif($q->param('api')) # API calls
 				$sql->execute(to_int($q->param('product_id')));
 				while(my @res = $sql->fetchrow_array())
 				{
-					notify($res[1], "New ticket created", "A new ticket was created for one of your products:\n\nUser: api\nTitle: " . sanitize_html($q->param('title')) . "\n" . $cfg->load('custom_name') . ": " . $custom . "\nDescription: " . $q->param('description'));
+					notify($res[1], "New ticket created", "A new ticket was created for one of your products:\n\nUser: api\nTitle: " . sanitize_html($q->param('title')) . "\n" . $cfg->load('custom_name') . ": " . $custom . "\nDescription: " . sanitize_html($q->param('description')));
 				}
 			}
 		}
