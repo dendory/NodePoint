@@ -165,7 +165,7 @@ sub navbar
 			if($cfg->load('comp_articles') eq "on") { print "	 <li><a href='./?m=articles'>Articles</a></li>\n"; }
 			print "	 <li class='active'><a href='./?m=settings'>Settings</a></li>\n";
 		}
-		elsif($q->param('kb') || $q->param('m') && ($q->param('m') eq "articles" || $q->param('m') eq "add_article" || $q->param('m') eq "save_article" || $q->param('m') eq "link_article" || $q->param('m') eq "unlink_article"))
+		elsif($q->param('kb') || $q->param('m') && ($q->param('m') eq "articles" || $q->param('m') eq "add_article" || $q->param('m') eq "save_article" || $q->param('m') eq "link_article" || $q->param('m') eq "unlink_article" || $q->param('m') eq "subscribe" || $q->param('m') eq "unsubscribe"))
 		{
 			print "	 <li><a href='.'>Home</a></li>\n";
 			print "	 <li><a href='./?m=products'>" . $items{"Product"} . "s</a></li>\n";
@@ -393,6 +393,12 @@ sub db_check
 	$sql = $db->prepare("SELECT * FROM escalate WHERE 0 = 1;") or do
 	{
 		$sql = $db->prepare("CREATE TABLE escalate (ticketid INT, user TEXT);");
+		$sql->execute();
+	};
+	$sql->finish();
+	$sql = $db->prepare("SELECT * FROM subscribe WHERE 0 = 1;") or do
+	{
+		$sql = $db->prepare("CREATE TABLE subscribe (user TEXT, articleid INT);");
 		$sql->execute();
 	};
 	$sql->finish();
@@ -653,12 +659,12 @@ sub home
 	if($logged_lvl > 0 && $cfg->load('comp_tickets') eq "on")
 	{
 		print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Tickets you created</h3></div><div class='panel-body'><table class='table table-striped'>\n";
-		print "<tr><th>ID</th><th>" . $items{"Product"} . "</th><th>" . $items{"Release"} . "</th><th>Title</th><th>Status</th><th>Date</th></tr>\n";
+		print "<tr><th>ID</th><th>" . $items{"Product"} . "</th><th>" . $items{"Release"} . "</th><th>Title</th><th>Status</th><th>Last modified</th></tr>\n";
 		$sql = $db->prepare("SELECT ROWID,* FROM tickets WHERE status != 'Closed' ORDER BY ROWID DESC");
 		$sql->execute();
 		while(my @res = $sql->fetchrow_array())
 		{
-			if($products[$res[1]] && $res[3] eq $logged_user) { print "<tr><td>" . $res[0] . "</td><td>" . $products[$res[1]] . "</td><td>" . $res[2] . "</td><td><a href='./?m=view_ticket&t=" . $res[0] . "'>" . $res[5] . "</a></td><td>" . $res[8] . "</td><td>" . $res[11] . "</td></tr>\n"; }
+			if($products[$res[1]] && $res[3] eq $logged_user) { print "<tr><td>" . $res[0] . "</td><td>" . $products[$res[1]] . "</td><td>" . $res[2] . "</td><td><a href='./?m=view_ticket&t=" . $res[0] . "'>" . $res[5] . "</a></td><td>" . $res[8] . "</td><td>" . $res[12] . "</td></tr>\n"; }
 		}
 		print "</table></div></div>";
 	}
@@ -666,12 +672,12 @@ sub home
 	if($cfg->load('comp_tickets') eq "on")
 	{
 		print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Tickets you follow</h3></div><div class='panel-body'><table class='table table-striped'>\n";
-		print "<tr><th>ID</th><th>" . $items{"Product"} . "</th><th>User</th><th>Title</th><th>Status</th><th>Date</th></tr>\n";
+		print "<tr><th>ID</th><th>" . $items{"Product"} . "</th><th>User</th><th>Title</th><th>Status</th><th>Last modified</th></tr>\n";
 		$sql = $db->prepare("SELECT ROWID,* FROM tickets WHERE status != 'Closed' ORDER BY ROWID DESC;");
 		$sql->execute();
 		while(my @res = $sql->fetchrow_array())
 		{
-			if($products[$res[1]] && $res[10] =~ /\b$logged_user\b/) { print "<tr><td>" . $res[0] . "</td><td>" . $products[$res[1]] . "</td><td>" . $res[3] . "</td><td><a href='./?m=view_ticket&t=" . $res[0] . "'>" . $res[5] . "</a></td><td>" . $res[8] . "</td><td>" . $res[11] . "</td></tr>\n"; }
+			if($products[$res[1]] && $res[10] =~ /\b$logged_user\b/) { print "<tr><td>" . $res[0] . "</td><td>" . $products[$res[1]] . "</td><td>" . $res[3] . "</td><td><a href='./?m=view_ticket&t=" . $res[0] . "'>" . $res[5] . "</a></td><td>" . $res[8] . "</td><td>" . $res[12] . "</td></tr>\n"; }
 		}
 		print "</table></div></div>";
 	}
@@ -679,12 +685,32 @@ sub home
 	if($logged_lvl > 2 && $cfg->load('comp_tickets') eq "on")
 	{
 		print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Tickets assigned to you</h3></div><div class='panel-body'><table class='table table-striped'>\n";
-		print "<tr><th>ID</th><th>" . $items{"Product"} . "</th><th>User</th><th>Title</th><th>Status</th><th>Date</th></tr>\n";
+		print "<tr><th>ID</th><th>" . $items{"Product"} . "</th><th>User</th><th>Title</th><th>Status</th><th>Last modified</th></tr>\n";
 		$sql = $db->prepare("SELECT ROWID,* FROM tickets WHERE status != 'Closed' ORDER BY ROWID DESC;");
 		$sql->execute();
 		while(my @res = $sql->fetchrow_array())
 		{
-			if($products[$res[1]] && $res[4] =~ /\b$logged_user\b/) { print "<tr><td>" . $res[0] . "</td><td>" . $products[$res[1]] . "</td><td>" . $res[3] . "</td><td><a href='./?m=view_ticket&t=" . $res[0] . "'>" . $res[5] . "</a></td><td>" . $res[8] . "</td><td>" . $res[11] . "</td></tr>\n"; }
+			if($products[$res[1]] && $res[4] =~ /\b$logged_user\b/) { print "<tr><td>" . $res[0] . "</td><td>" . $products[$res[1]] . "</td><td>" . $res[3] . "</td><td><a href='./?m=view_ticket&t=" . $res[0] . "'>" . $res[5] . "</a></td><td>" . $res[8] . "</td><td>" . $res[12] . "</td></tr>\n"; }
+		}
+		print "</table></div></div>";
+	}
+
+	if($cfg->load('comp_articles') eq "on")
+	{
+		print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Subscribed articles</h3></div><div class='panel-body'><table class='table table-striped'>\n";
+		print "<tr><th>ID</th><th>Title</th><th>Last modified</th></tr>\n";
+		$sql = $db->prepare("SELECT articleid FROM subscribe WHERE user = ?");
+		$sql->execute($logged_user);
+		while(my @res = $sql->fetchrow_array())
+		{
+			my $sql2;
+			if($logged_lvl > 3) { $sql2 = $db->prepare("SELECT title,modified FROM kb WHERE ROWID = ?"); }
+			else { $sql2 = $db->prepare("SELECT title,modified FROM kb WHERE published = 1 AND ROWID = ?"); }
+			$sql2->execute($res[0]);
+			while(my @res2 = $sql2->fetchrow_array())
+			{
+				print "<tr><td>" . $res[0] . "</td><td><a href='./?kb=" . $res[0] . "'>" . $res2[0] . "</a></td><td>" . $res2[1] . "</td></tr>\n";
+			}
 		}
 		print "</table></div></div>";
 	}
@@ -2415,6 +2441,20 @@ elsif($q->param('m')) # Modules
 			msg("Comment must be more than 1 and less than 10,000 characters. Please go back and try again.", 0);
 		}
 	}
+	elsif($q->param('m') eq "subscribe" && $q->param('articleid') && $logged_user ne "")
+	{
+		headers("Articles");
+		$sql = $db->prepare("INSERT INTO subscribe VALUES (?, ?)");
+		$sql->execute($logged_user, to_int($q->param('articleid')));
+		msg("Article <b>" . to_int($q->param('articleid')) . "</b> added to your home page. Press <a href='./?kb=" . to_int($q->param('articleid')) . "'>here</a> to continue.", 3);
+	}
+	elsif($q->param('m') eq "unsubscribe" && $q->param('articleid') && $logged_user ne "")
+	{
+		headers("Articles");
+		$sql = $db->prepare("DELETE FROM subscribe WHERE user = ? AND articleid = ?");
+		$sql->execute($logged_user, to_int($q->param('articleid')));
+		msg("Article <b>" . to_int($q->param('articleid')) . "</b> removed from your home page. Press <a href='./?kb=" . to_int($q->param('articleid')) . "'>here</a> to continue.", 3);
+	}
 	elsif($q->param('m') eq "follow_ticket" && $q->param('t') && $logged_user ne "")
 	{
 		headers("Tickets");
@@ -3207,6 +3247,12 @@ elsif($q->param('kb') && $cfg->load('comp_articles') eq "on")
 				else { print "<p>Applies to: <b>" . $products[$res[1]] . "</b></p>\n"; }
 				print "<p>Description:<br><pre>" . $res[3] . "</pre></p>\n";
 			}
+			my $sql2 = $db->prepare("SELECT ROWID FROM subscribe WHERE user = ? AND articleid = ?;");
+			$sql2->execute($logged_user, to_int($q->param('kb')));
+			my $found = 0;
+			while(my @res2 = $sql2->fetchrow_array()) { $found = 1;}
+			if($found == 1) { print "<form method='GET' action='.'><input type='hidden' name='m' value='unsubscribe'><input type='hidden' name='articleid' value='" . to_int($q->param('kb')) . "'><input class='btn btn-primary' type='submit' value='Unsubscribe'></form>"; }
+			else { print "<form method='GET' action='.'><input type='hidden' name='m' value='subscribe'><input type='hidden' name='articleid' value='" . to_int($q->param('kb')) . "'><input class='btn btn-primary' type='submit' value='Subscribe'></form>"; }
 			print "</p></div></div>";
 			if($cfg->load('comp_tickets') eq "on")
 			{
