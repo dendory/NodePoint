@@ -78,7 +78,7 @@ sub footers
 	print " <script src='bootstrap.js'></script>\n";
 	print " <script src='validator.js'></script>\n";
 	print " <script src='datepicker.js'></script>\n";
-	print " <script>\$('.datepicker').datepicker();</script>";
+	print " <script>\$('.datepicker').datepicker();</script>\n";
 	print " </body>\n";
 	print "</html>\n";
 }
@@ -3253,14 +3253,17 @@ elsif($q->param('kb') && $cfg->load('comp_articles') eq "on")
 				else { print "<p>Applies to: <b>" . $products[$res[1]] . "</b></p>\n"; }
 				print "<p>Description:<br><pre>" . $res[3] . "</pre></p>\n";
 			}
-			my $sql2 = $db->prepare("SELECT ROWID FROM subscribe WHERE user = ? AND articleid = ?;");
-			$sql2->execute($logged_user, to_int($q->param('kb')));
-			my $found = 0;
-			while(my @res2 = $sql2->fetchrow_array()) { $found = 1;}
-			if($found == 1) { print "<form method='GET' action='.'><input type='hidden' name='m' value='unsubscribe'><input type='hidden' name='articleid' value='" . to_int($q->param('kb')) . "'><input class='btn btn-primary' type='submit' value='Unsubscribe'></form>"; }
-			else { print "<form method='GET' action='.'><input type='hidden' name='m' value='subscribe'><input type='hidden' name='articleid' value='" . to_int($q->param('kb')) . "'><input class='btn btn-primary' type='submit' value='Subscribe'></form>"; }
-			print "</p></div></div>";
-			if($cfg->load('comp_tickets') eq "on")
+			if($logged_user ne "")
+			{
+				my $sql2 = $db->prepare("SELECT ROWID FROM subscribe WHERE user = ? AND articleid = ?;");
+				$sql2->execute($logged_user, to_int($q->param('kb')));
+				my $found = 0;
+				while(my @res2 = $sql2->fetchrow_array()) { $found = 1;}
+				if($found == 1) { print "<form method='GET' action='.'><input type='hidden' name='m' value='unsubscribe'><input type='hidden' name='articleid' value='" . to_int($q->param('kb')) . "'><input class='btn btn-primary' type='submit' value='Unsubscribe'></form>"; }
+				else { print "<form method='GET' action='.'><input type='hidden' name='m' value='subscribe'><input type='hidden' name='articleid' value='" . to_int($q->param('kb')) . "'><input class='btn btn-primary' type='submit' value='Subscribe'></form>"; }
+			}
+			print "</div></div>";
+			if($cfg->load('comp_tickets') eq "on" && $logged_user ne "")
 			{
 				print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Active tickets linked to this article</h3></div><div class='panel-body'>\n";
 				print "<table class='table table-striped'><tr><th>ID</th><th>Title</th><th>Status</th>";
