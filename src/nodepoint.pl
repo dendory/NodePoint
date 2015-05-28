@@ -456,7 +456,7 @@ sub save_config
 sub check_user
 {
 	my ($n, $p) = @_;
-	if(sha1_hex($p) eq $cfg->load("admin_pass") && $n eq $cfg->load("admin_name"))
+	if(sha1_hex($p) eq $cfg->load("admin_pass") && lc($n) eq lc($cfg->load("admin_name")))
 	{
 		$logged_user = $cfg->load("admin_name");
 		$logged_lvl = 6;
@@ -508,7 +508,7 @@ sub check_user
 				$sql->execute();
 				while(my @res = $sql->fetchrow_array())
 				{
-					if(sha1_hex(rtrim($p)) eq $res[1] && $n eq $res[0])
+					if(sha1_hex(rtrim($p)) eq $res[1] && lc($n) eq lc($res[0]))
 					{
 						$logged_user = $res[0];
 						$logged_lvl = to_int($res[3]);
@@ -635,13 +635,13 @@ sub home
 	if($q->param('delete_notify') && $logged_user ne "")
 	{
 		$sql = $db->prepare("DELETE FROM escalate WHERE user = ? AND ticketid = ?;");
-		$sql->execute($logged_user, to_int($q->param('delete_notify')));
+		$sql->execute(lc($logged_user), to_int($q->param('delete_notify')));
 	}
 
 	if($logged_user ne "")
 	{
 		$sql = $db->prepare("SELECT DISTINCT ticketid FROM escalate WHERE user = ?;");
-		$sql->execute($logged_user);
+		$sql->execute(lc($logged_user));
 		while(my @res = $sql->fetchrow_array()) { msg("<span class='pull-right'><a href='./?delete_notify=" . $res[0] . "'>Clear</a></span>Ticket <a href='./?m=view_ticket&t=" . $res[0] . "'>" . $res[0] . "</a> requires your attention.", 2); }
 	}
 
@@ -768,6 +768,12 @@ if($cfg->load("items_managed"))
 		$items{"Model"} = "Platform";
 		$items{"Release"} = "Version";
 	}
+	elsif($cfg->load("items_managed") eq "Assets with types and instances")
+	{
+		$items{"Product"} = "Asset";
+		$items{"Model"} = "Type";
+		$items{"Release"} = "Instance";
+	}
 }
 	
 # Main loop
@@ -865,7 +871,7 @@ elsif(!$cfg->load("db_address") || !$cfg->load("site_name")) # first use
 				print "<p><div class='row'><div class='col-sm-4'>Upload folder:</div><div class='col-sm-4'><input type='text' style='width:300px' name='upload_folder' value='.." . $cfg->sep . "uploads'></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Minimum upload level:</div><div class='col-sm-4'><select name='upload_lvl' style='width:300px'><option value=5>5 - Users management</option><option value=4>4 - Products management</option><option value=3>3 - Tickets management</option><option value=2>2 - Restricted view</option><option value=1 selected=selected>1 - Authorized users</option><option value=0>0 - Unauthorized users</option></select></div></div></p>\n";
 				print "<p>The upload folder should be a local folder with write access and is used for product images and comment attachments. If left empty, uploads will be disabled.</p>\n";
-				print "<p><div class='row'><div class='col-sm-4'>Items managed:</div><div class='col-sm-4'><select style='width:300px' name='items_managed'><option selected>Products with models and releases</option><option>Projects with goals and milestones</option><option>Resources with locations and updates</option><option>Applications with platforms and versions</option></select></div></div></p>\n";
+				print "<p><div class='row'><div class='col-sm-4'>Items managed:</div><div class='col-sm-4'><select style='width:300px' name='items_managed'><option selected>Products with models and releases</option><option>Projects with goals and milestones</option><option>Resources with locations and updates</option><option>Applications with platforms and versions</option><option>Assets with types and instances</option></select></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Custom ticket field:</div><div class='col-sm-4'><input type='text' style='width:300px' name='custom_name' value='Related tickets'></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Custom field type:</div><div class='col-sm-4'><select style='width:300px' name='custom_type'><option>Text</option><option>Link</option><option>Checkbox</option></select></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Active Directory server:</div><div class='col-sm-4'><input type='text' style='width:300px' name='ad_server' value=''></div></div></p>\n";
@@ -1675,10 +1681,11 @@ elsif($q->param('m')) # Modules
 			print "<tr><td>Upload folder</td><td><input class='form-control' type='text' name='upload_folder' value=\"" . $cfg->load("upload_folder") . "\"></td></tr>\n";
 			print "<tr><td>Minimum upload level</td><td><input class='form-control' type='text' name='upload_lvl' value=\"" . to_int($cfg->load("upload_lvl")) . "\"></td></tr>\n";
 			print "<tr><td>Items managed</td><td><select class='form-control' name='items_managed'>";
-			if($cfg->load("items_managed") eq "Projects with goals and milestones") { print "<option>Products with models and releases</option><option selected>Projects with goals and milestones</option><option>Resources with locations and updates</option><option>Applications with platforms and versions</option>"; }
-			elsif($cfg->load("items_managed") eq "Resources with locations and updates") { print "<option>Products with models and releases</option><option>Projects with goals and milestones</option><option selected>Resources with locations and updates</option><option>Applications with platforms and versions</option>"; }
-			elsif($cfg->load("items_managed") eq "Applications with platforms and versions") { print "<option>Products with models and releases</option><option>Projects with goals and milestones</option><option>Resources with locations and updates</option><option selected>Applications with platforms and versions</option>"; }
-			else { print "<option selected>Products with models and releases</option><option>Projects with goals and milestones</option><option>Resources with locations and updates</option><option>Applications with platforms and versions</option>"; }
+			if($cfg->load("items_managed") eq "Projects with goals and milestones") { print "<option>Products with models and releases</option><option selected>Projects with goals and milestones</option><option>Resources with locations and updates</option><option>Applications with platforms and versions</option><option>Assets with types and instances</option>"; }
+			elsif($cfg->load("items_managed") eq "Resources with locations and updates") { print "<option>Products with models and releases</option><option>Projects with goals and milestones</option><option selected>Resources with locations and updates</option><option>Applications with platforms and versions</option><option>Assets with types and instances</option>"; }
+			elsif($cfg->load("items_managed") eq "Applications with platforms and versions") { print "<option>Products with models and releases</option><option>Projects with goals and milestones</option><option>Resources with locations and updates</option><option selected>Applications with platforms and versions</option><option>Assets with types and instances</option>"; }
+			elsif($cfg->load("items_managed") eq "Assets with types and instances") { print "<option>Products with models and releases</option><option>Projects with goals and milestones</option><option>Resources with locations and updates</option><option>Applications with platforms and versions</option><option selected>Assets with types and instances</option>"; }
+			else { print "<option selected>Products with models and releases</option><option>Projects with goals and milestones</option><option>Resources with locations and updates</option><option>Applications with platforms and versions</option><option>Assets with types and instances</option>"; }
 			print "</select></td></tr>\n";			
 			print "<tr><td>Custom ticket field</td><td><input class='form-control' type='text' name='custom_name' value=\"" . $cfg->load("custom_name") . "\"></td></tr>\n";
 			print "<tr><td>Custom field type</td><td><select class='form-control' name='custom_type'>";
@@ -2326,7 +2333,7 @@ elsif($q->param('m')) # Modules
 			if($q->param("notify_user") && sanitize_alpha($q->param('notify_user')) ne "")
 			{
 				$sql = $db->prepare("INSERT INTO escalate VALUES (?, ?);");
-				$sql->execute(to_int($q->param('t')), sanitize_alpha($q->param('notify_user')));
+				$sql->execute(to_int($q->param('t')), sanitize_alpha(lc($q->param('notify_user'))));
 				notify(sanitize_alpha($q->param('notify_user')), "Ticket (" . to_int($q->param('t')) . ") requires your attention", "The ticket \"" . $q->param('ticket_title') . "\" has been modified:\n\nModified by: " . $logged_user . "\n" . $cfg->load('custom_name') . ": " . $lnk . "\nStatus: " . sanitize_alpha($q->param('ticket_status')) . "\nResolution: " . $resolution . "\nAssigned to: " . $assigned . "\nDescription: " . $q->param('ticket_desc') . "\n\n" . $changes);
 			}
 		}
