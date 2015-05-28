@@ -480,7 +480,7 @@ sub check_user
 					 logevent("LDAP: " . $mesg->error);
 					 return;
 				}
-				$logged_user = $n;
+				$logged_user = lc($n);
 				$logged_lvl = $cfg->load("default_lvl");
 				$cn = $q->cookie(-name => "np_name", -value => $logged_user);
 				$cp = $q->cookie(-name => "np_key", -value => encode_base64(RC4($cfg->load("api_read"), $p), ""));
@@ -496,7 +496,7 @@ sub check_user
 				if(!$found)
 				{
 					$sql = $db->prepare("INSERT INTO users VALUES(?, ?, ?, ?, ?, ?);");
-					$sql->execute($n, "*********", "", to_int($cfg->load('default_lvl')), now(), "");
+					$sql->execute($logged_user, "*********", "", to_int($cfg->load('default_lvl')), now(), "");
 				}
 			}; # check silently since headers may not be set			
 		}
