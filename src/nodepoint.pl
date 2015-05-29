@@ -27,7 +27,7 @@ my ($cfg, $db, $sql, $cn, $cp, $cgs, $last_login, $perf);
 my $logged_user = "";
 my $logged_lvl = -1;
 my $q = new CGI;
-my $VERSION = "1.3.0";
+my $VERSION = "1.2.3";
 my %items = ("Product", "Product", "Release", "Release", "Model", "SKU/Model");
 my @itemtypes = ("None");
 
@@ -106,14 +106,14 @@ sub navbar
 	}
 	elsif($logged_user eq "")
 	{
-		if($q->param('m') && $q->param('m') eq "products")
+		if($q->param('m') && ($q->param('m') eq "products" || $q->param('m') eq "view_product"))
 		{
 			print "	 <li><a href='.'>Login</a></li>\n";
 			print "	 <li class='active'><a href='./?m=products'>" . $items{"Product"} . "s</a></li>\n";
 			if($cfg->load('comp_tickets') eq "on") { print "	 <li><a href='./?m=tickets'>Tickets</a></li>\n"; }
 			if($cfg->load('comp_articles') eq "on") { print "	 <li><a href='./?m=articles'>Articles</a></li>\n"; }
 		}
-		elsif($q->param('m') && $q->param('m') eq "tickets")
+		elsif($q->param('m') && ($q->param('m') eq "tickets" || $q->param('m') eq "view_ticket"))
 		{
 			print "	 <li><a href='.'>Login</a></li>\n";
 			print "	 <li><a href='./?m=products'>" . $items{"Product"} . "s</a></li>\n";
@@ -647,7 +647,7 @@ sub home
 
 	if(!$q->cookie('np_gs'))
 	{
-		print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Getting started</h3></div><div class='panel-body'>\n";
+		print "<div class='panel panel-primary'><div class='panel-heading'><h3 class='panel-title'>Getting started</h3></div><div class='panel-body'>\n";
 		print "<p>Use the " . $items{"Product"} . "s tab to browse available " . lc($items{"Product"}) . "s along with their " . lc($items{"Release"}) . "s. You can view basic information about them and see their description. Use the Tickets tab to browse current tickets and comments. The Articles tab contains related support articles. You can also change your email address and password under the Settings tab.</p>\n";
 		print "<p>Your current access level is <b>" . $logged_lvl . "</b>. This gives you the following permissions:</p>\n";
 		if($logged_lvl > 0) { print "<p>As an <span class='label label-success'>Authorized User</span>, you can add new tickets to specific " . lc($items{"Product"}) . "s and " . lc($items{"Release"}) . "s, or comment on existing ones.</p>\n"; }
@@ -661,7 +661,7 @@ sub home
 
 	if($logged_lvl > 0 && $cfg->load('comp_tickets') eq "on")
 	{
-		print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Tickets you created</h3></div><div class='panel-body'><table class='table table-striped'>\n";
+		print "<div class='panel panel-primary'><div class='panel-heading'><h3 class='panel-title'>Tickets you created</h3></div><div class='panel-body'><table class='table table-striped'>\n";
 		print "<tr><th>ID</th><th>" . $items{"Product"} . "</th><th>" . $items{"Release"} . "</th><th>Title</th><th>Status</th><th>Last modified</th></tr>\n";
 		$sql = $db->prepare("SELECT ROWID,* FROM tickets WHERE status != 'Closed' ORDER BY ROWID DESC");
 		$sql->execute();
@@ -674,7 +674,7 @@ sub home
 	
 	if($cfg->load('comp_tickets') eq "on")
 	{
-		print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Tickets you follow</h3></div><div class='panel-body'><table class='table table-striped'>\n";
+		print "<div class='panel panel-primary'><div class='panel-heading'><h3 class='panel-title'>Tickets you follow</h3></div><div class='panel-body'><table class='table table-striped'>\n";
 		print "<tr><th>ID</th><th>" . $items{"Product"} . "</th><th>User</th><th>Title</th><th>Status</th><th>Last modified</th></tr>\n";
 		$sql = $db->prepare("SELECT ROWID,* FROM tickets WHERE status != 'Closed' ORDER BY ROWID DESC;");
 		$sql->execute();
@@ -687,7 +687,7 @@ sub home
 	
 	if($logged_lvl > 2 && $cfg->load('comp_tickets') eq "on")
 	{
-		print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Tickets assigned to you</h3></div><div class='panel-body'><table class='table table-striped'>\n";
+		print "<div class='panel panel-primary'><div class='panel-heading'><h3 class='panel-title'>Tickets assigned to you</h3></div><div class='panel-body'><table class='table table-striped'>\n";
 		print "<tr><th>ID</th><th>" . $items{"Product"} . "</th><th>User</th><th>Title</th><th>Status</th><th>Last modified</th></tr>\n";
 		$sql = $db->prepare("SELECT ROWID,* FROM tickets WHERE status != 'Closed' ORDER BY ROWID DESC;");
 		$sql->execute();
@@ -700,7 +700,7 @@ sub home
 
 	if($cfg->load('comp_articles') eq "on")
 	{
-		print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Subscribed articles</h3></div><div class='panel-body'><table class='table table-striped'>\n";
+		print "<div class='panel panel-primary'><div class='panel-heading'><h3 class='panel-title'>Subscribed articles</h3></div><div class='panel-body'><table class='table table-striped'>\n";
 		print "<tr><th>ID</th><th>Title</th><th>Last modified</th></tr>\n";
 		$sql = $db->prepare("SELECT articleid FROM subscribe WHERE user = ?");
 		$sql->execute($logged_user);
@@ -1529,9 +1529,9 @@ elsif($q->param('m')) # Modules
 					$email = $res[2];
 				}
 			}		    
-			print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Change email</h3></div><div class='panel-body'>\n";
+			print "<div class='panel panel-primary'><div class='panel-heading'><h3 class='panel-title'>Change email</h3></div><div class='panel-body'>\n";
 			print "<div class='form-group'><p><form method='POST' action='.' data-toggle='validator' role='form'><input type='hidden' name='m' value='change_email'><div class='row'><div class='col-sm-6'>To change your notification email address, enter a new address here. Leave empty to disable notifications:</div><div class='col-sm-6'><input type='email' name='new_email' class='form-control' data-error='Must be a valid email.' placeholder='Email address' maxlength='99' value='" . $email . "'></div></div></p><div class='help-block with-errors'></div></div><input class='btn btn-primary pull-right' type='submit' value='Change email'></form></div></div>";
-			print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Change password</h3></div><div class='panel-body'>\n";
+			print "<div class='panel panel-primary'><div class='panel-heading'><h3 class='panel-title'>Change password</h3></div><div class='panel-body'>\n";
 			if($cfg->load("ad_server")) { print "<p>Password management is synchronized with Active Directory.</p>"; }
 			elsif($logged_user eq "demo") { print "<p>The demo account cannot change its password.</p>"; }
 			else
@@ -1542,7 +1542,7 @@ elsif($q->param('m')) # Modules
 		}
 		if($logged_lvl > 4)
 		{
-			print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Users management</h3></div><div class='panel-body'>\n";
+			print "<div class='panel panel-primary'><div class='panel-heading'><h3 class='panel-title'>Users management</h3></div><div class='panel-body'>\n";
 			print "<p>Filter users by access level: <a href='./?m=settings'>All</a> | <a href='./?m=settings&filter_users=0'>0</a> | <a href='./?m=settings&filter_users=1'>1</a> | <a href='./?m=settings&filter_users=2'>2</a> | <a href='./?m=settings&filter_users=3'>3</a> | <a href='./?m=settings&filter_users=4'>4</a> | <a href='./?m=settings&filter_users=5'>5</a></p>";
 			print "<table class='table table-striped'><tr><th>User name</th><th>Email</th><th>Level</th><th>Change access level</th><th>Reset password</th><th>Last login</th></tr>\n";
 			if(defined($q->param("filter_users")))
@@ -1570,7 +1570,7 @@ elsif($q->param('m')) # Modules
 		}
 		if($logged_lvl > 1)
 		{
-			print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Statistics</h3></div><div class='panel-body'>\n";
+			print "<div class='panel panel-primary'><div class='panel-heading'><h3 class='panel-title'>Statistics</h3></div><div class='panel-body'>\n";
 			if($cfg->load('comp_tickets') eq "on")
 			{
 				print "<p><div class='row'><div class='col-sm-6'><center><h4>Number of tickets created</h4></center><canvas id='graph0'></canvas></div><div class='col-sm-6'><center><h4>Overall status distribution</h4></center><canvas id='graph1'></canvas></div></div></p>\n";
@@ -1628,7 +1628,7 @@ elsif($q->param('m')) # Modules
 		}
 		if($logged_lvl > 3 && $cfg->load('comp_tickets') eq "on")
 		{
-			print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Custom forms</h3></div><div class='panel-body'>\n";
+			print "<div class='panel panel-primary'><div class='panel-heading'><h3 class='panel-title'>Custom forms</h3></div><div class='panel-body'>\n";
 			print "<p><table class='table table-striped'><tr><th>Assigned " . lc($items{"Product"}) . "</th><th>Form name</th><th>Last update</th></tr>";
 			my @products;
 			$sql = $db->prepare("SELECT ROWID,* FROM products;");
@@ -1647,7 +1647,7 @@ elsif($q->param('m')) # Modules
 		}
 		if($logged_lvl > 5)
 		{
-			print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Initial settings</h3></div><div class='panel-body'>\n";
+			print "<div class='panel panel-primary'><div class='panel-heading'><h3 class='panel-title'>Initial settings</h3></div><div class='panel-body'>\n";
 			print "<form method='POST' action='.'><table class='table table-striped'><tr><th>Setting</th><th>Value</th></tr>\n";
 			print "<tr><td>Database file</td><td><input class='form-control' type='text' name='db_address' value=\"" .  $cfg->load("db_address") . "\"></td></tr>\n";
 			print "<tr><td>Admin name</td><td><input class='form-control' type='text' name='admin_name' value=\"" .  $cfg->load("admin_name") . "\" readonly></td></tr>\n";
@@ -1708,7 +1708,7 @@ elsif($q->param('m')) # Modules
 			else { print "<option>on</option><option selected>off</option>"; }
 			print "</select></td></tr>\n";
 			print "</table>The admin password will be left unchanged if empty.<br>See the <a href='./README.html'>README</a> file for help.<input class='btn btn-primary pull-right' type='submit' value='Save settings'></form></div></div>\n";
-			print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Log (last 200 events)</h3></div><div class='panel-body'>\n";
+			print "<div class='panel panel-primary'><div class='panel-heading'><h3 class='panel-title'>Log (last 200 events)</h3></div><div class='panel-body'>\n";
 			print "<form style='display:inline' method='POST' action='.'><input type='hidden' name='m' value='clear_log'><input class='btn btn-danger pull-right' type='submit' value='Clear log'><br></form><a name='log'></a><p>Filter log by events:<br><a href='./?m=settings#log'>All</a> | <a href='./?m=settings&filter_log=Failed#log'>Failed logins</a> | <a href='./?m=settings&filter_log=Success#log'>Successful logins</a> | <a href='./?m=settings&filter_log=level#log'>Level changes</a> | <a href='./?m=settings&filter_log=password#log'>Password changes</a> | <a href='./?m=settings&filter_log=new#log'>New users</a> | <a href='./?m=settings&filter_log=setting#log'>Settings updated</a> | <a href='./?m=settings&filter_log=notification#log'>Email notifications</a> | <a href='./?m=settings&filter_log=LDAP:#log'>Active Directory</a> | <a href='./?m=settings&filter_log=deleted:#log'>Deletes</a></p>\n";
 			print "<table class='table table-striped'><tr><th>IP address</th><th>User</th><th>Event</th><th>Time</th></tr>\n";
 			if($q->param("filter_log"))
@@ -1906,7 +1906,7 @@ elsif($q->param('m')) # Modules
 		while(my @res = $sql->fetchrow_array()) { $products[$res[0]] = $res[1]; }
 		if($logged_lvl > 3)
 		{
-			print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Add a new article</h3></div><div class='panel-body'>\n";
+			print "<div class='panel panel-primary'><div class='panel-heading'><h3 class='panel-title'>Add a new article</h3></div><div class='panel-body'>\n";
 			print "<form method='GET' action='.'><p><div class='row'><div class='col-sm-6'><input type='hidden' name='m' value='add_article'><input placeholder='Title' class='form-control' type='text' name='title' maxlength='50'></div><div class='col-sm-6'><select class='form-control' name='productid'><option value='0'>All " . lc($items{"Product"}) . "s</option>";
 			for(my $i = 1; $i < scalar(@products); $i++)
 			{
@@ -1914,7 +1914,7 @@ elsif($q->param('m')) # Modules
 			}
 			print "</select></div></div></p><p><input type='submit' class='btn btn-primary pull-right' value='Add article'></p></form></div></div>\n";
 		}
-		print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Support articles</h3></div><div class='panel-body'><table class='table table-striped'>\n";
+		print "<div class='panel panel-primary'><div class='panel-heading'><h3 class='panel-title'>Support articles</h3></div><div class='panel-body'><table class='table table-striped'>\n";
 		if($logged_lvl > 3) { print "<tr><th>ID</th><th>" . $items{"Product"} . "</th><th>Title</th><th>Status</th><th>Last update</th></tr>"; }
 		else { print "<tr><th>ID</th><th>" . $items{"Product"} . "</th><th>Title</th><th>Last update</th></tr>"; }
 		if($logged_lvl > 3) { $sql = $db->prepare("SELECT ROWID,* FROM kb;"); }
@@ -1952,7 +1952,7 @@ elsif($q->param('m')) # Modules
 			$vis = $res[5];
 			if($res[5] eq "Public" || ($res[5] eq "Private" && $logged_user ne "") || ($res[5] eq "Restricted" && $logged_lvl > 1) || $logged_lvl > 3)
 			{
-				print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>" . $items{"Product"} . " information</h3></div><div class='panel-body'>\n";
+				print "<div class='panel panel-primary'><div class='panel-heading'><h3 class='panel-title'>" . $items{"Product"} . " information</h3></div><div class='panel-body'>\n";
 				if($logged_lvl > 3) { print "<form method='POST' action='.' enctype='multipart/form-data'><input type='hidden' name='m' value='edit_product'><input type='hidden' name='product_id' value='" . to_int($q->param('p')) . "'>\n"; }
 				if($logged_lvl > 3) { print "<p><div class='row'><div class='col-sm-6'>" . $items{"Product"} . " name: <input class='form-control' type='text' name='product_name' value='" . $res[1] . "'></div><div class='col-sm-6'>" . $items{"Model"} . ": <input class='form-control' type='text' name='product_model' value='" . $res[2] . "'></div></div></p>\n"; }
 				else { print "<p><div class='row'><div class='col-sm-6'>Product name: <b>" . $res[1] . "</b></div><div class='col-sm-6'>" . $items{"Model"} . ": <b>" . $res[2] . "</b></div></div></p>\n"; }
@@ -1995,12 +1995,12 @@ elsif($q->param('m')) # Modules
 			}
 			if($logged_lvl > 2 && $vis ne "Archived")
 			{
-				print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Add " . lc($items{"Release"}) . " to this " . lc($items{"Product"}) . "</h3></div><div class='panel-body'><form method='POST' action='.'>\n";
+				print "<div class='panel panel-primary'><div class='panel-heading'><h3 class='panel-title'>Add " . lc($items{"Release"}) . " to this " . lc($items{"Product"}) . "</h3></div><div class='panel-body'><form method='POST' action='.'>\n";
 				print "<input type='hidden' name='m' value='add_release'><input type='hidden' name='product_id' value='" . to_int($q->param('p')) . "'><div class='row'><div class='col-sm-4'>" . $items{"Release"} . ": <input type='text' class='form-control' name='release_version'></div><div class='col-sm-6'>Notes or link: <input type='text' name='release_notes' class='form-control'></div></div><input class='btn btn-primary pull-right' type='submit' value='Add " . lc($items{"Release"}) . "'></form></div></div>\n";    
 			}
 			if($vis eq "Public" || ($vis eq "Private" && $logged_user ne "") || ($vis eq "Restricted" && $logged_lvl > 1) || $logged_lvl > 3)
 			{
-				print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>" . $items{"Release"} . "s</h3></div><div class='panel-body'><table class='table table-striped'>\n";
+				print "<div class='panel panel-primary'><div class='panel-heading'><h3 class='panel-title'>" . $items{"Release"} . "s</h3></div><div class='panel-body'><table class='table table-striped'>\n";
 				print "<tr><th>" . $items{"Release"} . "</th><th>User</th><th>Notes</th><th>Date</th></tr>\n";
 				$sql = $db->prepare("SELECT ROWID,* FROM releases WHERE productid = ?;");
 				$sql->execute(to_int($q->param('p')));
@@ -2018,7 +2018,7 @@ elsif($q->param('m')) # Modules
 		}
 		if($cfg->load('comp_articles') eq "on")
 		{
-			print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Related articles</h3></div><div class='panel-body'><table class='table table-striped'>\n";
+			print "<div class='panel panel-primary'><div class='panel-heading'><h3 class='panel-title'>Related articles</h3></div><div class='panel-body'><table class='table table-striped'>\n";
 			if($logged_lvl > 3) { print "<tr><th>ID</th><th>Title</th><th>Status</th><th>Last update</th></tr>"; }
 			else { print "<tr><th>ID</th><th>Title</th><th>Last update</th></tr>"; }
 			if($logged_lvl > 3) { $sql = $db->prepare("SELECT ROWID,* FROM kb WHERE (productid = ? OR productid = 0);"); }
@@ -2270,7 +2270,7 @@ elsif($q->param('m')) # Modules
 		headers($items{"Product"} . "s");
 		if($logged_lvl > 3)  # add new product pane
 		{
-			print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Add a new " . lc($items{"Product"}) . "</h3></div><div class='panel-body'><form method='POST' action='.' enctype='multipart/form-data'>\n";
+			print "<div class='panel panel-primary'><div class='panel-heading'><h3 class='panel-title'>Add a new " . lc($items{"Product"}) . "</h3></div><div class='panel-body'><form method='POST' action='.' enctype='multipart/form-data'>\n";
 			print "<p><div class='row'><div class='col-sm-6'><input placeholder='" . $items{"Product"} . " name' type='text' name='product_name' class='form-control'></div><div class='col-sm-6'><input type='text' placeholder='" . $items{"Model"} . "' name='product_model' class='form-control'></div></div></p>\n";
 			print "<p><div class='row'><div class='col-sm-6'><input type='text' name='product_release' placeholder='Initial " . lc($items{"Release"}) . "' class='form-control'></div><div class='col-sm-6'><select class='form-control' name='product_vis'><option>Public</option><option>Private</option><option>Restricted</option></select></div></div></p>\n";
 			print "<p><textarea placeholder='Description' class='form-control' name='product_desc' rows='10' style='width:99%'></textarea></p><input class='btn btn-primary pull-right' type='submit' value='Add " . lc($items{"Product"}) . "'>";
@@ -2280,7 +2280,7 @@ elsif($q->param('m')) # Modules
 		$sql = $db->prepare("SELECT ROWID,* FROM products;");
 		$sql->execute();
 		my $found;
-		print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>List of " . lc($items{"Product"}) . "s</h3></div><div class='panel-body'><table class='table table-striped'>\n";
+		print "<div class='panel panel-primary'><div class='panel-heading'><h3 class='panel-title'>List of " . lc($items{"Product"}) . "s</h3></div><div class='panel-body'><table class='table table-striped'>\n";
 		print "<tr><th>ID</th><th>Name</th><th>" . $items{"Model"} . "</th></tr>\n";
 		while(my @res = $sql->fetchrow_array())
 		{
@@ -2497,7 +2497,7 @@ elsif($q->param('m')) # Modules
 				$sql->execute(to_int($res[1]));
 				my $product = "";
 				while(my @res2 = $sql->fetchrow_array()) { $product = $res2[1]; }
-				print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Ticket " . to_int($q->param('t')) . "</h3></div><div class='panel-body'>";
+				print "<div class='panel panel-primary'><div class='panel-heading'><h3 class='panel-title'>Ticket " . to_int($q->param('t')) . "</h3></div><div class='panel-body'>";
 				if($logged_lvl > 2) { print "<form method='POST' action='.'><input type='hidden' name='m' value='update_ticket'><input type='hidden' name='t' value='" . to_int($q->param('t')) . "'>\n"; }
 				print "<p><div class='row'><div class='col-sm-6'>" . $items{"Product"} . ": <b>" . $product . "</b></div>";
 				if($cfg->load('comp_articles') eq "on")
@@ -2578,7 +2578,7 @@ elsif($q->param('m')) # Modules
 				{
 					$sql = $db->prepare("SELECT * FROM timetracking WHERE ticketid = ? ORDER BY ROWID DESC;");
 					$sql->execute(to_int($q->param('t')));
-					print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Time breakdown</h3></div><div class='panel-body'><table class='table table-striped'><tr><th>User</th><th>Hours spent</th><th>Date</th></tr>\n";
+					print "<div class='panel panel-primary'><div class='panel-heading'><h3 class='panel-title'>Time breakdown</h3></div><div class='panel-body'><table class='table table-striped'><tr><th>User</th><th>Hours spent</th><th>Date</th></tr>\n";
 					my $totaltime = 0;
 					while(my @res = $sql->fetchrow_array())
 					{
@@ -2591,7 +2591,7 @@ elsif($q->param('m')) # Modules
 				print "<h3>Comments</h3>";
 				if($logged_lvl > 0 && $res[8] ne "Closed")
 				{
-					print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Add comment</h3></div><div class='panel-body'><form method='POST' action='.' enctype='multipart/form-data'><input type='hidden' name='m' value='add_comment'><input type='hidden' name='t' value='" . to_int($q->param('t')) . "'>\n";
+					print "<div class='panel panel-primary'><div class='panel-heading'><h3 class='panel-title'>Add comment</h3></div><div class='panel-body'><form method='POST' action='.' enctype='multipart/form-data'><input type='hidden' name='m' value='add_comment'><input type='hidden' name='t' value='" . to_int($q->param('t')) . "'>\n";
 					print "<p><textarea class='form-control' rows='4' name='comment'></textarea></p>";
 					print "<p><input class='btn btn-primary pull-right' type='submit' value='Add comment'>";
 					if($logged_lvl >= to_int($cfg->load('upload_lvl'))) { print "Attach file: <input type='file' name='attach_file'>"; }
@@ -2602,9 +2602,9 @@ elsif($q->param('m')) # Modules
 				while(my @res = $sql->fetchrow_array())
 				{
 					if($res[5] eq "" || $res[5] eq "Never")
-					{ print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'><span style='float:right'><i>" . $res[4] . "</i></span>" . $res[2] . "</h3></div><div class='panel-body'>"; }
+					{ print "<div class='panel panel-primary'><div class='panel-heading'><h3 class='panel-title'><span style='float:right'><i>" . $res[4] . "</i></span>" . $res[2] . "</h3></div><div class='panel-body'>"; }
 					else
-					{ print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'><span style='float:right'><i>" . $res[4] . "</i> (Edited: <i>" . $res[5] . "</i>)</span>" . $res[2] . "</h3></div><div class='panel-body'>"; }
+					{ print "<div class='panel panel-primary'><div class='panel-heading'><h3 class='panel-title'><span style='float:right'><i>" . $res[4] . "</i> (Edited: <i>" . $res[5] . "</i>)</span>" . $res[2] . "</h3></div><div class='panel-body'>"; }
 					print "<form method='POST' action='.'><input type='hidden' name='m' value='update_comment'><input type='hidden' name='c' value='" . $res[0] . "'>\n";
 					if($logged_user eq $res[2]) { print "<p><textarea name='comment' rows='5' class='form-control'>" . $res[3] . "</textarea></p>"; }
 					else { print "<p><pre>" . $res[3] . "</pre></p>"; }
@@ -2705,7 +2705,7 @@ elsif($q->param('m')) # Modules
 			$sql = $db->prepare("SELECT * FROM forms WHERE productid = ?;");
 			$sql->execute(to_int($q->param('product_id')));
 			@customform = $sql->fetchrow_array();
-			print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Create a new ticket</h3></div><div class='panel-body'><form method='POST' action='.' enctype='multipart/form-data'>\n";
+			print "<div class='panel panel-primary'><div class='panel-heading'><h3 class='panel-title'>Create a new ticket</h3></div><div class='panel-body'><form method='POST' action='.' enctype='multipart/form-data'>\n";
 			print "<p><div class='row'><div class='col-sm-6'>" . $items{"Product"} . " name: <b>" . $product . "</b><input type='hidden' name='product_id' value='" . to_int($q->param('product_id')) . "'></div><div class='col-sm-6' style='text-align:right'>" . $items{"Release"} . ": <select name='release_id'>";
 			$sql = $db->prepare("SELECT ROWID,* FROM releases WHERE productid = ?;");
 			$sql->execute(to_int($q->param('product_id')));
@@ -2745,7 +2745,7 @@ elsif($q->param('m')) # Modules
 			$sql->execute(to_int($q->param('product_id')));
 			while(my @res = $sql->fetchrow_array())
 			{
-				print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>" . $items{"Product"} . " information</h3></div><div class='panel-body'>\n";
+				print "<div class='panel panel-primary'><div class='panel-heading'><h3 class='panel-title'>" . $items{"Product"} . " information</h3></div><div class='panel-body'>\n";
 				print "<div class='row'><div class='col-sm-6'>Product name: <b>" . $res[1] . "</b></div><div class='col-sm-6'>" . $items{"Model"} . ": <b>" . $res[2] . "</b></div></div>\n";
 				print "<div class='row'><div class='col-sm-6'>Created on: <b>" . $res[6] . "</b></div><div class='col-sm-6'>Last modified on: <b>" . $res[7] . "</b></div></div>\n";
 				print "<div class='row'><div class='col-sm-6'>" . $items{"Product"} . " visibility: <b>" . $res[5] . "</b></div></div>\n";
@@ -2822,85 +2822,85 @@ elsif($q->param('m')) # Modules
 		if(to_int($q->param('report')) == 1)
 		{
 			if($q->param('csv')) { print "User,\"Hours spent\"\n"; }
-			else { print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Time spent per user</h3></div><div class='panel-body'><table class='table table-striped'><tr><th>User</th><th>Hours spent</th></tr>"; }
+			else { print "<div class='panel panel-primary'><div class='panel-heading'><h3 class='panel-title'>Time spent per user</h3></div><div class='panel-body'><table class='table table-striped'><tr><th>User</th><th>Hours spent</th></tr>"; }
 			$sql = $db->prepare("SELECT * FROM timetracking ORDER BY name;");
 		}
 		elsif(to_int($q->param('report')) == 2)
 		{
 			if($q->param('csv')) { print "\"Ticket ID\",\"Hours spent\"\n"; }
-			else { print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>All time spent per ticket</h3></div><div class='panel-body'><table class='table table-striped'><tr><th>Ticket ID</th><th>Hours spent</th></tr>"; }
+			else { print "<div class='panel panel-primary'><div class='panel-heading'><h3 class='panel-title'>All time spent per ticket</h3></div><div class='panel-body'><table class='table table-striped'><tr><th>Ticket ID</th><th>Hours spent</th></tr>"; }
 			$sql = $db->prepare("SELECT * FROM timetracking ORDER BY ticketid;");		
 		}
 		elsif(to_int($q->param('report')) == 11)
 		{
 			if($q->param('csv')) { print "\"Ticket ID\",\"Hours spent\"\n"; }
-			else { print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Your time spent per ticket</h3></div><div class='panel-body'><table class='table table-striped'><tr><th>Ticket ID</th><th>Hours spent</th></tr>"; }
+			else { print "<div class='panel panel-primary'><div class='panel-heading'><h3 class='panel-title'>Your time spent per ticket</h3></div><div class='panel-body'><table class='table table-striped'><tr><th>Ticket ID</th><th>Hours spent</th></tr>"; }
 			$sql = $db->prepare("SELECT * FROM timetracking WHERE name == \"$logged_user\" ORDER BY ticketid;");		
 		}
 		elsif(to_int($q->param('report')) == 3)
 		{
 			if($q->param('csv')) { print $items{"Product"} . ",Tickets\n"; }
-			else { print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Tickets created per " . lc($items{"Product"}) . "</h3></div><div class='panel-body'><table class='table table-striped'><tr><th>" . $items{"Product"} . "</th><th>Tickets</th></tr>"; }
+			else { print "<div class='panel panel-primary'><div class='panel-heading'><h3 class='panel-title'>Tickets created per " . lc($items{"Product"}) . "</h3></div><div class='panel-body'><table class='table table-striped'><tr><th>" . $items{"Product"} . "</th><th>Tickets</th></tr>"; }
 			$sql = $db->prepare("SELECT productid FROM tickets ORDER BY productid;");
 		}
 		elsif(to_int($q->param('report')) == 13)
 		{
 			if($q->param('csv')) { print "Article,Tickets\n"; }
-			else { print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Tickets linked per article</h3></div><div class='panel-body'><table class='table table-striped'><tr><th>Article</th><th>Tickets</th></tr>"; }
+			else { print "<div class='panel panel-primary'><div class='panel-heading'><h3 class='panel-title'>Tickets linked per article</h3></div><div class='panel-body'><table class='table table-striped'><tr><th>Article</th><th>Tickets</th></tr>"; }
 			$sql = $db->prepare("SELECT DISTINCT kb,ticketid FROM kblink ORDER BY kb;");
 		}
 		elsif(to_int($q->param('report')) == 10)
 		{
 			if($q->param('csv')) { print $items{"Product"} . ",Tickets\n"; }
-			else { print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>New and open tickets per " . lc($items{"Product"}) . "</h3></div><div class='panel-body'><table class='table table-striped'><tr><th>" . $items{"Product"} . "</th><th>Tickets</th></tr>"; }
+			else { print "<div class='panel panel-primary'><div class='panel-heading'><h3 class='panel-title'>New and open tickets per " . lc($items{"Product"}) . "</h3></div><div class='panel-body'><table class='table table-striped'><tr><th>" . $items{"Product"} . "</th><th>Tickets</th></tr>"; }
 			$sql = $db->prepare("SELECT productid FROM tickets WHERE status == 'Open' OR status == 'New' ORDER BY productid;");
 		}
 		elsif(to_int($q->param('report')) == 4)
 		{
 			if($q->param('csv')) { print "User,Tickets\n"; }
-			else { print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Tickets created per user</h3></div><div class='panel-body'><table class='table table-striped'><tr><th>User</th><th>Tickets</th></tr>"; }
+			else { print "<div class='panel panel-primary'><div class='panel-heading'><h3 class='panel-title'>Tickets created per user</h3></div><div class='panel-body'><table class='table table-striped'><tr><th>User</th><th>Tickets</th></tr>"; }
 			$sql = $db->prepare("SELECT createdby FROM tickets ORDER BY createdby;");
 		}
 		elsif(to_int($q->param('report')) == 5)
 		{
 			if($q->param('csv')) { print "Day,Tickets\n"; }
-			else { print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Tickets created per day</h3></div><div class='panel-body'><table class='table table-striped'><tr><th>Day</th><th>Tickets</th></tr>"; }
+			else { print "<div class='panel panel-primary'><div class='panel-heading'><h3 class='panel-title'>Tickets created per day</h3></div><div class='panel-body'><table class='table table-striped'><tr><th>Day</th><th>Tickets</th></tr>"; }
 			$sql = $db->prepare("SELECT created,ROWID FROM tickets ORDER BY ROWID;");
 		}
 		elsif(to_int($q->param('report')) == 6)
 		{
 			if($q->param('csv')) { print "Month,Tickets\n"; }
-			else { print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Tickets created per month</h3></div><div class='panel-body'><table class='table table-striped'><tr><th>Month</th><th>Tickets</th></tr>"; }
+			else { print "<div class='panel panel-primary'><div class='panel-heading'><h3 class='panel-title'>Tickets created per month</h3></div><div class='panel-body'><table class='table table-striped'><tr><th>Month</th><th>Tickets</th></tr>"; }
 			$sql = $db->prepare("SELECT created,ROWID FROM tickets ORDER BY ROWID;");
 		}
 		elsif(to_int($q->param('report')) == 7)
 		{
 			if($q->param('csv')) { print "Status,Tickets\n"; }
-			else { print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Tickets per status</h3></div><div class='panel-body'><table class='table table-striped'><tr><th>Status</th><th>Tickets</th></tr>"; }
+			else { print "<div class='panel panel-primary'><div class='panel-heading'><h3 class='panel-title'>Tickets per status</h3></div><div class='panel-body'><table class='table table-striped'><tr><th>Status</th><th>Tickets</th></tr>"; }
 			$sql = $db->prepare("SELECT status FROM tickets ORDER BY status;");
 		}
 		elsif(to_int($q->param('report')) == 8)
 		{
 			if($q->param('csv')) { print "\"Access level\",Users\n"; }
-			else { print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Users per access level</h3></div><div class='panel-body'><table class='table table-striped'><tr><th>Access level</th><th>Users</th></tr>"; }
+			else { print "<div class='panel panel-primary'><div class='panel-heading'><h3 class='panel-title'>Users per access level</h3></div><div class='panel-body'><table class='table table-striped'><tr><th>Access level</th><th>Users</th></tr>"; }
 			$sql = $db->prepare("SELECT level FROM users ORDER BY level;");
 		}
 		elsif(to_int($q->param('report')) == 9)
 		{
 			if($q->param('csv')) { print "User,Tickets\n"; }
-			else { print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Tickets assigned per user</h3></div><div class='panel-body'><table class='table table-striped'><tr><th>User</th><th>Tickets</th></tr>"; }
+			else { print "<div class='panel panel-primary'><div class='panel-heading'><h3 class='panel-title'>Tickets assigned per user</h3></div><div class='panel-body'><table class='table table-striped'><tr><th>User</th><th>Tickets</th></tr>"; }
 			$sql = $db->prepare("SELECT name FROM users;");
 		}
 		elsif(to_int($q->param('report')) == 12)
 		{
 			if($q->param('csv')) { print "Filename,GUID\n"; }
-			else { print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Comment file attachments</h3></div><div class='panel-body'><table class='table table-striped'><tr><th>Filename</th><th>GUID</th></tr>"; }
+			else { print "<div class='panel panel-primary'><div class='panel-heading'><h3 class='panel-title'>Comment file attachments</h3></div><div class='panel-body'><table class='table table-striped'><tr><th>Filename</th><th>GUID</th></tr>"; }
 			$sql = $db->prepare("SELECT file,filename FROM comments WHERE file != '';");
 		}
 		else
 		{
 			if($q->param('csv')) { print "Unknown,Unknown\n"; }
-			else { print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Unknown report</h3></div><div class='panel-body'><table class='table table-striped'><tr><th>Unknown</th><th>Unknown</th></tr>"; }
+			else { print "<div class='panel panel-primary'><div class='panel-heading'><h3 class='panel-title'>Unknown report</h3></div><div class='panel-body'><table class='table table-striped'><tr><th>Unknown</th><th>Unknown</th></tr>"; }
 			$sql = $db->prepare("SELECT ROWID FROM users;");
 		}
 		$sql->execute();
@@ -3056,7 +3056,7 @@ elsif($q->param('m')) # Modules
 		headers("Tickets");
 		if($logged_lvl > 0)  # add new ticket pane
 		{
-			print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Create a new ticket</h3></div><div class='panel-body'><form method='POST' action='.'>\n";
+			print "<div class='panel panel-primary'><div class='panel-heading'><h3 class='panel-title'>Create a new ticket</h3></div><div class='panel-body'><form method='POST' action='.'>\n";
 			print "<p><div class='row'><div class='col-sm-8'>Select a " . lc($items{"Product"}) . " name: <select class='form-control' name='product_id'>";
 			$sql = $db->prepare("SELECT ROWID,* FROM products WHERE vis != 'Archived';");
 			$sql->execute();
@@ -3066,7 +3066,7 @@ elsif($q->param('m')) # Modules
 			}
 			print "</select></div><div class='col-sm-4'><input type='hidden' name='m' value='new_ticket'><input class='btn btn-primary pull-right' type='submit' value='Next'></div></div></p></form></div></div>\n";
 		}
-		print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Tickets ";
+		print "<div class='panel panel-primary'><div class='panel-heading'><h3 class='panel-title'>Tickets ";
 		if($q->param('filter_product')) { print "(" . $items{"Product"} . ": " . sanitize_alpha($q->param('filter_product')) . ") "; }
 		if($q->param('filter_status')) { print "(Status: " . sanitize_alpha($q->param('filter_status')) . ") "; }
 		print "(Limit: " . $limit . ") ";
@@ -3152,7 +3152,7 @@ elsif(($q->param('create_form') || $q->param('edit_form') || $q->param('save_for
 	}
 	else
 	{
-		print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Custom form</h3></div><div class='panel-body'><form method='POST' action='.'>";
+		print "<div class='panel panel-primary'><div class='panel-heading'><h3 class='panel-title'>Custom form</h3></div><div class='panel-body'><form method='POST' action='.'>";
 		my @products;
 		$sql = $db->prepare("SELECT ROWID,* FROM products;");
 		$sql->execute();
@@ -3230,8 +3230,8 @@ elsif($q->param('kb') && $cfg->load('comp_articles') eq "on")
 	{
 		if($logged_lvl > 3 || $res[4] == 1)
 		{
-			if($res[7] eq "Never") { print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'><span style='float:right'>Created: <i>" . $res[6] . "</i></span>Article " . to_int($q->param('kb')) . "</h3></div><div class='panel-body'>\n"; }
-			else { print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'><span style='float:right'>Last modified: <i>" . $res[7] . "</i></span>Article " . to_int($q->param('kb')) . "</h3></div><div class='panel-body'>\n"; }
+			if($res[7] eq "Never") { print "<div class='panel panel-primary'><div class='panel-heading'><h3 class='panel-title'><span style='float:right'>Created: <i>" . $res[6] . "</i></span>Article " . to_int($q->param('kb')) . "</h3></div><div class='panel-body'>\n"; }
+			else { print "<div class='panel panel-primary'><div class='panel-heading'><h3 class='panel-title'><span style='float:right'>Last modified: <i>" . $res[7] . "</i></span>Article " . to_int($q->param('kb')) . "</h3></div><div class='panel-body'>\n"; }
 			if($logged_lvl > 3)
 			{
 				print "<form method='POST' action='.'><input type='hidden' name='m' value='save_article'><input type='hidden' name='id' value='" . to_int($q->param('kb')) . "'>\n";
@@ -3272,7 +3272,7 @@ elsif($q->param('kb') && $cfg->load('comp_articles') eq "on")
 			print "</div></div>";
 			if($cfg->load('comp_tickets') eq "on" && $logged_user ne "")
 			{
-				print "<div class='panel panel-default'><div class='panel-heading'><h3 class='panel-title'>Active tickets linked to this article</h3></div><div class='panel-body'>\n";
+				print "<div class='panel panel-primary'><div class='panel-heading'><h3 class='panel-title'>Active tickets linked to this article</h3></div><div class='panel-body'>\n";
 				print "<table class='table table-striped'><tr><th>ID</th><th>Title</th><th>Status</th>";
 				if($logged_lvl > 3) { print "<th>Unlink</th>"; }
 				print "</tr>\n";
