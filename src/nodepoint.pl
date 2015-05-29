@@ -8,7 +8,7 @@
 #
 
 use strict;
-use Config::Linux;
+use Config::Win32;
 use Digest::SHA qw(sha1_hex);
 use DBI;
 use CGI;
@@ -27,7 +27,7 @@ my ($cfg, $db, $sql, $cn, $cp, $cgs, $last_login, $perf);
 my $logged_user = "";
 my $logged_lvl = -1;
 my $q = new CGI;
-my $VERSION = "1.2.2";
+my $VERSION = "1.3.0";
 my %items = ("Product", "Product", "Release", "Release", "Model", "SKU/Model");
 my @itemtypes = ("None");
 
@@ -726,11 +726,11 @@ sub home
 # Connect to config
 eval
 {
-	$cfg = Config::Linux->new("NodePoint", "settings");
+	$cfg = Config::Win32->new("NodePoint", "settings");
 };
 if(!defined($cfg)) # Can't even use headers() if this fails.
 {
-	print "Content-type: text/html\n\nError: Could not access " . Config::Linux->type . ". Please ensure NodePoint has the proper permissions.";
+	print "Content-type: text/html\n\nError: Could not access " . Config::Win32->type . ". Please ensure NodePoint has the proper permissions.";
 	exit(0);
 };
 
@@ -1479,7 +1479,7 @@ elsif($q->param('file') && $cfg->load('upload_folder')) # Show an image
 		msg("File not found or corrupted.", 0);
 		exit(0);
 	}
-	open(my $fp, $filename);
+	open(my $fp, "<", $filename);
 	if($type eq "application/octet-stream") { print "Content-type: text/plain\n\n"; }
 	else { print "Content-type: " . $type . "\n\n"; }
 	while(my $line = <$fp>)
@@ -2133,7 +2133,7 @@ elsif($q->param('m')) # Modules
 								binmode($io_handle);
 								my ($buffer, $bytesread);
 								$screenshot = Data::GUID->new;
-								open(my $OUTFILE, ">" . $cfg->load('upload_folder') . $cfg->sep . $screenshot) or die $@;
+								open(my $OUTFILE, ">", $cfg->load('upload_folder') . $cfg->sep . $screenshot) or die $@;
 								while($bytesread = $io_handle->read($buffer,1024))
 								{
 									print $OUTFILE $buffer;
@@ -2225,7 +2225,7 @@ elsif($q->param('m')) # Modules
 								binmode($io_handle);
 								my ($buffer, $bytesread);
 								$screenshot = Data::GUID->new;
-								open(my $OUTFILE, ">" . $cfg->load('upload_folder') . $cfg->sep . $screenshot) or die $@;
+								open(my $OUTFILE, ">", $cfg->load('upload_folder') . $cfg->sep . $screenshot) or die $@;
 								while($bytesread = $io_handle->read($buffer,1024))
 								{
 									print $OUTFILE $buffer;
@@ -2403,7 +2403,7 @@ elsif($q->param('m')) # Modules
 					{
 						my $tmpfilename = $q->tmpFileName($lightweight_fh);
 						my $file_size = (-s $tmpfilename);
-						if($file_size > 99000)
+						if($file_size > 999000)
 						{
 							msg("File size is too large. Please go back and try again.", 0);
 							footers();
@@ -2416,7 +2416,7 @@ elsif($q->param('m')) # Modules
 							my ($buffer, $bytesread);
 							$filedata = Data::GUID->new;
 							$filename = substr(sanitize_html($q->param('attach_file')), 0, 40);
-							open(my $OUTFILE, ">" . $cfg->load('upload_folder') . $cfg->sep . $filedata) or die $@;
+							open(my $OUTFILE, ">", $cfg->load('upload_folder') . $cfg->sep . $filedata) or die $@;
 							while($bytesread = $io_handle->read($buffer,1024))
 							{
 								print $OUTFILE $buffer;
