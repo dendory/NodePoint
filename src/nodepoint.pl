@@ -64,7 +64,7 @@ sub headers
 	navbar();
 	print "  <div class='container'>\n";
 	if($cfg->load("motd")) { print "<div class='well'>" . $cfg->load("motd") . "</div>\n"; }
-	if($logged_lvl > 5 && $cfg->load('comp_tickets') ne "on" && $cfg->load('comp_articles') ne "on" && $cfg->load('comp_time') ne "on") { msg("All components are turned off. Enable the ones you need in Settings.", 1); }
+	if($logged_lvl > 5 && $cfg->load('comp_tickets') ne "on" && $cfg->load('comp_articles') ne "on" && $cfg->load('comp_time') ne "on" && $cfg->load('comp_shoutbox') ne "on") { msg("All components are turned off. Enable the ones you need in Settings.", 1); }
 }
 
 # Footers
@@ -406,6 +406,12 @@ sub db_check
 		$sql->execute();
 	};
 	$sql->finish();
+	$sql = $db->prepare("SELECT * FROM shoutbox WHERE 0 = 1;") or do
+	{
+		$sql = $db->prepare("CREATE TABLE shoutbox (user TEXT, msg TEXT, created TEXT);");
+		$sql->execute();
+	};
+	$sql->finish();
 }
 
 # Log an event
@@ -452,6 +458,7 @@ sub save_config
 	$cfg->save("comp_tickets", $q->param('comp_tickets'));
 	$cfg->save("comp_articles", $q->param('comp_articles'));
 	$cfg->save("comp_time", $q->param('comp_time'));
+	$cfg->save("comp_shoutbox", $q->param('comp_shoutbox'));
 }
 
 # Check login credentials
@@ -661,6 +668,23 @@ sub home
 		print "</div></div>\n";
 	}
 
+	if($logged_user ne "" && $cfg->load('comp_shoutbox') eq "on")
+	{
+		if($q->param('shoutbox_post'))
+		{
+			$sql = $db->prepare("INSERT INTO shoutbox VALUES (?, ?, ?);");
+			$sql->execute($logged_user, sanitize_html($q->param('shoutbox_post')), now());
+		}
+		print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Shoutbox</h3></div><div class='panel-body'><div style='max-height:200px;overflow-y:scroll'><table class='table table-striped'>\n";
+		$sql = $db->prepare("SELECT * FROM shoutbox ORDER BY ROWID DESC LIMIT 30");
+		$sql->execute();
+		while(my @res = $sql->fetchrow_array())
+		{
+			print "<tr><th>" . $res[0] . "</th><td style='width:99%'>" . $res[1] . "</td></tr>";
+		}
+		print "</table></div><form method='POST' action='.'><div class='row'><div class='col-sm-10'><input maxlength='999' class='form-control' name='shoutbox_post' placeholder='Type your message here'></div><div class='col-sm-2'><input type='submit' value='Post' class='btn btn-primary pull-right'></div></div></form></div></div>\n";
+	}
+
 	if($logged_lvl > 0 && $cfg->load('comp_tickets') eq "on")
 	{
 		print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Tickets you created</h3></div><div class='panel-body'><table class='table table-striped'>\n";
@@ -782,7 +806,7 @@ if($cfg->load("items_managed"))
 if($q->param('site_name') && $q->param('db_address') && $logged_user ne "" && $logged_user eq $cfg->load('admin_name')) # Save config by admin
 {
 	headers("Settings");
-	if($q->param('site_name') && $q->param('db_address') && $q->param('admin_name') && $q->param('custom_name') && defined($q->param('default_lvl')) && $q->param('default_vis') && $q->param('api_write') && defined($q->param('theme_color')) &&  $q->param('api_imp') && $q->param('api_read') && $q->param('comp_tickets') && $q->param('comp_articles') && $q->param('comp_time')) # All required values have been filled out
+	if($q->param('site_name') && $q->param('db_address') && $q->param('admin_name') && $q->param('custom_name') && defined($q->param('default_lvl')) && $q->param('default_vis') && $q->param('api_write') && defined($q->param('theme_color')) &&  $q->param('api_imp') && $q->param('api_read') && $q->param('comp_tickets') && $q->param('comp_articles') && $q->param('comp_time') && $q->param('comp_shoutbox')) # All required values have been filled out
 	{
 		# Test database settings
 		$db = DBI->connect("dbi:SQLite:dbname=" . $q->param('db_address'), '', '', { RaiseError => 0, PrintError => 0 }) or do { msg("Could not verify database settings. Please hit back and try again.<br><br>" . $DBI::errstr, 0); exit(0); };
@@ -805,6 +829,7 @@ if($q->param('site_name') && $q->param('db_address') && $logged_user ne "" && $l
 		if(!$q->param('comp_tickets')) { $text .= "<span class='label label-danger'>Component: Tickets management</span> "; }
 		if(!$q->param('comp_articles')) { $text .= "<span class='label label-danger'>Component: Support articles</span> "; }
 		if(!$q->param('comp_time')) { $text .= "<span class='label label-danger'>Component: Time tracking</span> "; }
+		if(!$q->param('comp_shoutbox')) { $text .= "<span class='label label-danger'>Component: Shoutbox</span> "; }
 		$text .= " Please go back and try again.";
 		msg($text, 0);
 	}
@@ -885,6 +910,7 @@ elsif(!$cfg->load("db_address") || !$cfg->load("site_name")) # first use
 				print "<p><div class='row'><div class='col-sm-4'>Component: Tickets Management</div><div class='col-sm-4'><input type='checkbox' name='comp_tickets' checked></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Component: Support Articles</div><div class='col-sm-4'><input type='checkbox' name='comp_articles' checked></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Component: Time Tracking</div><div class='col-sm-4'><input type='checkbox' name='comp_time' checked></div></div></p>\n";
+				print "<p><div class='row'><div class='col-sm-4'>Component: Shoutbox</div><div class='col-sm-4'><input type='checkbox' name='comp_shoutbox' checked></div></div></p>\n";
 				print "<p><input class='btn btn-primary pull-right' type='submit' value='Save'></p></form>\n"; 
 			}
 			else
@@ -1628,6 +1654,7 @@ elsif($q->param('m')) # Modules
 			if($cfg->load('comp_time') eq "on") { print "<option value='1'>Time spent per user</option><option value='2'>All time spent per ticket</option><option value='11'>Your time spent per ticket</option>"; }
 			if($cfg->load('comp_articles') eq "on") { print "<option value='13'>Tickets linked per article</option>"; }
 			if($cfg->load('comp_tickets') eq "on") { print "<option value='3'>Tickets created per " . lc($items{"Product"}) . "</option><option value='10'>New and open tickets per " . lc($items{"Product"}) . "</option><option value='4'>Tickets created per user</option><option value='5'>Tickets created per day</option><option value='6'>Tickets created per month</option><option value='7'>Tickets per status</option><option value='9'>Tickets assigned per user</option><option value='12'>Comment file attachments</option>"; }
+			if($cfg->load('comp_shoutbox') eq "on") { print "<option value='14'>Full shoutbox history</option>"; }
 			print "<option value='8'>Users per access level</option></select></div><div class='col-sm-6'><span class='pull-right'><input class='btn btn-primary' type='submit' value='Show report'> &nbsp; <input class='btn btn-primary' type='submit' name='csv' value='Export as CSV'></span></div></div></form></p></div><div class='help-block with-errors'></div></div>\n";
 		}
 		if($logged_lvl > 3 && $cfg->load('comp_tickets') eq "on")
@@ -1722,6 +1749,10 @@ elsif($q->param('m')) # Modules
 			print "</select></td></tr>\n";
 			print "<tr><td>Component: Time Tracking</td><td><select class='form-control' name='comp_time'>";
 			if($cfg->load("comp_time") eq "on") { print "<option selected>on</option><option>off</option>"; }
+			else { print "<option>on</option><option selected>off</option>"; }
+			print "</select></td></tr>\n";
+			print "<tr><td>Component: Shoutbox</td><td><select class='form-control' name='comp_shoutbox'>";
+			if($cfg->load("comp_shoutbox") eq "on") { print "<option selected>on</option><option>off</option>"; }
 			else { print "<option>on</option><option selected>off</option>"; }
 			print "</select></td></tr>\n";
 			print "</table>The admin password will be left unchanged if empty.<br>See the <a href='./README.html'>README</a> file for help.<input class='btn btn-primary pull-right' type='submit' value='Save settings'></form></div></div>\n";
@@ -2866,6 +2897,12 @@ elsif($q->param('m')) # Modules
 			else { print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Tickets linked per article</h3></div><div class='panel-body'><table class='table table-striped'><tr><th>Article</th><th>Tickets</th></tr>"; }
 			$sql = $db->prepare("SELECT DISTINCT kb,ticketid FROM kblink ORDER BY kb;");
 		}
+		elsif(to_int($q->param('report')) == 14)
+		{
+			if($q->param('csv')) { print "Time,Message\n"; }
+			else { print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Tickets linked per article</h3></div><div class='panel-body'><table class='table table-striped'><tr><th>Time</th><th>Message</th></tr>"; }
+			$sql = $db->prepare("SELECT created,user,msg FROM shoutbox;");
+		}
 		elsif(to_int($q->param('report')) == 10)
 		{
 			if($q->param('csv')) { print $items{"Product"} . ",Tickets\n"; }
@@ -2931,6 +2968,10 @@ elsif($q->param('m')) # Modules
 			elsif(to_int($q->param('report')) == 12)
 			{
 				$results{$res[1]} = $res[0];
+			}
+			elsif(to_int($q->param('report')) == 14)
+			{
+				$results{$res[0]} = $res[1] . ": " . $res[2];			
 			}
 			elsif(to_int($q->param('report')) == 2 || to_int($q->param('report')) == 11)
 			{
@@ -3007,7 +3048,7 @@ elsif($q->param('m')) # Modules
 				$totalresults += to_float($results{$k});
 			}
 		}
-		
+		if(to_int($totalresults) == 0) { $totalresults = keys(%results); }
 		if($q->param('csv'))
 		{
 			print "Total," . $totalresults . "\n";
