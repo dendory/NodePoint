@@ -8,7 +8,7 @@
 #
 
 use strict;
-use Config::Linux;
+use Config::Win32;
 use Digest::SHA qw(sha1_hex);
 use DBI;
 use CGI;
@@ -27,7 +27,7 @@ my ($cfg, $db, $sql, $cn, $cp, $cgs, $last_login, $perf);
 my $logged_user = "";
 my $logged_lvl = -1;
 my $q = new CGI;
-my $VERSION = "1.2.4";
+my $VERSION = "1.3.0";
 my %items = ("Product", "Product", "Release", "Release", "Model", "SKU/Model");
 my @itemtypes = ("None");
 my @themes = ("primary", "default", "success", "info", "warning", "danger");
@@ -273,7 +273,7 @@ sub login
 	if($cfg->load('allow_registrations') && $cfg->load('allow_registrations') ne 'off' && !$cfg->load('ad_server'))
 	{
 		print "</div><div class='col-sm-6'><h3>Register a new account</h3><form data-toggle='validator' role='form' method='POST' action='.'><div class='form-group'>\n";
-		print "<p><input type='text' name='new_name' placeholder='User name' class='form-control' data-error='User name must be between 2 and 50 letters or numbers.' data-minlength='2' maxlength='50' required></p>\n";
+		print "<p><input type='text' name='new_name' placeholder='User name' class='form-control' data-error='User name must be between 2 and 20 letters or numbers.' data-minlength='2' maxlength='20' required></p>\n";
 		print "<p><input type='password' name='new_pass1' placeholder='Password' data-minlength='6' class='form-control' id='new_pass1' required></p>\n";
 		print "<p><input type='password' name='new_pass2' class='form-control' id='inputPasswordConfirm' data-match='#new_pass1' data-match-error='Passwords do not match.' placeholder='Confirm' required></p>\n";
 		print "<p><input type='email' name='new_email' placeholder='Email (optional)' class='form-control' data-error='Must be a valid email.' maxlength='99'></p>\n";
@@ -675,12 +675,19 @@ sub home
 			$sql = $db->prepare("INSERT INTO shoutbox VALUES (?, ?, ?);");
 			$sql->execute($logged_user, sanitize_html($q->param('shoutbox_post')), now());
 		}
+		if($q->param('shoutbox_delete') && $logged_lvl > 4)
+		{
+			$sql = $db->prepare("DELETE FROM shoutbox WHERE ROWID = ?;");
+			$sql->execute(int($q->param('shoutbox_delete')));		
+		}
 		print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Shoutbox</h3></div><div class='panel-body'><div style='max-height:200px;overflow-y:scroll'><table class='table table-striped'>\n";
-		$sql = $db->prepare("SELECT * FROM shoutbox ORDER BY ROWID DESC LIMIT 30");
+		$sql = $db->prepare("SELECT ROWID,* FROM shoutbox ORDER BY ROWID DESC LIMIT 30");
 		$sql->execute();
 		while(my @res = $sql->fetchrow_array())
 		{
-			print "<tr><th>" . $res[0] . "</th><td style='width:99%'>" . $res[1] . "</td></tr>";
+			print "<tr><th>" . $res[1] . "</th><td style='width:99%'>";
+			if($logged_lvl > 4) { print "<span class='pull-right'><form method='POST' action='.'><input type='hidden' name='shoutbox_delete' value='" . $res[0] . "'><input class='btn btn-danger pull-right' type='submit' value='X'></form></span>"; }
+			print $res[2] . "</td></tr>";
 		}
 		print "</table></div><form method='POST' action='.'><div class='row'><div class='col-sm-10'><input maxlength='999' class='form-control' name='shoutbox_post' placeholder='Type your message here'></div><div class='col-sm-2'><input type='submit' value='Post' class='btn btn-primary pull-right'></div></div></form></div></div>\n";
 	}
@@ -752,11 +759,11 @@ sub home
 # Connect to config
 eval
 {
-	$cfg = Config::Linux->new("NodePoint", "settings");
+	$cfg = Config::Win32->new("NodePoint", "settings");
 };
 if(!defined($cfg)) # Can't even use headers() if this fails.
 {
-	print "Content-type: text/html\n\nError: Could not access " . Config::Linux->type . ". Please ensure NodePoint has the proper permissions.";
+	print "Content-type: text/html\n\nError: Could not access " . Config::Win32->type . ". Please ensure NodePoint has the proper permissions.";
 	exit(0);
 };
 
@@ -910,7 +917,7 @@ elsif(!$cfg->load("db_address") || !$cfg->load("site_name")) # first use
 				print "<p><div class='row'><div class='col-sm-4'>Component: Tickets Management</div><div class='col-sm-4'><input type='checkbox' name='comp_tickets' checked></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Component: Support Articles</div><div class='col-sm-4'><input type='checkbox' name='comp_articles' checked></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Component: Time Tracking</div><div class='col-sm-4'><input type='checkbox' name='comp_time' checked></div></div></p>\n";
-				print "<p><div class='row'><div class='col-sm-4'>Component: Shoutbox</div><div class='col-sm-4'><input type='checkbox' name='comp_shoutbox' checked></div></div></p>\n";
+				print "<p><div class='row'><div class='col-sm-4'>Component: Shoutbox</div><div class='col-sm-4'><input type='checkbox' name='comp_shoutbox'></div></div></p>\n";
 				print "<p><input class='btn btn-primary pull-right' type='submit' value='Save'></p></form>\n"; 
 			}
 			else
@@ -1229,10 +1236,10 @@ elsif($q->param('api')) # API calls
 			print " \"status\": \"ERR_MISSING_ARGUMENT\"\n";
 			print "}\n";
 		}
-		elsif(length(sanitize_alpha($q->param('user'))) < 3 || length(sanitize_alpha($q->param('user'))) > 16)
+		elsif(length(sanitize_alpha($q->param('user'))) < 3 || length(sanitize_alpha($q->param('user'))) > 20)
 		{
 			print "{\n";
-			print " \"message\": \"Bad length for 'user' argument (between 3 and 16 characters).\",\n";
+			print " \"message\": \"Bad length for 'user' argument (between 3 and 20 characters).\",\n";
 			print " \"status\": \"ERR_ARGUMENT_LENGTH\"\n";
 			print "}\n";
 		}
@@ -1594,7 +1601,7 @@ elsif($q->param('m')) # Modules
 			if(!$cfg->load('ad_server'))
 			{
 				print "<div class='form-group'><h4>Manually add a new user:</h4><form method='POST' action='.' data-toggle='validator' role='form'>\n";
-				print "<p><div class='row'><div class='col-sm-6'><input type='text' name='new_name' placeholder='User name' class='form-control' required></div><div class='col-sm-6'><input type='email' name='new_email' placeholder='Email address (optional)' class='form-control'></div></div></p><p><div class='row'><div class='col-sm-6'><input type='password' name='new_pass1' data-minlength='6' id='new_pass1' class='form-control' placeholder='Password' required></div><div class='col-sm-6'><input type='password' name='new_pass2' id='inputPasswordConfirm' data-match='#new_pass1' data-match-error='Passwords do not match.' placeholder='Confirm password' class='form-control' required></div></div></p><div class='help-block with-errors'></div><input class='btn btn-primary pull-right' type='submit' value='Add user'></form></div>\n";
+				print "<p><div class='row'><div class='col-sm-6'><input type='text' name='new_name' placeholder='User name' class='form-control' maxlength='20' required></div><div class='col-sm-6'><input type='email' name='new_email' placeholder='Email address (optional)' class='form-control'></div></div></p><p><div class='row'><div class='col-sm-6'><input type='password' name='new_pass1' data-minlength='6' id='new_pass1' class='form-control' placeholder='Password' required></div><div class='col-sm-6'><input type='password' name='new_pass2' id='inputPasswordConfirm' data-match='#new_pass1' data-match-error='Passwords do not match.' placeholder='Confirm password' class='form-control' required></div></div></p><div class='help-block with-errors'></div><input class='btn btn-primary pull-right' type='submit' value='Add user'></form></div>\n";
 			}
 			print "</div></div>\n";
 		}
@@ -3368,9 +3375,9 @@ elsif(!$cfg->load("ad_server") && $q->param('new_name') && $q->param('new_pass1'
 	{
 		msg("This user name is reserved. Please go back and try again.", 0);
 	}
-	elsif(length(sanitize_alpha($q->param('new_name'))) < 3 || length(sanitize_alpha($q->param('new_name'))) > 16 || ($q->param('new_email') && length(sanitize_alpha($q->param('new_email'))) > 99) || length($q->param('new_pass1')) < 6)
+	elsif(length(sanitize_alpha($q->param('new_name'))) < 3 || length(sanitize_alpha($q->param('new_name'))) > 20 || ($q->param('new_email') && length(sanitize_alpha($q->param('new_email'))) > 99) || length($q->param('new_pass1')) < 6)
 	{
-		msg("User names should be between 3 and 16 characters, passwords should be at least 6 characters, emails less than 99 characters. Please go back and try again.", 0);    
+		msg("User names should be between 3 and 20 characters, passwords should be at least 6 characters, emails less than 99 characters. Please go back and try again.", 0);    
 	}
 	else
 	{
