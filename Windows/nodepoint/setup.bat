@@ -22,6 +22,6 @@ echo * Restarting IIS
 iisreset
 echo.
 echo You can access the initial configuration at: http://localhost/nodepoint
-echo You can view the README at: http://localhost/nodepoint/README.html
+echo You can view the manual at: http://localhost/nodepoint/manual.pdf
 echo.
 pause

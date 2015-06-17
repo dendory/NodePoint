@@ -1,0 +1,537 @@
+%
+% Manual for NodePoint - (C) 2015 Patrick Lambert
+% Compile with XeLaTeX
+%
+
+% Document class
+\documentclass[11pt]{article}
+\usepackage{geometry}
+
+% Conditional compilation for Windows and Linux
+\usepackage{ifthen}
+\newboolean{Windows}
+\setboolean{Windows}{false} % change to false for Linux
+\ifthenelse{\boolean{Windows}}
+{\def\NodePointManual{NodePoint Manual - Windows version 1.3.0}}
+{\def\NodePointManual{NodePoint Manual - Linux version 1.3.0}}
+
+% Margins and paper type
+\geometry{a4paper, right=1.5cm, left=1.5cm, top=2cm, bottom=1.5cm}
+
+% Color definitions
+\usepackage{color}
+\usepackage{hyperref}
+\definecolor{headings}{rgb}{0,0.53,0.84}
+\hypersetup{colorlinks, linkcolor={blue}, citecolor={blue}, urlcolor={blue}}
+
+% Paragraph indent and spacing
+\usepackage[english]{babel}
+\setlength{\parindent}{0em}
+\setlength{\parskip}{1em}
+\usepackage{indentfirst}
+\usepackage{setspace}
+
+% Section titles
+\usepackage{titlesec}
+\titleformat{\section}
+{\color{headings}\normalfont\LARGE\bfseries}
+{\color{headings}\thesection}{1em}{}
+\titleformat{\subsection}
+{\color{headings}\normalfont\Large\bfseries}
+{\color{headings}\thesubsection}{1em}{}
+\titleformat{\subsubsection}
+{\color{headings}\normalfont\large\bfseries}
+{\color{headings}\thesubsubsection}{1em}{}
+
+% Font definition
+\usepackage{fontspec}
+\setmainfont{Arial}
+
+% Header setup
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\rhead{\large{\textsc{\color{headings}{\thepage}}}}
+\lhead{\large{\textsc{\color{headings}{\NodePointManual{}}}}}     % text in footer middle
+
+% Document starts
+\begin{document}
+
+\begin{titlepage}
+\bigskip
+\begin{center}
+\begin{figure}
+\includegraphics{splash.jpg}
+\end{figure}
+\vspace*{1cm}
+{\setstretch{5.0}
+{\Huge \color{headings}{\NodePointManual}}\\
+\bigskip
+{\Large Patrick Lambert}\\
+\texttt{\url{http://nodepoint.ca}}\\ 
+\bigskip
+\today}
+\vspace*{\fill}
+\end{center}
+\end{titlepage}
+
+\tableofcontents
+
+\newpage
+
+\section{Introduction}
+
+NodePoint is a ticket management platform based on the Bootstrap framework. It is meant to be simple to setup and use, yet still offers most features one would expect in such a system. It is provided as freely available open source software under the MIT License.
+
+Here are some of the available features:
+
+\begin{itemize}
+\item \textbf{Users management:}  Allow users to register accounts, reset their passwords, email addresses and more.
+\item \textbf{Access level permissions:} Six access levels allow you to control who has access to add tickets, modify their statuses, manage products, and so on.
+\item \textbf{Active Directory integration:} Use the stand alone users module or synchronize with your AD domain.
+\item \textbf{Product and release control:} Add products and create releases against those products.
+\item \textbf{Statistics and reports:} Monitor your instance through a number of reports.
+\item \textbf{Custom home page:} See the tickets you created, are assigned to, or follow on your home page.
+\item \textbf{Custom forms:} Use the default form or create custom ones to customize the ticket entry page.
+\item \textbf{Knowledge base articles:} Create articles to build a knowledge base linked to your products.
+\item \textbf{Project management:} Create steps and assign them to users, with due dates and completion rates.
+\item \textbf{Full text search and filters:} Filter tickets by product, status or do a custom search.
+\item \textbf{Time tracking:} Users assigned to tickets can enter the time they took to solve issues and track their time.
+\item \textbf{Follow and auto assignment:} Users can follow tickets, assign themselves to work on issues, or auto assign themselves to products.
+\item \textbf{Comments and file uploads:} Leave comments or attach files related to tickets.
+\item \textbf{Easy to install:} NodePoint works on Windows and Linux, is easy to install, and can be configured in minutes.
+\item \textbf{Trivial to update:} See when an update is available and update your instance with a single copy operation.
+\item \textbf{Responsive design:} Using the Bootstrap framework, NodePoint works just as well on the desktop as on mobile.
+\item \textbf{Simple and elegant interface:} The interface is easy to understand and elegant for your users to use.
+\item \textbf{Email notifications:} NodePoint comes with a built-in email notification module to link with your email system.
+\item \textbf{JSON API:} Create custom scripts or link other systems to enter tickets automatically.
+\end{itemize}
+
+\clearpage
+\subsection{Requirements}
+\ifthenelse{\boolean{Windows}}
+{
+NodePoint was created for small to medium sized organizations (less than 5,000 users, less than 100,000 tickets). It runs on a single server and does not require any external resource. Configuration settings are stored in the Windows Registry while data is stored in a file database from a customizable location (the \texttt{../db} folder by default). As such, only two requirements are needed to install:
+\begin{itemize}
+\item A 64 bits Windows host (7, 8, 10, Server 2008, Server 2012 should all work).
+\item IIS installed with \textit{CGI} and \textit{ISAPI Extensions} features.
+\end{itemize}
+}
+{
+NodePoint was created for small to medium sized organizations (less than 5,000 users, less than 100,000 tickets). It runs on a single server and does not require any external resource. Configuration settings are stored in the \texttt{../nodepoint.cfg} file while data is stored in a file database from a customizable location (the \texttt{../db} folder by default). As such, only two requirements are needed to install:
+\begin{itemize}
+\item A 64 bits Linux host.
+\item Apache web server.
+\end{itemize}
+}
+
+\subsection{Installation}
+Follow these steps to complete a new installation:
+
+\ifthenelse{\boolean{Windows}}
+{
+\begin{enumerate}
+\item Download NodePoint from \url{http://nodepoint.ca} and unzip the folder where you want files to live, for example \texttt{C:\textbackslash nodepoint}.
+\item Run \texttt{setup.bat} and follow the instructions. This will create a new user for NodePoint to run under, configure IIS, and restart the web server.
+\item Access the site from \textit{localhost} (e.g. \texttt{http://localhost/nodepoint}) and complete the first time configuration (see below).
+\end{enumerate}
+}
+{
+\begin{enumerate}
+\item Download NodePoint from \url{http://nodepoint.ca} and unzip the folder where you want files to live, for example \texttt{\textasciitilde/nodepoint}.
+\item Make sure \texttt{www/nodepoint.cgi} can be executed by the web server, and it has write access to\\ \texttt{../nodepoint.cfg}, \texttt{../db} and \texttt{../uploads}. This is done by default using the included \texttt{.htaccess} file but may require some modifications to your server's default configuration file.
+\item Map a virtual host in your \texttt{httpd.conf}, or link the \texttt{www} folder, for example: \texttt{ln -s /var/www/nodepoint \textasciitilde/nodepoint/www} (paths may differ based on your Linux distribution).
+\item Access the site from \textit{localhost} (e.g. \texttt{http://localhost/nodepoint}) and complete the first time configuration (see below).
+\end{enumerate}
+}
+
+\subsection{Upgrading}
+NodePoint is designed to be fully upgradable from any minor version to another. For example, \textit{1.x.x} to \textit{1.x.x}. To upgrade from a previous NodePoint version, simply copy the new \texttt{www} folder onto the old one. This will overwrite all product files but leave your configuration, data and uploads.
+
+\subsection{Troubleshooting}
+
+\ifthenelse{\boolean{Windows}}
+{
+\subsubsection{If setup.bat fails}
+
+Make sure you are running it as a local administrator. Make sure the file \texttt{\%windir\%\textbackslash system32\textbackslash inetsrv\textbackslash appcmd.exe} exists, and that your web site is named \textit{Default Web Site}. Also try running setup from the installation folder. Optionally, you may have to modify the script to suit your environment.
+
+\subsubsection{If you get the error Could not access Registry}
+
+Make sure the virtual folder has credentials that has access to the Registry. Go to \textit{Administrative Tools -> IIS Manager}, then select the NodePoint site under \textit{Default Web Site} and go to Advanced Settings. Once there, select a Specific User that has access to the Registry.
+
+This can be your own user name, or you can create a dedicated user in \textit{Administrative Tools -> Computer Management -> Local Users and Groups}. Make sure that user is part of the \texttt{Administrators} local group, and that you restart the IIS server after:
+
+\begin{figure}[h]
+\includegraphics{iisaccount.jpg}
+\end{figure}
+
+\subsubsection{If you get the error Could not access database file}
+
+Make sure that NodePoint has Read/Write access to the database file specified in the initial configuration. By default this is \texttt{C:\textbackslash nodepoint\textbackslash db\textbackslash nodepoint.db}. This should be the user you configured in the initial setup. You can use Windows Explorer to right click on the file and check under the Security tab.
+
+\subsubsection{If the server tries to download the file instead of executing it}
+
+Make sure you have the \textit{CGI} and \textit{ISAPI Extensions} IIS features installed and enable \textbf{Execute} under \textit{IIS Manager -> Handler Mappings -> CGI-exe -> Edit Feature Permissions}:
+
+\begin{figure}[h]
+\includegraphics{handlermapping.jpg}
+\end{figure}
+
+\subsubsection{If you get the error The page you are requesting cannot be served because of the ISAPI and CGI Restriction list settings on the Web server}
+
+Go to \textit{IIS Manager -> ISAPI and CGI Restrictions} and make sure NodePoint is listed. If not, click on \textbf{Edit Feature Settings} and enable unspecified CGI modules.
+
+\subsubsection{If you forgot your admin password}
+
+You will need to remove the initial configuration settings and recreate them in order to recover access. This configuration is stored locally on the server inside the Windows Registry. Use \texttt{regedit.exe} and navigate to \texttt{HKLM/SOFTWARE/NodePoint}.
+}
+{
+\subsubsection{If you get a 500 server error}
+
+Check in your server log what the likely error might be. Try to run \texttt{\textasciitilde/nodepoint/www/nodepoint.cgi} from a shell. Make sure you have a 64 bits OS.
+
+\subsubsection{You see a list of files in your browser instead of the proper interface}
+
+Make sure the \texttt{.htaccess} file is present, and that your Apache configuration allows overrides. Look for the line \textit{AllowOverride All} in your default site configuration file.
+
+\subsubsection{If you get the error Could not access configuration file}
+
+Make sure NodePoint has write access to \texttt{../nodepoint.cfg}. Make sure the file only contains one line with the text \textit{dummy value}.
+
+\subsubsection{If you get the error Could not access database}
+
+Make sure NodePoint has write access to the database, by default \texttt{../db/nodepoint.db}.
+
+\subsubsection{If you forgot your admin password}
+
+Simply delete the \texttt{nodepoint.cfg} configuration file on the server and recreate it through the web interface from \textit{localhost}.
+}
+
+\subsubsection{If email notifications don't work}
+
+This is typically because of permission issues. Make sure that:
+\begin{itemize}
+\item The user that NodePoint runs under has permission to make network connections.
+\item The firewall is allowing outgoing connections.
+\item The SMTP server is accepting connections from the NodePoint server and email address you set.
+\end{itemize}
+
+\subsection{Best practices}
+\subsubsection{Backups}
+NodePoint is likely to hold data you may not want to lose. The product stores information in three different locations:
+
+\ifthenelse{\boolean{Windows}}{First, configuration data is stored in the Windows Registry.}{First, configuration data is stored in the \texttt{nodepoint.cfg} file.} There is very little information stored there, and you can view all of it on the \textbf{Settings} screen. Some of the information you may wish to backup includes:
+
+\begin{itemize}
+\item The administrator password.
+\item The API read and write keys.
+\item Information for your SMTP and Active Directory servers.
+\item Any other changes made such as default access levels, database location etc.
+\end{itemize}
+
+The most important data is held in the database file. This includes tickets, articles, user information, and so on. This file should be backed up on a regular basis. You can simply copy the file somewhere through a script, or as part of a backup strategy.
+
+Finally, all uploads are stored in the \texttt{../uploads} folder. This includes both images used with products, along with files uploaded by users as part of ticket comments. These should also be backed up as part of any backup strategy you may have.
+
+\subsubsection{Restores}
+Restoring a NodePoint installation is fairly simple. Once you have finished a new installation, simply restore your backed up data before accessing the NodePoint site. There is nothing to restart and no service to worry about.
+
+\subsubsection{Data integrity}
+Data stored in the \texttt{nodepoint.db} file is stored in SQL format, using very efficient and proven technology. Locks are used to avoid data duplication. Data corruption is unlikely, but backups should still be done in the rare case that something happens to the file. Partial recovery is possible but not something to be attempted on a live system.
+
+This does mean that you can access the data directly using a SQLite client. This however is highly discouraged without first contacting us for support. Doing the \textit{vacuum} operation for example will corrupt your data.
+
+\subsection{Security concerns}
+By default, data stored in the database is accessible from anyone with login access to the server. As such, only administrators should be given physical access to the server used. User passwords are stored in a hashed format, both for the administrator and regular users.
+
+Using SSL is highly recommended and does not impact the operation of NodePoint at all. Simply add an encryption certificate to your web server and access the product as normally.
+
+NodePoint is a stateless system, which means that users are re-authenticated at every operation. This means that things like cookie highjacking or manipulation will not allow a user to gain access if their password becomes invalid. While there is no ban or lock function in the product, a user with a proper access level can reset the password of another user which effectively locks them out. Note that users cannot be deleted in order to avoid many items and operations becoming orphaned.
+
+The API provided uses a read and write key. This means that all operations are done as a special \textit{api} user. Different amounts of secrecy can be used for the two keys, such as users having access to a script that exposes the read key, but the write key only being used on a server side script. If \textbf{User Impersonation} is configured, the API calls can specify a specific user for a number of operations as well.
+
+If you specify a SMTP server for email notifications along with a username and password, these will be stored in plain text. This is unavoidable for NodePoint to be able to log into your email server. It is recommended that you use IP based filtering instead of a specific account.
+
+Finally, while NodePoint offers Active Directory integration, note that this is done using LDAP Simple Bind, not Kerberos, in order to allow both the Windows and Linux version to support this feature. LDAP over SSL can be implemented to provide encryption.
+
+\subsection{Support}
+If you need any functionality that is not covered by the base product, check out the \textbf{Resources} section of the web site where various scripts can be found. You can also contact the support team at \texttt{support@nodepoint.ca} if you have any request or question.
+
+\clearpage
+\section{Configuration}
+Basic configuration options are defined the first time you access the product. To prevent outsiders to reset your configuration in the event that the data is lost, the initial configuration must be done from the local host. The same information is available both from this initial configuration and at any point from the \textbf{Settings} page while logged in as the product administrator.
+
+\subsection{Initial configuration}
+When you first access NodePoint, you are presented with this screen:
+
+\begin{figure}[h]
+\includegraphics{initial.jpg}
+\end{figure}
+
+The page includes reasonable defaults along with some explanations of what each option does. You should read them carefully. At a minimum, you must specify an administrator password. Do not lose it, as it is required to change the configuration at a later point.
+
+\subsection{Configuration options}
+
+These are the default configuration values for NodePoint. They have to be defined during first use and can be modified by the product administrator later from the \textbf{Settings} tab.
+
+\begin{itemize}
+\item \textbf{Database file:} This is the NodePoint database file.
+\item \textbf{Admin name:} The product administrator.
+\item \textbf{Admin password:} The password for the administrator.
+\item \textbf{Site name:} The name shown at the top left of the interface.
+\item \textbf{Public notice:} This notice is shown on every page. Leave empty to remove the notice.
+\item \textbf{Bootstrap template:} This is a CSS file used by NodePoint. It should be a valid Bootstrap template, or could contain extra CSS elements you wish to use. The default file is \texttt{default.css} and contains a few such elements.
+\item \textbf{Favicon:} This is the icon shown by web browsers in the URL bar.
+\item \textbf{Ticket visibility:} When set to \textit{Public}, all tickets will be visible by logged in and guest users. When set to \textit{Private}, people need to log in to view tickets. \textit{Restricted} prevents people without at least the Restricted View access level from viewing others' tickets. This is a good choice for IT/Helpdesk systems.
+\item \textbf{Default access level:} The access level for new users. The default is 1.
+\item \textbf{Allow registrations:} Allow guest users to register a new account. If set to no, the only way to add new accounts is if a user with Users Management access adds one.
+\item \textbf{API read key:} Used for some API operations.
+\item \textbf{API write key:} Used for some API operations.
+\item \textbf{Allow user impersonation:} Allows API calls to specify a \textit{from\_user} parameter when creating a ticket.
+\item \textbf{SMTP server:} The hostname for email notifications. Leave empty to disable email notifications.
+\item \textbf{SMTP port:} The port number for SMTP connections, defaults to 25.
+\item \textbf{SMTP username:} User for SMTP connections, if your mail server requires authentication.
+\item \textbf{SMTP password:} Password for SMTP connections, if your mail server requires authentication.
+\item \textbf{Support email:} The email from which email notifications come from.
+\item \textbf{External notifications plugin:} Call an application or script when a notification is sent. You can use the following variables here: \textit{\%user\%}, \textit{\%title\%} and \textit{\%message\%}. For example: \texttt{echo \%message\% >> ..\textbackslash \%user\%.log}
+\item \textbf{Upload folder:} Where product images and comment files are stored. Leave empty to disable uploads.
+\item \textbf{Minimum upload level:} The minimum access level a user must have to attach files to comments.
+\item \textbf{Items managed:} The type of items NodePoint should manage. This is purely a UI customization.
+\item \textbf{Custom ticket field:} The name of the third ticket field in the default form (after \textit{title} and \textit{description}). This can be used to ask users who fill in tickets to list related tickets, or any other information relevant to your particular installation.
+\item \textbf{Custom ticket type:} The type of field. If \textit{text}, then the entries will be shown as text. If \textit{URL}, then links will be assumed. If \textit{checkbox}, then users will have to select yes or no.
+\item \textbf{Active Directory server:} Enter your domain controller address to enable AD integration. Users will be created dynamically as they first log on, and passwords will be checked against AD using LDAP.
+\item \textbf{Active Directory domain:} The domain to use for AD integration (in NT4 format).
+\item \textbf{Components:} Activate components that you require. This does not remove their functionality, only hiding them from the interface.
+\end{itemize}
+
+\section{Users and activity}
+NodePoint provides a simple way to manage users based on their access levels. Users have a specific level, which determines what shows up to them in the interface and what they can do. They can also enter an optional email address for notifications. Email addresses must be confirmed through the sending of an automated token when they first register, if email notifications are turned on. Users also have a password which can be changed by the user under the \textbf{Settings} page, or reset by someone with the Users Management level.
+
+These are the access levels used by NodePoint:
+
+\def\arraystretch{1.3} 
+\begin{tabular}{ |p{15mm}|p{50mm}|p{100mm}| } 
+\hline
+\textbf{Level} & \textbf{Name} & \textbf{Description}\\
+\hline
+6 & NodePoint Admin & Can change basic NodePoint settings.\\
+5 & Users management & Can create users, reset passwords, change access levels.\\
+4 & Products management & Can add, retire and edit products, edit articles.\\
+3 & Tickets management & Can create releases, update tickets, track time.\\
+2 & Restricted view & Can view statistics, restricted tickets and products.\\
+1 & Authorized users & Can create tickets and comments.\\
+0 & Unauthorized users & Can view private tickets.\\
+\hline
+\end{tabular}
+
+NodePoint has a few special user accounts. The \textit{admin} account is used as product administrator and acts differently than normal user accounts. It should only be used for administrative functions. \textit{Guest} is used to specify people who are not logged in, and cannot be registered as a user account. The name \textit{api} refers to any change made using the JSON API. The \textit{demo} account can be registered normally but cannot change its own password, and is meant for product demos.
+
+\subsection{Users management}
+Management of user passwords and access levels can be done by anyone with access level 5 or higher. With the right access level, this panel will then be available in the \textbf{Settings} page:
+
+\begin{figure}[h]
+\includegraphics{userman.jpg}
+\end{figure}
+
+From there you can see a list of users, their email addresses, access levels, last logins along with the options to change their access levels and reset their passwords. Note that email notifications will only be sent out to users who confirmed their email addresses.
+
+Note that while there is no lock or ban function, resetting a password accomplishes the same thing. A reset can also be done for a user who loses their password as well.
+
+Finally, new users can be created from that panel. If the \textbf{Allow Registrations} option is enabled, people can also register new user accounts from the login screen.
+
+Here are the character restrictions for users:
+
+\begin{itemize}
+\item \textbf{User names:} Between 3 and 20 characters, using alphanumeric characters, plus the dot and dash. User names are not case sensitive during login authentication.
+\item \textbf{Passwords:} At least 6 characters.
+\item \textbf{Email addresses:} At the most 99 characters.
+\end{itemize}
+
+\subsection{Active Directory integration}
+Active Directory integration can be enabled in the initial configuration, which will link the users management panel to your domain controller. Passwords will no longer be stored in the NodePoint database. Once a user attempts to login, their credentials will be validated, then NodePoint will check if a user entry exists in the database. A new entry will be created on first login. Users still need to set their email addresses for email notifications to work. Access levels can still be assigned to users to control their access to the NodePoint interface.
+
+Authentication uses the LDAP protocol. You must specify a valid domain controller hostname or IP address for logins to work. If a login fails, you can view the log on the \textbf{Settings} page to see the error message.
+
+\subsection{Reports}
+User activity can be monitored through two graphs along with a number of reports. The first graph shows the number of tickets entered per day for the last 7 days. The second one shows an overview of all tickets based on status. Reports can be shown on the screen or downloaded as CSV documents to open in a spreadsheet application. Both are available to users of level 2 and higher on the \textbf{Settings} page.
+
+\begin{figure}[h]
+\includegraphics{reports.jpg}
+\end{figure}
+
+\clearpage
+\section{Components}
+NodePoint is divided into multiple components that you can enable or disable in the configuration as a product administrator. You can turn them on or off depending on your needs. For example, a help desk portal could have the \textbf{Tickets Management}, \textbf{Time Tracking} and \textbf{Support Articles} components enabled, while a project management portal could have only the \textbf{Projects Management} component enabled.
+
+\subsection{Tickets Management}
+Users who have an access level of 1 or higher can enter tickets on the \textbf{Tickets} page. The default form asks for a title, description and a custom entry type, configurable in the initial settings. Custom forms can also be designed and assigned to products by users of access level 4 and above. These custom forms can have up to 10 fields, each field can be a text area, a check box, satisfaction rating, and so on. Products that have a custom form assigned will display that form to users instead of the default one.
+
+Users with access level 3 or above can modify tickets. When a ticket is modified, the description is updated to show who modified it, and what parameters were changed, such as the title, description, status and resolution. Open tickets do not require a resolution, but every other status does. The list of tickets can be filtered based on product, status and so on.
+
+\subsubsection{Custom forms}
+To use custom forms, follow these steps:
+
+\begin{enumerate}
+\item Add at least one product on the \textbf{Products} page.
+\item Create a custom form on the \textbf{Settings} page.
+\item Assign that form to the product.
+\end{enumerate}
+
+Here is an example of a custom form being built along with the result:
+
+\begin{figure}[h]
+\includegraphics[scale=0.5]{customform.jpg}
+\includegraphics[scale=0.5]{customform2.jpg}
+\end{figure}
+
+\subsubsection{Following and assignment}
+Any logged in user can follow a ticket by clicking the proper option on the ticket's screen, which will add that ticket to their home screen for easy reference. This is meant as a way to follow an issue you are not actively working on.
+
+Users with access level 3 or higher can assign themselves to a ticket by clicking the proper checkbox on the ticket's screen. This is meant as a way to assign resources to a particular issue.
+
+Auto assignment can also be used to assign specific users to any ticket filed against a product. You can add yourself to the auto-assign list of a product by clicking the button on the product's screen:
+
+\begin{figure}[h]
+\includegraphics{autoassign.jpg}
+\end{figure}
+
+Both followed and assigned tickets are listed on the user's home page. Finally, email notifications are sent out when a ticket is created, modified or a comment is added. The notifications are sent to the ticket author and users assigned to that ticket.
+
+\subsection{Support Articles}
+The \textbf{Articles} page hosts articles that can be used to document common use cases, common issues, or to build a knowledge base for your organization. Articles are created in \textit{draft} mode, which hides them from users with an access level lower than 4. Only once they are published are they visible to all users.
+
+Users with at least access level 2 can link articles to tickets. These can be used to assign related documentation to issues, or used as categories. Linked tickets (except closed ones) are listed on the article's page, which makes it easy to track which tickets are assigned to a specific article.
+
+\subsection{Time Tracking}
+When updating a ticket, users can track the time they spent on the issue, which will be added to the time table for that ticket. A total of all the time spent on tickets by a specific user is shown on the \textbf{Settings} page. A report is also available with the total time spent by all users.
+
+Time entries cannot be removed since it acts as a timestamp for work done. Corrections can be made by entering negative values.
+
+\subsection{Shoutbox}
+The shoutbox is a simple chat area on the home page that all users can use. The box shows the last few entries made by users, and individual entries can be deleted by users with access level 5 or higher.
+
+\subsection{Projects Management}
+The projects management component can be used to manage products or projects, create new steps needed to accomplish tasks, and assign these steps to users with due dates. Users with access level 4 or higher can create new tasks on the \textbf{Products} page:
+
+\begin{figure}[h]
+\includegraphics{projectmanagement.jpg}
+\end{figure}
+
+New steps created will send an email notification to the user assigned to the task, and all steps will show on the user's home page. There, users can modify the completion rate for each step. Completed and overdue tasks will also be highlighted.
+
+\clearpage
+\section{JSON API}
+NodePoint provides a JSON based REST API that can be used to accomplish some basic tasks. This can be useful to integrate the system with existing products, or to use with custom scripts. Each API call requires either the \textit{read} or \textit{write} key. The calls can be made using GET or POST.
+
+Here is a list of commands:
+
+\subsection{Show ticket}
+
+\begin{itemize}
+\item api=show\_ticket
+\item key=<read key>
+\item id=<ticket id>
+\end{itemize}
+
+\subsection{List tickets by product}
+
+\begin{itemize}
+\item api=list\_tickets
+\item key=<read key>
+\item product\_id=<product id>
+\end{itemize}
+
+\subsection{List users}
+
+\begin{itemize}
+\item api=list\_users
+\item key=<read key>
+\end{itemize}
+
+\subsection{Verify user password}
+
+\begin{itemize}
+\item api=verify\_password
+\item key=<read key>
+\item user=<user name>
+\item password=<password>
+\end{itemize}
+
+\subsection{Change user password}
+
+\begin{itemize}
+\item api=change\_password
+\item key=<write key>
+\item user=<user name>
+\item password=<password>
+\end{itemize}
+
+\subsection{Add new user}
+
+\begin{itemize}
+\item api=add\_user
+\item key=<write key>
+\item user=<user name>
+\item password=<password>
+\item email=<email>
+\end{itemize}
+
+\subsection{Add ticket}
+
+\begin{itemize}
+\item api=add\_ticket
+\item key=<write key>
+\item product\_id=<product id>
+\item release\_id=<release id>
+\item title=<ticket title>
+\item description=<ticket description>
+\item custom=<custom field>
+\item from\_user=<valid user>
+\end{itemize}
+
+\subsection{Add comment}
+
+\begin{itemize}
+\item api=add\_comment
+\item key=<write key>
+\item id=<ticket id>
+\item comment=<comment>
+\end{itemize}
+
+\subsection{Add release}
+
+\begin{itemize}
+\item api=add\_release
+\item key=<write key>
+\item product\_id=<product id>
+\item release\_id=<release id>
+\item notes=<notes>
+\end{itemize}
+
+\clearpage
+\section{License}
+The MIT License (MIT)
+
+Copyright \textcopyright \thinspace 2014-\the\year \thinspace Patrick Lambert
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+
+\end{document}
+

@@ -8,7 +8,7 @@
 #
 
 use strict;
-use Config::Win32;
+use Config::Linux;
 use Digest::SHA qw(sha1_hex);
 use DBI;
 use CGI;
@@ -64,7 +64,7 @@ sub headers
 	navbar();
 	print "  <div class='container'>\n";
 	if($cfg->load("motd")) { print "<div class='well'>" . $cfg->load("motd") . "</div>\n"; }
-	if($logged_lvl > 5 && $cfg->load('comp_tickets') ne "on" && $cfg->load('comp_articles') ne "on" && $cfg->load('comp_time') ne "on" && $cfg->load('comp_shoutbox') ne "on") { msg("All components are turned off. Enable the ones you need in Settings.", 1); }
+	if($logged_lvl > 5 && $cfg->load('comp_tickets') ne "on" && $cfg->load('comp_articles') ne "on" && $cfg->load('comp_time') ne "on" && $cfg->load('comp_shoutbox') ne "on" && $cfg->load('comp_steps') ne "on") { msg("All components are turned off. Enable the ones you need in Settings.", 1); }
 }
 
 # Footers
@@ -153,7 +153,7 @@ sub navbar
 			if($cfg->load('comp_articles') eq "on") { print "	 <li><a href='./?m=articles'>Articles</a></li>\n"; }
 			print "	 <li><a href='./?m=settings'>Settings</a></li>\n";
 		}
-		elsif($q->param('m') && ($q->param('m') eq "products" || $q->param('m') eq "add_product" ||$q->param('m') eq "view_product" || $q->param('m') eq "edit_product" || $q->param('m') eq "add_release" || $q->param('m') eq "delete_release"))
+		elsif($q->param('m') && ($q->param('m') eq "products" || $q->param('m') eq "add_product" ||$q->param('m') eq "view_product" || $q->param('m') eq "edit_product" || $q->param('m') eq "add_release" || $q->param('m') eq "add_step" || $q->param('m') eq "delete_step" || $q->param('m') eq "delete_release"))
 		{
 			print "	 <li><a href='.'>Home</a></li>\n";
 			print "	 <li class='active'><a href='./?m=products'>" . $items{"Product"} . "s</a></li>\n";
@@ -412,6 +412,12 @@ sub db_check
 		$sql->execute();
 	};
 	$sql->finish();
+	$sql = $db->prepare("SELECT * FROM steps WHERE 0 = 1;") or do
+	{
+		$sql = $db->prepare("CREATE TABLE steps (productid INT, name TEXT, user TEXT, completion INT, due TEXT);");
+		$sql->execute();
+	};
+	$sql->finish();
 }
 
 # Log an event
@@ -459,6 +465,7 @@ sub save_config
 	$cfg->save("comp_articles", $q->param('comp_articles'));
 	$cfg->save("comp_time", $q->param('comp_time'));
 	$cfg->save("comp_shoutbox", $q->param('comp_shoutbox'));
+	$cfg->save("comp_steps", $q->param('comp_steps'));
 }
 
 # Check login credentials
@@ -678,7 +685,7 @@ sub home
 		if($q->param('shoutbox_delete') && $logged_lvl > 4)
 		{
 			$sql = $db->prepare("DELETE FROM shoutbox WHERE ROWID = ?;");
-			$sql->execute(int($q->param('shoutbox_delete')));		
+			$sql->execute(to_int($q->param('shoutbox_delete')));		
 		}
 		print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Shoutbox</h3></div><div class='panel-body'><div style='max-height:200px;overflow-y:scroll'><table class='table table-striped'>\n";
 		$sql = $db->prepare("SELECT ROWID,* FROM shoutbox ORDER BY ROWID DESC LIMIT 30");
@@ -731,6 +738,62 @@ sub home
 		print "</table></div></div>";
 	}
 
+	if($cfg->load('comp_steps') eq "on")
+	{
+		if(defined($q->param('set_step')) && defined($q->param('completion')))
+		{
+			$sql = $db->prepare("UPDATE steps SET completion = ? WHERE user = ? AND ROWID = ?;");
+			$sql->execute(to_int($q->param('completion')), $logged_user, to_int($q->param('set_step')));	
+		}
+		my @products;
+		$sql = $db->prepare("SELECT ROWID,* FROM products;");
+		$sql->execute();
+		while(my @res = $sql->fetchrow_array()) { $products[$res[0]] = $res[1]; }
+		print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Steps assigned to you</h3></div><div class='panel-body'><table class='table table-striped'>\n";
+		print "<tr><th>" . $items{"Product"} . "</th><th>Step</th><th>Due by</th><th>Completion</th><th></th></tr>\n";
+		$sql = $db->prepare("SELECT ROWID,* FROM steps WHERE user = ?");
+		$sql->execute($logged_user);
+		my $m = localtime->strftime('%m');
+		my $y = localtime->strftime('%Y');
+		my $d = localtime->strftime('%d');
+		while(my @res = $sql->fetchrow_array())
+		{
+			if($products[$res[1]])
+			{
+				print "<tr><td>" . $products[$res[1]] . "</td><td>" . $res[2] . "</td><td>";
+				my @dueby = split(/\//, $res[5]);
+				if(to_int($res[4]) == 100) { print "<font color='green'>Completed</font>"; }
+				elsif($dueby[2] < $y || ($dueby[2] == $y && $dueby[0] < $m) || ($dueby[2] == $y && $dueby[0] == $m && $dueby[1] < $d)) { print "<font color='red'>Overdue</font>"; }
+				else { print $res[5]; }
+				print "</td><td><form method='POST' action='.'><input type='hidden' name='set_step' value='" . $res[0] . "'><select name='completion' class='form-control'>";
+				if(to_int($res[4]) == 0) { print "<option value='0' selected>0%</option>"; }
+				else { print "<option value='0'>0%</option>"; }
+				if(to_int($res[4]) == 10) { print "<option value='10' selected>10%</option>"; }
+				else { print "<option value='10'>10%</option>"; }
+				if(to_int($res[4]) == 20) { print "<option value='20' selected>20%</option>"; }
+				else { print "<option value='20'>20%</option>"; }
+				if(to_int($res[4]) == 30) { print "<option value='30' selected>30%</option>"; }
+				else { print "<option value='30'>30%</option>"; }
+				if(to_int($res[4]) == 40) { print "<option value='40' selected>40%</option>"; }
+				else { print "<option value='40'>40%</option>"; }
+				if(to_int($res[4]) == 50) { print "<option value='50' selected>50%</option>"; }
+				else { print "<option value='50'>50%</option>"; }
+				if(to_int($res[4]) == 60) { print "<option value='60' selected>60%</option>"; }
+				else { print "<option value='60'>60%</option>"; }
+				if(to_int($res[4]) == 70) { print "<option value='70' selected>70%</option>"; }
+				else { print "<option value='70'>70%</option>"; }
+				if(to_int($res[4]) == 80) { print "<option value='80' selected>80%</option>"; }
+				else { print "<option value='80'>80%</option>"; }
+				if(to_int($res[4]) == 90) { print "<option value='90' selected>90%</option>"; }
+				else { print "<option value='90'>90%</option>"; }
+				if(to_int($res[4]) == 100) { print "<option value='100' selected>100%</option>"; }
+				else { print "<option value='100'>100%</option>"; }
+				print "</select></td><td><input type='submit' class='btn btn-primary pull-right' value='Save'></form></td></tr>";
+			}
+		}
+		print "</table></div></div>";
+	}
+
 	if($cfg->load('comp_articles') eq "on")
 	{
 		print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Subscribed articles</h3></div><div class='panel-body'><table class='table table-striped'>\n";
@@ -759,11 +822,11 @@ sub home
 # Connect to config
 eval
 {
-	$cfg = Config::Win32->new("NodePoint", "settings");
+	$cfg = Config::Linux->new("NodePoint", "settings");
 };
 if(!defined($cfg)) # Can't even use headers() if this fails.
 {
-	print "Content-type: text/html\n\nError: Could not access " . Config::Win32->type . ". Please ensure NodePoint has the proper permissions.";
+	print "Content-type: text/html\n\nError: Could not access " . Config::Linux->type . ". Please ensure NodePoint has the proper permissions.";
 	exit(0);
 };
 
@@ -813,7 +876,7 @@ if($cfg->load("items_managed"))
 if($q->param('site_name') && $q->param('db_address') && $logged_user ne "" && $logged_user eq $cfg->load('admin_name')) # Save config by admin
 {
 	headers("Settings");
-	if($q->param('site_name') && $q->param('db_address') && $q->param('admin_name') && $q->param('custom_name') && defined($q->param('default_lvl')) && $q->param('default_vis') && $q->param('api_write') && defined($q->param('theme_color')) &&  $q->param('api_imp') && $q->param('api_read') && $q->param('comp_tickets') && $q->param('comp_articles') && $q->param('comp_time') && $q->param('comp_shoutbox')) # All required values have been filled out
+	if($q->param('site_name') && $q->param('db_address') && $q->param('admin_name') && $q->param('custom_name') && defined($q->param('default_lvl')) && $q->param('default_vis') && $q->param('api_write') && defined($q->param('theme_color')) &&  $q->param('api_imp') && $q->param('api_read') && $q->param('comp_tickets') && $q->param('comp_articles') && $q->param('comp_time') && $q->param('comp_shoutbox') && $q->param('comp_steps')) # All required values have been filled out
 	{
 		# Test database settings
 		$db = DBI->connect("dbi:SQLite:dbname=" . $q->param('db_address'), '', '', { RaiseError => 0, PrintError => 0 }) or do { msg("Could not verify database settings. Please hit back and try again.<br><br>" . $DBI::errstr, 0); exit(0); };
@@ -837,6 +900,7 @@ if($q->param('site_name') && $q->param('db_address') && $logged_user ne "" && $l
 		if(!$q->param('comp_articles')) { $text .= "<span class='label label-danger'>Component: Support articles</span> "; }
 		if(!$q->param('comp_time')) { $text .= "<span class='label label-danger'>Component: Time tracking</span> "; }
 		if(!$q->param('comp_shoutbox')) { $text .= "<span class='label label-danger'>Component: Shoutbox</span> "; }
+		if(!$q->param('comp_steps')) { $text .= "<span class='label label-danger'>Component: Projects Management</span> "; }
 		$text .= " Please go back and try again.";
 		msg($text, 0);
 	}
@@ -918,6 +982,7 @@ elsif(!$cfg->load("db_address") || !$cfg->load("site_name")) # first use
 				print "<p><div class='row'><div class='col-sm-4'>Component: Support Articles</div><div class='col-sm-4'><input type='checkbox' name='comp_articles' checked></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Component: Time Tracking</div><div class='col-sm-4'><input type='checkbox' name='comp_time' checked></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Component: Shoutbox</div><div class='col-sm-4'><input type='checkbox' name='comp_shoutbox'></div></div></p>\n";
+				print "<p><div class='row'><div class='col-sm-4'>Component: Projects Management</div><div class='col-sm-4'><input type='checkbox' name='comp_steps'></div></div></p>\n";
 				print "<p><input class='btn btn-primary pull-right' type='submit' value='Save'></p></form>\n"; 
 			}
 			else
@@ -1762,7 +1827,11 @@ elsif($q->param('m')) # Modules
 			if($cfg->load("comp_shoutbox") eq "on") { print "<option selected>on</option><option>off</option>"; }
 			else { print "<option>on</option><option selected>off</option>"; }
 			print "</select></td></tr>\n";
-			print "</table>The admin password will be left unchanged if empty.<br>See the <a href='./README.html'>README</a> file for help.<input class='btn btn-primary pull-right' type='submit' value='Save settings'></form></div></div>\n";
+			print "<tr><td>Component: Projects Management</td><td><select class='form-control' name='comp_steps'>";
+			if($cfg->load("comp_steps") eq "on") { print "<option selected>on</option><option>off</option>"; }
+			else { print "<option>on</option><option selected>off</option>"; }
+			print "</select></td></tr>\n";
+			print "</table>The admin password will be left unchanged if empty.<br>See the <a href='./manual.pdf'>manual</a> file for help.<input class='btn btn-primary pull-right' type='submit' value='Save settings'></form></div></div>\n";
 			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Log (last 200 events)</h3></div><div class='panel-body'>\n";
 			print "<form style='display:inline' method='POST' action='.'><input type='hidden' name='m' value='clear_log'><input class='btn btn-danger pull-right' type='submit' value='Clear log'><br></form><a name='log'></a><p>Filter log by events:<br><a href='./?m=settings#log'>All</a> | <a href='./?m=settings&filter_log=Failed#log'>Failed logins</a> | <a href='./?m=settings&filter_log=Success#log'>Successful logins</a> | <a href='./?m=settings&filter_log=level#log'>Level changes</a> | <a href='./?m=settings&filter_log=password#log'>Password changes</a> | <a href='./?m=settings&filter_log=new#log'>New users</a> | <a href='./?m=settings&filter_log=setting#log'>Settings updated</a> | <a href='./?m=settings&filter_log=notification#log'>Email notifications</a> | <a href='./?m=settings&filter_log=LDAP:#log'>Active Directory</a> | <a href='./?m=settings&filter_log=deleted:#log'>Deletes</a></p>\n";
 			print "<table class='table table-striped'><tr><th>IP address</th><th>User</th><th>Event</th><th>Time</th></tr>\n";
@@ -2048,14 +2117,15 @@ elsif($q->param('m')) # Modules
 				}
 				print "</div></div>\n";
 			}
-			if($logged_lvl > 2 && $vis ne "Archived")
-			{
-				print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Add " . lc($items{"Release"}) . " to this " . lc($items{"Product"}) . "</h3></div><div class='panel-body'><form method='POST' action='.'>\n";
-				print "<input type='hidden' name='m' value='add_release'><input type='hidden' name='product_id' value='" . to_int($q->param('p')) . "'><div class='row'><div class='col-sm-4'>" . $items{"Release"} . ": <input type='text' class='form-control' name='release_version'></div><div class='col-sm-6'>Notes or link: <input type='text' name='release_notes' class='form-control'></div></div><input class='btn btn-primary pull-right' type='submit' value='Add " . lc($items{"Release"}) . "'></form></div></div>\n";    
-			}
 			if($vis eq "Public" || ($vis eq "Private" && $logged_user ne "") || ($vis eq "Restricted" && $logged_lvl > 1) || $logged_lvl > 3)
 			{
-				print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>" . $items{"Release"} . "s</h3></div><div class='panel-body'><table class='table table-striped'>\n";
+				print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>" . $items{"Release"} . "s</h3></div><div class='panel-body'>";
+				if($logged_lvl > 2 && $vis ne "Archived")
+				{
+					print "<h4>Add a new " . lc($items{"Release"}) . "</h4><form method='POST' action='.'>\n";
+					print "<input type='hidden' name='m' value='add_release'><input type='hidden' name='product_id' value='" . to_int($q->param('p')) . "'><div class='row'><div class='col-sm-4'>" . $items{"Release"} . ": <input type='text' class='form-control' name='release_version'></div><div class='col-sm-6'>Notes or link: <input type='text' name='release_notes' class='form-control'></div><div class='col-sm-2'><input class='btn btn-primary pull-right' type='submit' value='Add " . lc($items{"Release"}) . "'></div></div></form><hr><h4>List of " . lc($items{"Release"}) . "s</h4>\n";    
+				}
+				print "<table class='table table-striped'>\n";
 				print "<tr><th>" . $items{"Release"} . "</th><th>User</th><th>Notes</th><th>Date</th></tr>\n";
 				$sql = $db->prepare("SELECT ROWID,* FROM releases WHERE productid = ?;");
 				$sql->execute(to_int($q->param('p')));
@@ -2070,33 +2140,62 @@ elsif($q->param('m')) # Modules
 				}
 				print "</table></div></div>\n";
 			}
-		}
-		if($cfg->load('comp_articles') eq "on")
-		{
-			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Related articles</h3></div><div class='panel-body'><table class='table table-striped'>\n";
-			if($logged_lvl > 3) { print "<tr><th>ID</th><th>Title</th><th>Status</th><th>Last update</th></tr>"; }
-			else { print "<tr><th>ID</th><th>Title</th><th>Last update</th></tr>"; }
-			if($logged_lvl > 3) { $sql = $db->prepare("SELECT ROWID,* FROM kb WHERE (productid = ? OR productid = 0);"); }
-			else { $sql = $db->prepare("SELECT ROWID,* FROM kb WHERE published = 1 AND (productid = ? OR productid = 0);"); }
-			$sql->execute(to_int($q->param('p')));
-			my $status;
-			while(my @res = $sql->fetchrow_array())
+			if($cfg->load('comp_steps') eq "on" && ($vis eq "Public" || ($vis eq "Private" && $logged_user ne "") || ($vis eq "Restricted" && $logged_lvl > 1) || $logged_lvl > 3))
 			{
-				if(to_int($res[4]) == 0) { $status = "Draft"; }
-				else { $status = "Published"; }			
-				if($logged_lvl > 3)
+				print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Project management</h3></div><div class='panel-body'>";
+				if($logged_lvl > 3 && $vis ne "Archived")
 				{
-					
-					if($res[7] eq "Never") { print "<tr><td>" . $res[0] . "</td><td><a href='./?kb=" . $res[0] . "'>" . $res[2] . "</a></td><td>" . $status . "</td><td>" . $res[6] . "</td></tr>\n"; }
-					else { print "<tr><td>" . $res[0] . "</td><td><a href='./?kb=" . $res[0] . "'>" . $res[2] . "</a></td><td>" . $status . "</td><td>" . $res[7] . "</td></tr>\n"; }
+					print "<form method='POST' action='.'><input type='hidden' name='product_id' value='" . to_int($q->param('p')) . "'><input type='hidden' name='m' value='add_step'><h4>Add a new step</h4><p><div class='row'><div class='col-sm-12'><input placeholder='Description' class='form-control' name='name' maxlength='200'></div></div></p><p><div class='row'><div class='col-sm-5'>Assign user:<br><select name='user' class='form-control'>";
+					my $sql = $db->prepare("SELECT name FROM users WHERE level > 0;");
+					$sql->execute();
+					while(my @res = $sql->fetchrow_array()) { print "<option>" . $res[0] . "</option>"; }
+					print "</select></div><div class='col-sm-5'>Due by:<br><input type='text' class='form-control datepicker' name='due' placeholder='mm/dd/yyyy'></div><div class='col-sm-2'><input class='btn btn-primary pull-right' type='submit' value='Add step'></div></div></p></form><hr><h4>Current steps</h4>\n";
 				}
-				else
+				print "<table class='table table-stripped'><tr><th>Step</th><th>Assigned to</th><th>Completion</th><th>Due by</th></tr>";
+				my $sql = $db->prepare("SELECT ROWID,* FROM steps WHERE productid = ?;");
+				$sql->execute(to_int($q->param('p')));
+				my $m = localtime->strftime('%m');
+				my $y = localtime->strftime('%Y');
+				my $d = localtime->strftime('%d');
+				while(my @res = $sql->fetchrow_array())
 				{
-					if($res[7] eq "Never") { print "<tr><td>" . $res[0] . "</td><td><a href='./?kb=" . $res[0] . "'>" . $res[2] . "</a></td><td>" . $res[6] . "</td></tr>\n"; }
-					else { print "<tr><td>" . $res[0] . "</td><td><a href='./?kb=" . $res[0] . "'>" . $res[2] . "</a></td><td>" . $res[7] . "</td></tr>\n"; }
-				}			
+					print "<tr><td>" . $res[2] . "</td><td>" . $res[3] . "</td><td>" . $res[4] . "%</td><td>";
+					my @dueby = split(/\//, $res[5]);
+					if(to_int($res[4]) == 100) { print "<font color='green'>Completed</font>"; }
+					elsif($dueby[2] < $y || ($dueby[2] == $y && $dueby[0] < $m) || ($dueby[2] == $y && $dueby[0] == $m && $dueby[1] < $d)) { print "<font color='red'>Overdue</font>"; }
+					else { print $res[5]; }
+					if($logged_lvl > 3 && $vis ne "Archived") { print "<span class='pull-right'><form method='POST' action='.'><input type='hidden' name='product_id' value='" . to_int($q->param('p')) . "'><input type='hidden' name='m' value='delete_step'><input type='hidden' name='step_id' value='" . $res[0] . "'><input class='btn btn-danger pull-right' type='submit' value='Delete'></form></span>"; }
+					print "</td></tr>";
+				}				
+				print "</table></div></div>\n";    
 			}
-			print "</table></div></div>\n";
+			if($cfg->load('comp_articles') eq "on" && ($vis eq "Public" || ($vis eq "Private" && $logged_user ne "") || ($vis eq "Restricted" && $logged_lvl > 1) || $logged_lvl > 3))
+			{
+				print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Related articles</h3></div><div class='panel-body'><table class='table table-striped'>\n";
+				if($logged_lvl > 3) { print "<tr><th>ID</th><th>Title</th><th>Status</th><th>Last update</th></tr>"; }
+				else { print "<tr><th>ID</th><th>Title</th><th>Last update</th></tr>"; }
+				if($logged_lvl > 3) { $sql = $db->prepare("SELECT ROWID,* FROM kb WHERE (productid = ? OR productid = 0);"); }
+				else { $sql = $db->prepare("SELECT ROWID,* FROM kb WHERE published = 1 AND (productid = ? OR productid = 0);"); }
+				$sql->execute(to_int($q->param('p')));
+				my $status;
+				while(my @res = $sql->fetchrow_array())
+				{
+					if(to_int($res[4]) == 0) { $status = "Draft"; }
+					else { $status = "Published"; }			
+					if($logged_lvl > 3)
+					{
+						
+						if($res[7] eq "Never") { print "<tr><td>" . $res[0] . "</td><td><a href='./?kb=" . $res[0] . "'>" . $res[2] . "</a></td><td>" . $status . "</td><td>" . $res[6] . "</td></tr>\n"; }
+						else { print "<tr><td>" . $res[0] . "</td><td><a href='./?kb=" . $res[0] . "'>" . $res[2] . "</a></td><td>" . $status . "</td><td>" . $res[7] . "</td></tr>\n"; }
+					}
+					else
+					{
+						if($res[7] eq "Never") { print "<tr><td>" . $res[0] . "</td><td><a href='./?kb=" . $res[0] . "'>" . $res[2] . "</a></td><td>" . $res[6] . "</td></tr>\n"; }
+						else { print "<tr><td>" . $res[0] . "</td><td><a href='./?kb=" . $res[0] . "'>" . $res[2] . "</a></td><td>" . $res[7] . "</td></tr>\n"; }
+					}			
+				}
+				print "</table></div></div>\n";
+			}
 		}
 	}
 	elsif($logged_lvl > 2 && $q->param('m') eq "delete_release")
@@ -2116,6 +2215,42 @@ elsif($q->param('m')) # Modules
 			$sql->execute(to_int($q->param('product_id')), to_int($q->param('release_id')));
 			msg($items{"Release"} . " deleted from " . lc($items{"Product"}) . " <b>" . to_int($q->param('product_id')) . "</b>. Press <a href='./?m=view_product&p=" . to_int($q->param('product_id')) . "'>here</a> to continue.", 3);
 		}	
+	}
+	elsif($logged_lvl > 3 && $q->param('m') eq "add_step")
+	{
+		headers($items{"Product"} . "s");
+		if(!$q->param('product_id') || !$q->param('name') || !$q->param('due') || !$q->param('user'))
+		{
+			my $text = "Required fields missing: ";
+			if(!$q->param('product_id')) { $text .= "<span class='label label-danger'>" . $items{"Product"} . " ID</span> "; }
+			if(!$q->param('name')) { $text .= "<span class='label label-danger'>Description</span> "; }
+			if(!$q->param('due')) { $text .= "<span class='label label-danger'>Due date</span> "; }
+			if(!$q->param('user')) { $text .= "<span class='label label-danger'>Assigned user</span> "; }
+			$text .= " Please go back and try again.";
+			msg($text, 0);
+		}
+		elsif($q->param('due') !~ m/[0-9]{2}\/[0-9]{2}\/[0-9]{4}/)
+		{
+			msg("Due date must be in the format: mm/dd/yyyy. Please go back and try again.", 0);
+		}
+		else
+		{
+			$sql = $db->prepare("INSERT INTO steps VALUES (?, ?, ?, ?, ?);");
+			$sql->execute(to_int($q->param('product_id')), sanitize_html($q->param('name')), sanitize_alpha($q->param('user')), 0, sanitize_html($q->param('due')));
+			my $prod = "";
+			$sql = $db->prepare("SELECT name FROM products WHERE ROWID = ?;");
+			$sql->execute(to_int($q->param('product_id')));
+			while(my @res = $sql->fetchrow_array()) { $prod = $res[0]; }
+			notify(sanitize_alpha($q->param('user')), "New step assigned to you", "A new step has been added for you on " . lc($items{"Product"}) . " \"" . $prod . "\":\n\nStep description: " . sanitize_html($q->param('name')) . "\nDue by: " . sanitize_html($q->param('due')));
+			msg("Step added. Press <a href='./?m=view_product&p=" . to_int($q->param('product_id')) . "'>here</a> to continue.", 3);
+		}
+	}
+	elsif($logged_lvl > 3 && $q->param('m') eq "delete_step" && $q->param('step_id'))
+	{
+		headers($items{"Product"} . "s");
+		$sql = $db->prepare("DELETE FROM steps WHERE ROWID = ?;");
+		$sql->execute(to_int($q->param('step_id')));
+		msg("Step removed. Press <a href='./?m=view_product&p=" . to_int($q->param('product_id')) . "'>here</a> to continue.", 3);
 	}
 	elsif($logged_lvl > 2 && $q->param('m') eq "add_release")
 	{
@@ -2610,7 +2745,11 @@ elsif($q->param('m')) # Modules
 				{ 
 					print "<p><div class='row'>";
 					if($cfg->load('comp_time') eq "on") { print "<div class='col-sm-4'>Time spent (in <b>hours</b>): <input type='text' name='time_spent' class='form-control' value='0'></div>"; }
-					print "<div class='col-sm-4'>Notify user: <input type='text' name='notify_user' class='form-control' value=''></div>";
+					print "<div class='col-sm-4'>Notify user: <select name='notify_user' class='form-control'>";
+					my $sql2 = $db->prepare("SELECT name FROM users WHERE level > 0;");
+					$sql2->execute();
+					while(my @res2 = $sql2->fetchrow_array()) { print "<option>" . $res2[0] . "</option>"; }
+					print "</select></div>";
 					if($cfg->load('comp_time') ne "on") { print "<div class='col-sm-4'></div>"; }
 					print "<div class='col-sm-4'><input class='btn btn-primary pull-right' type='submit' value='Update ticket'></div></div></p></form><hr>\n"; 
 				}
