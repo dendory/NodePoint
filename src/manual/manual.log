@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.1415926-2.5-0.9999.3 (MiKTeX 2.9) (preloaded format=xelatex 2015.6.17)  17 JUN 2015 16:35
+This is XeTeX, Version 3.1415926-2.5-0.9999.3 (MiKTeX 2.9) (preloaded format=xelatex 2015.6.17)  18 JUN 2015 09:09
 entering extended mode
 **manual.tex
 (C:\scripts\git\nodepoint\src\manual\manual.tex
@@ -914,7 +914,7 @@ Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 536.
 Here is how much of TeX's memory you used:
  21381 strings out of 429025
  392698 string characters out of 3166798
- 460532 words of memory out of 3000000
+ 460529 words of memory out of 3000000
  24496 multiletter control sequences out of 15000+200000
  6939 words of font info for 49 fonts, out of 3000000 for 9000
  912 hyphenation exceptions out of 8191

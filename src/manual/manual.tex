@@ -94,7 +94,7 @@ Here are some of the available features:
 \item \textbf{Custom home page:} See the tickets you created, are assigned to, or follow on your home page.
 \item \textbf{Custom forms:} Use the default form or create custom ones to customize the ticket entry page.
 \item \textbf{Knowledge base articles:} Create articles to build a knowledge base linked to your products.
-\item \textbf{Project management:} Create steps and assign them to users, with due dates and completion rates.
+\item \textbf{Tasks management:} Create tasks and assign them to users, with due dates and completion rates.
 \item \textbf{Full text search and filters:} Filter tickets by product, status or do a custom search.
 \item \textbf{Time tracking:} Users assigned to tickets can enter the time they took to solve issues and track their time.
 \item \textbf{Follow and auto assignment:} Users can follow tickets, assign themselves to work on issues, or auto assign themselves to products.
@@ -362,7 +362,7 @@ User activity can be monitored through two graphs along with a number of reports
 
 \clearpage
 \section{Components}
-NodePoint is divided into multiple components that you can enable or disable in the configuration as a product administrator. You can turn them on or off depending on your needs. For example, a help desk portal could have the \textbf{Tickets Management}, \textbf{Time Tracking} and \textbf{Support Articles} components enabled, while a project management portal could have only the \textbf{Projects Management} component enabled.
+NodePoint is divided into multiple components that you can enable or disable in the configuration as a product administrator. You can turn them on or off depending on your needs. For example, a help desk portal could have the \textbf{Tickets Management}, \textbf{Time Tracking} and \textbf{Support Articles} components enabled, while a project management portal could have only the \textbf{Tasks Management} component enabled.
 
 \subsection{Tickets Management}
 Users who have an access level of 1 or higher can enter tickets on the \textbf{Tickets} page. The default form asks for a title, description and a custom entry type, configurable in the initial settings. Custom forms can also be designed and assigned to products by users of access level 4 and above. These custom forms can have up to 10 fields, each field can be a text area, a check box, satisfaction rating, and so on. Products that have a custom form assigned will display that form to users instead of the default one.
@@ -411,14 +411,14 @@ Time entries cannot be removed since it acts as a timestamp for work done. Corre
 \subsection{Shoutbox}
 The shoutbox is a simple chat area on the home page that all users can use. The box shows the last few entries made by users, and individual entries can be deleted by users with access level 5 or higher.
 
-\subsection{Projects Management}
-The projects management component can be used to manage products or projects, create new steps needed to accomplish tasks, and assign these steps to users with due dates. Users with access level 4 or higher can create new tasks on the \textbf{Products} page:
+\subsection{Tasks Management}
+The tasks management component can be used to manage products or projects, create new tasks needed to be completed, and assign these tasks to users with due dates. Users with access level 4 or higher can create new tasks on the \textbf{Products} page:
 
 \begin{figure}[h]
 \includegraphics{projectmanagement.jpg}
 \end{figure}
 
-New steps created will send an email notification to the user assigned to the task, and all steps will show on the user's home page. There, users can modify the completion rate for each step. Completed and overdue tasks will also be highlighted.
+New tasks created will send an email notification to the user assigned to the task, and all tasks will show on the user's home page. There, users can modify the completion rate for each item. Completed and overdue tasks will also be highlighted.
 
 \clearpage
 \section{JSON API}

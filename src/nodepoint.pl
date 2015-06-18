@@ -749,8 +749,8 @@ sub home
 		$sql = $db->prepare("SELECT ROWID,* FROM products;");
 		$sql->execute();
 		while(my @res = $sql->fetchrow_array()) { $products[$res[0]] = $res[1]; }
-		print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Steps assigned to you</h3></div><div class='panel-body'><table class='table table-striped'>\n";
-		print "<tr><th>" . $items{"Product"} . "</th><th>Step</th><th>Due by</th><th>Completion</th><th></th></tr>\n";
+		print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Tasks assigned to you</h3></div><div class='panel-body'><table class='table table-striped'>\n";
+		print "<tr><th>" . $items{"Product"} . "</th><th>Task</th><th>Due by</th><th>Completion</th><th></th></tr>\n";
 		$sql = $db->prepare("SELECT ROWID,* FROM steps WHERE user = ?");
 		$sql->execute($logged_user);
 		my $m = localtime->strftime('%m');
@@ -900,7 +900,7 @@ if($q->param('site_name') && $q->param('db_address') && $logged_user ne "" && $l
 		if(!$q->param('comp_articles')) { $text .= "<span class='label label-danger'>Component: Support articles</span> "; }
 		if(!$q->param('comp_time')) { $text .= "<span class='label label-danger'>Component: Time tracking</span> "; }
 		if(!$q->param('comp_shoutbox')) { $text .= "<span class='label label-danger'>Component: Shoutbox</span> "; }
-		if(!$q->param('comp_steps')) { $text .= "<span class='label label-danger'>Component: Projects Management</span> "; }
+		if(!$q->param('comp_steps')) { $text .= "<span class='label label-danger'>Component: Tasks Management</span> "; }
 		$text .= " Please go back and try again.";
 		msg($text, 0);
 	}
@@ -982,7 +982,7 @@ elsif(!$cfg->load("db_address") || !$cfg->load("site_name")) # first use
 				print "<p><div class='row'><div class='col-sm-4'>Component: Support Articles</div><div class='col-sm-4'><input type='checkbox' name='comp_articles' checked></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Component: Time Tracking</div><div class='col-sm-4'><input type='checkbox' name='comp_time' checked></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Component: Shoutbox</div><div class='col-sm-4'><input type='checkbox' name='comp_shoutbox'></div></div></p>\n";
-				print "<p><div class='row'><div class='col-sm-4'>Component: Projects Management</div><div class='col-sm-4'><input type='checkbox' name='comp_steps'></div></div></p>\n";
+				print "<p><div class='row'><div class='col-sm-4'>Component: Tasks Management</div><div class='col-sm-4'><input type='checkbox' name='comp_steps'></div></div></p>\n";
 				print "<p><input class='btn btn-primary pull-right' type='submit' value='Save'></p></form>\n"; 
 			}
 			else
@@ -1827,7 +1827,7 @@ elsif($q->param('m')) # Modules
 			if($cfg->load("comp_shoutbox") eq "on") { print "<option selected>on</option><option>off</option>"; }
 			else { print "<option>on</option><option selected>off</option>"; }
 			print "</select></td></tr>\n";
-			print "<tr><td>Component: Projects Management</td><td><select class='form-control' name='comp_steps'>";
+			print "<tr><td>Component: Tasks Management</td><td><select class='form-control' name='comp_steps'>";
 			if($cfg->load("comp_steps") eq "on") { print "<option selected>on</option><option>off</option>"; }
 			else { print "<option>on</option><option selected>off</option>"; }
 			print "</select></td></tr>\n";
@@ -2123,7 +2123,7 @@ elsif($q->param('m')) # Modules
 				if($logged_lvl > 2 && $vis ne "Archived")
 				{
 					print "<h4>Add a new " . lc($items{"Release"}) . "</h4><form method='POST' action='.'>\n";
-					print "<input type='hidden' name='m' value='add_release'><input type='hidden' name='product_id' value='" . to_int($q->param('p')) . "'><div class='row'><div class='col-sm-4'>" . $items{"Release"} . ": <input type='text' class='form-control' name='release_version'></div><div class='col-sm-6'>Notes or link: <input type='text' name='release_notes' class='form-control'></div><div class='col-sm-2'><input class='btn btn-primary pull-right' type='submit' value='Add " . lc($items{"Release"}) . "'></div></div></form><hr><h4>List of " . lc($items{"Release"}) . "s</h4>\n";    
+					print "<input type='hidden' name='m' value='add_release'><input type='hidden' name='product_id' value='" . to_int($q->param('p')) . "'><div class='row'><div class='col-sm-4'>" . $items{"Release"} . ": <input type='text' class='form-control' name='release_version'></div><div class='col-sm-6'>Notes or link: <input type='text' name='release_notes' class='form-control'></div><div class='col-sm-2'><input class='btn btn-primary pull-right' type='submit' value='Add " . lc($items{"Release"}) . "'></div></div></form><hr><h4>Current " . lc($items{"Release"}) . "s</h4>\n";    
 				}
 				print "<table class='table table-striped'>\n";
 				print "<tr><th>" . $items{"Release"} . "</th><th>User</th><th>Notes</th><th>Date</th></tr>\n";
@@ -2142,16 +2142,16 @@ elsif($q->param('m')) # Modules
 			}
 			if($cfg->load('comp_steps') eq "on" && ($vis eq "Public" || ($vis eq "Private" && $logged_user ne "") || ($vis eq "Restricted" && $logged_lvl > 1) || $logged_lvl > 3))
 			{
-				print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Project management</h3></div><div class='panel-body'>";
+				print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Tasks</h3></div><div class='panel-body'>";
 				if($logged_lvl > 3 && $vis ne "Archived")
 				{
-					print "<form method='POST' action='.'><input type='hidden' name='product_id' value='" . to_int($q->param('p')) . "'><input type='hidden' name='m' value='add_step'><h4>Add a new step</h4><p><div class='row'><div class='col-sm-12'><input placeholder='Description' class='form-control' name='name' maxlength='200'></div></div></p><p><div class='row'><div class='col-sm-5'>Assign user:<br><select name='user' class='form-control'>";
+					print "<form method='POST' action='.'><input type='hidden' name='product_id' value='" . to_int($q->param('p')) . "'><input type='hidden' name='m' value='add_step'><h4>Add a new task</h4><p><div class='row'><div class='col-sm-12'><input placeholder='Description' class='form-control' name='name' maxlength='200'></div></div></p><p><div class='row'><div class='col-sm-5'>Assign user:<br><select name='user' class='form-control'>";
 					my $sql = $db->prepare("SELECT name FROM users WHERE level > 0;");
 					$sql->execute();
 					while(my @res = $sql->fetchrow_array()) { print "<option>" . $res[0] . "</option>"; }
-					print "</select></div><div class='col-sm-5'>Due by:<br><input type='text' class='form-control datepicker' name='due' placeholder='mm/dd/yyyy'></div><div class='col-sm-2'><input class='btn btn-primary pull-right' type='submit' value='Add step'></div></div></p></form><hr><h4>Current steps</h4>\n";
+					print "</select></div><div class='col-sm-5'>Due by:<br><input type='text' class='form-control datepicker' name='due' placeholder='mm/dd/yyyy'></div><div class='col-sm-2'><input class='btn btn-primary pull-right' type='submit' value='Add task'></div></div></p></form><hr><h4>Current tasks</h4>\n";
 				}
-				print "<table class='table table-stripped'><tr><th>Step</th><th>Assigned to</th><th>Completion</th><th>Due by</th></tr>";
+				print "<table class='table table-stripped'><tr><th>Task</th><th>Assigned to</th><th>Completion</th><th>Due by</th></tr>";
 				my $sql = $db->prepare("SELECT ROWID,* FROM steps WHERE productid = ?;");
 				$sql->execute(to_int($q->param('p')));
 				my $m = localtime->strftime('%m');
@@ -2241,8 +2241,8 @@ elsif($q->param('m')) # Modules
 			$sql = $db->prepare("SELECT name FROM products WHERE ROWID = ?;");
 			$sql->execute(to_int($q->param('product_id')));
 			while(my @res = $sql->fetchrow_array()) { $prod = $res[0]; }
-			notify(sanitize_alpha($q->param('user')), "New step assigned to you", "A new step has been added for you on " . lc($items{"Product"}) . " \"" . $prod . "\":\n\nStep description: " . sanitize_html($q->param('name')) . "\nDue by: " . sanitize_html($q->param('due')));
-			msg("Step added. Press <a href='./?m=view_product&p=" . to_int($q->param('product_id')) . "'>here</a> to continue.", 3);
+			notify(sanitize_alpha($q->param('user')), "New task assigned to you", "A new task has been added for you on " . lc($items{"Product"}) . " \"" . $prod . "\":\n\nTask description: " . sanitize_html($q->param('name')) . "\nDue by: " . sanitize_html($q->param('due')));
+			msg("Task added. Press <a href='./?m=view_product&p=" . to_int($q->param('product_id')) . "'>here</a> to continue.", 3);
 		}
 	}
 	elsif($logged_lvl > 3 && $q->param('m') eq "delete_step" && $q->param('step_id'))
@@ -2250,7 +2250,7 @@ elsif($q->param('m')) # Modules
 		headers($items{"Product"} . "s");
 		$sql = $db->prepare("DELETE FROM steps WHERE ROWID = ?;");
 		$sql->execute(to_int($q->param('step_id')));
-		msg("Step removed. Press <a href='./?m=view_product&p=" . to_int($q->param('product_id')) . "'>here</a> to continue.", 3);
+		msg("Task removed. Press <a href='./?m=view_product&p=" . to_int($q->param('product_id')) . "'>here</a> to continue.", 3);
 	}
 	elsif($logged_lvl > 2 && $q->param('m') eq "add_release")
 	{
@@ -2972,6 +2972,8 @@ elsif($q->param('m')) # Modules
 				$sql = $db->prepare("DELETE FROM releases WHERE productid = ?;");
 				$sql->execute(to_int($q->param('productid')));
 				$sql = $db->prepare("DELETE FROM autoassign WHERE productid = ?;");
+				$sql->execute(to_int($q->param('productid')));
+				$sql = $db->prepare("DELETE FROM steps WHERE productid = ?;");
 				$sql->execute(to_int($q->param('productid')));
 				$sql = $db->prepare("DELETE FROM products WHERE ROWID = ?;");
 				$sql->execute(to_int($q->param('productid')));
