@@ -1583,7 +1583,12 @@ elsif($q->param('file') && $cfg->load('upload_folder')) # Show an image
 		msg("File not found or corrupted.", 0);
 		exit(0);
 	}
+	my $actualfile = sanitize_alpha($q->param('file'));
+	$sql = $db->prepare("SELECT filename FROM comments WHERE file = ?;");
+	$sql->execute(sanitize_alpha($q->param('file')));
+	while(my @res = $sql->fetchrow_array()) { $actualfile = $res[0]; }
 	open(my $fp, "<", $filename);
+	print "Content-Disposition: inline; filename=" . $actualfile . "\n";
 	if($type eq "application/octet-stream") { print "Content-type: text/plain\n\n"; }
 	else { print "Content-type: " . $type . "\n\n"; }
 	while(my $line = <$fp>)
