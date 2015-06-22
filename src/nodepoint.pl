@@ -8,7 +8,7 @@
 #
 
 use strict;
-use Config::Win32;
+use Config::Linux;
 use Digest::SHA qw(sha1_hex);
 use DBI;
 use CGI;
@@ -824,11 +824,11 @@ sub home
 # Connect to config
 eval
 {
-	$cfg = Config::Win32->new("NodePoint", "settings");
+	$cfg = Config::Linux->new("NodePoint", "settings");
 };
 if(!defined($cfg)) # Can't even use headers() if this fails.
 {
-	print "Content-type: text/html\n\nError: Could not access " . Config::Win32->type . ". Please ensure NodePoint has the proper permissions.";
+	print "Content-type: text/html\n\nError: Could not access " . Config::Linux->type . ". Please ensure NodePoint has the proper permissions.";
 	exit(0);
 };
 
@@ -2700,7 +2700,7 @@ elsif($q->param('m')) # Modules
 				my $product = "";
 				while(my @res2 = $sql->fetchrow_array()) { $product = $res2[1]; }
 				print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Ticket " . to_int($q->param('t')) . "</h3></div><div class='panel-body'>";
-				if($logged_lvl > 2) { print "<form method='POST' action='.'><input type='hidden' name='m' value='update_ticket'><input type='hidden' name='t' value='" . to_int($q->param('t')) . "'>\n"; }
+				if($logged_lvl > 2 && $q->param('edit')) { print "<form method='POST' action='.'><input type='hidden' name='m' value='update_ticket'><input type='hidden' name='t' value='" . to_int($q->param('t')) . "'>\n"; }
 				print "<p><div class='row'><div class='col-sm-6'>" . $items{"Product"} . ": <b>" . $product . "</b></div>";
 				if($cfg->load('comp_articles') eq "on")
 				{
@@ -2713,14 +2713,14 @@ elsif($q->param('m')) # Modules
 					print "</div></p>";
 				print "<p><div class='row'><div class='col-sm-6'>Created by: <b>" . $res[3] . "</b></div><div class='col-sm-6'>Created on: <b>" . $res[11] . "</b></div></div></p>\n";
 				print "<p><div class='row'><input type='hidden' name='ticket_assigned' value='" . $res[4] . "'><div class='col-sm-6'>Assigned to: <b>" . $res[4] . "</b>";
-				if($logged_lvl > 2)
+				if($logged_lvl > 2 && $q->param('edit'))
 				{ 
 					print " <input type='checkbox' name='ticket_assign_self'";
 					if($res[4] =~ /\b\Q$logged_user\E\b/) { print " checked"; }
 					print "><i> Assign yourself</i>"; 
 				}
 				print "</div><div class='col-sm-6'>Modified on: <b>" . $res[12] . "</b></div></div></p>\n";
-				if($logged_lvl > 2) 
+				if($logged_lvl > 2 && $q->param('edit')) 
 				{
 					print "<p><div class='row'><div class='col-sm-6'>Status: <select class='form-control' name='ticket_status'><option";
 					if($res[8] eq "New") { print " selected"; }
@@ -2740,24 +2740,24 @@ elsif($q->param('m')) # Modules
 				}
 				else {print "<p><div class='row'><div class='col-sm-6'>Status: <b>" . $res[8] . "</b></div><div class='col-sm-6'>Resolution: <b>" . $res[9] . "</b></div></div></p>\n"; }
 				print "<p><div class='row'><div class='col-sm-6'>" . $items{"Release"} . "s: ";
-				if($logged_lvl > 2) { print "<input type='text' class='form-control' name='ticket_releases' value='" . $res[2] . "'>"; }
+				if($logged_lvl > 2 && $q->param('edit')) { print "<input type='text' class='form-control' name='ticket_releases' value='" . $res[2] . "'>"; }
 				else { print "<b>" . $res[2] . "</b>"; }
 				print "</div><div class='col-sm-6'>";
-				if($logged_lvl > 2)	{ print $cfg->load('custom_name') . ": <input type='text' class='form-control' name='ticket_link' value='" . $res[7] . "'></div></div></p>\n"; }
+				if($logged_lvl > 2 && $q->param('edit')) { print $cfg->load('custom_name') . ": <input type='text' class='form-control' name='ticket_link' value='" . $res[7] . "'></div></div></p>\n"; }
 				else
 				{
 					if($cfg->load('custom_type') eq "Link") { print $cfg->load('custom_name') . ": <a href='" . $res[7] . "'><b>" . $res[7] . "</b></a></div></div></p>\n"; }
 					else { print $cfg->load('custom_name') . ": <b>" . $res[7] . "</b></div></div></p>\n"; }
 				}
-				if($logged_lvl > 2) { print "<p>Title: <input type='text' class='form-control' name='ticket_title' value='" . $res[5] . "'></p>"; }
+				if($logged_lvl > 2 && $q->param('edit')) { print "<p>Title: <input type='text' class='form-control' name='ticket_title' value='" . $res[5] . "'></p>"; }
 				else { print "<p>Title: <b>" . $res[5] . "</b></p>"; }
-				if($logged_lvl > 2) { print "<p>Description:<br><textarea class='form-control' name='ticket_desc' rows='20'>" . $res[6] . "</textarea></p>\n"; }
+				if($logged_lvl > 2 && $q->param('edit')) { print "<p>Description:<br><textarea class='form-control' name='ticket_desc' rows='20'>" . $res[6] . "</textarea></p>\n"; }
 				else { print "<p>Description:<br><pre>" . $res[6] . "</pre></p>\n"; }
-				if($logged_lvl > 2)
+				if($logged_lvl > 2 && $q->param('edit'))
 				{ 
 					print "<p><div class='row'>";
 					if($cfg->load('comp_time') eq "on") { print "<div class='col-sm-4'>Time spent (in <b>hours</b>): <input type='text' name='time_spent' class='form-control' value='0'></div>"; }
-					print "<div class='col-sm-4'>Notify user: <select name='notify_user' class='form-control'>";
+					print "<div class='col-sm-4'>Notify user: <select name='notify_user' class='form-control'><option selected></option>";
 					my $sql2 = $db->prepare("SELECT name FROM users WHERE level > 0;");
 					$sql2->execute();
 					while(my @res2 = $sql2->fetchrow_array()) { print "<option>" . $res2[0] . "</option>"; }
@@ -2773,12 +2773,16 @@ elsif($q->param('m')) # Modules
 					while(my @res2 = $sql->fetchrow_array()) { print "<option value=" . $res2[0] . ">" . $res2[1] . "</option>"; }
 					print "</select></div><div class='col-sm-4'><input class='btn btn-primary pull-right' type='submit' value='Link article to this ticket'></form></div></div><hr>";
 				}
+				if($logged_lvl > 2 && !$q->param('edit'))
+				{
+					print "<form method='GET' action='.'><input type='hidden' name='m' value='view_ticket'><input type='hidden' name='t' value='" . to_int($q->param('t')) . "'><input class='btn btn-primary pull-right' type='submit' name='edit' value='Edit ticket'></form>";
+				}
 				if($logged_user ne "")
 				{
 					if($res[10] =~ /\b\Q$logged_user\E\b/) { print "<form action='.' method='POST' style='display:inline'><input type='hidden' name='m' value='unfollow_ticket'><input type='hidden' name='t' value='" . to_int($q->param('t')) . "'><input class='btn btn-primary' type='submit' value='Unfollow ticket'></form>"; }
 					else { print "<form action='.' method='POST' style='display:inline'><input type='hidden' name='m' value='follow_ticket'><input type='hidden' name='t' value='" . to_int($q->param('t')) . "'><input class='btn btn-primary' type='submit' value='Follow ticket'></form>"; }
 				}
-				if($logged_user eq $cfg->load("admin_name")) { print "<span class='pull-right'><form method='GET' action='.'><input type='hidden' name='m' value='confirm_delete'><input type='hidden' name='ticketid' value='" . to_int($q->param('t')) . "'><input type='submit' class='btn btn-danger' value='Permanently delete this ticket'></form></span>"; }
+				if($logged_user eq $cfg->load("admin_name") && $q->param('edit')) { print "<span class='pull-right'><form method='GET' action='.'><input type='hidden' name='m' value='confirm_delete'><input type='hidden' name='ticketid' value='" . to_int($q->param('t')) . "'><input type='submit' class='btn btn-danger' value='Permanently delete this ticket'></form></span>"; }
 				print "</div></div>\n";
 				if($logged_lvl > 1 && $cfg->load('comp_time') eq "on")
 				{
