@@ -8,7 +8,7 @@
 #
 
 use strict;
-use Config::Linux;
+use Config::Win32;
 use Digest::SHA qw(sha1_hex);
 use DBI;
 use CGI;
@@ -22,12 +22,13 @@ use Crypt::RC4;
 use MIME::Base64;
 use Time::HiRes qw(time);
 use Time::Piece;
+use Text::Markdown 'markdown';
 
 my ($cfg, $db, $sql, $cn, $cp, $cgs, $last_login, $perf);
 my $logged_user = "";
 my $logged_lvl = -1;
 my $q = new CGI;
-my $VERSION = "1.3.0";
+my $VERSION = "1.3.1";
 my %items = ("Product", "Product", "Release", "Release", "Model", "SKU/Model");
 my @itemtypes = ("None");
 my @themes = ("primary", "default", "success", "info", "warning", "danger");
@@ -78,6 +79,7 @@ sub footers
 	print " <script src='jquery.js'></script>\n";
 	print " <script src='bootstrap.js'></script>\n";
 	print " <script src='validator.js'></script>\n";
+	print " <script src='markdown.js'></script>\n";
 	print " <script src='datepicker.js'></script>\n";
 	print " <script>\$('.datepicker').datepicker();</script>\n";
 	print " </body>\n";
@@ -822,11 +824,11 @@ sub home
 # Connect to config
 eval
 {
-	$cfg = Config::Linux->new("NodePoint", "settings");
+	$cfg = Config::Win32->new("NodePoint", "settings");
 };
 if(!defined($cfg)) # Can't even use headers() if this fails.
 {
-	print "Content-type: text/html\n\nError: Could not access " . Config::Linux->type . ". Please ensure NodePoint has the proper permissions.";
+	print "Content-type: text/html\n\nError: Could not access " . Config::Win32->type . ". Please ensure NodePoint has the proper permissions.";
 	exit(0);
 };
 
@@ -2077,11 +2079,11 @@ elsif($q->param('m')) # Modules
 			if($res[5] eq "Public" || ($res[5] eq "Private" && $logged_user ne "") || ($res[5] eq "Restricted" && $logged_lvl > 1) || $logged_lvl > 3)
 			{
 				print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>" . $items{"Product"} . " information</h3></div><div class='panel-body'>\n";
-				if($logged_lvl > 3) { print "<form method='POST' action='.' enctype='multipart/form-data'><input type='hidden' name='m' value='edit_product'><input type='hidden' name='product_id' value='" . to_int($q->param('p')) . "'>\n"; }
-				if($logged_lvl > 3) { print "<p><div class='row'><div class='col-sm-6'>" . $items{"Product"} . " name: <input class='form-control' type='text' name='product_name' value='" . $res[1] . "'></div><div class='col-sm-6'>" . $items{"Model"} . ": <input class='form-control' type='text' name='product_model' value='" . $res[2] . "'></div></div></p>\n"; }
+				if($logged_lvl > 3 && $q->param('edit')) { print "<form method='POST' action='.' enctype='multipart/form-data'><input type='hidden' name='m' value='edit_product'><input type='hidden' name='product_id' value='" . to_int($q->param('p')) . "'>\n"; }
+				if($logged_lvl > 3 && $q->param('edit')) { print "<p><div class='row'><div class='col-sm-6'>" . $items{"Product"} . " name: <input class='form-control' type='text' name='product_name' value='" . $res[1] . "'></div><div class='col-sm-6'>" . $items{"Model"} . ": <input class='form-control' type='text' name='product_model' value='" . $res[2] . "'></div></div></p>\n"; }
 				else { print "<p><div class='row'><div class='col-sm-6'>Product name: <b>" . $res[1] . "</b></div><div class='col-sm-6'>" . $items{"Model"} . ": <b>" . $res[2] . "</b></div></div></p>\n"; }
 				print "<p><div class='row'><div class='col-sm-6'>Created on: <b>" . $res[6] . "</b></div><div class='col-sm-6'>Last modified on: <b>" . $res[7] . "</b></div></div></p>\n";
-				if($logged_lvl > 3)
+				if($logged_lvl > 3 && $q->param('edit'))
 				{
 					print "<p><div class='row'><div class='col-sm-6'>" . $items{"Product"} . " visibility: <select class='form-control' name='product_vis'><option";
 					if($res[5] eq "Public") { print " selected=selected"; }
@@ -2099,12 +2101,16 @@ elsif($q->param('m')) # Modules
 				$sql2->execute(to_int($q->param('p')));
 				while(my @res2 = $sql2->fetchrow_array()) { print " " . $res2[0]; }
 				print "</b></div></div></p>\n";
-				if($logged_lvl > 3) { print "<p>Description:<br><textarea rows='10' name='product_desc' class='form-control'>" . $res[3] . "</textarea></p>\n"; }
-				else { print "<p>Description:<br><pre>" . $res[3] . "</pre></p>\n"; }
+				if($logged_lvl > 3 && $q->param('edit')) { print "<p>Description:<span class='pull-right'><img title='Header' src='icons/header.png' style='cursor:pointer' onclick='javascript:md_header()'> <img title='Bold' src='icons/bold.png' style='cursor:pointer' onclick='javascript:md_bold()'> <img title='Italic' src='icons/italic.png' style='cursor:pointer' onclick='javascript:md_italic()'> <img title='Code' src='icons/code.png' style='cursor:pointer' onclick='javascript:md_code()'> <img title='Image' src='icons/image.png' style='cursor:pointer' onclick='javascript:md_image()'> <img title='Link' src='icons/link.png' style='cursor:pointer' onclick='javascript:md_link()'> <img title='List' src='icons/list.png' style='cursor:pointer' onclick='javascript:md_list()'></span><br><textarea id='markdown' rows='10' name='product_desc' class='form-control'>" . $res[3] . "</textarea></p>\n"; }
+				else { print "<hr>" . markdown($res[3]) . "\n"; }
 				if($res[4] ne "") { print "<p><img src='./?file=" . $res[4] . "' style='max-width:95%'></p>\n"; }
-				if($logged_lvl > 3) { print "<input class='btn btn-primary pull-right' type='submit' value='Update " . lc($items{"Product"}) . "'>Change " . lc($items{"Product"}) . " image: <input type='file' name='product_screenshot'></form>\n"; }
-				if($logged_user eq $cfg->load("admin_name")) { print "<form method='GET' action='.'><input type='hidden' name='m' value='confirm_delete'><input type='hidden' name='productid' value='" . to_int($q->param('p')) . "'><input type='submit' class='btn btn-danger pull-right' value='Permanently delete this " . lc($items{"Product"}) . "'></form>"; }
-				if($logged_lvl > 2)
+				if($logged_lvl > 3 && $q->param('edit')) { print "<input class='btn btn-primary pull-right' type='submit' value='Update " . lc($items{"Product"}) . "'>Change " . lc($items{"Product"}) . " image: <input type='file' name='product_screenshot'></form>\n"; }
+				if($logged_user eq $cfg->load("admin_name") && $q->param('edit')) { print "<form method='GET' action='.'><input type='hidden' name='m' value='confirm_delete'><input type='hidden' name='productid' value='" . to_int($q->param('p')) . "'><input type='submit' class='btn btn-danger pull-right' value='Permanently delete this " . lc($items{"Product"}) . "'></form>"; }
+				if($logged_lvl > 3  && !$q->param('edit'))
+				{
+					print "<form method='GET' action='.'><input type='hidden' name='m' value='view_product'><input type='hidden' name='p' value='" . to_int($q->param('p')) . "'><input class='btn btn-primary pull-right' type='submit' name='edit' value='Edit " . lc($items{"Product"}) . "'></form>";
+				}
+ 				if($logged_lvl > 2)
 				{
 					my $sql2 = $db->prepare("SELECT * FROM autoassign WHERE productid = ? AND user = ?;");
 					$sql2->execute(to_int($q->param('p')), $logged_user);
@@ -2463,7 +2469,8 @@ elsif($q->param('m')) # Modules
 			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Add a new " . lc($items{"Product"}) . "</h3></div><div class='panel-body'><form method='POST' action='.' enctype='multipart/form-data'>\n";
 			print "<p><div class='row'><div class='col-sm-6'><input placeholder='" . $items{"Product"} . " name' type='text' name='product_name' class='form-control'></div><div class='col-sm-6'><input type='text' placeholder='" . $items{"Model"} . "' name='product_model' class='form-control'></div></div></p>\n";
 			print "<p><div class='row'><div class='col-sm-6'><input type='text' name='product_release' placeholder='Initial " . lc($items{"Release"}) . "' class='form-control'></div><div class='col-sm-6'><select class='form-control' name='product_vis'><option>Public</option><option>Private</option><option>Restricted</option></select></div></div></p>\n";
-			print "<p><textarea placeholder='Description' class='form-control' name='product_desc' rows='10' style='width:99%'></textarea></p><input class='btn btn-primary pull-right' type='submit' value='Add " . lc($items{"Product"}) . "'>";
+			print "<span class='pull-right'><img title='Header' src='icons/header.png' style='cursor:pointer' onclick='javascript:md_header()'> <img title='Bold' src='icons/bold.png' style='cursor:pointer' onclick='javascript:md_bold()'> <img title='Italic' src='icons/italic.png' style='cursor:pointer' onclick='javascript:md_italic()'> <img title='Code' src='icons/code.png' style='cursor:pointer' onclick='javascript:md_code()'> <img title='Image' src='icons/image.png' style='cursor:pointer' onclick='javascript:md_image()'> <img title='Link' src='icons/link.png' style='cursor:pointer' onclick='javascript:md_link()'> <img title='List' src='icons/list.png' style='cursor:pointer' onclick='javascript:md_list()'></span><br>";
+			print "<p><textarea placeholder='Description' id='markdown' class='form-control' name='product_desc' rows='10'></textarea></p><input class='btn btn-primary pull-right' type='submit' value='Add " . lc($items{"Product"}) . "'>";
 			if($cfg->load('upload_folder')) { print $items{"Product"} . " image: <input type='file' name='product_screenshot'>\n"; }
 			print "<input type='hidden' name='m' value='add_product'></form></div></div>\n";
 		}
@@ -3438,7 +3445,7 @@ elsif($q->param('kb') && $cfg->load('comp_articles') eq "on")
 		{
 			if($res[7] eq "Never") { print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'><span style='float:right'>Created: <i>" . $res[6] . "</i></span>Article " . to_int($q->param('kb')) . "</h3></div><div class='panel-body'>\n"; }
 			else { print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'><span style='float:right'>Last modified: <i>" . $res[7] . "</i></span>Article " . to_int($q->param('kb')) . "</h3></div><div class='panel-body'>\n"; }
-			if($logged_lvl > 3)
+			if($logged_lvl > 3 && $q->param('edit'))
 			{
 				print "<form method='POST' action='.'><input type='hidden' name='m' value='save_article'><input type='hidden' name='id' value='" . to_int($q->param('kb')) . "'>\n";
 				print "<p><div class='row'><div class='col-sm-6'>Title: <input type='text' maxlength='50' class='form-control' name='title' value='" . $res[2] . "'></div><div class='col-sm-6'>\n";
@@ -3456,16 +3463,20 @@ elsif($q->param('kb') && $cfg->load('comp_articles') eq "on")
 					}
 				}
 				print "</select></div></div></p>";
-				print "<p>Description:<br><textarea name='article' rows='20' class='form-control'>" . $res[3] . "</textarea></p>\n";
+				print "<p>Description:<span class='pull-right'><img title='Header' src='icons/header.png' style='cursor:pointer' onclick='javascript:md_header()'> <img title='Bold' src='icons/bold.png' style='cursor:pointer' onclick='javascript:md_bold()'> <img title='Italic' src='icons/italic.png' style='cursor:pointer' onclick='javascript:md_italic()'> <img title='Code' src='icons/code.png' style='cursor:pointer' onclick='javascript:md_code()'> <img title='Image' src='icons/image.png' style='cursor:pointer' onclick='javascript:md_image()'> <img title='Link' src='icons/link.png' style='cursor:pointer' onclick='javascript:md_link()'> <img title='List' src='icons/list.png' style='cursor:pointer' onclick='javascript:md_list()'></span><br><textarea id='markdown' name='article' rows='20' class='form-control'>" . $res[3] . "</textarea></p>\n";
 				print "<input type='submit' class='btn btn-primary pull-right' value='Save article'></form>";
 			}
 			else
 			{
-				print "<p>Title: <b>" . $res[2] . "</b></p>\n";
-				if($res[1] == 0 || !$products[$res[1]]) { print "<p>Applies to: <b>All " . lc($items{"Product"}) . "s</b></p>\n"; }
-				else { print "<p>Applies to: <b>" . $products[$res[1]] . "</b></p>\n"; }
-				print "<p>Description:<br><pre>" . $res[3] . "</pre></p>\n";
+				print "<div class='row'><div class='col-sm-6'>Title: <b>" . $res[2] . "</b></div>\n";
+				if($res[1] == 0 || !$products[$res[1]]) { print "<div class='col-sm-6'>Applies to: <b>All " . lc($items{"Product"}) . "s</b></div></div>\n"; }
+				else { print "<div class='col-sm-6'>Applies to: <b>" . $products[$res[1]] . "</b></div></div>\n"; }
+				print "<hr>" . markdown($res[3]) . "\n";
 			}
+			if($logged_lvl > 3  && !$q->param('edit'))
+			{
+				print "<form method='GET' action='.'><input type='hidden' name='kb' value='" . to_int($q->param('kb')) . "'><input class='btn btn-primary pull-right' type='submit' name='edit' value='Edit article'></form>";
+			} 
 			if($logged_user ne "")
 			{
 				my $sql2 = $db->prepare("SELECT ROWID FROM subscribe WHERE user = ? AND articleid = ?;");
