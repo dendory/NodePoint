@@ -10,10 +10,10 @@
 % Conditional compilation for Windows and Linux
 \usepackage{ifthen}
 \newboolean{Windows}
-\setboolean{Windows}{false} % change to false for Linux
+\setboolean{Windows}{true} % change to false for Linux
 \ifthenelse{\boolean{Windows}}
-{\def\NodePointManual{NodePoint Manual - Windows version 1.3.0}}
-{\def\NodePointManual{NodePoint Manual - Linux version 1.3.0}}
+{\def\NodePointManual{NodePoint Manual - Windows version 1.3.1}}
+{\def\NodePointManual{NodePoint Manual - Linux version 1.3.1}}
 
 % Margins and paper type
 \geometry{a4paper, right=1.5cm, left=1.5cm, top=2cm, bottom=1.5cm}
