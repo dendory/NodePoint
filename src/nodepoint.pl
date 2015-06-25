@@ -8,7 +8,7 @@
 #
 
 use strict;
-use Config::Linux;
+use Config::Win32;
 use Digest::SHA qw(sha1_hex);
 use DBI;
 use CGI;
@@ -28,7 +28,7 @@ my ($cfg, $db, $sql, $cn, $cp, $cgs, $last_login, $perf);
 my $logged_user = "";
 my $logged_lvl = -1;
 my $q = new CGI;
-my $VERSION = "1.3.1";
+my $VERSION = "1.3.2";
 my %items = ("Product", "Product", "Release", "Release", "Model", "SKU/Model");
 my @itemtypes = ("None");
 my @themes = ("primary", "default", "success", "info", "warning", "danger");
@@ -824,11 +824,11 @@ sub home
 # Connect to config
 eval
 {
-	$cfg = Config::Linux->new("NodePoint", "settings");
+	$cfg = Config::Win32->new("NodePoint", "settings");
 };
 if(!defined($cfg)) # Can't even use headers() if this fails.
 {
-	print "Content-type: text/html\n\nError: Could not access " . Config::Linux->type . ". Please ensure NodePoint has the proper permissions.";
+	print "Content-type: text/html\n\nError: Could not access " . Config::Win32->type . ". Please ensure NodePoint has the proper permissions.";
 	exit(0);
 };
 
@@ -1656,12 +1656,12 @@ elsif($q->param('m')) # Modules
 			print "<table class='table table-striped'><tr><th>User name</th><th>Email</th><th>Level</th><th>Change access level</th><th>Reset password</th><th>Last login</th></tr>\n";
 			if(defined($q->param("filter_users")))
 			{
-				$sql = $db->prepare("SELECT * FROM users WHERE level = ?;");
+				$sql = $db->prepare("SELECT * FROM users WHERE level = ? ORDER BY name;");
 				$sql->execute(to_int($q->param("filter_users")));
 			}
 			else
 			{
-				$sql = $db->prepare("SELECT * FROM users;");
+				$sql = $db->prepare("SELECT * FROM users ORDER BY name;");
 				$sql->execute();
 			}
 			while(my @res = $sql->fetchrow_array())
@@ -2157,7 +2157,7 @@ elsif($q->param('m')) # Modules
 				if($logged_lvl > 3 && $vis ne "Archived")
 				{
 					print "<form method='POST' action='.'><input type='hidden' name='product_id' value='" . to_int($q->param('p')) . "'><input type='hidden' name='m' value='add_step'><h4>Add a new task</h4><p><div class='row'><div class='col-sm-12'><input placeholder='Description' class='form-control' name='name' maxlength='200'></div></div></p><p><div class='row'><div class='col-sm-5'>Assign user:<br><select name='user' class='form-control'>";
-					my $sql = $db->prepare("SELECT name FROM users WHERE level > 0;");
+					my $sql = $db->prepare("SELECT name FROM users WHERE level > 0 ORDER BY name;");
 					$sql->execute();
 					while(my @res = $sql->fetchrow_array()) { print "<option>" . $res[0] . "</option>"; }
 					print "</select></div><div class='col-sm-5'>Due by:<br><input type='text' class='form-control datepicker' name='due' placeholder='mm/dd/yyyy'></div><div class='col-sm-2'><input class='btn btn-primary pull-right' type='submit' value='Add task'></div></div></p></form><hr><h4>Current tasks</h4>\n";
@@ -2758,7 +2758,7 @@ elsif($q->param('m')) # Modules
 					print "<p><div class='row'>";
 					if($cfg->load('comp_time') eq "on") { print "<div class='col-sm-4'>Time spent (in <b>hours</b>): <input type='text' name='time_spent' class='form-control' value='0'></div>"; }
 					print "<div class='col-sm-4'>Notify user: <select name='notify_user' class='form-control'><option selected></option>";
-					my $sql2 = $db->prepare("SELECT name FROM users WHERE level > 0;");
+					my $sql2 = $db->prepare("SELECT name FROM users WHERE level > 0 ORDER BY name;");
 					$sql2->execute();
 					while(my @res2 = $sql2->fetchrow_array()) { print "<option>" . $res2[0] . "</option>"; }
 					print "</select></div>";
