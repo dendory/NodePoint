@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.1415926-2.5-0.9999.3 (MiKTeX 2.9) (preloaded format=xelatex 2015.6.17)  22 JUN 2015 14:53
+This is XeTeX, Version 3.1415926-2.5-0.9999.3 (MiKTeX 2.9) (preloaded format=xelatex 2015.6.17)  25 JUN 2015 14:44
 entering extended mode
 **manual.tex
 (C:\scripts\git\nodepoint\src\manual\manual.tex
@@ -865,37 +865,24 @@ Requested font "Arial/I/ICU:script=latn;language=DFLT;" at 10.95pt
  -> C:/Windows/Fonts/ariali.ttf
 Requested font "Arial/B/ICU:script=latn;language=DFLT;" at 12.0pt
  -> C:/Windows/Fonts/arialbd.ttf
+ [4
 
-Overfull \hbox (31.65036pt too wide) in paragraph at lines 209--209
-[]\EU1/Arial(0)/m/n/10.95 Make sure you are running it as a local administrator
-. Make sure the file \EU1/lmtt/m/n/10.95 %windir%\system32\inetsrv\appcmd.exe
- []
-
-File: iisaccount.jpg Graphic file (type QTm)
-<use  "iisaccount.jpg" >
-
-LaTeX Warning: `h' float specifier changed to `ht'.
-
-[4
-
-]
-File: handlermapping.jpg Graphic file (type QTm)
- <use  "handlermapping.jpg" > [5] [6]
+] [5]
 Overfull \hbox (7.8762pt too wide) in paragraph at lines 259--260
 \EU1/Arial(0)/m/n/10.95 web site where various scripts can be found. You can al
 so contact the support team at \EU1/lmtt/m/n/10.95 support@nodepoint.ca
  []
 
-[7]
+[6]
 File: initial.jpg Graphic file (type QTm)
- <use  "initial.jpg" > [8
+ <use  "initial.jpg" > [7
 
-] [9]
+] [8]
 File: userman.jpg Graphic file (type QTm)
- <use  "userman.jpg" > [10]
+ <use  "userman.jpg" > [9]
 File: reports.jpg Graphic file (type QTm)
 
-<use  "reports.jpg" > [11]
+<use  "reports.jpg" > [10]
 File: customform.jpg Graphic file (type QTm)
  <use  "customform.jpg" >
 File: customform2.jpg Graphic file (type QTm)
@@ -904,33 +891,33 @@ Overfull \hbox (0.8773pt too wide) in paragraph at lines 384--386
 [][] [] 
  []
 
-[12
+[11
 
 ]
 File: autoassign.jpg Graphic file (type QTm)
- <use  "autoassign.jpg" > [13]
+ <use  "autoassign.jpg" > [12]
 File: projectmanagement.jpg Graphic file (type QTm)
- <use  "projectmanagement.jpg" > [14]
-[15
+ <use  "projectmanagement.jpg" > [13]
+[14
 
-] [16]
-Package atveryend Info: Empty hook `BeforeClearDocument' on input line 536.
- [17
+] [15]
+Package atveryend Info: Empty hook `BeforeClearDocument' on input line 549.
+ [16
 
 ]
-Package atveryend Info: Empty hook `AfterLastShipout' on input line 536.
+Package atveryend Info: Empty hook `AfterLastShipout' on input line 549.
  (C:\scripts\git\nodepoint\src\manual\manual.aux)
-Package atveryend Info: Empty hook `AtVeryEndDocument' on input line 536.
-Package atveryend Info: Empty hook `AtEndAfterFileList' on input line 536.
-Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 536.
+Package atveryend Info: Empty hook `AtVeryEndDocument' on input line 549.
+Package atveryend Info: Empty hook `AtEndAfterFileList' on input line 549.
+Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 549.
  ) 
 Here is how much of TeX's memory you used:
- 21385 strings out of 429025
- 392762 string characters out of 3166798
- 460769 words of memory out of 3000000
- 24498 multiletter control sequences out of 15000+200000
+ 21381 strings out of 429025
+ 392698 string characters out of 3166798
+ 460610 words of memory out of 3000000
+ 24496 multiletter control sequences out of 15000+200000
  6939 words of font info for 49 fonts, out of 3000000 for 9000
  912 hyphenation exceptions out of 8191
  46i,12n,50p,10376b,419s stack positions out of 5000i,500n,10000p,200000b,50000s
 
-Output written on manual.pdf (18 pages).
+Output written on manual.pdf (17 pages).

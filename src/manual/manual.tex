@@ -10,10 +10,10 @@
 % Conditional compilation for Windows and Linux
 \usepackage{ifthen}
 \newboolean{Windows}
-\setboolean{Windows}{true} % change to false for Linux
+\setboolean{Windows}{false} % change to false for Linux
 \ifthenelse{\boolean{Windows}}
-{\def\NodePointManual{NodePoint Manual - Windows version 1.3.1}}
-{\def\NodePointManual{NodePoint Manual - Linux version 1.3.1}}
+{\def\NodePointManual{NodePoint Manual - Windows version 1.3.2}}
+{\def\NodePointManual{NodePoint Manual - Linux version 1.3.2}}
 
 % Margins and paper type
 \geometry{a4paper, right=1.5cm, left=1.5cm, top=2cm, bottom=1.5cm}
@@ -316,7 +316,7 @@ These are the access levels used by NodePoint:
 \textbf{Level} & \textbf{Name} & \textbf{Description}\\
 \hline
 6 & NodePoint Admin & Can change basic NodePoint settings.\\
-5 & Users management & Can create users, reset passwords, change access levels.\\
+5 & Users management & Can manage users, reset passwords, edit clients.\\
 4 & Products management & Can add, retire and edit products, edit articles.\\
 3 & Tickets management & Can create releases, update tickets, track time.\\
 2 & Restricted view & Can view statistics, restricted tickets and products.\\
@@ -419,6 +419,19 @@ The tasks management component can be used to manage products or projects, creat
 \end{figure}
 
 New tasks created will send an email notification to the user assigned to the task, and all tasks will show on the user's home page. There, users can modify the completion rate for each item. Completed and overdue tasks will also be highlighted.
+
+\subsection{Clients Directory}
+The clients directory can be used to keep track of clients or contacts from the \textbf{Settings} page. New clients can be added along with specific information such as email, phone number or notes by users of access level 5, details seen by users of level 2 and higher. The following statuses can be assigned to clients:
+
+\begin{itemize}
+\item \textbf{Prospect:} A prospective client.
+\item \textbf{Contact:} A contact entry.
+\item \textbf{Paid:} A paid client.
+\item \textbf{Unpaid:} An unpaid or default client.
+\item \textbf{Closed:} A closed entry (no ticket can be filed against closed clients).
+\end{itemize}
+
+If the clients directory is enabled, the \textit{Clients} field type can be added to custom ticket forms, which will show a drop down list of available clients when creating new tickets, to assign issues to specific clients. This can be used as a CRM portal to keep track of interactions with clients. 
 
 \clearpage
 \section{JSON API}

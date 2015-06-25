@@ -65,7 +65,7 @@ sub headers
 	navbar();
 	print "  <div class='container'>\n";
 	if($cfg->load("motd")) { print "<div class='well'>" . $cfg->load("motd") . "</div>\n"; }
-	if($logged_lvl > 5 && $cfg->load('comp_tickets') ne "on" && $cfg->load('comp_articles') ne "on" && $cfg->load('comp_time') ne "on" && $cfg->load('comp_shoutbox') ne "on" && $cfg->load('comp_steps') ne "on") { msg("All components are turned off. Enable the ones you need in Settings.", 1); }
+	if($logged_lvl > 5 && $cfg->load('comp_tickets') ne "on" && $cfg->load('comp_articles') ne "on" && $cfg->load('comp_time') ne "on" && $cfg->load('comp_shoutbox') ne "on" && $cfg->load('comp_clients') ne "on" && $cfg->load('comp_steps') ne "on") { msg("All components are turned off. Enable the ones you need in Settings.", 1); }
 }
 
 # Footers
@@ -163,7 +163,7 @@ sub navbar
 			if($cfg->load('comp_articles') eq "on") { print "	 <li><a href='./?m=articles'>Articles</a></li>\n"; }
 			print "	 <li><a href='./?m=settings'>Settings</a></li>\n";
 		}
-		elsif($q->param('m') && ($q->param('m') eq "settings" || $q->param('m') eq "confirm_delete" || $q->param('m') eq "clear_log" || $q->param('m') eq "stats" || $q->param('m') eq "change_lvl" || $q->param('m') eq "confirm_email" || $q->param('m') eq "reset_pass" || $q->param('m') eq "logout") || $q->param('create_form') || $q->param('edit_form') || $q->param('save_form'))
+		elsif($q->param('m') && ($q->param('m') eq "settings" || $q->param('m') eq "confirm_delete" || $q->param('m') eq "clear_log" || $q->param('m') eq "stats" || $q->param('m') eq "change_lvl" || $q->param('m') eq "confirm_email" || $q->param('m') eq "reset_pass" || $q->param('m') eq "logout" || $q->param('m') eq "add_client" || $q->param('m') eq  "view_client" || $q->param('m') eq "save_client") || $q->param('create_form') || $q->param('edit_form') || $q->param('save_form'))
 		{
 			print "	 <li><a href='.'>Home</a></li>\n";
 			print "	 <li><a href='./?m=products'>" . $items{"Product"} . "s</a></li>\n";
@@ -420,6 +420,12 @@ sub db_check
 		$sql->execute();
 	};
 	$sql->finish();
+	$sql = $db->prepare("SELECT * FROM clients WHERE 0 = 1;") or do
+	{
+		$sql = $db->prepare("CREATE TABLE clients (name TEXT, status TEXT, contact TEXT, notes TEXT, modified TEXT);");
+		$sql->execute();
+	};
+	$sql->finish();
 }
 
 # Log an event
@@ -468,6 +474,7 @@ sub save_config
 	$cfg->save("comp_time", $q->param('comp_time'));
 	$cfg->save("comp_shoutbox", $q->param('comp_shoutbox'));
 	$cfg->save("comp_steps", $q->param('comp_steps'));
+	$cfg->save("comp_clients", $q->param('comp_clients'));
 }
 
 # Check login credentials
@@ -878,7 +885,7 @@ if($cfg->load("items_managed"))
 if($q->param('site_name') && $q->param('db_address') && $logged_user ne "" && $logged_user eq $cfg->load('admin_name')) # Save config by admin
 {
 	headers("Settings");
-	if($q->param('site_name') && $q->param('db_address') && $q->param('admin_name') && $q->param('custom_name') && defined($q->param('default_lvl')) && $q->param('default_vis') && $q->param('api_write') && defined($q->param('theme_color')) &&  $q->param('api_imp') && $q->param('api_read') && $q->param('comp_tickets') && $q->param('comp_articles') && $q->param('comp_time') && $q->param('comp_shoutbox') && $q->param('comp_steps')) # All required values have been filled out
+	if($q->param('site_name') && $q->param('db_address') && $q->param('admin_name') && $q->param('custom_name') && defined($q->param('default_lvl')) && $q->param('default_vis') && $q->param('api_write') && defined($q->param('theme_color')) &&  $q->param('api_imp') && $q->param('api_read') && $q->param('comp_tickets') && $q->param('comp_articles') && $q->param('comp_time') && $q->param('comp_shoutbox') && $q->param('comp_clients') && $q->param('comp_steps')) # All required values have been filled out
 	{
 		# Test database settings
 		$db = DBI->connect("dbi:SQLite:dbname=" . $q->param('db_address'), '', '', { RaiseError => 0, PrintError => 0 }) or do { msg("Could not verify database settings. Please hit back and try again.<br><br>" . $DBI::errstr, 0); exit(0); };
@@ -902,6 +909,7 @@ if($q->param('site_name') && $q->param('db_address') && $logged_user ne "" && $l
 		if(!$q->param('comp_articles')) { $text .= "<span class='label label-danger'>Component: Support articles</span> "; }
 		if(!$q->param('comp_time')) { $text .= "<span class='label label-danger'>Component: Time tracking</span> "; }
 		if(!$q->param('comp_shoutbox')) { $text .= "<span class='label label-danger'>Component: Shoutbox</span> "; }
+		if(!$q->param('comp_clients')) { $text .= "<span class='label label-danger'>Component: Clients Directory</span> "; }
 		if(!$q->param('comp_steps')) { $text .= "<span class='label label-danger'>Component: Tasks Management</span> "; }
 		$text .= " Please go back and try again.";
 		msg($text, 0);
@@ -952,7 +960,7 @@ elsif(!$cfg->load("db_address") || !$cfg->load("site_name")) # first use
 				print "<p><div class='row'><div class='col-sm-4'>Allow user registrations:</div><div class='col-sm-4'><input type='checkbox' name='allow_registrations' checked=checked></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Default access level:</div><div class='col-sm-4'><select name='default_lvl' style='width:300px'><option value=5>5 - Users management</option><option value=4>4 - Products management</option><option value=3>3 - Tickets management</option><option value=2>2 - Restricted view</option><option value=1 selected=selected>1 - Authorized users</option><option value=0>0 - Unauthorized users</option></select></div></div></p>\n";
 				print "<p>New registered users will be assigned a default access level, which can then be modified by users with the <b>5 - Users management</b> level. These are the access levels, with each rank having the lower permissions as well:</p>\n";
-				print "<table class='table table-striped'><tr><th>Level</th><th>Name</th><th>Description</th></tr><tr><td>6</td><td>NodePoint Admin</td><td>Can change basic NodePoint settings</td></tr><td>5</td><td>Users management</td><td>Can create users, reset passwords, change access levels</td></tr><tr><td>4</td><td>Products management</td><td>Can add, retire and edit products, edit articles</td></tr><tr><td>3</td><td>Tickets management</td><td>Can create releases, update tickets, track time</td></tr><tr><td>2</td><td>Restricted view</td><td>Can view statistics, restricted tickets and products</td></tr><tr><td>1</td><td>Authorized users</td><td>Can create tickets and comments</td></tr><tr><td>0</td><td>Unauthorized users</td><td>Can view private tickets</td></tr></table>\n";
+				print "<table class='table table-striped'><tr><th>Level</th><th>Name</th><th>Description</th></tr><tr><td>6</td><td>NodePoint Admin</td><td>Can change basic NodePoint settings</td></tr><td>5</td><td>Users management</td><td>Can manage users, reset passwords, edit clients</td></tr><tr><td>4</td><td>Products management</td><td>Can add, retire and edit products, edit articles</td></tr><tr><td>3</td><td>Tickets management</td><td>Can create releases, update tickets, track time</td></tr><tr><td>2</td><td>Restricted view</td><td>Can view statistics, restricted tickets and products</td></tr><tr><td>1</td><td>Authorized users</td><td>Can create tickets and comments</td></tr><tr><td>0</td><td>Unauthorized users</td><td>Can view private tickets</td></tr></table>\n";
 				my $key = join'', map +(0..9,'a'..'z','A'..'Z')[rand(10+26*2)], 1..32;
 				print "<p><div class='row'><div class='col-sm-4'>API read key:</div><div class='col-sm-4'><input type='text' style='width:300px' name='api_read' value='" . $key . "'></div></div></p>\n";
 				$key = join'', map +(0..9,'a'..'z','A'..'Z')[rand(10+26*2)], 1..32;
@@ -983,9 +991,10 @@ elsif(!$cfg->load("db_address") || !$cfg->load("site_name")) # first use
 				print "<p><div class='row'><div class='col-sm-4'>Component: Tickets Management</div><div class='col-sm-4'><input type='checkbox' name='comp_tickets' checked></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Component: Support Articles</div><div class='col-sm-4'><input type='checkbox' name='comp_articles' checked></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Component: Time Tracking</div><div class='col-sm-4'><input type='checkbox' name='comp_time' checked></div></div></p>\n";
-				print "<p><div class='row'><div class='col-sm-4'>Component: Shoutbox</div><div class='col-sm-4'><input type='checkbox' name='comp_shoutbox'></div></div></p>\n";
-				print "<p><div class='row'><div class='col-sm-4'>Component: Tasks Management</div><div class='col-sm-4'><input type='checkbox' name='comp_steps'></div></div></p>\n";
-				print "<p><input class='btn btn-primary pull-right' type='submit' value='Save'></p></form>\n"; 
+				print "<p><div class='row'><div class='col-sm-4'>Component: Shoutbox</div><div class='col-sm-4'><input type='checkbox' name='comp_shoutbox' checked></div></div></p>\n";
+				print "<p><div class='row'><div class='col-sm-4'>Component: Clients Directory</div><div class='col-sm-4'><input type='checkbox' name='comp_clients' checked></div></div></p>\n";
+				print "<p><div class='row'><div class='col-sm-4'>Component: Tasks Management</div><div class='col-sm-4'><input type='checkbox' name='comp_steps' checked></div></div></p>\n";
+				print "<p>See the <a href='./manual.pdf'>manual</a> file for help.<input class='btn btn-primary pull-right' type='submit' value='Save'></p></form>\n"; 
 			}
 			else
 			{
@@ -1672,8 +1681,24 @@ elsif($q->param('m')) # Modules
 			print "</table>\n";
 			if(!$cfg->load('ad_server'))
 			{
-				print "<div class='form-group'><h4>Manually add a new user:</h4><form method='POST' action='.' data-toggle='validator' role='form'>\n";
+				print "<div class='form-group'><h4>Add a new user:</h4><form method='POST' action='.' data-toggle='validator' role='form'>\n";
 				print "<p><div class='row'><div class='col-sm-6'><input type='text' name='new_name' placeholder='User name' class='form-control' maxlength='20' required></div><div class='col-sm-6'><input type='email' name='new_email' placeholder='Email address (optional)' class='form-control'></div></div></p><p><div class='row'><div class='col-sm-6'><input type='password' name='new_pass1' data-minlength='6' id='new_pass1' class='form-control' placeholder='Password' required></div><div class='col-sm-6'><input type='password' name='new_pass2' id='inputPasswordConfirm' data-match='#new_pass1' data-match-error='Passwords do not match.' placeholder='Confirm password' class='form-control' required></div></div></p><div class='help-block with-errors'></div><input class='btn btn-primary pull-right' type='submit' value='Add user'></form></div>\n";
+			}
+			print "</div></div>\n";
+		}
+		if($logged_lvl > 1 && $cfg->load('comp_clients') eq "on")
+		{
+			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Clients directory</h3></div><div class='panel-body'><table class='table table-striped'><tr><th>Name</th><th>Contact</th><th>Status</th></tr>\n";
+			$sql = $db->prepare("SELECT ROWID,* FROM clients ORDER BY name;");
+			$sql->execute();
+			while(my @res = $sql->fetchrow_array())
+			{
+				print "<tr><td><a href='./?m=view_client&c=" . $res[0] . "'>" . $res[1] . "</a></td><td>" . $res[3] . "</td><td>" . $res[2] . "</td></tr>";
+			}		
+			print "</table>";
+			if($logged_lvl > 4)
+			{
+				print "<h4>Add a new client:</h4><form method='POST' action='.'><input type='hidden' name='m' value='add_client'><p><div class='row'><div class='col-sm-6'><input type='text' class='form-control' name='name' placeholder='Client name' maxlength='50'></div><div class='col-sm-6'><select class='form-control' name='status'><option>Prospect</option><option>Contact</option><option>Paid</option><option>Unpaid</option><option>Closed</option></select></div></div></p><p><input type='text' class='form-control' name='contact' placeholder='Contact' maxlength='99'></p><p><textarea class='form-control' name='notes' placeholder='Notes'></textarea></p><p><input type='submit' value='Add client' class='btn btn-primary pull-right'></form>";
 			}
 			print "</div></div>\n";
 		}
@@ -1691,17 +1716,17 @@ elsif($q->param('m')) # Modules
 				my @points = (0, 0, 0, 0, 0, 0, 0);
 				my $curwd = "-1";
 				while(my @res = $sql->fetchrow_array())
-				{ 
+				{
 					my ($weekday, $month, $day, $hms, $year) = split(' ', $res[0]);
 					if($curwd ne $month . " " . $day)
 					{
 						$i++;
 						$curwd = $month . " " . $day;
-					} 
+					}
 					$labels[$i] = $month . " " . $day;
 					$points[$i]++;
 					if($i > 6) { last; }
-				}			
+				}
 				print "labels: ['" . $labels[6] . "', '" . $labels[5] . "', '" . $labels[4] . "', '" . $labels[3] . "', '" . $labels[2] . "', '" . $labels[1] . "', '" . $labels[0] . "'], datasets: [{ label: 'Tickets created by day', fillColor: '#F2FBFC', strokeColor: '#97BBCC', pointColor: '#97BBCC', pointStrokeColor: '#A7CBDC', pointHighlightFill: '#A7CBDC', pointHighlightStroke: '#97BBCC', data: [" . $points[6] . "," . $points[5] . "," . $points[4] . "," . $points[3] . "," . $points[2] . "," . $points[1] . "," . $points[0] . "] }]}; var ctx0 = document.getElementById('graph0').getContext('2d'); new Chart(ctx0).Line(data0); var data1 = [{ value: ";
 				$sql = $db->prepare("SELECT COUNT(*) FROM tickets WHERE status = 'New';");
 				$sql->execute();
@@ -1834,6 +1859,10 @@ elsif($q->param('m')) # Modules
 			if($cfg->load("comp_shoutbox") eq "on") { print "<option selected>on</option><option>off</option>"; }
 			else { print "<option>on</option><option selected>off</option>"; }
 			print "</select></td></tr>\n";
+			print "<tr><td>Component: Clients Directory</td><td><select class='form-control' name='comp_clients'>";
+			if($cfg->load("comp_clients") eq "on") { print "<option selected>on</option><option>off</option>"; }
+			else { print "<option>on</option><option selected>off</option>"; }
+			print "</select></td></tr>\n";
 			print "<tr><td>Component: Tasks Management</td><td><select class='form-control' name='comp_steps'>";
 			if($cfg->load("comp_steps") eq "on") { print "<option selected>on</option><option>off</option>"; }
 			else { print "<option>on</option><option selected>off</option>"; }
@@ -1857,6 +1886,83 @@ elsif($q->param('m')) # Modules
 				print "<tr><td>" . $res[0] . "</td><td>" . $res[1] . "</td><td>" . $res[2] . "</td><td>" . $res[3] . "</td></tr>\n";
 			}
 			print "</table></div></div>\n";
+		}
+	}
+	elsif($q->param('m') eq "save_client" && $q->param('c') && $logged_lvl > 4)
+	{
+		headers("Settings");
+		if($q->param('delete'))
+		{
+			$sql = $db->prepare("DELETE FROM clients WHERE ROWID = ?;");
+			$sql->execute(to_int($q->param('c')));
+			msg("Client removed. Press <a href='./?m=settings'>here</a> to continue.", 3);		
+		}
+		elsif(!$q->param('contact') || !$q->param('status'))
+		{
+			my $text = "Required fields missing: ";
+			if(!$q->param('contact')) { $text .= "<span class='label label-danger'>Contact</span> "; }
+			if(!$q->param('status')) { $text .= "<span class='label label-danger'>Status</span> "; }
+			$text .= " Please go back and try again.";
+			msg($text, 0);	    
+		}
+		else
+		{
+			my $notes = "";
+			if($q->param('notes')) { $notes = sanitize_html($q->param('notes')); }
+			$sql = $db->prepare("UPDATE clients SET status = ?, contact = ?, notes = ?, modified = ? WHERE ROWID = ?;");
+			$sql->execute(sanitize_html($q->param('status')), sanitize_html($q->param('contact')), $notes, now(), to_int($q->param('c')));
+			msg("Client updated. Press <a href='./?m=view_client&c=" . to_int($q->param('c')) . "'>here</a> to continue.", 3);
+		}
+	}
+	elsif($q->param('m') eq "view_client" && $q->param('c') && $logged_lvl > 1)
+	{
+		headers("Settings");
+		$sql = $db->prepare("SELECT * FROM clients WHERE ROWID = ?;");
+		$sql->execute(to_int($q->param('c')));
+		while(my @res = $sql->fetchrow_array())
+		{
+			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>" . $res[0] . "<span class='pull-right'>Last modified: <i>" . $res[4] . "</i></span></h3></div><div class='panel-body'>";
+			if($logged_lvl > 4 && $q->param('edit'))
+			{
+				print "<form method='POST' action='.'><input type='hidden' name='m' value='save_client'><input type='hidden' name='c' value='" . to_int($q->param('c')) . "'><p><div class='row'><div class='col-sm-6'><input type='text' class='form-control' name='contact' placeholder='Contact' maxlength='99' value='" . $res[2] . "'></div><div class='col-sm-6'><select class='form-control' name='status'><option";
+				if($res[1] eq "Prospect") { print " selected"; }
+				print ">Prospect</option><option";
+				if($res[1] eq "Contact") { print " selected"; }
+				print ">Contact</option><option";
+				if($res[1] eq "Paid") { print " selected"; }
+				print ">Paid</option><option";
+				if($res[1] eq "Unpaid") { print " selected"; }
+				print ">Unpaid</option><option";
+				if($res[1] eq "Closed") { print " selected"; }
+				print ">Closed</option></select></div></div></p><p><textarea class='form-control' name='notes' placeholder='Notes' rows='10'>" . $res[3] . "</textarea></p><p><input type='submit' value='Delete' name='delete' class='btn btn-danger'><input type='submit' value='Save client' class='btn btn-primary pull-right'></form>";
+			}
+			else
+			{
+				print "<p><div class='row'><div class='col-sm-6'>Contact: <b>" . $res[2] . "</b></div><div class='col-sm-6'>Status: <b>" . $res[1] . "</b></div></div></p><p>Notes:<br><pre>" . $res[3] . "</pre></p>";
+				if($logged_lvl > 4) { print "<form method='POST' action='.'><input type='hidden' name='m' value='view_client'><input type='hidden' name='c' value='" . to_int($q->param('c')) . "'><input type='submit' class='btn btn-primary pull-right' name='edit' value='Edit client'></form>"; }
+			}
+			print "</div></div>\n";
+		}		
+	}
+	elsif($q->param('m') eq "add_client" && $logged_lvl > 4)
+	{
+		headers("Settings");
+		if(!$q->param('name') || !$q->param('contact') || !$q->param('status'))
+		{
+			my $text = "Required fields missing: ";
+			if(!$q->param('name')) { $text .= "<span class='label label-danger'>Client name</span> "; }
+			if(!$q->param('contact')) { $text .= "<span class='label label-danger'>Contact</span> "; }
+			if(!$q->param('status')) { $text .= "<span class='label label-danger'>Status</span> "; }
+			$text .= " Please go back and try again.";
+			msg($text, 0);	    
+		}
+		else
+		{
+			my $notes = "";
+			if($q->param('notes')) { $notes = sanitize_html($q->param('notes')); }
+			$sql = $db->prepare("INSERT INTO clients VALUES (?, ?, ?, ?, ?);");
+			$sql->execute(sanitize_html($q->param('name')), sanitize_html($q->param('status')), sanitize_html($q->param('contact')), $notes, now());
+			msg("Client added. Press <a href='./?m=settings'>here</a> to continue.", 3);
 		}
 	}
 	elsif($q->param('m') eq "clear_log" && $logged_lvl > 5)
@@ -1970,7 +2076,7 @@ elsif($q->param('m')) # Modules
 		headers("Settings");
 		print "<p><form method='POST' action='.'><input type='hidden' name='m' value='change_lvl'><input type='hidden' name='u' value='" . sanitize_alpha($q->param('u')) . "'>Select a new access level for user <b>" . sanitize_alpha($q->param('u')) . "</b>: <select name='newlvl'><option>0</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select><br><input class='btn btn-primary' type='submit' value='Change level'></form></p><br>\n";
 		print "<p>Here is a list of available NodePoint levels:</p>\n";
-		print "<table class='table table-striped'><tr><th>Level</th><th>Name</th><th>Description</th></tr><tr><td>6</td><td>NodePoint Admin</td><td>Can change basic NodePoint settings</td></tr><td>5</td><td>Users management</td><td>Can create users, reset passwords, change access levels</td></tr><tr><td>4</td><td>" . $items{"Product"} . "s management</td><td>Can add, retire and edit " . lc($items{"Product"}) . "s, edit articles</td></tr><tr><td>3</td><td>Tickets management</td><td>Can create " . lc($items{"Release"}) . "s, update tickets, track time</td></tr><tr><td>2</td><td>Restricted view</td><td>Can view statistics, restricted tickets and " . lc($items{"Product"}) . "s</td></tr><tr><td>1</td><td>Authorized users</td><td>Can create tickets and comments</td></tr><tr><td>0</td><td>Unauthorized users</td><td>Can view private tickets</td></tr></table>\n";
+		print "<table class='table table-striped'><tr><th>Level</th><th>Name</th><th>Description</th></tr><tr><td>6</td><td>NodePoint Admin</td><td>Can change basic NodePoint settings</td></tr><td>5</td><td>Users management</td><td>Can manage users, reset passwords, edit clients</td></tr><tr><td>4</td><td>" . $items{"Product"} . "s management</td><td>Can add, retire and edit " . lc($items{"Product"}) . "s, edit articles</td></tr><tr><td>3</td><td>Tickets management</td><td>Can create " . lc($items{"Release"}) . "s, update tickets, track time</td></tr><tr><td>2</td><td>Restricted view</td><td>Can view statistics, restricted tickets and " . lc($items{"Product"}) . "s</td></tr><tr><td>1</td><td>Authorized users</td><td>Can create tickets and comments</td></tr><tr><td>0</td><td>Unauthorized users</td><td>Can view private tickets</td></tr></table>\n";
 	}
 	elsif($q->param('m') eq "reset_pass" && $logged_lvl > 4 && $q->param('u'))
 	{
@@ -2937,6 +3043,14 @@ elsif($q->param('m')) # Modules
 						elsif(to_int($customform[($i*2)+3]) == 7) { print "<select class='form-control' name='field" . $i . "'><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option></select>"; }
 						elsif(to_int($customform[($i*2)+3]) == 8) { print "<input type='text' class='form-control' name='field" . $i . "' value='" . $ENV{REMOTE_ADDR} . "' readonly>"; }
 						elsif(to_int($customform[($i*2)+3]) == 10) { print "<input type='text' class='form-control datepicker' name='field" . $i . "' placeholder='mm/dd/yyyy'>"; }
+						elsif(to_int($customform[($i*2)+3]) == 11)
+						{
+							print "<select class='form-control' name='field" . $i . "'>";
+							my $sql2 = $db->prepare("SELECT name FROM clients WHERE status != 'Closed';");
+							$sql2->execute();
+							while(my @res2 = $sql2->fetchrow_array()) { print "<option>" . $res2[0] . "</option>"; }
+							print "</select>";
+						}
 						elsif(to_int($customform[($i*2)+3]) == 9) { print "<select class='form-control' name='field" . $i . "'><option>Extremely</option><option>A lot</option><option>Moderately</option><option>Slightly</option><option>Not at all</option></select>"; }
 						else { print "<input type='text' class='form-control' name='field" . $i . "'>"; }
 						print "</div></div></p>";
@@ -3433,7 +3547,14 @@ elsif(($q->param('create_form') || $q->param('edit_form') || $q->param('save_for
 			if(to_int($q->param('edit_form')) > 0) { if(to_int($res[($i*2)+3]) == 9) { print " selected"; } }
 			print ">Satisfaction scale</option><option value=10";
 			if(to_int($q->param('edit_form')) > 0) { if(to_int($res[($i*2)+3]) == 10) { print " selected"; } }
-			print ">Date</option></td></tr>";
+			print ">Date</option>";
+			if($cfg->load('comp_clients') eq "on")
+			{
+				print "<option value=11";
+				if(to_int($q->param('edit_form')) > 0) { if(to_int($res[($i*2)+3]) == 11) { print " selected"; } }
+				print ">Client</option>";
+			}
+			print "</td></tr>";
 		}
 		print "</table><p><input type='submit' class='btn btn-primary pull-right' value='Save'></p></form></div></div>";
 	}
