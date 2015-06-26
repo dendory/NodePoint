@@ -47,18 +47,18 @@ function md_code()
 
 function md_header()
 {
-    insertAtCursor('## ', '', '');
+    insertAtCursor('### ', '', '');
 }
 
 function md_image()
 {
     var text = prompt("Image URL", "/path/to/img.jpg");
-    insertAtCursor('![', '](' + text + ')', 'Alt text');
+    if(text !== null) { insertAtCursor('![', '](' + text + ')', 'Alt text'); }
 }
 
 function md_link()
 {
     var text = prompt("Link URL", "http://")
-    insertAtCursor('[', '](' + text + ')', 'Link description');
+    if(text !== null) { insertAtCursor('[', '](' + text + ')', 'Link description'); }
 }
 
