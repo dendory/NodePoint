@@ -3558,6 +3558,14 @@ elsif($q->param('m')) # Modules
 	elsif($q->param('m') eq "items" && $cfg->load('comp_items') eq "on")
 	{
 		headers("Items");
+		my @products;
+		$sql = $db->prepare("SELECT ROWID,name FROM products;");
+		$sql->execute();
+		while(my @res = $sql->fetchrow_array()) { $products[$res[0]] = $res[1]; }
+		my @clients;
+		$sql = $db->prepare("SELECT ROWID,name FROM clients;");
+		$sql->execute();
+		while(my @res = $sql->fetchrow_array()) { $clients[$res[0]] = $res[1]; }
 		if($q->param('new_item'))
 		{
 			if(!$q->param('name') || !$q->param('type') || !$q->param('product_id') || !$q->param('client_id')) 
@@ -3574,43 +3582,163 @@ elsif($q->param('m')) # Modules
 			{
 				my $info = "";
 				if($q->param('info')) { $info = sanitize_html($q->param('info')); }
+				my $serial = "";
+				if($q->param('serial')) { $serial = sanitize_html($q->param('serial')); }
 				my $approval = 0;
 				if($q->param('approval')) { $approval = 1; }
 				$sql = $db->prepare("INSERT INTO items VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);");
-				$sql->execute(sanitize_html($q->param('name')), sanitize_html($q->param('type')), sanitize_html($q->param('serial')), to_int($q->param('product_id')), to_int($q->param('client_id')), $approval, 1, "", $info);
+				$sql->execute(sanitize_html($q->param('name')), sanitize_html($q->param('type')), $serial, to_int($q->param('product_id')), to_int($q->param('client_id')), $approval, 1, "", $info);
 				msg("Item added. Press <a href='./?m=items'>here</a> to continue.", 3);
 			}
 		}
 		elsif($q->param('i'))
 		{
-			
+			if($q->param('save_item'))
+			{
+				if(!$q->param('type') || !$q->param('product_id') || !$q->param('client_id')) 
+				{
+					my $text = "Required fields missing: ";
+					if(!$q->param('type')) { $text .= "<span class='label label-danger'>Item type</span> "; }
+					if(!$q->param('product_id')) { $text .= "<span class='label label-danger'>" . $items{"Product"} . "</span> "; }
+					if(!$q->param('client_id')) { $text .= "<span class='label label-danger'>Client</span> "; }
+					$text .= " Please go back and try again.";
+					msg($text, 0);
+				}
+				else
+				{
+					my $info = "";
+					if($q->param('info')) { $info = sanitize_html($q->param('info')); }
+					my $serial = "";
+					if($q->param('serial')) { $serial = sanitize_html($q->param('serial')); }
+					my $approval = 0;
+					if($q->param('approval')) { $approval = 1; }
+					$sql = $db->prepare("UPDATE items SET type = ?, productid = ?, clientid = ?, serial = ?, approval = ?, info = ? WHERE ROWID = ?;");
+					$sql->execute(sanitize_html($q->param('type')), to_int($q->param('product_id')), to_int($q->param('client_id')), $serial, $approval, $info, to_int($q->param('i')));
+					msg("Item updated.", 3);
+				}
+			}
+			$sql = $db->prepare("SELECT ROWID,* FROM items WHERE ROWID = ?;");
+			$sql->execute(to_int($q->param('i')));
+			while(my @res = $sql->fetchrow_array())
+			{
+				print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>" . $res[1] . "</h3></div><div class='panel-body'>";
+				if(!$q->param('edit'))
+				{
+					print "<p><div class='row'><div class='col-sm-6'>Type: <b>" . $res[2] . "</b></div><div class='col-sm-6'>Serial number: <b>" . $res[3] . "</b></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-6'>Product: <b>";
+					if($products[$res[4]]) { print $products[$res[4]]; }
+					else { print "None"; }
+					print "</b></div><div class='col-sm-6'>Client: <b>";
+					if($products[$res[5]]) { print $clients[$res[5]]; }
+					else { print "None"; }					
+					print "</b></div></div></p>";
+					print "<p>Information provided on checkout:<br><pre>" . $res[9] . "</pre></p>";
+					print "<p>Checkout approval: <b>";
+					if(to_int($res[6]) == 1) { print "Required"; }
+					else { print "Not required"; } 	
+					print "</b></p><p>Status: <b>";
+					if(to_int($res[7]) == 0) { print "Unavailable"; }
+					elsif(to_int($res[7]) == 1) { print "Available"; }
+					elsif(to_int($res[7]) == 2) { print "Waiting approval for " . $res[8]; }
+					else { print "Checked out by " . $res[8]; }
+					print "</b></p><p>";
+					if($logged_lvl > 3) 
+					{
+						print "<form method='GET' action='.'><input type='hidden' name='m' value='items'><input type='hidden' name='i' value='" . to_int($q->param('i')) . "'><input type='submit' class='btn btn-primary pull-right' name='edit' value='Edit item'></form>"; 
+					}
+					if($logged_lvl > 0)
+					{
+						print "<form method='GET' action='.'><input type='hidden' name='m' value='items'><input type='hidden' name='i' value='" . to_int($q->param('i')) . "'><input type='submit' class='btn btn-primary' name='checkout' value='";
+						if(to_int($res[6]) == 1) { print "Request"; }
+						else { print "Checkout"; }
+						print "'></form>"; 
+					}
+					print "</p>";
+				}
+				else
+				{
+					print "<form method='POST' action='.'><input type='hidden' name='m' value='items'><input type='hidden' name='i' value='" . to_int($q->param('i')) . "'>\n";
+					print "<p><div class='row'><div class='col-sm-6'>Item type: <select name='type' class='form-control'><option";
+					if($res[2] eq "Desktop") { print " selected"; }
+					print ">Desktop</option><option";
+					if($res[2] eq "Laptop") { print " selected"; }
+					print ">Laptop</option><option";
+					if($res[2] eq "Server") { print " selected"; }
+					print ">Server</option><option";
+					if($res[2] eq "Keyboard") { print " selected"; }
+					print ">Keyboard</option><option";
+					if($res[2] eq "Mouse") { print " selected"; }
+					print ">Mouse</option><option";
+					if($res[2] eq "Display") { print " selected"; }
+					print ">Display</option><option";
+					if($res[2] eq "Phone") { print " selected"; }
+					print ">Phone</option><option";
+					if($res[2] eq "Printer") { print " selected"; }
+					print ">Printer</option><option";
+					if($res[2] eq "Peripheral") { print " selected"; }
+					print ">Peripheral</option><option";
+					if($res[2] eq "Software") { print " selected"; }
+					print ">Software</option><option";
+					if($res[2] eq "Other") { print " selected"; }
+					print ">Other</option></select></div><div class='col-sm-6'>Serial number: <input type='text' maxlength='30' class='form-control' name='serial' value='" . $res[3] . "'></div></div></p>\n";
+					print "<p><div class='row'><div class='col-sm-6'>Related " . lc($items{"Product"}) . ": <select class='form-control' name='product_id'><option>None</option>";
+					for(my $i = 1; $i < scalar(@products); $i++)
+					{
+						if($products[$i]) 
+						{
+							if(to_int($res[4]) == $i) { print "<option value='" . $i . "' selected>" . $products[$i] . "</option>"; }
+							else { print "<option value='" . $i . "'>" . $products[$i] . "</option>"; }
+						} 
+					}
+					print "</select></div><div class='col-sm-6'>Related client: <select class='form-control' name='client_id'><option>None</option>";
+					for(my $i = 1; $i < scalar(@clients); $i++)
+					{
+						if($clients[$i]) 
+						{
+							 if(to_int($res[5]) == $i) { print "<option value='" . $i . "' selected>" . $clients[$i] . "</option>"; }
+							 else { print "<option value='" . $i . "'>" . $clients[$i] . "</option>"; }
+						} 
+					}
+					print "</select></div></div></p>";
+					print "<p>Information provided on checkout: <textarea name='info' class='form-control'>" . $res[9] . "</textarea></p>";
+					print "<p><label><input type='checkbox' name='approval'";
+					if(to_int($res[6]) == 1) { print " checked"; }
+					print "> Require approval for checkout</label></p>";
+					print "<p><input type='submit' name='save_item' class='btn btn-primary pull-right' value='Save'><input type='submit' name='save_item' class='btn btn-danger' value='Make unavailable'></p></form>";
+				}
+				print "</div></div>\n";
+			}
+			if($logged_lvl > 0)
+			{
+				print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Checkout history</h3></div><div class='panel-body'><table class='table table-striped'><tr><th>User</th><th>Event</th><th>Time</th></tr>";		
+				$sql = $db->prepare("SELECT user,event,time FROM checkouts WHERE itemid = ?;");
+				$sql->execute(to_int($q->param('i')));
+				while(my @res = $sql->fetchrow_array())
+				{
+					print "<tr><td>" . $res[0] . "</td><td>" . $res[1] . "</td><td>" . $res[2] . "</td></tr>";
+				}
+				print "</table></div></div>";
+			}
 		}
 		else
 		{
 			if($logged_lvl > 3)
 			{
-				my @products;
-				$sql = $db->prepare("SELECT ROWID,name FROM products;");
-				$sql->execute();
-				while(my @res = $sql->fetchrow_array()) { $products[$res[0]] = $res[1]; }
-				my @clients;
-				$sql = $db->prepare("SELECT ROWID,name FROM clients;");
-				$sql->execute();
-				while(my @res = $sql->fetchrow_array()) { $clients[$res[0]] = $res[1]; }
 				print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Add a new item</h3></div><div class='panel-body'><form method='POST' action='.'><input type='hidden' name='m' value='items'>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Item type: <select name='type' class='form-control'><option>Desktop</option><option>Laptop</option><option>Server</option><option>Keyboard</option><option>Mouse</option><option>Display</option><option>Phone</option><option>Printer</option><option>Peripheral</option><option>Software</option><option>Other</option></select></div><div class='col-sm-4'>Item name: <input type='text' maxlength='50' class='form-control' name='name'></div><div class='col-sm-4'>Serial number: <input type='text' maxlength='30' class='form-control' name='serial'></div></div></p>\n";
-				print "<p><div class='row'><div class='col-sm-8'>Related " . lc($items{"Product"}) . ": <select class='form-control' name='product_id'><option>None</option>";
+				print "<p><div class='row'><div class='col-sm-6'>Related " . lc($items{"Product"}) . ": <select class='form-control' name='product_id'><option>None</option>";
 				for(my $i = 1; $i < scalar(@products); $i++)
 				{
 					if($products[$i]) { print "<option value='" . $i . "'>" . $products[$i] . "</option>"; } 
 				}
-				print "</select></div></div></p>";
-				print "<p><div class='row'><div class='col-sm-8'>Related client: <select class='form-control' name='client_id'><option>None</option>";
+				print "</select></div><div class='col-sm-6'>Related client: <select class='form-control' name='client_id'><option>None</option>";
 				for(my $i = 1; $i < scalar(@clients); $i++)
 				{
 					if($clients[$i]) { print "<option value='" . $i . "'>" . $clients[$i] . "</option>"; } 
 				}
-				print "</select></div></div></p><p><input type='submit' name='new_item' class='btn btn-primary pull-right' value='Add item'><label><input type='checkbox' name='approval'> Require approval for checkout</label></p></form></div></div>\n";
+				print "</select></div></div></p>";
+				print "<p>Information provided on checkout: <textarea name='info' class='form-control'></textarea></p>";
+				print "<p><input type='submit' name='new_item' class='btn btn-primary pull-right' value='Add item'><label><input type='checkbox' name='approval'> Require approval for checkout</label></p></form></div></div>\n";
 			}
 			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Inventory items</h3></div><div class='panel-body'>";
 			if($logged_lvl > 3)
