@@ -10,10 +10,10 @@
 % Conditional compilation for Windows and Linux
 \usepackage{ifthen}
 \newboolean{Windows}
-\setboolean{Windows}{false} % change to false for Linux
+\setboolean{Windows}{true} % change to false for Linux
 \ifthenelse{\boolean{Windows}}
-{\def\NodePointManual{NodePoint Manual - Windows version 1.3.2}}
-{\def\NodePointManual{NodePoint Manual - Linux version 1.3.2}}
+{\def\NodePointManual{NodePoint Manual - Windows version 1.4.0}}
+{\def\NodePointManual{NodePoint Manual - Linux version 1.4.0}}
 
 % Margins and paper type
 \geometry{a4paper, right=1.5cm, left=1.5cm, top=2cm, bottom=1.5cm}
@@ -294,7 +294,8 @@ These are the default configuration values for NodePoint. They have to be define
 \item \textbf{SMTP username:} User for SMTP connections, if your mail server requires authentication.
 \item \textbf{SMTP password:} Password for SMTP connections, if your mail server requires authentication.
 \item \textbf{Support email:} The email from which email notifications come from.
-\item \textbf{External notifications plugin:} Call an application or script when a notification is sent. You can use the following variables here: \textit{\%user\%}, \textit{\%title\%} and \textit{\%message\%}. For example: \texttt{echo \%message\% >> ..\textbackslash \%user\%.log}
+\item \textbf{Notifications plugin:} Call an application or script when a notification is sent. You can use the following variables here: \textit{\%user\%}, \textit{\%title\%} and \textit{\%message\%}. For example: \texttt{echo \%message\% >> ..\textbackslash \%user\%.log}
+\item \textbf{Checkout plugin:} Call an application or script when an inventory item is checked out or approved. You can use the following variables here: \textit{\%user\%}, \textit{\%item\%} and \textit{\%info\%}. For example: \texttt{python assign\_resource.py -item \%item\% -user \%user\%}
 \item \textbf{Upload folder:} Where product images and comment files are stored. Leave empty to disable uploads.
 \item \textbf{Minimum upload level:} The minimum access level a user must have to attach files to comments.
 \item \textbf{Items managed:} The type of items NodePoint should manage. This is purely a UI customization.
@@ -302,13 +303,13 @@ These are the default configuration values for NodePoint. They have to be define
 \item \textbf{Custom ticket type:} The type of field. If \textit{text}, then the entries will be shown as text. If \textit{URL}, then links will be assumed. If \textit{checkbox}, then users will have to select yes or no.
 \item \textbf{Active Directory server:} Enter your domain controller address to enable AD integration. Users will be created dynamically as they first log on, and passwords will be checked against AD using LDAP.
 \item \textbf{Active Directory domain:} The domain to use for AD integration (in NT4 format).
-\item \textbf{Components:} Activate components that you require. This does not remove their functionality, only hiding them from the interface.
+\item \textbf{Components:} Activate components that you require. This does not remove their functionality, only hiding them from the interface. See chapter 4.
 \end{itemize}
 
 \section{Users and activity}
 NodePoint provides a simple way to manage users based on their access levels. Users have a specific level, which determines what shows up to them in the interface and what they can do. They can also enter an optional email address for notifications. Email addresses must be confirmed through the sending of an automated token when they first register, if email notifications are turned on. Users also have a password which can be changed by the user under the \textbf{Settings} page, or reset by someone with the Users Management level.
 
-These are the access levels used by NodePoint:
+These are the access levels used by NodePoint along with a short description:
 
 \def\arraystretch{1.3} 
 \begin{tabular}{ |p{15mm}|p{50mm}|p{100mm}| } 
@@ -317,8 +318,8 @@ These are the access levels used by NodePoint:
 \hline
 6 & NodePoint Admin & Can change basic NodePoint settings.\\
 5 & Users management & Can manage users, reset passwords, edit clients.\\
-4 & Products management & Can add, retire and edit products, edit articles.\\
-3 & Tickets management & Can create releases, update tickets, track time.\\
+4 & Products management & Can add, retire and edit products, edit articles and items.\\
+3 & Tickets management & Can create releases, update tickets, approve checkouts.\\
 2 & Restricted view & Can view statistics, restricted tickets and products.\\
 1 & Authorized users & Can create tickets and comments.\\
 0 & Unauthorized users & Can view private tickets.\\
@@ -433,6 +434,10 @@ The clients directory can be used to keep track of clients or contacts from the 
 
 If the clients directory is enabled, the \textit{Clients} field type can be added to custom ticket forms, which will show a drop down list of available clients when creating new tickets, to assign issues to specific clients. This can be used as a CRM portal to keep track of interactions with clients. 
 
+\subsection{Inventory Control}
+The Inventory Control component allows users with access level 4 or higher to add items to the \textbf{Items} page. These items can be linked to products or clients, and can be checked out by other users. Approval can also be required, in which case users will need to request access, and someone with access level 3 or higher will need to approve the request. This component can be used to keep track of physical items such as computers, keyboards and phones, or even software licenses.
+
+
 \clearpage
 \section{JSON API}
 NodePoint provides a JSON based REST API that can be used to accomplish some basic tasks. This can be useful to integrate the system with existing products, or to use with custom scripts. Each API call requires either the \textit{read} or \textit{write} key. The calls can be made using GET or POST.
@@ -520,6 +525,17 @@ Here is a list of commands:
 \item product\_id=<product id>
 \item release\_id=<release id>
 \item notes=<notes>
+\end{itemize}
+
+\subsection{Add task}
+
+\begin{itemize}
+\item api=add\_task
+\item key=<write key>
+\item product\_id=<product id>
+\item description=<task description>
+\item user=<assigned user>
+\item due=<mm/dd/yyyy>
 \end{itemize}
 
 \clearpage

@@ -28,7 +28,7 @@ my ($cfg, $db, $sql, $cn, $cp, $cgs, $last_login, $perf);
 my $logged_user = "";
 my $logged_lvl = -1;
 my $q = new CGI;
-my $VERSION = "1.3.2";
+my $VERSION = "1.4.0";
 my %items = ("Product", "Product", "Release", "Release", "Model", "SKU/Model");
 my @itemtypes = ("None");
 my @themes = ("primary", "default", "success", "info", "warning", "danger");
@@ -65,7 +65,7 @@ sub headers
 	navbar();
 	print "  <div class='container'>\n";
 	if($cfg->load("motd")) { print "<div class='well'>" . $cfg->load("motd") . "</div>\n"; }
-	if($logged_lvl > 5 && $cfg->load('comp_tickets') ne "on" && $cfg->load('comp_articles') ne "on" && $cfg->load('comp_time') ne "on" && $cfg->load('comp_shoutbox') ne "on" && $cfg->load('comp_clients') ne "on" && $cfg->load('comp_steps') ne "on") { msg("All components are turned off. Enable the ones you need in Settings.", 1); }
+	if($logged_lvl > 5 && $cfg->load('comp_tickets') ne "on" && $cfg->load('comp_articles') ne "on" && $cfg->load('comp_time') ne "on" && $cfg->load('comp_shoutbox') ne "on" && $cfg->load('comp_clients') ne "on" && $cfg->load('comp_items') ne "on" && $cfg->load('comp_steps') ne "on") { msg("All components are turned off. Enable the ones you need in Settings.", 1); }
 }
 
 # Footers
@@ -115,6 +115,7 @@ sub navbar
 			print "	 <li class='active'><a href='./?m=products'>" . $items{"Product"} . "s</a></li>\n";
 			if($cfg->load('comp_tickets') eq "on") { print "	 <li><a href='./?m=tickets'>Tickets</a></li>\n"; }
 			if($cfg->load('comp_articles') eq "on") { print "	 <li><a href='./?m=articles'>Articles</a></li>\n"; }
+			if($cfg->load('comp_items') eq "on") { print "	 <li><a href='./?m=items'>Items</a></li>\n"; }
 		}
 		elsif($q->param('m') && ($q->param('m') eq "tickets" || $q->param('m') eq "view_ticket"))
 		{
@@ -122,6 +123,7 @@ sub navbar
 			print "	 <li><a href='./?m=products'>" . $items{"Product"} . "s</a></li>\n";
 			if($cfg->load('comp_tickets') eq "on") { print "	 <li class='active'><a href='./?m=tickets'>Tickets</a></li>\n"; }
 			if($cfg->load('comp_articles') eq "on") { print "	 <li><a href='./?m=articles'>Articles</a></li>\n"; }
+			if($cfg->load('comp_items') eq "on") { print "	 <li><a href='./?m=items'>Items</a></li>\n"; }
 		}
 		elsif($q->param('kb') || ($q->param('m') && $q->param('m') eq "articles"))
 		{
@@ -129,6 +131,7 @@ sub navbar
 			print "	 <li><a href='./?m=products'>" . $items{"Product"} . "s</a></li>\n";
 			if($cfg->load('comp_tickets') eq "on") { print "	 <li><a href='./?m=tickets'>Tickets</a></li>\n"; }
 			if($cfg->load('comp_articles') eq "on") { print "	 <li class='active'><a href='./?m=articles'>Articles</a></li>\n"; }
+			if($cfg->load('comp_items') eq "on") { print "	 <li><a href='./?m=items'>Items</a></li>\n"; }
 		}
 		elsif($q->param('m') && $q->param('m') eq "items")
 		{
@@ -136,6 +139,7 @@ sub navbar
 			print "	 <li><a href='./?m=products'>" . $items{"Product"} . "s</a></li>\n";
 			if($cfg->load('comp_tickets') eq "on") { print "	 <li><a href='./?m=tickets'>Tickets</a></li>\n"; }
 			if($cfg->load('comp_articles') eq "on") { print "	 <li><a href='./?m=articles'>Articles</a></li>\n"; }
+			if($cfg->load('comp_items') eq "on") { print "	 <li class='active'><a href='./?m=items'>Items</a></li>\n"; }
 		}
 		else
 		{
@@ -143,6 +147,7 @@ sub navbar
 			print "	 <li><a href='./?m=products'>" . $items{"Product"} . "s</a></li>\n";
 			if($cfg->load('comp_tickets') eq "on") { print "	 <li><a href='./?m=tickets'>Tickets</a></li>\n"; }
 			if($cfg->load('comp_articles') eq "on") { print "	 <li><a href='./?m=articles'>Articles</a></li>\n"; }
+			if($cfg->load('comp_items') eq "on") { print "	 <li><a href='./?m=items'>Items</a></li>\n"; }
 		}	    
 	}
 	else
@@ -153,6 +158,7 @@ sub navbar
 			print "	 <li><a href='./?m=products'>" . $items{"Product"} . "s</a></li>\n";
 			if($cfg->load('comp_tickets') eq "on") { print "	 <li class='active'><a href='./?m=tickets'>Tickets</a></li>\n"; }
 			if($cfg->load('comp_articles') eq "on") { print "	 <li><a href='./?m=articles'>Articles</a></li>\n"; }
+			if($cfg->load('comp_items') eq "on") { print "	 <li><a href='./?m=items'>Items</a></li>\n"; }
 			print "	 <li><a href='./?m=settings'>Settings</a></li>\n";
 		}
 		elsif($q->param('m') && ($q->param('m') eq "products" || $q->param('m') eq "add_product" ||$q->param('m') eq "view_product" || $q->param('m') eq "edit_product" || $q->param('m') eq "add_release" || $q->param('m') eq "add_step" || $q->param('m') eq "delete_step" || $q->param('m') eq "delete_release"))
@@ -161,6 +167,7 @@ sub navbar
 			print "	 <li class='active'><a href='./?m=products'>" . $items{"Product"} . "s</a></li>\n";
 			if($cfg->load('comp_tickets') eq "on") { print "	 <li><a href='./?m=tickets'>Tickets</a></li>\n"; }
 			if($cfg->load('comp_articles') eq "on") { print "	 <li><a href='./?m=articles'>Articles</a></li>\n"; }
+			if($cfg->load('comp_items') eq "on") { print "	 <li><a href='./?m=items'>Items</a></li>\n"; }
 			print "	 <li><a href='./?m=settings'>Settings</a></li>\n";
 		}
 		elsif($q->param('m') && ($q->param('m') eq "settings" || $q->param('m') eq "confirm_delete" || $q->param('m') eq "clear_log" || $q->param('m') eq "stats" || $q->param('m') eq "change_lvl" || $q->param('m') eq "confirm_email" || $q->param('m') eq "reset_pass" || $q->param('m') eq "logout" || $q->param('m') eq "add_client" || $q->param('m') eq  "view_client" || $q->param('m') eq "save_client") || $q->param('create_form') || $q->param('edit_form') || $q->param('save_form'))
@@ -169,6 +176,7 @@ sub navbar
 			print "	 <li><a href='./?m=products'>" . $items{"Product"} . "s</a></li>\n";
 			if($cfg->load('comp_tickets') eq "on") { print "	 <li><a href='./?m=tickets'>Tickets</a></li>\n"; }
 			if($cfg->load('comp_articles') eq "on") { print "	 <li><a href='./?m=articles'>Articles</a></li>\n"; }
+			if($cfg->load('comp_items') eq "on") { print "	 <li><a href='./?m=items'>Items</a></li>\n"; }
 			print "	 <li class='active'><a href='./?m=settings'>Settings</a></li>\n";
 		}
 		elsif($q->param('kb') || $q->param('m') && ($q->param('m') eq "articles" || $q->param('m') eq "add_article" || $q->param('m') eq "save_article" || $q->param('m') eq "link_article" || $q->param('m') eq "unlink_article" || $q->param('m') eq "subscribe" || $q->param('m') eq "unsubscribe"))
@@ -177,14 +185,16 @@ sub navbar
 			print "	 <li><a href='./?m=products'>" . $items{"Product"} . "s</a></li>\n";
 			if($cfg->load('comp_tickets') eq "on") { print "	 <li><a href='./?m=tickets'>Tickets</a></li>\n"; }
 			if($cfg->load('comp_articles') eq "on") { print "	 <li class='active'><a href='./?m=articles'>Articles</a></li>\n"; }
+			if($cfg->load('comp_items') eq "on") { print "	 <li><a href='./?m=items'>Items</a></li>\n"; }
 			print "	 <li><a href='./?m=settings'>Settings</a></li>\n";
 		}
-		elsif($q->param('m') && ($q->param('m') eq "items" || $q->param('m') eq "checkout" || $q->param('m') eq "checkin" || $q->param('m') eq "save_item" || $q->param('m') eq "create_item" || $q->param('m') eq "edit_item"))
+		elsif($q->param('m') && $q->param('m') eq "items")
 		{
 			print "	 <li><a href='.'>Home</a></li>\n";
 			print "	 <li><a href='./?m=products'>" . $items{"Product"} . "s</a></li>\n";
 			if($cfg->load('comp_tickets') eq "on") { print "	 <li><a href='./?m=tickets'>Tickets</a></li>\n"; }
 			if($cfg->load('comp_articles') eq "on") { print "	 <li><a href='./?m=articles'>Articles</a></li>\n"; }
+			if($cfg->load('comp_items') eq "on") { print "	 <li class='active'><a href='./?m=items'>Items</a></li>\n"; }
 			print "	 <li><a href='./?m=settings'>Settings</a></li>\n";
 		}
 		else
@@ -193,6 +203,7 @@ sub navbar
 			print "	 <li><a href='./?m=products'>" . $items{"Product"} . "s</a></li>\n";
 			if($cfg->load('comp_tickets') eq "on") { print "	 <li><a href='./?m=tickets'>Tickets</a></li>\n"; }
 			if($cfg->load('comp_articles') eq "on") { print "	 <li><a href='./?m=articles'>Articles</a></li>\n"; }
+			if($cfg->load('comp_items') eq "on") { print "	 <li><a href='./?m=items'>Items</a></li>\n"; }
 			print "	 <li><a href='./?m=settings'>Settings</a></li>\n";
 		}
 		if($cfg->load('comp_tickets') eq "on") 
@@ -426,6 +437,18 @@ sub db_check
 		$sql->execute();
 	};
 	$sql->finish();
+	$sql = $db->prepare("SELECT * FROM items WHERE 0 = 1;") or do
+	{
+		$sql = $db->prepare("CREATE TABLE items (name TEXT, type TEXT, serial TEXT, productid INT, clientid INT, approval INT, status INT, user TEXT, info TEXT);");
+		$sql->execute();
+	};
+	$sql->finish();
+	$sql = $db->prepare("SELECT * FROM checkouts WHERE 0 = 1;") or do
+	{
+		$sql = $db->prepare("CREATE TABLE checkouts (itemid INT, user TEXT, event TEXT, time TEXT);");
+		$sql->execute();
+	};
+	$sql->finish();
 }
 
 # Log an event
@@ -467,6 +490,7 @@ sub save_config
 	$cfg->save("custom_name", $q->param('custom_name'));
 	$cfg->save("custom_type", $q->param('custom_type'));
 	$cfg->save("ext_plugin", $q->param('ext_plugin'));
+	$cfg->save("checkout_plugin", $q->param('checkout_plugin'));
 	$cfg->save("ad_server", $q->param('ad_server'));
 	$cfg->save("ad_domain", $q->param('ad_domain'));
 	$cfg->save("comp_tickets", $q->param('comp_tickets'));
@@ -475,6 +499,7 @@ sub save_config
 	$cfg->save("comp_shoutbox", $q->param('comp_shoutbox'));
 	$cfg->save("comp_steps", $q->param('comp_steps'));
 	$cfg->save("comp_clients", $q->param('comp_clients'));
+	$cfg->save("comp_items", $q->param('comp_items'));
 }
 
 # Check login credentials
@@ -663,6 +688,15 @@ sub home
 		$sql->execute(lc($logged_user), to_int($q->param('delete_notify')));
 	}
 
+	if($logged_lvl > 3 && $cfg->load('comp_items') eq "on")
+	{
+		my $apprcount = 0;
+		$sql = $db->prepare("SELECT COUNT(*) FROM items WHERE status = 2;");
+		$sql->execute();
+		while(my @res = $sql->fetchrow_array()) { $apprcount = int($res[0]); }
+		if($apprcount > 0) { msg("There are <b>" . $apprcount . "</b> items awaiting checkout approval. Press <a href='./?m=items'>here</a> to view the list.", 2); }
+	}
+
 	if($logged_user ne "")
 	{
 		$sql = $db->prepare("SELECT DISTINCT ticketid FROM escalate WHERE user = ?;");
@@ -679,7 +713,7 @@ sub home
 		if($logged_lvl > 1) { print "<p>Since you have <span class='label label-success'>Restricted View</span> permission, you can view statistics and view restricted products and tickets, those which may not be visible to normal users.</p>\n"; }
 		if($logged_lvl > 2) { print "<p>With <span class='label label-success'>Tickets Management</span> access, you can modify existing tickets entered by other users, such as change the status, add a resolution, or edit title and description. You can assign yourself to tickets, auto-assign to " . lc($items{"Product"}) . "s, and you can also add new " . lc($items{"Release"}) . "s under the " . $items{"Product"} . "s tab.</p>\n"; }
 		if($logged_lvl > 3) { print "<p>As a <span class='label label-success'>" . $items{"Product"} . "s Management</span> user, you can add new " . lc($items{"Product"}) . "s, edit existing ones, change their visibility, and edit articles. Archiving a product will prevent users from adding new tickets for it.</p>\n" }
-		if($logged_lvl > 4) { print "<p>With the <span class='label label-success'>Users Managemenet</span> access level, you have the ability to edit users under the Settings tab. You can reset passwords and change access levels, along with adding new users. You can also delete comments under the Tickets tab.</p>\n"; }
+		if($logged_lvl > 4) { print "<p>With the <span class='label label-success'>Users Managemenet</span> access level, you have the ability to edit users under the Settings tab. You can reset passwords and change access levels, along with adding new users. You can delete comments under the Tickets tab and edit items.</p>\n"; }
 		if($logged_lvl > 5) { print "<p>Since you are logged in as <span class='label label-success'>NodePoint Administrator</span>, you can edit initial settings under the Settings tab. Note that it is good practice to use a lower access user to do your daily tasks.</p>\n" }
 		print "</div></div>\n";
 	}
@@ -885,7 +919,7 @@ if($cfg->load("items_managed"))
 if($q->param('site_name') && $q->param('db_address') && $logged_user ne "" && $logged_user eq $cfg->load('admin_name')) # Save config by admin
 {
 	headers("Settings");
-	if($q->param('site_name') && $q->param('db_address') && $q->param('admin_name') && $q->param('custom_name') && defined($q->param('default_lvl')) && $q->param('default_vis') && $q->param('api_write') && defined($q->param('theme_color')) &&  $q->param('api_imp') && $q->param('api_read') && $q->param('comp_tickets') && $q->param('comp_articles') && $q->param('comp_time') && $q->param('comp_shoutbox') && $q->param('comp_clients') && $q->param('comp_steps')) # All required values have been filled out
+	if($q->param('site_name') && $q->param('db_address') && $q->param('admin_name') && $q->param('custom_name') && defined($q->param('default_lvl')) && $q->param('default_vis') && $q->param('api_write') && defined($q->param('theme_color')) &&  $q->param('api_imp') && $q->param('api_read') && $q->param('comp_tickets') && $q->param('comp_articles') && $q->param('comp_time') && $q->param('comp_shoutbox') && $q->param('comp_clients') && $q->param('comp_items') && $q->param('comp_steps')) # All required values have been filled out
 	{
 		# Test database settings
 		$db = DBI->connect("dbi:SQLite:dbname=" . $q->param('db_address'), '', '', { RaiseError => 0, PrintError => 0 }) or do { msg("Could not verify database settings. Please hit back and try again.<br><br>" . $DBI::errstr, 0); exit(0); };
@@ -909,6 +943,7 @@ if($q->param('site_name') && $q->param('db_address') && $logged_user ne "" && $l
 		if(!$q->param('comp_articles')) { $text .= "<span class='label label-danger'>Component: Support articles</span> "; }
 		if(!$q->param('comp_time')) { $text .= "<span class='label label-danger'>Component: Time tracking</span> "; }
 		if(!$q->param('comp_shoutbox')) { $text .= "<span class='label label-danger'>Component: Shoutbox</span> "; }
+		if(!$q->param('comp_items')) { $text .= "<span class='label label-danger'>Component: Inventory Control</span> "; }
 		if(!$q->param('comp_clients')) { $text .= "<span class='label label-danger'>Component: Clients Directory</span> "; }
 		if(!$q->param('comp_steps')) { $text .= "<span class='label label-danger'>Component: Tasks Management</span> "; }
 		$text .= " Please go back and try again.";
@@ -960,7 +995,7 @@ elsif(!$cfg->load("db_address") || !$cfg->load("site_name")) # first use
 				print "<p><div class='row'><div class='col-sm-4'>Allow user registrations:</div><div class='col-sm-4'><input type='checkbox' name='allow_registrations' checked=checked></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Default access level:</div><div class='col-sm-4'><select name='default_lvl' style='width:300px'><option value=5>5 - Users management</option><option value=4>4 - Products management</option><option value=3>3 - Tickets management</option><option value=2>2 - Restricted view</option><option value=1 selected=selected>1 - Authorized users</option><option value=0>0 - Unauthorized users</option></select></div></div></p>\n";
 				print "<p>New registered users will be assigned a default access level, which can then be modified by users with the <b>5 - Users management</b> level. These are the access levels, with each rank having the lower permissions as well:</p>\n";
-				print "<table class='table table-striped'><tr><th>Level</th><th>Name</th><th>Description</th></tr><tr><td>6</td><td>NodePoint Admin</td><td>Can change basic NodePoint settings</td></tr><td>5</td><td>Users management</td><td>Can manage users, reset passwords, edit clients</td></tr><tr><td>4</td><td>Products management</td><td>Can add, retire and edit products, edit articles</td></tr><tr><td>3</td><td>Tickets management</td><td>Can create releases, update tickets, track time</td></tr><tr><td>2</td><td>Restricted view</td><td>Can view statistics, restricted tickets and products</td></tr><tr><td>1</td><td>Authorized users</td><td>Can create tickets and comments</td></tr><tr><td>0</td><td>Unauthorized users</td><td>Can view private tickets</td></tr></table>\n";
+				print "<table class='table table-striped'><tr><th>Level</th><th>Name</th><th>Description</th></tr><tr><td>6</td><td>NodePoint Admin</td><td>Can change basic NodePoint settings</td></tr><td>5</td><td>Users management</td><td>Can manage users, reset passwords, edit clients</td></tr><tr><td>4</td><td>Products management</td><td>Can add, retire and edit products, edit articles and items</td></tr><tr><td>3</td><td>Tickets management</td><td>Can create releases, update tickets, track time</td></tr><tr><td>2</td><td>Restricted view</td><td>Can view statistics, restricted tickets and products</td></tr><tr><td>1</td><td>Authorized users</td><td>Can create tickets and comments</td></tr><tr><td>0</td><td>Unauthorized users</td><td>Can view private tickets</td></tr></table>\n";
 				my $key = join'', map +(0..9,'a'..'z','A'..'Z')[rand(10+26*2)], 1..32;
 				print "<p><div class='row'><div class='col-sm-4'>API read key:</div><div class='col-sm-4'><input type='text' style='width:300px' name='api_read' value='" . $key . "'></div></div></p>\n";
 				$key = join'', map +(0..9,'a'..'z','A'..'Z')[rand(10+26*2)], 1..32;
@@ -973,8 +1008,8 @@ elsif(!$cfg->load("db_address") || !$cfg->load("site_name")) # first use
 				print "<p><div class='row'><div class='col-sm-4'>SMTP password:</div><div class='col-sm-4'><input type='password' style='width:300px' name='smtp_pass' value=''></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Support email:</div><div class='col-sm-4'><input type='text' style='width:300px' name='smtp_from' value='admin\@company.com'></div></div></p>\n";
 				print "<p>If a SMTP server host name is entered, NodePoint will attempt to send an email when new tickets are created, or changes occur.</p>\n";
-				print "<p><div class='row'><div class='col-sm-4'>External notifications plugin:</div><div class='col-sm-4'><input type='text' style='width:300px' name='ext_plugin' value=''></div></div></p>\n";
-				print "<p>Notifications can be sent to an external system command. Variables accepted are: \%user\%, \%title\% and \%message\%.</p>\n";
+				print "<p><div class='row'><div class='col-sm-4'>Notifications plugin:</div><div class='col-sm-4'><input type='text' style='width:300px' name='ext_plugin' value=''></div></div></p>\n";
+				print "<p><div class='row'><div class='col-sm-4'>Checkout plugin:</div><div class='col-sm-4'><input type='text' style='width:300px' name='checkout_plugin' value=''></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Admin username:</div><div class='col-sm-4'><input type='text' style='width:300px' name='admin_name' value='admin'></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Admin password:</div><div class='col-sm-4'><input style='width:300px' type='password' name='admin_pass'></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Public notice:</div><div class='col-sm-4'><input type='text' style='width:300px' name='motd' value='Welcome to NodePoint. Remember to be courteous when writing tickets. Contact the help desk for any problem.'></div></div></p>\n";
@@ -994,6 +1029,7 @@ elsif(!$cfg->load("db_address") || !$cfg->load("site_name")) # first use
 				print "<p><div class='row'><div class='col-sm-4'>Component: Shoutbox</div><div class='col-sm-4'><input type='checkbox' name='comp_shoutbox' checked></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Component: Clients Directory</div><div class='col-sm-4'><input type='checkbox' name='comp_clients' checked></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Component: Tasks Management</div><div class='col-sm-4'><input type='checkbox' name='comp_steps' checked></div></div></p>\n";
+				print "<p><div class='row'><div class='col-sm-4'>Component: Inventory Control</div><div class='col-sm-4'><input type='checkbox' name='comp_items' checked></div></div></p>\n";
 				print "<p>See the <a href='./manual.pdf'>manual</a> file for help.<input class='btn btn-primary pull-right' type='submit' value='Save'></p></form>\n"; 
 			}
 			else
@@ -1521,6 +1557,72 @@ elsif($q->param('api')) # API calls
 			print "}\n";
 		}
 	}
+	elsif($q->param('api') eq "add_task")
+	{
+		if(!$q->param('product_id'))
+		{
+			print "{\n";
+			print " \"message\": \"Missing 'product_id' argument.\",\n";
+			print " \"status\": \"ERR_MISSING_ARGUMENT\"\n";
+			print "}\n";
+		}
+		elsif(!$q->param('description'))
+		{
+			print "{\n";
+			print " \"message\": \"Missing 'description' argument.\",\n";
+			print " \"status\": \"ERR_MISSING_ARGUMENT\"\n";
+			print "}\n";
+		}
+		elsif(!$q->param('due'))
+		{
+			print "{\n";
+			print " \"message\": \"Missing 'due' argument.\",\n";
+			print " \"status\": \"ERR_MISSING_ARGUMENT\"\n";
+			print "}\n";
+		}
+		elsif($q->param('due') !~ m/[0-9]{2}\/[0-9]{2}\/[0-9]{4}/)
+		{
+			print "{\n";
+			print " \"message\": \"Argument 'due' must be in format 'mm/dd/yyyy'.\",\n";
+			print " \"status\": \"ERR_INVALID_FORMAT\"\n";
+			print "}\n";
+		}
+		elsif(!$q->param('user'))
+		{
+			print "{\n";
+			print " \"message\": \"Missing 'user' argument.\",\n";
+			print " \"status\": \"ERR_MISSING_ARGUMENT\"\n";
+			print "}\n";
+		}
+		elsif(!$q->param('key'))
+		{
+			print "{\n";
+			print " \"message\": \"Missing 'key' argument.\",\n";
+			print " \"status\": \"ERR_MISSING_ARGUMENT\"\n";
+			print "}\n";
+		}
+		elsif($q->param('key') ne $cfg->load('api_write'))
+		{
+			print "{\n";
+			print " \"message\": \"Invalid 'key' value.\",\n";
+			print " \"status\": \"ERR_INVALID_KEY\"\n";
+			print "}\n";
+		}
+		else
+		{
+			$sql = $db->prepare("INSERT INTO steps VALUES (?, ?, ?, ?, ?);");
+			$sql->execute(to_int($q->param('product_id')), sanitize_html($q->param('description')), sanitize_alpha($q->param('user')), 0, sanitize_html($q->param('due')));
+			my $prod = "";
+			$sql = $db->prepare("SELECT name FROM products WHERE ROWID = ?;");
+			$sql->execute(to_int($q->param('product_id')));
+			while(my @res = $sql->fetchrow_array()) { $prod = $res[0]; }
+			notify(sanitize_alpha($q->param('user')), "New task assigned to you", "A new task has been added for you on " . lc($items{"Product"}) . " \"" . $prod . "\":\n\nTask description: " . sanitize_html($q->param('description')) . "\nDue by: " . sanitize_html($q->param('due')));
+			print "{\n";
+			print " \"message\": \"Task added.\",\n";
+			print " \"status\": \"OK\"\n";
+			print "}\n";
+		}
+	}
 	elsif($q->param('api') eq "add_comment")
 	{
 		if(!$q->param('comment'))
@@ -1825,7 +1927,8 @@ elsif($q->param('m')) # Modules
 			print "<tr><td>SMTP username</td><td><input class='form-control' type='text' name='smtp_user' value=\"" . $cfg->load("smtp_user") . "\"></td></tr>\n";
 			print "<tr><td>SMTP password</td><td><input class='form-control' type='password' name='smtp_pass' value=\"" . $cfg->load("smtp_pass") . "\"></td></tr>\n";
 			print "<tr><td>Support email</td><td><input class='form-control' type='text' name='smtp_from' value=\"" . $cfg->load("smtp_from") . "\"></td></tr>\n";
-			print "<tr><td>External notifications plugin</td><td><input class='form-control' type='text' name='ext_plugin' value=\"" . $cfg->load("ext_plugin") . "\"></td></tr>\n";
+			print "<tr><td>Notifications plugin</td><td><input class='form-control' type='text' name='ext_plugin' value=\"" . $cfg->load("ext_plugin") . "\"></td></tr>\n";
+			print "<tr><td>Checkout plugin</td><td><input class='form-control' type='text' name='checkout_plugin' value=\"" . $cfg->load("checkout_plugin") . "\"></td></tr>\n";
 			print "<tr><td>Upload folder</td><td><input class='form-control' type='text' name='upload_folder' value=\"" . $cfg->load("upload_folder") . "\"></td></tr>\n";
 			print "<tr><td>Minimum upload level</td><td><input class='form-control' type='text' name='upload_lvl' value=\"" . to_int($cfg->load("upload_lvl")) . "\"></td></tr>\n";
 			print "<tr><td>Items managed</td><td><select class='form-control' name='items_managed'>";
@@ -1865,6 +1968,10 @@ elsif($q->param('m')) # Modules
 			print "</select></td></tr>\n";
 			print "<tr><td>Component: Tasks Management</td><td><select class='form-control' name='comp_steps'>";
 			if($cfg->load("comp_steps") eq "on") { print "<option selected>on</option><option>off</option>"; }
+			else { print "<option>on</option><option selected>off</option>"; }
+			print "</select></td></tr>\n";
+			print "<tr><td>Component: Inventory Control</td><td><select class='form-control' name='comp_items'>";
+			if($cfg->load("comp_items") eq "on") { print "<option selected>on</option><option>off</option>"; }
 			else { print "<option>on</option><option selected>off</option>"; }
 			print "</select></td></tr>\n";
 			print "</table>The admin password will be left unchanged if empty.<br>See the <a href='./manual.pdf'>manual</a> file for help.<input class='btn btn-primary pull-right' type='submit' value='Save settings'></form></div></div>\n";
@@ -2076,7 +2183,7 @@ elsif($q->param('m')) # Modules
 		headers("Settings");
 		print "<p><form method='POST' action='.'><input type='hidden' name='m' value='change_lvl'><input type='hidden' name='u' value='" . sanitize_alpha($q->param('u')) . "'>Select a new access level for user <b>" . sanitize_alpha($q->param('u')) . "</b>: <select name='newlvl'><option>0</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select><br><input class='btn btn-primary' type='submit' value='Change level'></form></p><br>\n";
 		print "<p>Here is a list of available NodePoint levels:</p>\n";
-		print "<table class='table table-striped'><tr><th>Level</th><th>Name</th><th>Description</th></tr><tr><td>6</td><td>NodePoint Admin</td><td>Can change basic NodePoint settings</td></tr><td>5</td><td>Users management</td><td>Can manage users, reset passwords, edit clients</td></tr><tr><td>4</td><td>" . $items{"Product"} . "s management</td><td>Can add, retire and edit " . lc($items{"Product"}) . "s, edit articles</td></tr><tr><td>3</td><td>Tickets management</td><td>Can create " . lc($items{"Release"}) . "s, update tickets, track time</td></tr><tr><td>2</td><td>Restricted view</td><td>Can view statistics, restricted tickets and " . lc($items{"Product"}) . "s</td></tr><tr><td>1</td><td>Authorized users</td><td>Can create tickets and comments</td></tr><tr><td>0</td><td>Unauthorized users</td><td>Can view private tickets</td></tr></table>\n";
+		print "<table class='table table-striped'><tr><th>Level</th><th>Name</th><th>Description</th></tr><tr><td>6</td><td>NodePoint Admin</td><td>Can change basic NodePoint settings</td></tr><td>5</td><td>Users management</td><td>Can manage users, reset passwords, edit clients</td></tr><tr><td>4</td><td>" . $items{"Product"} . "s management</td><td>Can add, retire and edit " . lc($items{"Product"}) . "s, edit articles and items</td></tr><tr><td>3</td><td>Tickets management</td><td>Can create " . lc($items{"Release"}) . "s, update tickets, track time</td></tr><tr><td>2</td><td>Restricted view</td><td>Can view statistics, restricted tickets and " . lc($items{"Product"}) . "s</td></tr><tr><td>1</td><td>Authorized users</td><td>Can create tickets and comments</td></tr><tr><td>0</td><td>Unauthorized users</td><td>Can view private tickets</td></tr></table>\n";
 	}
 	elsif($q->param('m') eq "reset_pass" && $logged_lvl > 4 && $q->param('u'))
 	{
@@ -3447,6 +3554,106 @@ elsif($q->param('m')) # Modules
 			{ print "<tr><td>" . $res[0] . "</td><td>" . $products[$res[1]] . "</td><td>" . $res[3] . "</td><td><a href='./?m=view_ticket&t=" . $res[0] . "'>" . $res[5] . "</a></td><td>" . $res[8] . "</td><td>" . $res[11] . "</td></tr>\n"; }
 		}
 		print "</table></div></div>\n";
+	}
+	elsif($q->param('m') eq "items" && $cfg->load('comp_items') eq "on")
+	{
+		headers("Items");
+		if($q->param('new_item'))
+		{
+			if(!$q->param('name') || !$q->param('type') || !$q->param('product_id') || !$q->param('client_id')) 
+			{
+				my $text = "Required fields missing: ";
+				if(!$q->param('name')) { $text .= "<span class='label label-danger'>Item name</span> "; }
+				if(!$q->param('type')) { $text .= "<span class='label label-danger'>Item type</span> "; }
+				if(!$q->param('product_id')) { $text .= "<span class='label label-danger'>" . $items{"Product"} . "</span> "; }
+				if(!$q->param('client_id')) { $text .= "<span class='label label-danger'>Client</span> "; }
+				$text .= " Please go back and try again.";
+				msg($text, 0);
+			}
+			else
+			{
+				my $info = "";
+				if($q->param('info')) { $info = sanitize_html($q->param('info')); }
+				my $approval = 0;
+				if($q->param('approval')) { $approval = 1; }
+				$sql = $db->prepare("INSERT INTO items VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);");
+				$sql->execute(sanitize_html($q->param('name')), sanitize_html($q->param('type')), sanitize_html($q->param('serial')), to_int($q->param('product_id')), to_int($q->param('client_id')), $approval, 1, "", $info);
+				msg("Item added. Press <a href='./?m=items'>here</a> to continue.", 3);
+			}
+		}
+		elsif($q->param('i'))
+		{
+			
+		}
+		else
+		{
+			if($logged_lvl > 3)
+			{
+				my @products;
+				$sql = $db->prepare("SELECT ROWID,name FROM products;");
+				$sql->execute();
+				while(my @res = $sql->fetchrow_array()) { $products[$res[0]] = $res[1]; }
+				my @clients;
+				$sql = $db->prepare("SELECT ROWID,name FROM clients;");
+				$sql->execute();
+				while(my @res = $sql->fetchrow_array()) { $clients[$res[0]] = $res[1]; }
+				print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Add a new item</h3></div><div class='panel-body'><form method='POST' action='.'><input type='hidden' name='m' value='items'>\n";
+				print "<p><div class='row'><div class='col-sm-4'>Item type: <select name='type' class='form-control'><option>Desktop</option><option>Laptop</option><option>Server</option><option>Keyboard</option><option>Mouse</option><option>Display</option><option>Phone</option><option>Printer</option><option>Peripheral</option><option>Software</option><option>Other</option></select></div><div class='col-sm-4'>Item name: <input type='text' maxlength='50' class='form-control' name='name'></div><div class='col-sm-4'>Serial number: <input type='text' maxlength='30' class='form-control' name='serial'></div></div></p>\n";
+				print "<p><div class='row'><div class='col-sm-8'>Related " . lc($items{"Product"}) . ": <select class='form-control' name='product_id'><option>None</option>";
+				for(my $i = 1; $i < scalar(@products); $i++)
+				{
+					if($products[$i]) { print "<option value='" . $i . "'>" . $products[$i] . "</option>"; } 
+				}
+				print "</select></div></div></p>";
+				print "<p><div class='row'><div class='col-sm-8'>Related client: <select class='form-control' name='client_id'><option>None</option>";
+				for(my $i = 1; $i < scalar(@clients); $i++)
+				{
+					if($clients[$i]) { print "<option value='" . $i . "'>" . $clients[$i] . "</option>"; } 
+				}
+				print "</select></div></div></p><p><input type='submit' name='new_item' class='btn btn-primary pull-right' value='Add item'><label><input type='checkbox' name='approval'> Require approval for checkout</label></p></form></div></div>\n";
+			}
+			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Inventory items</h3></div><div class='panel-body'>";
+			if($logged_lvl > 3)
+			{
+				my $apprcount = 0;
+				$sql = $db->prepare("SELECT COUNT(*) FROM items WHERE status = 2;");
+				$sql->execute();
+				while(my @res = $sql->fetchrow_array()) { $apprcount = to_int($res[0]); }
+				if($apprcount > 0)
+				{
+					print "<h4>Items awaiting approval</h4>";
+					print "<table class='table table-striped'><tr><th>Type</th><th>Name</th><th>Serial</th><th>User</th><th>Action</th></tr>\n";
+					$sql = $db->prepare("SELECT ROWID,* FROM items WHERE approval = 1;");
+					$sql->execute();
+					while(my @res = $sql->fetchrow_array())
+					{
+						print "<tr><td>" . $res[2] . "</td><td>" . $res[1] . "</td><td>" . $res[3] . "</td><td>" . $res[8] . "</td><td><form method='POST' action='.'><input type='hidden' name='m' values='items'><input type='hidden' name='i' value='" . $res[0] . "'><input type='submit' name='approve' value='Approve'> <input type='submit' name='deny' value='Deny'></form></td></tr>\n";
+					}
+					print "</table><hr><h4>Items list</h4>\n";
+				}
+			}
+			print "<table class='table table-striped'><tr><th>Type</th><th>Name</th><th>Serial</th><th>Status</th></tr>\n";
+			if(!$q->param('sort'))
+			{ 
+				$sql = $db->prepare("SELECT ROWID,* FROM items;"); 
+				$sql->execute();
+			}
+			else 
+			{ 
+				$sql = $db->prepare("SELECT ROWID,* FROM items ORDER BY type;"); 
+				$sql->execute();
+			}
+			while(my @res = $sql->fetchrow_array())
+			{
+				print "<tr><td>" . $res[2] . "</td><td><a href='./?m=items&i=" . $res[0] . "'>" . $res[1] . "</a></td><td>" . $res[3] . "</td><td>";
+				if(to_int($res[7]) == 0) { print "<font color='red'>Unavailable</font>"; }
+				elsif(to_int($res[7]) == 1) { print "<font color='green'>Available</font>"; }
+				elsif(to_int($res[7]) == 2) { print "<font color='orange'>Waiting approval for: " . $res[8] . "</font>"; }
+				else { print "<font color='red'>Checked out by: " . $res[8] . "</font>"; }
+				print "</td></tr>\n";
+			}
+			print "</table></div></div>\n";
+		}
 	}
 	else
 	{
