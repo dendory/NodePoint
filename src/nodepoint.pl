@@ -3632,15 +3632,16 @@ elsif($q->param('m')) # Modules
 					print "</table><hr><h4>Items list</h4>\n";
 				}
 			}
+			print "<p><form method='GET' action='.'><div class='row'><div class='col-sm-2'><input type='hidden' name='m' value='items'><select name='sort' class='form-control'><option value=''>Sort by:</option><option>Type</option><option>Name</option><option>Serial</option><option>Status</option></select></div><div class='col-sm-4'><input type='submit' class='btn btn-primary' value='Sort'></div></div></form></p>";
 			print "<table class='table table-striped'><tr><th>Type</th><th>Name</th><th>Serial</th><th>Status</th></tr>\n";
-			if(!$q->param('sort'))
-			{ 
-				$sql = $db->prepare("SELECT ROWID,* FROM items;"); 
+			if($q->param('sort') && (lc($q->param('sort')) eq 'type' || lc($q->param('sort')) eq 'name' || lc($q->param('sort')) eq 'serial' || lc($q->param('sort')) eq 'status'))
+			{
+				$sql = $db->prepare("SELECT ROWID,* FROM items ORDER BY " . sanitize_alpha(lc($q->param('sort'))) . ";"); 
 				$sql->execute();
 			}
 			else 
 			{ 
-				$sql = $db->prepare("SELECT ROWID,* FROM items ORDER BY type;"); 
+				$sql = $db->prepare("SELECT ROWID,* FROM items;"); 
 				$sql->execute();
 			}
 			while(my @res = $sql->fetchrow_array())
