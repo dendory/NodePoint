@@ -295,7 +295,7 @@ These are the default configuration values for NodePoint. They have to be define
 \item \textbf{SMTP password:} Password for SMTP connections, if your mail server requires authentication.
 \item \textbf{Support email:} The email from which email notifications come from.
 \item \textbf{Notifications plugin:} Call an application or script when a notification is sent. You can use the following variables here: \textit{\%user\%}, \textit{\%title\%} and \textit{\%message\%}. For example: \texttt{echo \%message\% >> ..\textbackslash \%user\%.log}
-\item \textbf{Checkout plugin:} Call an application or script when an inventory item is checked out or approved. You can use the following variables here: \textit{\%user\%}, \textit{\%item\%} and \textit{\%info\%}. For example: \texttt{python assign\_resource.py -item \%item\% -user \%user\%}
+\item \textbf{Checkout plugin:} Call an application or script when an inventory item is checked out or approved. You can use the following variables here: \textit{\%user\%} and \textit{\%serial\%}. For example: \texttt{python add\_license.py -item \%serial\% -user \%user\%}
 \item \textbf{Upload folder:} Where product images and comment files are stored. Leave empty to disable uploads.
 \item \textbf{Minimum upload level:} The minimum access level a user must have to attach files to comments.
 \item \textbf{Items managed:} The type of items NodePoint should manage. This is purely a UI customization.
@@ -319,7 +319,7 @@ These are the access levels used by NodePoint along with a short description:
 6 & NodePoint Admin & Can change basic NodePoint settings.\\
 5 & Users management & Can manage users, reset passwords, edit clients.\\
 4 & Products management & Can add, retire and edit products, edit articles and items.\\
-3 & Tickets management & Can create releases, update tickets, approve checkouts.\\
+3 & Tickets management & Can create releases, update tickets, track time.\\
 2 & Restricted view & Can view statistics, restricted tickets and products.\\
 1 & Authorized users & Can create tickets and comments.\\
 0 & Unauthorized users & Can view private tickets.\\
@@ -435,8 +435,17 @@ The clients directory can be used to keep track of clients or contacts from the 
 If the clients directory is enabled, the \textit{Clients} field type can be added to custom ticket forms, which will show a drop down list of available clients when creating new tickets, to assign issues to specific clients. This can be used as a CRM portal to keep track of interactions with clients. 
 
 \subsection{Inventory Control}
-The Inventory Control component allows users with access level 4 or higher to add items to the \textbf{Items} page. These items can be linked to products or clients, and can be checked out by other users. Approval can also be required, in which case users will need to request access, and someone with access level 3 or higher will need to approve the request. This component can be used to keep track of physical items such as computers, keyboards and phones, or even software licenses.
+The Inventory Control component allows users with access level 4 or higher to add items to the \textbf{Items} page. These items can be linked to products or clients, and can be checked out by other users. Approval can also be required, in which case users will need to request access, and someone with access level 4 or higher will need to approve the request. This component can be used to keep track of physical items such as computers, keyboards and phones, or even software licenses:
 
+\begin{figure}[h]
+\includegraphics{items.jpg}
+\end{figure}
+
+When a user checks out an item, additional information such as item location, lock codes or other secret data can be displayed on the item's page and sent through email to that user, so that the person can retrieve it. If approval is required, a notification will be sent to all available users with level 4 or higher. They can then decide to approve or deny the request.
+
+Users with checked out items will see a list of items on their home page, and can then return the item, making it available to other users. A checkout history is kept for each item and shown on the item page, showing all past requests and events. Items can also be manually assigned to users, or made unavailable, preventing any user from requesting or checking them out.
+
+Finally, a checkout plugin can be used to accomplish some automated task when an item is checked out, approved or assigned to a user.
 
 \clearpage
 \section{JSON API}

@@ -856,6 +856,22 @@ sub home
 		}
 		print "</table></div></div>";
 	}
+
+	if($cfg->load('comp_items') eq "on")
+	{
+		print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Checked out items</h3></div><div class='panel-body'><table class='table table-striped'>\n";
+		print "<tr><th>Type</th><th>Name</th><th>Serial</th></tr>\n";
+		$sql = $db->prepare("SELECT ROWID,* FROM items WHERE user = ?");
+		$sql->execute($logged_user);
+		while(my @res = $sql->fetchrow_array())
+		{
+			print "<tr><td>" . $res[2] . "</td><td><a href='./?m=items&i=" . $res[0] . "'>" . $res[1] . "</a></td><td>";
+			if($res[7] == 2) { print "<input type='submit' name='checkin' class='btn btn-default pull-right' value='Waiting approval' disabled>"; }
+			else { print "<form method='POST' action='.'><input type='hidden' name='m' value='items'><input type='hidden' name='i' value='" . $res[0] . "'><input type='submit' name='checkin' value='Return' class='btn btn-primary pull-right'>" . $res[3] . "</form>"; }
+			print "</td></tr>\n";
+		}
+		print "</table></div></div>";
+	}
 }
 
 #
@@ -1016,7 +1032,7 @@ elsif(!$cfg->load("db_address") || !$cfg->load("site_name")) # first use
 				print "<p><div class='row'><div class='col-sm-4'>Upload folder:</div><div class='col-sm-4'><input type='text' style='width:300px' name='upload_folder' value='.." . $cfg->sep . "uploads'></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Minimum upload level:</div><div class='col-sm-4'><select name='upload_lvl' style='width:300px'><option value=5>5 - Users management</option><option value=4>4 - Products management</option><option value=3>3 - Tickets management</option><option value=2>2 - Restricted view</option><option value=1 selected=selected>1 - Authorized users</option><option value=0>0 - Unauthorized users</option></select></div></div></p>\n";
 				print "<p>The upload folder should be a local folder with write access and is used for product images and comment attachments. If left empty, uploads will be disabled.</p>\n";
-				print "<p><div class='row'><div class='col-sm-4'>Items managed:</div><div class='col-sm-4'><select style='width:300px' name='items_managed'><option selected>Products with models and releases</option><option>Projects with goals and milestones</option><option>Resources with locations and updates</option><option>Applications with platforms and versions</option><option>Assets with types and instances</option></select></div></div></p>\n";
+				print "<p><div class='row'><div class='col-sm-4'>Items managed:</div><div class='col-sm-4'><select style='width:300px' name='items_managed'><option selected>Products with models and releases</option><option selected>Projects with goals and milestones</option><option>Resources with locations and updates</option><option>Applications with platforms and versions</option><option>Assets with types and instances</option></select></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Custom ticket field:</div><div class='col-sm-4'><input type='text' style='width:300px' name='custom_name' value='Related tickets'></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Custom field type:</div><div class='col-sm-4'><select style='width:300px' name='custom_type'><option>Text</option><option>Link</option><option>Checkbox</option></select></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Active Directory server:</div><div class='col-sm-4'><input type='text' style='width:300px' name='ad_server' value=''></div></div></p>\n";
@@ -1030,7 +1046,7 @@ elsif(!$cfg->load("db_address") || !$cfg->load("site_name")) # first use
 				print "<p><div class='row'><div class='col-sm-4'>Component: Clients Directory</div><div class='col-sm-4'><input type='checkbox' name='comp_clients' checked></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Component: Tasks Management</div><div class='col-sm-4'><input type='checkbox' name='comp_steps' checked></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Component: Inventory Control</div><div class='col-sm-4'><input type='checkbox' name='comp_items' checked></div></div></p>\n";
-				print "<p>See the <a href='./manual.pdf'>manual</a> file for help.<input class='btn btn-primary pull-right' type='submit' value='Save'></p></form>\n"; 
+				print "<p>See the <a href='./manual.pdf'>manual</a> file for detailed instructions.<input class='btn btn-primary pull-right' type='submit' value='Save'></p></form>\n"; 
 			}
 			else
 			{
@@ -1800,7 +1816,7 @@ elsif($q->param('m')) # Modules
 			print "</table>";
 			if($logged_lvl > 4)
 			{
-				print "<h4>Add a new client:</h4><form method='POST' action='.'><input type='hidden' name='m' value='add_client'><p><div class='row'><div class='col-sm-6'><input type='text' class='form-control' name='name' placeholder='Client name' maxlength='50'></div><div class='col-sm-6'><select class='form-control' name='status'><option>Prospect</option><option>Contact</option><option>Paid</option><option>Unpaid</option><option>Closed</option></select></div></div></p><p><input type='text' class='form-control' name='contact' placeholder='Contact' maxlength='99'></p><p><textarea class='form-control' name='notes' placeholder='Notes'></textarea></p><p><input type='submit' value='Add client' class='btn btn-primary pull-right'></form>";
+				print "<h4>Add a new client:</h4><form method='POST' action='.' data-toggle='validator' role='form'><input type='hidden' name='m' value='add_client'><p><div class='row'><div class='col-sm-6'><input type='text' class='form-control' name='name' placeholder='Client name' maxlength='50' required></div><div class='col-sm-6'><select class='form-control' name='status'><option>Prospect</option><option>Contact</option><option>Paid</option><option>Unpaid</option><option>Closed</option></select></div></div></p><p><input type='text' class='form-control' name='contact' placeholder='Contact' maxlength='99' required></p><p><textarea class='form-control' name='notes' placeholder='Notes'></textarea></p><p><input type='submit' value='Add client' class='btn btn-primary pull-right'></form>";
 			}
 			print "</div></div>\n";
 		}
@@ -1974,7 +1990,7 @@ elsif($q->param('m')) # Modules
 			if($cfg->load("comp_items") eq "on") { print "<option selected>on</option><option>off</option>"; }
 			else { print "<option>on</option><option selected>off</option>"; }
 			print "</select></td></tr>\n";
-			print "</table>The admin password will be left unchanged if empty.<br>See the <a href='./manual.pdf'>manual</a> file for help.<input class='btn btn-primary pull-right' type='submit' value='Save settings'></form></div></div>\n";
+			print "</table>The admin password will be left unchanged if empty.<br>See the <a href='./manual.pdf'>manual</a> file for detailed instructions.<input class='btn btn-primary pull-right' type='submit' value='Save settings'></form></div></div>\n";
 			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Log (last 200 events)</h3></div><div class='panel-body'>\n";
 			print "<form style='display:inline' method='POST' action='.'><input type='hidden' name='m' value='clear_log'><input class='btn btn-danger pull-right' type='submit' value='Clear log'><br></form><a name='log'></a><p>Filter log by events:<br><a href='./?m=settings#log'>All</a> | <a href='./?m=settings&filter_log=Failed#log'>Failed logins</a> | <a href='./?m=settings&filter_log=Success#log'>Successful logins</a> | <a href='./?m=settings&filter_log=level#log'>Level changes</a> | <a href='./?m=settings&filter_log=password#log'>Password changes</a> | <a href='./?m=settings&filter_log=new#log'>New users</a> | <a href='./?m=settings&filter_log=setting#log'>Settings updated</a> | <a href='./?m=settings&filter_log=notification#log'>Email notifications</a> | <a href='./?m=settings&filter_log=LDAP:#log'>Active Directory</a> | <a href='./?m=settings&filter_log=deleted:#log'>Deletes</a></p>\n";
 			print "<table class='table table-striped'><tr><th>IP address</th><th>User</th><th>Event</th><th>Time</th></tr>\n";
@@ -2251,7 +2267,7 @@ elsif($q->param('m')) # Modules
 		if($logged_lvl > 3)
 		{
 			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Add a new article</h3></div><div class='panel-body'>\n";
-			print "<form method='GET' action='.'><p><div class='row'><div class='col-sm-6'><input type='hidden' name='m' value='add_article'><input placeholder='Title' class='form-control' type='text' name='title' maxlength='50'></div><div class='col-sm-6'><select class='form-control' name='productid'><option value='0'>All " . lc($items{"Product"}) . "s</option>";
+			print "<form method='GET' action='.' data-toggle='validator' role='form'><p><div class='row'><div class='col-sm-6'><input type='hidden' name='m' value='add_article'><input placeholder='Title' class='form-control' type='text' name='title' maxlength='50' required></div><div class='col-sm-6'><select class='form-control' name='productid'><option value='0'>All " . lc($items{"Product"}) . "s</option>";
 			for(my $i = 1; $i < scalar(@products); $i++)
 			{
 				if($products[$i]) { print "<option value='" . $i . "'>" . $products[$i] . "</option>"; }
@@ -2346,8 +2362,8 @@ elsif($q->param('m')) # Modules
 				print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>" . $items{"Release"} . "s</h3></div><div class='panel-body'>";
 				if($logged_lvl > 2 && $vis ne "Archived")
 				{
-					print "<h4>Add a new " . lc($items{"Release"}) . "</h4><form method='POST' action='.'>\n";
-					print "<input type='hidden' name='m' value='add_release'><input type='hidden' name='product_id' value='" . to_int($q->param('p')) . "'><div class='row'><div class='col-sm-4'>" . $items{"Release"} . ": <input type='text' class='form-control' name='release_version'></div><div class='col-sm-6'>Notes or link: <input type='text' name='release_notes' class='form-control'></div><div class='col-sm-2'><input class='btn btn-primary pull-right' type='submit' value='Add " . lc($items{"Release"}) . "'></div></div></form><hr><h4>Current " . lc($items{"Release"}) . "s</h4>\n";    
+					print "<h4>Add a new " . lc($items{"Release"}) . "</h4><form method='POST' action='.' data-toggle='validator' role='form'>\n";
+					print "<input type='hidden' name='m' value='add_release'><input type='hidden' name='product_id' value='" . to_int($q->param('p')) . "'><div class='row'><div class='col-sm-4'>" . $items{"Release"} . ": <input type='text' class='form-control' name='release_version' required></div><div class='col-sm-6'>Notes or link: <input type='text' name='release_notes' class='form-control' required></div><div class='col-sm-2'><input class='btn btn-primary pull-right' type='submit' value='Add " . lc($items{"Release"}) . "'></div></div></form><hr><h4>Current " . lc($items{"Release"}) . "s</h4>\n";    
 				}
 				print "<table class='table table-striped'>\n";
 				print "<tr><th>" . $items{"Release"} . "</th><th>User</th><th>Notes</th><th>Date</th></tr>\n";
@@ -2369,11 +2385,11 @@ elsif($q->param('m')) # Modules
 				print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Tasks</h3></div><div class='panel-body'>";
 				if($logged_lvl > 3 && $vis ne "Archived")
 				{
-					print "<form method='POST' action='.'><input type='hidden' name='product_id' value='" . to_int($q->param('p')) . "'><input type='hidden' name='m' value='add_step'><h4>Add a new task</h4><p><div class='row'><div class='col-sm-12'><input placeholder='Description' class='form-control' name='name' maxlength='200'></div></div></p><p><div class='row'><div class='col-sm-5'>Assign user:<br><select name='user' class='form-control'>";
+					print "<form method='POST' action='.' data-toggle='validator' role='form'><input type='hidden' name='product_id' value='" . to_int($q->param('p')) . "'><input type='hidden' name='m' value='add_step'><h4>Add a new task</h4><p><div class='row'><div class='col-sm-12'><input placeholder='Description' class='form-control' name='name' maxlength='200' required></div></div></p><p><div class='row'><div class='col-sm-5'>Assign user:<br><select name='user' class='form-control'>";
 					my $sql = $db->prepare("SELECT name FROM users WHERE level > 0 ORDER BY name;");
 					$sql->execute();
 					while(my @res = $sql->fetchrow_array()) { print "<option>" . $res[0] . "</option>"; }
-					print "</select></div><div class='col-sm-5'>Due by:<br><input type='text' class='form-control datepicker' name='due' placeholder='mm/dd/yyyy'></div><div class='col-sm-2'><input class='btn btn-primary pull-right' type='submit' value='Add task'></div></div></p></form><hr><h4>Current tasks</h4>\n";
+					print "</select></div><div class='col-sm-5'>Due by:<br><input type='text' class='form-control datepicker' name='due' placeholder='mm/dd/yyyy' required></div><div class='col-sm-2'><input class='btn btn-primary pull-right' type='submit' value='Add task'></div></div></p></form><hr><h4>Current tasks</h4>\n";
 				}
 				print "<table class='table table-stripped'><tr><th>Task</th><th>Assigned to</th><th>Completion</th><th>Due by</th></tr>";
 				my $sql = $db->prepare("SELECT ROWID,* FROM steps WHERE productid = ?;");
@@ -2684,11 +2700,11 @@ elsif($q->param('m')) # Modules
 		headers($items{"Product"} . "s");
 		if($logged_lvl > 3)  # add new product pane
 		{
-			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Add a new " . lc($items{"Product"}) . "</h3></div><div class='panel-body'><form method='POST' action='.' enctype='multipart/form-data'>\n";
-			print "<p><div class='row'><div class='col-sm-6'><input placeholder='" . $items{"Product"} . " name' type='text' name='product_name' class='form-control'></div><div class='col-sm-6'><input type='text' placeholder='" . $items{"Model"} . "' name='product_model' class='form-control'></div></div></p>\n";
-			print "<p><div class='row'><div class='col-sm-6'><input type='text' name='product_release' placeholder='Initial " . lc($items{"Release"}) . "' class='form-control'></div><div class='col-sm-6'><select class='form-control' name='product_vis'><option>Public</option><option>Private</option><option>Restricted</option></select></div></div></p>\n";
+			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Add a new " . lc($items{"Product"}) . "</h3></div><div class='panel-body'><form method='POST' action='.' enctype='multipart/form-data' data-toggle='validator' role='form'>\n";
+			print "<p><div class='row'><div class='col-sm-6'><input placeholder='" . $items{"Product"} . " name' type='text' name='product_name' class='form-control' required></div><div class='col-sm-6'><input type='text' placeholder='" . $items{"Model"} . "' name='product_model' class='form-control'></div></div></p>\n";
+			print "<p><div class='row'><div class='col-sm-6'><input type='text' name='product_release' placeholder='Initial " . lc($items{"Release"}) . "' class='form-control' required></div><div class='col-sm-6'><select class='form-control' name='product_vis'><option>Public</option><option>Private</option><option>Restricted</option></select></div></div></p>\n";
 			print "<span class='pull-right'><img title='Header' src='icons/header.png' style='cursor:pointer' onclick='javascript:md_header()'> <img title='Bold' src='icons/bold.png' style='cursor:pointer' onclick='javascript:md_bold()'> <img title='Italic' src='icons/italic.png' style='cursor:pointer' onclick='javascript:md_italic()'> <img title='Code' src='icons/code.png' style='cursor:pointer' onclick='javascript:md_code()'> <img title='Image' src='icons/image.png' style='cursor:pointer' onclick='javascript:md_image()'> <img title='Link' src='icons/link.png' style='cursor:pointer' onclick='javascript:md_link()'> <img title='List' src='icons/list.png' style='cursor:pointer' onclick='javascript:md_list()'></span><br>";
-			print "<p><textarea placeholder='Description' id='markdown' class='form-control' name='product_desc' rows='10'></textarea></p><input class='btn btn-primary pull-right' type='submit' value='Add " . lc($items{"Product"}) . "'>";
+			print "<p><textarea placeholder='Description' id='markdown' class='form-control' name='product_desc' rows='10' required></textarea></p><input class='btn btn-primary pull-right' type='submit' value='Add " . lc($items{"Product"}) . "'>";
 			if($cfg->load('upload_folder')) { print $items{"Product"} . " image: <input type='file' name='product_screenshot'>\n"; }
 			print "<input type='hidden' name='m' value='add_product'></form></div></div>\n";
 		}
@@ -3593,7 +3609,7 @@ elsif($q->param('m')) # Modules
 		}
 		elsif($q->param('i'))
 		{
-			if($q->param('save_item'))
+			if($q->param('save_item') && $logged_lvl > 3)
 			{
 				if(!$q->param('type') || !$q->param('product_id') || !$q->param('client_id')) 
 				{
@@ -3617,6 +3633,145 @@ elsif($q->param('m')) # Modules
 					msg("Item updated.", 3);
 				}
 			}
+			if($q->param('deny') && $logged_lvl > 3)
+			{
+				my $sql2 = $db->prepare("SELECT ROWID,* FROM items WHERE ROWID = ?;");
+				$sql2->execute(to_int($q->param('i')));
+				while(my @res2 = $sql2->fetchrow_array())
+				{
+					notify($res2[8], "Checkout request denied", "Item name: " . $res2[1] . "\nItem type: " . $res2[2] . "\nSerial number: " . $res2[3]);
+				}
+				$sql2 = $db->prepare("UPDATE items SET user = ?, status = ? WHERE ROWID = ?;");
+				$sql2->execute("", 1, to_int($q->param('i')));
+				$sql2 = $db->prepare("INSERT INTO checkouts VALUES (?, ?, ?, ?);");
+				$sql2->execute(to_int($q->param('i')), $logged_user, "Denied", now());
+				msg("Checkout request denied.", 3);
+			}
+			if($q->param('approve') && $logged_lvl > 3)
+			{
+				my $sql2 = $db->prepare("UPDATE items SET status = ? WHERE ROWID = ?;");
+				$sql2->execute(3, to_int($q->param('i')));
+				$sql2 = $db->prepare("INSERT INTO checkouts VALUES (?, ?, ?, ?);");
+				$sql2->execute(to_int($q->param('i')), $logged_user, "Approved", now());
+				msg("Checkout request approved.", 3);
+				$sql2 = $db->prepare("SELECT ROWID,* FROM items WHERE ROWID = ?;");
+				$sql2->execute(to_int($q->param('i')));
+				while(my @res2 = $sql2->fetchrow_array())
+				{
+					notify($res2[8], "Checkout request approved", "Item name: " . $res2[1] . "\nItem type: " . $res2[2] . "\nSerial number: " . $res2[3] . "\nAdditional information: " . $res2[9]);
+					if($cfg->load('checkout_plugin'))
+					{
+						my $cmd = $cfg->load('checkout_plugin');
+						my $u = $res2[8];
+						my $s = $res2[3];
+						$cmd =~ s/\%user\%/\"$u\"/g;
+						$cmd =~ s/\%serial\%/\"$s\"/g;
+						$cmd =~ s/\n/ /g;
+						$cmd =~ s/\r/ /g;
+						system($cmd);
+					}	
+				}
+			}
+			if($q->param('assign') && $q->param('user') && $logged_lvl > 3)
+			{
+				my $sql2 = $db->prepare("UPDATE items SET user = ?, status = ? WHERE ROWID = ?;");
+				$sql2->execute(sanitize_alpha($q->param('user')), 3, to_int($q->param('i')));
+				$sql2 = $db->prepare("INSERT INTO checkouts VALUES (?, ?, ?, ?);");
+				$sql2->execute(to_int($q->param('i')), $logged_user, "Assigned to " . sanitize_alpha($q->param('user')), now());
+				msg("Item assigned to user <b>" . sanitize_alpha($q->param('user')) . "</b>.", 3);
+				$sql2 = $db->prepare("SELECT ROWID,* FROM items WHERE ROWID = ?;");
+				$sql2->execute(to_int($q->param('i')));
+				while(my @res2 = $sql2->fetchrow_array())
+				{
+					notify(sanitize_alpha($q->param('user')), "Item assigned to you", "An item has been assigned to you.\n\nItem name: " . $res2[1] . "\nItem type: " . $res2[2] . "\nSerial number: " . $res2[3] . "\nAdditional information: " . $res2[9]);
+					if($cfg->load('checkout_plugin'))
+					{
+						my $cmd = $cfg->load('checkout_plugin');
+						my $u = sanitize_alpha($q->param('user'));
+						my $s = $res2[3];
+						$cmd =~ s/\%user\%/\"$u\"/g;
+						$cmd =~ s/\%serial\%/\"$s\"/g;
+						$cmd =~ s/\n/ /g;
+						$cmd =~ s/\r/ /g;
+						system($cmd);
+					}					
+				}
+			}
+			if($q->param('unavailable') && $logged_lvl > 3)
+			{
+				my $sql2 = $db->prepare("UPDATE items SET user = ?, status = ? WHERE ROWID = ?;");
+				$sql2->execute("", 0, to_int($q->param('i')));
+				$sql2 = $db->prepare("INSERT INTO checkouts VALUES (?, ?, ?, ?);");
+				$sql2->execute(to_int($q->param('i')), $logged_user, "Made unavailable", now());
+				msg("Item made unavailable.", 3);
+			}
+			if($q->param('delete') && $logged_lvl > 3)
+			{
+				my $sql2 = $db->prepare("DELETE FROM items WHERE ROWID = ?;");
+				$sql2->execute(to_int($q->param('i')));
+				$sql2 = $db->prepare("DELETE FROM checkouts WHERE itemid = ?;");
+				$sql2->execute(to_int($q->param('i')));
+				msg("Item removed.", 3);
+			}
+			if($q->param('available') && $logged_lvl > 3)
+			{
+				my $sql2 = $db->prepare("UPDATE items SET user = ?, status = ? WHERE ROWID = ?;");
+				$sql2->execute("", 1, to_int($q->param('i')));
+				$sql2 = $db->prepare("INSERT INTO checkouts VALUES (?, ?, ?, ?);");
+				$sql2->execute(to_int($q->param('i')), $logged_user, "Made available", now());
+				msg("Item made available.", 3);
+			}
+			if($q->param('checkin') && $logged_lvl > 0)
+			{
+				my $sql2 = $db->prepare("UPDATE items SET user = ?, status = ? WHERE ROWID = ?;");
+				$sql2->execute("", 1, to_int($q->param('i')));
+				$sql2 = $db->prepare("INSERT INTO checkouts VALUES (?, ?, ?, ?);");
+				$sql2->execute(to_int($q->param('i')), $logged_user, "Returned", now());
+				msg("Item returned. Press <a href='./?m=items'>here</a> to continue.", 3);
+			}
+			if($q->param('checkout') && $logged_lvl > 0)
+			{
+				$sql = $db->prepare("SELECT ROWID,* FROM items WHERE ROWID = ?;");
+				$sql->execute(to_int($q->param('i')));
+				while(my @res = $sql->fetchrow_array())
+				{
+					if($res[6] == 1) # Approval needed
+					{
+						my $sql2 = $db->prepare("UPDATE items SET user = ?, status = ? WHERE ROWID = ?;");
+						$sql2->execute($logged_user, 2, to_int($q->param('i')));
+						$sql2 = $db->prepare("INSERT INTO checkouts VALUES (?, ?, ?, ?);");
+						$sql2->execute(to_int($q->param('i')), $logged_user, "Requested", now());
+						msg("Request sent. You will be notified after it is approved or denied.", 3);
+						notify($logged_user, "Item requested", "Your checkout request was sent. You will be notified after it is approved or denied.\n\nItem name: " . $res[1] . "\nItem type: " . $res[2] . "\nSerial number: " . $res[3]);
+						$sql2 = $db->prepare("SELECT name FROM users WHERE level > 3 AND email != '';");
+						$sql2->execute();
+						while(my @res2 = $sql2->fetchrow_array())
+						{
+							notify($res2[0], "Checkout requested", "A checkout request was submitted by: " . $logged_user . "\n\nItem name: " . $res[1] . "\nItem type: " . $res[2] . "\nSerial number: " . $res[3]);
+						}
+					}
+					else # Checkout
+					{
+						my $sql2 = $db->prepare("UPDATE items SET user = ?, status = ? WHERE ROWID = ?;");
+						$sql2->execute($logged_user, 3, to_int($q->param('i')));
+						$sql2 = $db->prepare("INSERT INTO checkouts VALUES (?, ?, ?, ?);");
+						$sql2->execute(to_int($q->param('i')), $logged_user, "Checked out", now());
+						msg("Item checked out.", 3);
+						notify($logged_user, "Item checked out", "Item name: " . $res[1] . "\nItem type: " . $res[2] . "\nSerial number: " . $res[3] . "\nAdditional information: " . $res[9]);
+						if($cfg->load('checkout_plugin'))
+						{
+							my $cmd = $cfg->load('checkout_plugin');
+							my $u = $logged_user;
+							my $s = $res[3];
+							$cmd =~ s/\%user\%/\"$u\"/g;
+							$cmd =~ s/\%serial\%/\"$s\"/g;
+							$cmd =~ s/\n/ /g;
+							$cmd =~ s/\r/ /g;
+							system($cmd);
+						}
+					}
+				}
+			}
 			$sql = $db->prepare("SELECT ROWID,* FROM items WHERE ROWID = ?;");
 			$sql->execute(to_int($q->param('i')));
 			while(my @res = $sql->fetchrow_array())
@@ -3625,28 +3780,28 @@ elsif($q->param('m')) # Modules
 				if(!$q->param('edit'))
 				{
 					print "<p><div class='row'><div class='col-sm-6'>Type: <b>" . $res[2] . "</b></div><div class='col-sm-6'>Serial number: <b>" . $res[3] . "</b></div></div></p>";
-					print "<p><div class='row'><div class='col-sm-6'>Product: <b>";
+					print "<p><div class='row'><div class='col-sm-6'>Related " . lc($items{'Product'}) . ": <b>";
 					if($products[$res[4]]) { print $products[$res[4]]; }
 					else { print "None"; }
-					print "</b></div><div class='col-sm-6'>Client: <b>";
-					if($products[$res[5]]) { print $clients[$res[5]]; }
+					print "</b></div><div class='col-sm-6'>Related client: <b>";
+					if($clients[$res[5]]) { print $clients[$res[5]]; }
 					else { print "None"; }					
 					print "</b></div></div></p>";
-					print "<p>Information provided on checkout:<br><pre>" . $res[9] . "</pre></p>";
+					if(($logged_user eq $res[8] && $res[7] == 3) || $logged_lvl > 3) { print "<p>Additional information:<br><pre>" . $res[9] . "</pre></p>"; }
 					print "<p>Checkout approval: <b>";
 					if(to_int($res[6]) == 1) { print "Required"; }
 					else { print "Not required"; } 	
 					print "</b></p><p>Status: <b>";
 					if(to_int($res[7]) == 0) { print "Unavailable"; }
 					elsif(to_int($res[7]) == 1) { print "Available"; }
-					elsif(to_int($res[7]) == 2) { print "Waiting approval for " . $res[8]; }
-					else { print "Checked out by " . $res[8]; }
+					elsif(to_int($res[7]) == 2) { print "Waiting approval for: " . $res[8]; }
+					else { print "Checked out by: " . $res[8]; }
 					print "</b></p><p>";
 					if($logged_lvl > 3) 
 					{
 						print "<form method='GET' action='.'><input type='hidden' name='m' value='items'><input type='hidden' name='i' value='" . to_int($q->param('i')) . "'><input type='submit' class='btn btn-primary pull-right' name='edit' value='Edit item'></form>"; 
 					}
-					if($logged_lvl > 0)
+					if($logged_lvl > 0 && $res[7] == 1)
 					{
 						print "<form method='GET' action='.'><input type='hidden' name='m' value='items'><input type='hidden' name='i' value='" . to_int($q->param('i')) . "'><input type='submit' class='btn btn-primary' name='checkout' value='";
 						if(to_int($res[6]) == 1) { print "Request"; }
@@ -3655,7 +3810,7 @@ elsif($q->param('m')) # Modules
 					}
 					print "</p>";
 				}
-				else
+				elsif($logged_lvl > 3)
 				{
 					print "<form method='POST' action='.'><input type='hidden' name='m' value='items'><input type='hidden' name='i' value='" . to_int($q->param('i')) . "'>\n";
 					print "<p><div class='row'><div class='col-sm-6'>Item type: <select name='type' class='form-control'><option";
@@ -3704,7 +3859,15 @@ elsif($q->param('m')) # Modules
 					print "<p><label><input type='checkbox' name='approval'";
 					if(to_int($res[6]) == 1) { print " checked"; }
 					print "> Require approval for checkout</label></p>";
-					print "<p><input type='submit' name='save_item' class='btn btn-primary pull-right' value='Save'><input type='submit' name='save_item' class='btn btn-danger' value='Make unavailable'></p></form>";
+					print "<p><input type='submit' name='save_item' class='btn btn-primary pull-right' value='Save'>";
+					if($res[7] == 0) { print "<input type='submit' name='available' class='btn btn-success' value='Make available'>"; }
+					else { print "<input type='submit' name='unavailable' class='btn btn-danger' value='Make unavailable'>"; }
+					print " <input type='submit' name='delete' class='btn btn-danger' value='Delete item'>";
+					print "</p><hr><p><div class='row'><div class='col-sm-4'>Assign to user: <select name='user' class='form-control'>";
+					my $sql2 = $db->prepare("SELECT name FROM users WHERE level > 0 ORDER BY name;");
+					$sql2->execute();
+					while(my @res2 = $sql2->fetchrow_array()) { print "<option>" . $res2[0] . "</option>"; }
+					print "</select></div><div class='col-sm-8'><input type='submit' name='assign' class='btn btn-primary pull-right' value='Assign'></div></div></p></form>";
 				}
 				print "</div></div>\n";
 			}
@@ -3724,8 +3887,8 @@ elsif($q->param('m')) # Modules
 		{
 			if($logged_lvl > 3)
 			{
-				print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Add a new item</h3></div><div class='panel-body'><form method='POST' action='.'><input type='hidden' name='m' value='items'>\n";
-				print "<p><div class='row'><div class='col-sm-4'>Item type: <select name='type' class='form-control'><option>Desktop</option><option>Laptop</option><option>Server</option><option>Keyboard</option><option>Mouse</option><option>Display</option><option>Phone</option><option>Printer</option><option>Peripheral</option><option>Software</option><option>Other</option></select></div><div class='col-sm-4'>Item name: <input type='text' maxlength='50' class='form-control' name='name'></div><div class='col-sm-4'>Serial number: <input type='text' maxlength='30' class='form-control' name='serial'></div></div></p>\n";
+				print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Add a new item</h3></div><div class='panel-body'><form method='POST' action='.' data-toggle='validator' role='form'><input type='hidden' name='m' value='items'>\n";
+				print "<p><div class='row'><div class='col-sm-4'>Item type: <select name='type' class='form-control'><option>Desktop</option><option>Laptop</option><option>Server</option><option>Keyboard</option><option>Mouse</option><option>Display</option><option>Phone</option><option>Printer</option><option>Peripheral</option><option>Software</option><option>Other</option></select></div><div class='col-sm-4'>Item name: <input type='text' maxlength='50' class='form-control' name='name' required></div><div class='col-sm-4'>Serial number: <input type='text' maxlength='30' class='form-control' name='serial'></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-6'>Related " . lc($items{"Product"}) . ": <select class='form-control' name='product_id'><option>None</option>";
 				for(my $i = 1; $i < scalar(@products); $i++)
 				{
@@ -3751,11 +3914,11 @@ elsif($q->param('m')) # Modules
 				{
 					print "<h4>Items awaiting approval</h4>";
 					print "<table class='table table-striped'><tr><th>Type</th><th>Name</th><th>Serial</th><th>User</th><th>Action</th></tr>\n";
-					$sql = $db->prepare("SELECT ROWID,* FROM items WHERE approval = 1;");
+					$sql = $db->prepare("SELECT ROWID,* FROM items WHERE status = 2;");
 					$sql->execute();
 					while(my @res = $sql->fetchrow_array())
 					{
-						print "<tr><td>" . $res[2] . "</td><td>" . $res[1] . "</td><td>" . $res[3] . "</td><td>" . $res[8] . "</td><td><form method='POST' action='.'><input type='hidden' name='m' values='items'><input type='hidden' name='i' value='" . $res[0] . "'><input type='submit' name='approve' value='Approve'> <input type='submit' name='deny' value='Deny'></form></td></tr>\n";
+						print "<tr><td>" . $res[2] . "</td><td>" . $res[1] . "</td><td>" . $res[3] . "</td><td>" . $res[8] . "</td><td><form method='POST' action='.'><input type='hidden' name='m' value='items'><input type='hidden' name='i' value='" . $res[0] . "'><input class='btn btn-success' type='submit' name='approve' value='Approve'> <input type='submit' class='btn btn-danger' name='deny' value='Deny'></form></td></tr>\n";
 					}
 					print "</table><hr><h4>Items list</h4>\n";
 				}
