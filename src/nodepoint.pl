@@ -8,7 +8,7 @@
 #
 
 use strict;
-use Config::Win32;
+use Config::Linux;
 use Digest::SHA qw(sha1_hex);
 use DBI;
 use CGI;
@@ -655,7 +655,7 @@ sub notify
 						$smtp->data();
 						$smtp->datasend("From: " . $cfg->load('smtp_from') . "\n");
 						$smtp->datasend("To: " . $res[2] . "\n");
-						$smtp->datasend("Subject: NodePoint - " . $title . "\n\n");
+						$smtp->datasend("Subject: " . $cfg->load('site_name') . " - " . $title . "\n\n");
 						$smtp->datasend($mesg . "\n\nThis is an automated message from " . $cfg->load('site_name') . ". To disable notifications, log into your account and remove the email under Settings.\n");
 						$smtp->datasend();
 						$smtp->quit;
@@ -881,11 +881,11 @@ sub home
 # Connect to config
 eval
 {
-	$cfg = Config::Win32->new("NodePoint", "settings");
+	$cfg = Config::Linux->new("NodePoint", "settings");
 };
 if(!defined($cfg)) # Can't even use headers() if this fails.
 {
-	print "Content-type: text/html\n\nError: Could not access " . Config::Win32->type . ". Please ensure NodePoint has the proper permissions.";
+	print "Content-type: text/html\n\nError: Could not access " . Config::Linux->type . ". Please ensure NodePoint has the proper permissions.";
 	exit(0);
 };
 
@@ -1009,9 +1009,9 @@ elsif(!$cfg->load("db_address") || !$cfg->load("site_name")) # first use
 				print "<p><div class='row'><div class='col-sm-4'>Ticket visibility:</div><div class='col-sm-4'><select name='default_vis' style='width:300px'><option>Public</option><option>Private</option><option>Restricted</option></select></div></div></p>\n";
 				print "<p>Tickets will have a default visibility when created. Public tickets can be seen by people not logged in, while private tickets require people to be logged in to view. Restricted ones can only be seen by authors and users with the <b>2 - Restricted view</b> level, ideal for helpdesk/support portals.</p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Allow user registrations:</div><div class='col-sm-4'><input type='checkbox' name='allow_registrations' checked=checked></div></div></p>\n";
-				print "<p><div class='row'><div class='col-sm-4'>Default access level:</div><div class='col-sm-4'><select name='default_lvl' style='width:300px'><option value=5>5 - Users management</option><option value=4>4 - Products management</option><option value=3>3 - Tickets management</option><option value=2>2 - Restricted view</option><option value=1 selected=selected>1 - Authorized users</option><option value=0>0 - Unauthorized users</option></select></div></div></p>\n";
+				print "<p><div class='row'><div class='col-sm-4'>Default access level:</div><div class='col-sm-4'><select name='default_lvl' style='width:300px'><option value=5>5 - Users management</option><option value=4>4 - Projects management</option><option value=3>3 - Tickets management</option><option value=2>2 - Restricted view</option><option value=1 selected=selected>1 - Authorized users</option><option value=0>0 - Unauthorized users</option></select></div></div></p>\n";
 				print "<p>New registered users will be assigned a default access level, which can then be modified by users with the <b>5 - Users management</b> level. These are the access levels, with each rank having the lower permissions as well:</p>\n";
-				print "<table class='table table-striped'><tr><th>Level</th><th>Name</th><th>Description</th></tr><tr><td>6</td><td>NodePoint Admin</td><td>Can change basic NodePoint settings</td></tr><td>5</td><td>Users management</td><td>Can manage users, reset passwords, edit clients</td></tr><tr><td>4</td><td>Products management</td><td>Can add, retire and edit products, edit articles and items</td></tr><tr><td>3</td><td>Tickets management</td><td>Can create releases, update tickets, track time</td></tr><tr><td>2</td><td>Restricted view</td><td>Can view statistics, restricted tickets and products</td></tr><tr><td>1</td><td>Authorized users</td><td>Can create tickets and comments</td></tr><tr><td>0</td><td>Unauthorized users</td><td>Can view private tickets</td></tr></table>\n";
+				print "<table class='table table-striped'><tr><th>Level</th><th>Name</th><th>Description</th></tr><tr><td>6</td><td>NodePoint Admin</td><td>Can change basic NodePoint settings</td></tr><td>5</td><td>Users management</td><td>Can manage users, reset passwords, edit clients</td></tr><tr><td>4</td><td>Projects management</td><td>Can add, retire and edit projects, edit articles and items</td></tr><tr><td>3</td><td>Tickets management</td><td>Can create releases, update tickets, track time</td></tr><tr><td>2</td><td>Restricted view</td><td>Can view statistics, restricted tickets and products</td></tr><tr><td>1</td><td>Authorized users</td><td>Can create tickets and comments</td></tr><tr><td>0</td><td>Unauthorized users</td><td>Can view private tickets</td></tr></table>\n";
 				my $key = join'', map +(0..9,'a'..'z','A'..'Z')[rand(10+26*2)], 1..32;
 				print "<p><div class='row'><div class='col-sm-4'>API read key:</div><div class='col-sm-4'><input type='text' style='width:300px' name='api_read' value='" . $key . "'></div></div></p>\n";
 				$key = join'', map +(0..9,'a'..'z','A'..'Z')[rand(10+26*2)], 1..32;
@@ -1030,7 +1030,7 @@ elsif(!$cfg->load("db_address") || !$cfg->load("site_name")) # first use
 				print "<p><div class='row'><div class='col-sm-4'>Admin password:</div><div class='col-sm-4'><input style='width:300px' type='password' name='admin_pass'></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Public notice:</div><div class='col-sm-4'><input type='text' style='width:300px' name='motd' value='Welcome to NodePoint. Remember to be courteous when writing tickets. Contact the help desk for any problem.'></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Upload folder:</div><div class='col-sm-4'><input type='text' style='width:300px' name='upload_folder' value='.." . $cfg->sep . "uploads'></div></div></p>\n";
-				print "<p><div class='row'><div class='col-sm-4'>Minimum upload level:</div><div class='col-sm-4'><select name='upload_lvl' style='width:300px'><option value=5>5 - Users management</option><option value=4>4 - Products management</option><option value=3>3 - Tickets management</option><option value=2>2 - Restricted view</option><option value=1 selected=selected>1 - Authorized users</option><option value=0>0 - Unauthorized users</option></select></div></div></p>\n";
+				print "<p><div class='row'><div class='col-sm-4'>Minimum upload level:</div><div class='col-sm-4'><select name='upload_lvl' style='width:300px'><option value=5>5 - Users management</option><option value=4>4 - Projects management</option><option value=3>3 - Tickets management</option><option value=2>2 - Restricted view</option><option value=1 selected=selected>1 - Authorized users</option><option value=0>0 - Unauthorized users</option></select></div></div></p>\n";
 				print "<p>The upload folder should be a local folder with write access and is used for product images and comment attachments. If left empty, uploads will be disabled.</p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Items managed:</div><div class='col-sm-4'><select style='width:300px' name='items_managed'><option selected>Products with models and releases</option><option selected>Projects with goals and milestones</option><option>Resources with locations and updates</option><option>Applications with platforms and versions</option><option>Assets with types and instances</option></select></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Custom ticket field:</div><div class='col-sm-4'><input type='text' style='width:300px' name='custom_name' value='Related tickets'></div></div></p>\n";
@@ -1161,7 +1161,7 @@ elsif($q->param('api')) # API calls
 		else
 		{
 			print "{\n";
-			print " \"message\": \"Ticket list.\",\n";
+			print " \"message\": \"Tickets list.\",\n";
 			print " \"status\": \"OK\",\n";
 			print " \"tickets\": [\n";
 			my $found = 0;
@@ -1176,6 +1176,93 @@ elsif($q->param('api')) # API calls
 				print "   \"product_id\": \"" . $res[1] . "\",\n";
 				print "   \"release_id\": \"" . $res[2] . "\",\n";
 				print "   \"title\": \"" . $res[5] . "\"\n";
+				print "  }";
+			}
+			print "\n ]\n";
+			print "}\n";
+		}
+	}
+	elsif($q->param('api') eq "list_tasks")
+	{
+		if(!$q->param('user'))
+		{
+			print "{\n";
+			print " \"message\": \"Missing 'user' argument.\",\n";
+			print " \"status\": \"ERR_MISSING_ARGUMENT\"\n";
+			print "}\n";
+		}
+		elsif(!$q->param('key'))
+		{
+			print "{\n";
+			print " \"message\": \"Missing 'key' argument.\",\n";
+			print " \"status\": \"ERR_MISSING_ARGUMENT\"\n";
+			print "}\n";
+		}
+		elsif($q->param('key') ne $cfg->load('api_read'))
+		{
+			print "{\n";
+			print " \"message\": \"Invalid 'key' value.\",\n";
+			print " \"status\": \"ERR_INVALID_KEY\"\n";
+			print "}\n";
+		}
+		else
+		{
+			print "{\n";
+			print " \"message\": \"Tasks list.\",\n";
+			print " \"status\": \"OK\",\n";
+			print " \"tasks\": [\n";
+			my $found = 0;
+			$sql = $db->prepare("SELECT * FROM steps WHERE user = ?;");
+			$sql->execute(sanitize_alpha($q->param('user')));
+			while(my @res = $sql->fetchrow_array())
+			{
+				if($found) { print ",\n"; }
+				$found = 1;
+				print "  {\n";
+				print "   \"product_id\": \"" . $res[0] . "\",\n";
+				print "   \"description\": \"" . $res[1] . "\",\n";
+				print "   \"completion\": \"" . $res[3] . "\",\n";
+				print "   \"due\": \"" . $res[4] . "\"\n";
+				print "  }";
+			}
+			print "\n ]\n";
+			print "}\n";
+		}
+	}
+	elsif($q->param('api') eq "list_clients")
+	{
+		if(!$q->param('key'))
+		{
+			print "{\n";
+			print " \"message\": \"Missing 'key' argument.\",\n";
+			print " \"status\": \"ERR_MISSING_ARGUMENT\"\n";
+			print "}\n";
+		}
+		elsif($q->param('key') ne $cfg->load('api_read'))
+		{
+			print "{\n";
+			print " \"message\": \"Invalid 'key' value.\",\n";
+			print " \"status\": \"ERR_INVALID_KEY\"\n";
+			print "}\n";
+		}
+		else
+		{
+			print "{\n";
+			print " \"message\": \"Clients list.\",\n";
+			print " \"status\": \"OK\",\n";
+			print " \"clients\": [\n";
+			my $found = 0;
+			$sql = $db->prepare("SELECT * FROM clients;");
+			$sql->execute();
+			while(my @res = $sql->fetchrow_array())
+			{
+				if($found) { print ",\n"; }
+				$found = 1;
+				print "  {\n";
+				print "   \"name\": \"" . $res[0] . "\",\n";
+				print "   \"status\": \"" . $res[1] . "\",\n";
+				print "   \"contact\": \"" . $res[2] . "\",\n";
+				print "   \"notes\": \"" . $res[3] . "\"\n";
 				print "  }";
 			}
 			print "\n ]\n";
@@ -1693,7 +1780,7 @@ elsif($q->param('api')) # API calls
 	else
 	{
 		print "{\n";
-		print " \"message\": \"Invalid 'api' value. Valid values are: 'show_ticket', 'add_ticket'.\",\n";
+		print " \"message\": \"Invalid 'api' value. See the manual for valid values.\",\n";
 		print " \"status\": \"ERR_INVALID_API\"\n";
 		print "}\n";
 	}
@@ -1877,6 +1964,7 @@ elsif($q->param('m')) # Modules
 			if($cfg->load('comp_articles') eq "on") { print "<option value='13'>Tickets linked per article</option>"; }
 			if($cfg->load('comp_tickets') eq "on") { print "<option value='3'>Tickets created per " . lc($items{"Product"}) . "</option><option value='10'>New and open tickets per " . lc($items{"Product"}) . "</option><option value='4'>Tickets created per user</option><option value='5'>Tickets created per day</option><option value='6'>Tickets created per month</option><option value='7'>Tickets per status</option><option value='9'>Tickets assigned per user</option><option value='12'>Comment file attachments</option>"; }
 			if($cfg->load('comp_shoutbox') eq "on") { print "<option value='14'>Full shoutbox history</option>"; }
+			if($cfg->load('comp_items') eq "on") { print "<option value='15'>Items checked out per user</option>"; }
 			print "<option value='8'>Users per access level</option></select></div><div class='col-sm-6'><span class='pull-right'><input class='btn btn-primary' type='submit' value='Show report'> &nbsp; <input class='btn btn-primary' type='submit' name='csv' value='Export as CSV'></span></div></div></form></p></div><div class='help-block with-errors'></div></div>\n";
 		}
 		if($logged_lvl > 3 && $cfg->load('comp_tickets') eq "on")
@@ -3174,6 +3262,14 @@ elsif($q->param('m')) # Modules
 							while(my @res2 = $sql2->fetchrow_array()) { print "<option>" . $res2[0] . "</option>"; }
 							print "</select>";
 						}
+						elsif(to_int($customform[($i*2)+3]) == 12)
+						{
+							print "<select class='form-control' name='field" . $i . "'>";
+							my $sql2 = $db->prepare("SELECT serial FROM items WHERE user = ?;");
+							$sql2->execute($logged_user);
+							while(my @res2 = $sql2->fetchrow_array()) { print "<option>" . $res2[0] . "</option>"; }
+							print "</select>";
+						}
 						elsif(to_int($customform[($i*2)+3]) == 9) { print "<select class='form-control' name='field" . $i . "'><option>Extremely</option><option>A lot</option><option>Moderately</option><option>Slightly</option><option>Not at all</option></select>"; }
 						else { print "<input type='text' class='form-control' name='field" . $i . "'>"; }
 						print "</div></div></p>";
@@ -3304,6 +3400,12 @@ elsif($q->param('m')) # Modules
 			else { print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Tickets linked per article</h3></div><div class='panel-body'><table class='table table-striped'><tr><th>Time</th><th>Message</th></tr>"; }
 			$sql = $db->prepare("SELECT created,user,msg FROM shoutbox;");
 		}
+		elsif(to_int($q->param('report')) == 15)
+		{
+			if($q->param('csv')) { print "Serial,User\n"; }
+			else { print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Items checked out per user</h3></div><div class='panel-body'><table class='table table-striped'><tr><th>Serial number</th><th>User</th></tr>"; }
+			$sql = $db->prepare("SELECT user,serial FROM items WHERE status = 3;");
+		}
 		elsif(to_int($q->param('report')) == 10)
 		{
 			if($q->param('csv')) { print $items{"Product"} . ",Tickets\n"; }
@@ -3366,7 +3468,7 @@ elsif($q->param('m')) # Modules
 				if(!$results{$res[1]}) { $results{$res[1]} = 0; }
 				$results{$res[1]} += to_float($res[2]);
 			}
-			elsif(to_int($q->param('report')) == 12)
+			elsif(to_int($q->param('report')) == 12 || to_int($q->param('report')) == 15)
 			{
 				$results{$res[1]} = $res[0];
 			}
@@ -3417,7 +3519,7 @@ elsif($q->param('m')) # Modules
 		{
 			foreach my $k (sort {$a <=> $b} keys(%results)) # numeric sorting
 			{
-				if($q->param('csv')) { print "\"" . $k . "\"," . $results{$k} . "\n"; }
+				if($q->param('csv')) { print "\"" . $k . "\",\"" . $results{$k} . "\"\n"; }
 				else { print "<tr><td>" . $k . "</td><td>" . $results{$k} . "</td></tr>"; }
 				$totalresults += to_float($results{$k});
 			}
@@ -3426,7 +3528,7 @@ elsif($q->param('m')) # Modules
 		{
 			foreach my $k (sort by_date keys(%results)) # date sorting
 			{
-				if($q->param('csv')) { print "\"" . $k . "\"," . $results{$k} . "\n"; }
+				if($q->param('csv')) { print "\"" . $k . "\",\"" . $results{$k} . "\"\n"; }
 				else { print "<tr><td>" . $k . "</td><td>" . $results{$k} . "</td></tr>"; }
 				$totalresults += to_float($results{$k});
 			}		
@@ -3435,7 +3537,7 @@ elsif($q->param('m')) # Modules
 		{
 			foreach my $k (sort by_month keys(%results)) # month sorting
 			{
-				if($q->param('csv')) { print "\"" . $k . "\"," . $results{$k} . "\n"; }
+				if($q->param('csv')) { print "\"" . $k . "\",\"" . $results{$k} . "\"\n"; }
 				else { print "<tr><td>" . $k . "</td><td>" . $results{$k} . "</td></tr>"; }
 				$totalresults += to_float($results{$k});
 			}		
@@ -3444,7 +3546,7 @@ elsif($q->param('m')) # Modules
 		{
 			foreach my $k (sort(keys(%results))) # alphabetical sorting
 			{
-				if($q->param('csv')) { print "\"" . $k . "\"," . $results{$k} . "\n"; }
+				if($q->param('csv')) { print "\"" . $k . "\",\"" . $results{$k} . "\"\n"; }
 				else { print "<tr><td>" . $k . "</td><td>" . $results{$k} . "</td></tr>"; }
 				$totalresults += to_float($results{$k});
 			}
@@ -3584,11 +3686,12 @@ elsif($q->param('m')) # Modules
 		while(my @res = $sql->fetchrow_array()) { $clients[$res[0]] = $res[1]; }
 		if($q->param('new_item'))
 		{
-			if(!$q->param('name') || !$q->param('type') || !$q->param('product_id') || !$q->param('client_id')) 
+			if(!$q->param('name') || !$q->param('type') || !$q->param('product_id') || !$q->param('client_id') || !$q->param('serial')) 
 			{
 				my $text = "Required fields missing: ";
 				if(!$q->param('name')) { $text .= "<span class='label label-danger'>Item name</span> "; }
 				if(!$q->param('type')) { $text .= "<span class='label label-danger'>Item type</span> "; }
+				if(!$q->param('serial')) { $text .= "<span class='label label-danger'>Serial number</span> "; }
 				if(!$q->param('product_id')) { $text .= "<span class='label label-danger'>" . $items{"Product"} . "</span> "; }
 				if(!$q->param('client_id')) { $text .= "<span class='label label-danger'>Client</span> "; }
 				$text .= " Please go back and try again.";
@@ -3598,12 +3701,10 @@ elsif($q->param('m')) # Modules
 			{
 				my $info = "";
 				if($q->param('info')) { $info = sanitize_html($q->param('info')); }
-				my $serial = "";
-				if($q->param('serial')) { $serial = sanitize_html($q->param('serial')); }
 				my $approval = 0;
 				if($q->param('approval')) { $approval = 1; }
 				$sql = $db->prepare("INSERT INTO items VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);");
-				$sql->execute(sanitize_html($q->param('name')), sanitize_html($q->param('type')), $serial, to_int($q->param('product_id')), to_int($q->param('client_id')), $approval, 1, "", $info);
+				$sql->execute(sanitize_html($q->param('name')), sanitize_html($q->param('type')), sanitize_html($q->param('serial')), to_int($q->param('product_id')), to_int($q->param('client_id')), $approval, 1, "", $info);
 				msg("Item added. Press <a href='./?m=items'>here</a> to continue.", 3);
 			}
 		}
@@ -3611,10 +3712,11 @@ elsif($q->param('m')) # Modules
 		{
 			if($q->param('save_item') && $logged_lvl > 3)
 			{
-				if(!$q->param('type') || !$q->param('product_id') || !$q->param('client_id')) 
+				if(!$q->param('type') || !$q->param('product_id') || !$q->param('client_id') || !$q->param('serial')) 
 				{
 					my $text = "Required fields missing: ";
 					if(!$q->param('type')) { $text .= "<span class='label label-danger'>Item type</span> "; }
+					if(!$q->param('serial')) { $text .= "<span class='label label-danger'>Serial number</span> "; }
 					if(!$q->param('product_id')) { $text .= "<span class='label label-danger'>" . $items{"Product"} . "</span> "; }
 					if(!$q->param('client_id')) { $text .= "<span class='label label-danger'>Client</span> "; }
 					$text .= " Please go back and try again.";
@@ -3624,12 +3726,10 @@ elsif($q->param('m')) # Modules
 				{
 					my $info = "";
 					if($q->param('info')) { $info = sanitize_html($q->param('info')); }
-					my $serial = "";
-					if($q->param('serial')) { $serial = sanitize_html($q->param('serial')); }
 					my $approval = 0;
 					if($q->param('approval')) { $approval = 1; }
 					$sql = $db->prepare("UPDATE items SET type = ?, productid = ?, clientid = ?, serial = ?, approval = ?, info = ? WHERE ROWID = ?;");
-					$sql->execute(sanitize_html($q->param('type')), to_int($q->param('product_id')), to_int($q->param('client_id')), $serial, $approval, $info, to_int($q->param('i')));
+					$sql->execute(sanitize_html($q->param('type')), to_int($q->param('product_id')), to_int($q->param('client_id')), sanitize_html($q->param('serial')), $approval, $info, to_int($q->param('i')));
 					msg("Item updated.", 3);
 				}
 			}
@@ -3711,7 +3811,7 @@ elsif($q->param('m')) # Modules
 				$sql2->execute(to_int($q->param('i')));
 				$sql2 = $db->prepare("DELETE FROM checkouts WHERE itemid = ?;");
 				$sql2->execute(to_int($q->param('i')));
-				msg("Item removed.", 3);
+				msg("Item removed. Press <a href='./?m=items'>here</a> to continue.", 3);
 			}
 			if($q->param('available') && $logged_lvl > 3)
 			{
@@ -3834,8 +3934,14 @@ elsif($q->param('m')) # Modules
 					print ">Peripheral</option><option";
 					if($res[2] eq "Software") { print " selected"; }
 					print ">Software</option><option";
+					if($res[2] eq "Furniture") { print " selected"; }
+					print ">Furniture</option><option";
+					if($res[2] eq "Tool") { print " selected"; }
+					print ">Tool</option><option";
+					if($res[2] eq "Vehicle") { print " selected"; }
+					print ">Vehicle</option><option";
 					if($res[2] eq "Other") { print " selected"; }
-					print ">Other</option></select></div><div class='col-sm-6'>Serial number: <input type='text' maxlength='30' class='form-control' name='serial' value='" . $res[3] . "'></div></div></p>\n";
+					print ">Other</option></select></div><div class='col-sm-6'>Serial number: <input type='text' maxlength='30' class='form-control' name='serial' value='" . $res[3] . "' required></div></div></p>\n";
 					print "<p><div class='row'><div class='col-sm-6'>Related " . lc($items{"Product"}) . ": <select class='form-control' name='product_id'><option>None</option>";
 					for(my $i = 1; $i < scalar(@products); $i++)
 					{
@@ -3888,7 +3994,7 @@ elsif($q->param('m')) # Modules
 			if($logged_lvl > 3)
 			{
 				print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Add a new item</h3></div><div class='panel-body'><form method='POST' action='.' data-toggle='validator' role='form'><input type='hidden' name='m' value='items'>\n";
-				print "<p><div class='row'><div class='col-sm-4'>Item type: <select name='type' class='form-control'><option>Desktop</option><option>Laptop</option><option>Server</option><option>Keyboard</option><option>Mouse</option><option>Display</option><option>Phone</option><option>Printer</option><option>Peripheral</option><option>Software</option><option>Other</option></select></div><div class='col-sm-4'>Item name: <input type='text' maxlength='50' class='form-control' name='name' required></div><div class='col-sm-4'>Serial number: <input type='text' maxlength='30' class='form-control' name='serial'></div></div></p>\n";
+				print "<p><div class='row'><div class='col-sm-4'>Item type: <select name='type' class='form-control'><option>Desktop</option><option>Laptop</option><option>Server</option><option>Keyboard</option><option>Mouse</option><option>Display</option><option>Phone</option><option>Printer</option><option>Peripheral</option><option>Software</option><option>Furniture</option><option>Tool</option><option>Vehicle</option><option>Other</option></select></div><div class='col-sm-4'>Item name: <input type='text' maxlength='50' class='form-control' name='name' required></div><div class='col-sm-4'>Serial number: <input type='text' maxlength='30' class='form-control' name='serial' required></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-6'>Related " . lc($items{"Product"}) . ": <select class='form-control' name='product_id'><option>None</option>";
 				for(my $i = 1; $i < scalar(@products); $i++)
 				{
@@ -4052,6 +4158,12 @@ elsif(($q->param('create_form') || $q->param('edit_form') || $q->param('save_for
 				print "<option value=11";
 				if(to_int($q->param('edit_form')) > 0) { if(to_int($res[($i*2)+3]) == 11) { print " selected"; } }
 				print ">Client</option>";
+			}
+			if($cfg->load('comp_items') eq "on")
+			{
+				print "<option value=12";
+				if(to_int($q->param('edit_form')) > 0) { if(to_int($res[($i*2)+3]) == 12) { print " selected"; } }
+				print ">Checked out item</option>";
 			}
 			print "</td></tr>";
 		}

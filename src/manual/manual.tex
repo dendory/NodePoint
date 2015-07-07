@@ -10,7 +10,7 @@
 % Conditional compilation for Windows and Linux
 \usepackage{ifthen}
 \newboolean{Windows}
-\setboolean{Windows}{true} % change to false for Linux
+\setboolean{Windows}{false} % change to false for Linux
 \ifthenelse{\boolean{Windows}}
 {\def\NodePointManual{NodePoint Manual - Windows version 1.4.0}}
 {\def\NodePointManual{NodePoint Manual - Linux version 1.4.0}}
@@ -87,23 +87,25 @@ Here are some of the available features:
 
 \begin{itemize}
 \item \textbf{Users management:}  Allow users to register accounts, reset their passwords, email addresses and more.
-\item \textbf{Access level permissions:} Six access levels allow you to control who has access to add tickets, modify their statuses, manage products, and so on.
-\item \textbf{Active Directory integration:} Use the stand alone users module or synchronize with your AD domain.
-\item \textbf{Product and release control:} Add products and create releases against those products.
+\item \textbf{Access level permissions:} Six access levels allow you to control who has access to add tickets, modify their statuses, manage projects, and so on.
+\item \textbf{Active Directory integration:} Use the stand alone users component or synchronize with your AD domain.
+\item \textbf{Projects and milestone control:} Add projects and create milestones against those projects.
 \item \textbf{Statistics and reports:} Monitor your instance through a number of reports.
 \item \textbf{Custom home page:} See the tickets you created, are assigned to, or follow on your home page.
 \item \textbf{Custom forms:} Use the default form or create custom ones to customize the ticket entry page.
+\item \textbf{Full text search and filters:} Filter tickets by product, status or do a custom search.
+\item \textbf{Follow and auto assignment:} Users can follow tickets, assign themselves to work on issues, or auto assign themselves to projects.
+\item \textbf{Comments and file uploads:} Leave comments or attach files related to tickets.
 \item \textbf{Knowledge base articles:} Create articles to build a knowledge base linked to your products.
 \item \textbf{Tasks management:} Create tasks and assign them to users, with due dates and completion rates.
-\item \textbf{Full text search and filters:} Filter tickets by product, status or do a custom search.
+\item \textbf{Inventory control:} Add items that users can checkout, with full approval control.
+\item \textbf{Clients directory:} Make a clients listing which can then be used with tickets and items.
 \item \textbf{Time tracking:} Users assigned to tickets can enter the time they took to solve issues and track their time.
-\item \textbf{Follow and auto assignment:} Users can follow tickets, assign themselves to work on issues, or auto assign themselves to products.
-\item \textbf{Comments and file uploads:} Leave comments or attach files related to tickets.
 \item \textbf{Easy to install:} NodePoint works on Windows and Linux, is easy to install, and can be configured in minutes.
 \item \textbf{Trivial to update:} See when an update is available and update your instance with a single copy operation.
 \item \textbf{Responsive design:} Using the Bootstrap framework, NodePoint works just as well on the desktop as on mobile.
 \item \textbf{Simple and elegant interface:} The interface is easy to understand and elegant for your users to use.
-\item \textbf{Email notifications:} NodePoint comes with a built-in email notification module to link with your email system.
+\item \textbf{Email notifications:} NodePoint comes with built-in email notifications.
 \item \textbf{JSON API:} Create custom scripts or link other systems to enter tickets automatically.
 \end{itemize}
 
@@ -256,11 +258,11 @@ If you specify a SMTP server for email notifications along with a username and p
 Finally, while NodePoint offers Active Directory integration, note that this is done using LDAP Simple Bind, not Kerberos, in order to allow both the Windows and Linux version to support this feature. LDAP over SSL can be implemented to provide encryption.
 
 \subsection{Support}
-If you need any functionality that is not covered by the base product, check out the \textbf{Resources} section of the web site where various scripts can be found. You can also contact the support team at \texttt{support@nodepoint.ca} if you have any request or question.
+If you need any functionality that is not covered by the base product, check out the \textbf{Resources} section of the web site where various scripts can be found. You can also contact support at \texttt{support@nodepoint.ca} if you have any request or question.
 
 \clearpage
 \section{Configuration}
-Basic configuration options are defined the first time you access the product. To prevent outsiders to reset your configuration in the event that the data is lost, the initial configuration must be done from the local host. The same information is available both from this initial configuration and at any point from the \textbf{Settings} page while logged in as the product administrator.
+Basic configuration options are defined the first time you access the product. To prevent outsiders from resetting your configuration in the event that the data is lost, the initial configuration must be done from the local host. The same information is available both from this initial configuration and at any point from the \textbf{Settings} page while logged in as the product administrator.
 
 \subsection{Initial configuration}
 When you first access NodePoint, you are presented with this screen:
@@ -318,7 +320,7 @@ These are the access levels used by NodePoint along with a short description:
 \hline
 6 & NodePoint Admin & Can change basic NodePoint settings.\\
 5 & Users management & Can manage users, reset passwords, edit clients.\\
-4 & Products management & Can add, retire and edit products, edit articles and items.\\
+4 & Projects management & Can add, retire and edit projects, edit articles and items.\\
 3 & Tickets management & Can create releases, update tickets, track time.\\
 2 & Restricted view & Can view statistics, restricted tickets and products.\\
 1 & Authorized users & Can create tickets and comments.\\
@@ -366,17 +368,17 @@ User activity can be monitored through two graphs along with a number of reports
 NodePoint is divided into multiple components that you can enable or disable in the configuration as a product administrator. You can turn them on or off depending on your needs. For example, a help desk portal could have the \textbf{Tickets Management}, \textbf{Time Tracking} and \textbf{Support Articles} components enabled, while a project management portal could have only the \textbf{Tasks Management} component enabled.
 
 \subsection{Tickets Management}
-Users who have an access level of 1 or higher can enter tickets on the \textbf{Tickets} page. The default form asks for a title, description and a custom entry type, configurable in the initial settings. Custom forms can also be designed and assigned to products by users of access level 4 and above. These custom forms can have up to 10 fields, each field can be a text area, a check box, satisfaction rating, and so on. Products that have a custom form assigned will display that form to users instead of the default one.
+Users who have an access level of 1 or higher can enter tickets on the \textbf{Tickets} page. The default form asks for a title, description and a custom entry type, configurable in the initial settings. Custom forms can also be designed and assigned to projects by users of access level 4 and above. These custom forms can have up to 10 fields, each field can be a text area, a check box, satisfaction rating, and so on. Projects that have a custom form assigned will display that form to users instead of the default one.
 
-Users with access level 3 or above can modify tickets. When a ticket is modified, the description is updated to show who modified it, and what parameters were changed, such as the title, description, status and resolution. Open tickets do not require a resolution, but every other status does. The list of tickets can be filtered based on product, status and so on.
+Users with access level 3 or above can modify tickets. When a ticket is modified, the description is updated to show who modified it, and what parameters were changed, such as the title, description, status and resolution. Open tickets do not require a resolution, but every other status does. The list of tickets can be filtered based on project, status and so on.
 
 \subsubsection{Custom forms}
 To use custom forms, follow these steps:
 
 \begin{enumerate}
-\item Add at least one product on the \textbf{Products} page.
+\item Add at least one project on the \textbf{Projects} page.
 \item Create a custom form on the \textbf{Settings} page.
-\item Assign that form to the product.
+\item Assign that form to the project.
 \end{enumerate}
 
 Here is an example of a custom form being built along with the result:
@@ -391,7 +393,7 @@ Any logged in user can follow a ticket by clicking the proper option on the tick
 
 Users with access level 3 or higher can assign themselves to a ticket by clicking the proper checkbox on the ticket's screen. This is meant as a way to assign resources to a particular issue.
 
-Auto assignment can also be used to assign specific users to any ticket filed against a product. You can add yourself to the auto-assign list of a product by clicking the button on the product's screen:
+Auto assignment can also be used to assign specific users to any ticket filed against a project. You can add yourself to the auto-assign list of a product by clicking the button on the project's screen:
 
 \begin{figure}[h]
 \includegraphics{autoassign.jpg}
@@ -413,7 +415,7 @@ Time entries cannot be removed since it acts as a timestamp for work done. Corre
 The shoutbox is a simple chat area on the home page that all users can use. The box shows the last few entries made by users, and individual entries can be deleted by users with access level 5 or higher.
 
 \subsection{Tasks Management}
-The tasks management component can be used to manage products or projects, create new tasks needed to be completed, and assign these tasks to users with due dates. Users with access level 4 or higher can create new tasks on the \textbf{Products} page:
+The tasks management component can be used to manage products or projects, create new tasks needed to be completed, and assign these tasks to users with due dates. Users with access level 4 or higher can create new tasks on the \textbf{Projects} page:
 
 \begin{figure}[h]
 \includegraphics{projectmanagement.jpg}
@@ -435,17 +437,17 @@ The clients directory can be used to keep track of clients or contacts from the 
 If the clients directory is enabled, the \textit{Clients} field type can be added to custom ticket forms, which will show a drop down list of available clients when creating new tickets, to assign issues to specific clients. This can be used as a CRM portal to keep track of interactions with clients. 
 
 \subsection{Inventory Control}
-The Inventory Control component allows users with access level 4 or higher to add items to the \textbf{Items} page. These items can be linked to products or clients, and can be checked out by other users. Approval can also be required, in which case users will need to request access, and someone with access level 4 or higher will need to approve the request. This component can be used to keep track of physical items such as computers, keyboards and phones, or even software licenses:
+The Inventory Control component allows users with access level 4 or higher to add items to the \textbf{Items} page. These items can be linked to projects or clients, and can be checked out by other users. Approval can also be required, in which case users will need to request access, and someone with access level 4 or higher will need to approve the request. This component can be used to keep track of physical items such as computers, keyboards and phones, or even software licenses:
 
 \begin{figure}[h]
 \includegraphics{items.jpg}
 \end{figure}
 
-When a user checks out an item, additional information such as item location, lock codes or other secret data can be displayed on the item's page and sent through email to that user, so that the person can retrieve it. If approval is required, a notification will be sent to all available users with level 4 or higher. They can then decide to approve or deny the request.
+When a user checks out an item, additional information such as item location, lock codes or other secret data can be displayed on the item's page and sent through email to that user, so that the person can retrieve it. This information field is otherwise hidden from other users. If approval is required, a notification will be sent to all available users with level 4 or higher. They can then decide to approve or deny the request.
 
 Users with checked out items will see a list of items on their home page, and can then return the item, making it available to other users. A checkout history is kept for each item and shown on the item page, showing all past requests and events. Items can also be manually assigned to users, or made unavailable, preventing any user from requesting or checking them out.
 
-Finally, a checkout plugin can be used to accomplish some automated task when an item is checked out, approved or assigned to a user.
+An \textit{items} field is available to be used in custom ticket forms, which will display a list of checked out items that the user can file tickets about. Finally, a checkout plugin can be used to accomplish some automated task when an item is checked out, approved or assigned to a user.
 
 \clearpage
 \section{JSON API}
@@ -545,6 +547,21 @@ Here is a list of commands:
 \item description=<task description>
 \item user=<assigned user>
 \item due=<mm/dd/yyyy>
+\end{itemize}
+
+\subsection{List tasks}
+
+\begin{itemize}
+\item api=list\_tasks
+\item key=<read key>
+\item user=<user>
+\end{itemize}
+
+\subsection{List clients}
+
+\begin{itemize}
+\item api=list\_clients
+\item key=<read key>
 \end{itemize}
 
 \clearpage
