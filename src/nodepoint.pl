@@ -1252,17 +1252,63 @@ elsif($q->param('api')) # API calls
 			print " \"status\": \"OK\",\n";
 			print " \"clients\": [\n";
 			my $found = 0;
-			$sql = $db->prepare("SELECT * FROM clients;");
+			$sql = $db->prepare("SELECT ROWID,* FROM clients;");
 			$sql->execute();
 			while(my @res = $sql->fetchrow_array())
 			{
 				if($found) { print ",\n"; }
 				$found = 1;
 				print "  {\n";
-				print "   \"name\": \"" . $res[0] . "\",\n";
-				print "   \"status\": \"" . $res[1] . "\",\n";
-				print "   \"contact\": \"" . $res[2] . "\",\n";
-				print "   \"notes\": \"" . $res[3] . "\"\n";
+				print "   \"id\": \"" . $res[0] . "\",\n";
+				print "   \"name\": \"" . $res[1] . "\",\n";
+				print "   \"status\": \"" . $res[2] . "\",\n";
+				print "   \"contact\": \"" . $res[3] . "\",\n";
+				print "   \"notes\": \"" . $res[4] . "\"\n";
+				print "  }";
+			}
+			print "\n ]\n";
+			print "}\n";
+		}
+	}
+	elsif($q->param('api') eq "list_items")
+	{
+		if(!$q->param('key'))
+		{
+			print "{\n";
+			print " \"message\": \"Missing 'key' argument.\",\n";
+			print " \"status\": \"ERR_MISSING_ARGUMENT\"\n";
+			print "}\n";
+		}
+		elsif($q->param('key') ne $cfg->load('api_read'))
+		{
+			print "{\n";
+			print " \"message\": \"Invalid 'key' value.\",\n";
+			print " \"status\": \"ERR_INVALID_KEY\"\n";
+			print "}\n";
+		}
+		else
+		{
+			print "{\n";
+			print " \"message\": \"Items list.\",\n";
+			print " \"status\": \"OK\",\n";
+			print " \"items\": [\n";
+			my $found = 0;
+			$sql = $db->prepare("SELECT ROWID,* FROM items;");
+			$sql->execute();
+			while(my @res = $sql->fetchrow_array())
+			{
+				if($found) { print ",\n"; }
+				$found = 1;
+				print "  {\n";
+				print "   \"id\": \"" . $res[0] . "\",\n";
+				print "   \"name\": \"" . $res[1] . "\",\n";
+				print "   \"type\": \"" . $res[2] . "\",\n";
+				print "   \"serial\": \"" . $res[3] . "\",\n";
+				print "   \"product_id\": \"" . $res[4] . "\",\n";
+				print "   \"client_id\": \"" . $res[5] . "\",\n";
+				print "   \"approval\": \"" . $res[6] . "\",\n";
+				print "   \"status\": \"" . $res[7] . "\",\n";
+				print "   \"user\": \"" . $res[8] . "\"\n";
 				print "  }";
 			}
 			print "\n ]\n";
@@ -1613,6 +1659,81 @@ elsif($q->param('api')) # API calls
 			}
 		}
 	}
+	elsif($q->param('api') eq "add_item")
+	{
+		if(!$q->param('type'))
+		{
+			print "{\n";
+			print " \"message\": \"Missing 'type' argument.\",\n";
+			print " \"status\": \"ERR_MISSING_ARGUMENT\"\n";
+			print "}\n";
+		}
+		elsif(!$q->param('name'))
+		{
+			print "{\n";
+			print " \"message\": \"Missing 'name' argument.\",\n";
+			print " \"status\": \"ERR_MISSING_ARGUMENT\"\n";
+			print "}\n";
+		}
+		elsif(!$q->param('serial'))
+		{
+			print "{\n";
+			print " \"message\": \"Missing 'serial' argument.\",\n";
+			print " \"status\": \"ERR_MISSING_ARGUMENT\"\n";
+			print "}\n";
+		}
+		elsif(!defined($q->param('info')))
+		{
+			print "{\n";
+			print " \"message\": \"Missing 'info' argument.\",\n";
+			print " \"status\": \"ERR_MISSING_ARGUMENT\"\n";
+			print "}\n";
+		}
+		elsif(!defined($q->param('approval')))
+		{
+			print "{\n";
+			print " \"message\": \"Missing 'approval' argument.\",\n";
+			print " \"status\": \"ERR_MISSING_ARGUMENT\"\n";
+			print "}\n";
+		}
+		elsif(!defined($q->param('product_id')))
+		{
+			print "{\n";
+			print " \"message\": \"Missing 'product_id' argument.\",\n";
+			print " \"status\": \"ERR_MISSING_ARGUMENT\"\n";
+			print "}\n";
+		}
+		elsif(!defined($q->param('client_id')))
+		{
+			print "{\n";
+			print " \"message\": \"Missing 'client_id' argument.\",\n";
+			print " \"status\": \"ERR_MISSING_ARGUMENT\"\n";
+			print "}\n";
+		}
+		elsif(!$q->param('key'))
+		{
+			print "{\n";
+			print " \"message\": \"Missing 'key' argument.\",\n";
+			print " \"status\": \"ERR_MISSING_ARGUMENT\"\n";
+			print "}\n";
+		}
+		elsif($q->param('key') ne $cfg->load('api_write'))
+		{
+			print "{\n";
+			print " \"message\": \"Invalid 'key' value.\",\n";
+			print " \"status\": \"ERR_INVALID_KEY\"\n";
+			print "}\n";
+		}
+		else
+		{
+			$sql = $db->prepare("INSERT INTO items VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);");
+			$sql->execute(sanitize_html($q->param('name')), ucfirst(sanitize_alpha($q->param('type'))), sanitize_html($q->param('serial')), to_int($q->param('product_id')), to_int($q->param('client_id')), to_int($q->param('approval')), 1, "", sanitize_html($q->param('info')));
+			print "{\n";
+			print " \"message\": \"Item added.\",\n";
+			print " \"status\": \"OK\"\n";
+			print "}\n";
+		}
+	}
 	elsif($q->param('api') eq "add_release")
 	{
 		if(!$q->param('release_id'))
@@ -1893,12 +2014,12 @@ elsif($q->param('m')) # Modules
 		}
 		if($logged_lvl > 1 && $cfg->load('comp_clients') eq "on")
 		{
-			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Clients directory</h3></div><div class='panel-body'><table class='table table-striped'><tr><th>Name</th><th>Contact</th><th>Status</th></tr>\n";
+			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Clients directory</h3></div><div class='panel-body'><table class='table table-striped'><tr><th>ID</th><th>Name</th><th>Contact</th><th>Status</th></tr>\n";
 			$sql = $db->prepare("SELECT ROWID,* FROM clients ORDER BY name;");
 			$sql->execute();
 			while(my @res = $sql->fetchrow_array())
 			{
-				print "<tr><td><a href='./?m=view_client&c=" . $res[0] . "'>" . $res[1] . "</a></td><td>" . $res[3] . "</td><td>" . $res[2] . "</td></tr>";
+				print "<tr><td>" . $res[0] . "</td><td><a href='./?m=view_client&c=" . $res[0] . "'>" . $res[1] . "</a></td><td>" . $res[3] . "</td><td>" . $res[2] . "</td></tr>";
 			}		
 			print "</table>";
 			if($logged_lvl > 4)
@@ -2153,7 +2274,23 @@ elsif($q->param('m')) # Modules
 				if($logged_lvl > 4) { print "<form method='POST' action='.'><input type='hidden' name='m' value='view_client'><input type='hidden' name='c' value='" . to_int($q->param('c')) . "'><input type='submit' class='btn btn-primary pull-right' name='edit' value='Edit client'></form>"; }
 			}
 			print "</div></div>\n";
-		}		
+		}
+		if($cfg->load('comp_items') eq "on")
+		{
+			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Related items</h3></div><div class='panel-body'><table class='table table-striped'><tr><th>Type</th><th>Name</th><th>Serial</th><th>Status</th></tr>";
+			$sql = $db->prepare("SELECT ROWID,* FROM items WHERE clientid = ?;");
+			$sql->execute(to_int($q->param('c')));
+			while(my @res = $sql->fetchrow_array())
+			{
+				print "<tr><td>" . $res[2] . "</td><td><a href='./?m=items&i=" . $res[0] . "'>" . $res[1] . "</a></td><td>" . $res[3] . "</td><td>";
+				if(to_int($res[7]) == 0) { print "<font color='red'>Unavailable</font>"; }
+				elsif(to_int($res[7]) == 1) { print "<font color='green'>Available</font>"; }
+				elsif(to_int($res[7]) == 2) { print "<font color='orange'>Waiting approval for: " . $res[8] . "</font>"; }
+				else { print "<font color='red'>Checked out by: " . $res[8] . "</font>"; }
+				print "</td></tr>\n";
+			}
+			print "</table></div></div>\n";
+		}
 	}
 	elsif($q->param('m') eq "add_client" && $logged_lvl > 4)
 	{
@@ -2524,6 +2661,22 @@ elsif($q->param('m')) # Modules
 				}
 				print "</table></div></div>\n";
 			}
+		}
+		if($cfg->load('comp_items') eq "on")
+		{
+			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Related items</h3></div><div class='panel-body'><table class='table table-striped'><tr><th>Type</th><th>Name</th><th>Serial</th><th>Status</th></tr>";
+			$sql = $db->prepare("SELECT ROWID,* FROM items WHERE productid = ?;");
+			$sql->execute(to_int($q->param('p')));
+			while(my @res = $sql->fetchrow_array())
+			{
+				print "<tr><td>" . $res[2] . "</td><td><a href='./?m=items&i=" . $res[0] . "'>" . $res[1] . "</a></td><td>" . $res[3] . "</td><td>";
+				if(to_int($res[7]) == 0) { print "<font color='red'>Unavailable</font>"; }
+				elsif(to_int($res[7]) == 1) { print "<font color='green'>Available</font>"; }
+				elsif(to_int($res[7]) == 2) { print "<font color='orange'>Waiting approval for: " . $res[8] . "</font>"; }
+				else { print "<font color='red'>Checked out by: " . $res[8] . "</font>"; }
+				print "</td></tr>\n";
+			}
+			print "</table></div></div>\n";
 		}
 	}
 	elsif($logged_lvl > 2 && $q->param('m') eq "delete_release")

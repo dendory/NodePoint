@@ -10,7 +10,7 @@
 % Conditional compilation for Windows and Linux
 \usepackage{ifthen}
 \newboolean{Windows}
-\setboolean{Windows}{false} % change to false for Linux
+\setboolean{Windows}{true} % change to false for Linux
 \ifthenelse{\boolean{Windows}}
 {\def\NodePointManual{NodePoint Manual - Windows version 1.4.0}}
 {\def\NodePointManual{NodePoint Manual - Linux version 1.4.0}}
@@ -197,7 +197,7 @@ Check in your server log what the likely error might be. Try to run \texttt{\tex
 
 Make sure the \texttt{.htaccess} file is present, and that your Apache configuration allows overrides. Look for the line \textit{AllowOverride All} in your default site configuration file.
 
-\subsubsection{If you get the error Could not access configuration file}
+\subsubsection{If you get the error Could not access configuration file or initial settings don't seem to save}
 
 Make sure NodePoint has write access to \texttt{../nodepoint.cfg}. Make sure the file only contains one line with the text \textit{dummy value}.
 
@@ -561,6 +561,27 @@ Here is a list of commands:
 
 \begin{itemize}
 \item api=list\_clients
+\item key=<read key>
+\end{itemize}
+
+\subsection{Add item}
+
+\begin{itemize}
+\item api=add\_item
+\item key=<write key>
+\item product\_id=<product id>
+\item client\_id=<client id>
+\item approval=<0|1>
+\item type=<item type>
+\item name=<item name>
+\item serial=<serial number>
+\item info=<additional information>
+\end{itemize}
+
+\subsection{List items}
+
+\begin{itemize}
+\item api=list\_items
 \item key=<read key>
 \end{itemize}
 
