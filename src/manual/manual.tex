@@ -10,10 +10,10 @@
 % Conditional compilation for Windows and Linux
 \usepackage{ifthen}
 \newboolean{Windows}
-\setboolean{Windows}{true} % change to false for Linux
+\setboolean{Windows}{false} % change to false for Linux
 \ifthenelse{\boolean{Windows}}
-{\def\NodePointManual{NodePoint Manual - Windows version 1.4.0}}
-{\def\NodePointManual{NodePoint Manual - Linux version 1.4.0}}
+{\def\NodePointManual{NodePoint Manual - Windows version 1.4.1}}
+{\def\NodePointManual{NodePoint Manual - Linux version 1.4.1}}
 
 % Margins and paper type
 \geometry{a4paper, right=1.5cm, left=1.5cm, top=2cm, bottom=1.5cm}
@@ -150,6 +150,13 @@ Follow these steps to complete a new installation:
 \subsection{Upgrading}
 NodePoint is designed to be fully upgradable from any minor version to another. For example, \textit{1.x.x} to \textit{1.x.x}. To upgrade from a previous NodePoint version, simply copy the new \texttt{www} folder onto the old one. This will overwrite all product files but leave your configuration, data and uploads.
 
+\subsection{Uninstalling}
+You can remove a NodePoint installation from a host in two steps:
+\begin{enumerate}
+\item Remove the folder where your NodePoint files live (backup your database if you wish to retain your data).
+\item Remove the virtual host entry from your web server.
+\end{enumerate}
+
 \subsection{Troubleshooting}
 
 \ifthenelse{\boolean{Windows}}
@@ -258,7 +265,16 @@ If you specify a SMTP server for email notifications along with a username and p
 Finally, while NodePoint offers Active Directory integration, note that this is done using LDAP Simple Bind, not Kerberos, in order to allow both the Windows and Linux version to support this feature. LDAP over SSL can be implemented to provide encryption.
 
 \subsection{Support}
-If you need any functionality that is not covered by the base product, check out the \textbf{Resources} section of the web site where various scripts can be found. You can also contact support at \texttt{support@nodepoint.ca} if you have any request or question.
+If you need any functionality that is not covered by the base product, check out the \textbf{Resources} section of the web site where various scripts can be found. You can use the plugin options along with the JSON API to extend the functionality of the product. You can also contact support at \texttt{support@nodepoint.ca} if you have any request or question.
+
+Here are some examples of scripts available:
+
+\begin{itemize}
+\item Batch import of tickets from a CSV file.
+\item Desktop ticket support client.
+\item Create tickets from an email inbox.
+\end{itemize}
+
 
 \clearpage
 \section{Configuration}

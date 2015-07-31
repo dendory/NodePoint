@@ -28,7 +28,7 @@ my ($cfg, $db, $sql, $cn, $cp, $cgs, $last_login, $perf);
 my $logged_user = "";
 my $logged_lvl = -1;
 my $q = new CGI;
-my $VERSION = "1.4.0";
+my $VERSION = "1.4.1";
 my %items = ("Product", "Product", "Release", "Release", "Model", "SKU/Model");
 my @itemtypes = ("None");
 my @themes = ("primary", "default", "success", "info", "warning", "danger");
@@ -707,7 +707,11 @@ sub home
 	if(!$q->cookie('np_gs'))
 	{
 		print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Getting started</h3></div><div class='panel-body'>\n";
-		print "<p>Use the " . $items{"Product"} . "s tab to browse available " . lc($items{"Product"}) . "s along with their " . lc($items{"Release"}) . "s. You can view basic information about them and see their description. Use the Tickets tab to browse current tickets and comments. The Articles tab contains related support articles. You can also change your email address and password under the Settings tab.</p>\n";
+		print "<p>Use the " . $items{"Product"} . "s tab to browse available " . lc($items{"Product"}) . "s along with their " . lc($items{"Release"}) . "s. You can view basic information about them and see their description.";
+		if($cfg->load('comp_tickets') eq "on") { print " Use the Tickets tab to browse current tickets and comments."; }
+		if($cfg->load('comp_articles') eq "on") { print " The Articles tab contains related support articles."; }
+		if($cfg->load('comp_items') eq "on") { print " The Items tab contains inventory items you can checkout."; }
+		print " You can also change your email address and password under the Settings tab.</p>\n";
 		print "<p>Your current access level is <b>" . $logged_lvl . "</b>. This gives you the following permissions:</p>\n";
 		if($logged_lvl > 0) { print "<p>As an <span class='label label-success'>Authorized User</span>, you can add new tickets to specific " . lc($items{"Product"}) . "s and " . lc($items{"Release"}) . "s, or comment on existing ones.</p>\n"; }
 		if($logged_lvl > 1) { print "<p>Since you have <span class='label label-success'>Restricted View</span> permission, you can view statistics and view restricted products and tickets, those which may not be visible to normal users.</p>\n"; }
@@ -794,7 +798,7 @@ sub home
 		while(my @res = $sql->fetchrow_array()) { $products[$res[0]] = $res[1]; }
 		print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Tasks assigned to you</h3></div><div class='panel-body'><table class='table table-striped'>\n";
 		print "<tr><th>" . $items{"Product"} . "</th><th>Task</th><th>Due by</th><th>Completion</th><th></th></tr>\n";
-		$sql = $db->prepare("SELECT ROWID,* FROM steps WHERE user = ?");
+		$sql = $db->prepare("SELECT ROWID,* FROM steps WHERE user = ? AND completion < 100");
 		$sql->execute($logged_user);
 		my $m = localtime->strftime('%m');
 		my $y = localtime->strftime('%Y');
@@ -2085,6 +2089,7 @@ elsif($q->param('m')) # Modules
 			if($cfg->load('comp_articles') eq "on") { print "<option value='13'>Tickets linked per article</option>"; }
 			if($cfg->load('comp_tickets') eq "on") { print "<option value='3'>Tickets created per " . lc($items{"Product"}) . "</option><option value='10'>New and open tickets per " . lc($items{"Product"}) . "</option><option value='4'>Tickets created per user</option><option value='5'>Tickets created per day</option><option value='6'>Tickets created per month</option><option value='7'>Tickets per status</option><option value='9'>Tickets assigned per user</option><option value='12'>Comment file attachments</option>"; }
 			if($cfg->load('comp_shoutbox') eq "on") { print "<option value='14'>Full shoutbox history</option>"; }
+			if($cfg->load('comp_clients') eq "on") { print "<option value='16'>Clients per status</option>"; }
 			if($cfg->load('comp_items') eq "on") { print "<option value='15'>Items checked out per user</option>"; }
 			print "<option value='8'>Users per access level</option></select></div><div class='col-sm-6'><span class='pull-right'><input class='btn btn-primary' type='submit' value='Show report'> &nbsp; <input class='btn btn-primary' type='submit' name='csv' value='Export as CSV'></span></div></div></form></p></div><div class='help-block with-errors'></div></div>\n";
 		}
@@ -3529,6 +3534,12 @@ elsif($q->param('m')) # Modules
 			else { print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>All time spent per ticket</h3></div><div class='panel-body'><table class='table table-striped'><tr><th>Ticket ID</th><th>Hours spent</th></tr>"; }
 			$sql = $db->prepare("SELECT * FROM timetracking ORDER BY ticketid;");		
 		}
+		elsif(to_int($q->param('report')) == 16)
+		{
+			if($q->param('csv')) { print "\"Status\",\"Clients\"\n"; }
+			else { print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Clients per status</h3></div><div class='panel-body'><table class='table table-striped'><tr><th>Status</th><th>Clients</th></tr>"; }
+			$sql = $db->prepare("SELECT status FROM clients;");
+		}
 		elsif(to_int($q->param('report')) == 11)
 		{
 			if($q->param('csv')) { print "\"Ticket ID\",\"Hours spent\"\n"; }
@@ -3550,7 +3561,7 @@ elsif($q->param('m')) # Modules
 		elsif(to_int($q->param('report')) == 14)
 		{
 			if($q->param('csv')) { print "Time,Message\n"; }
-			else { print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Tickets linked per article</h3></div><div class='panel-body'><table class='table table-striped'><tr><th>Time</th><th>Message</th></tr>"; }
+			else { print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Full shoutbox history</h3></div><div class='panel-body'><table class='table table-striped'><tr><th>Time</th><th>Message</th></tr>"; }
 			$sql = $db->prepare("SELECT created,user,msg FROM shoutbox;");
 		}
 		elsif(to_int($q->param('report')) == 15)
@@ -3648,7 +3659,7 @@ elsif($q->param('m')) # Modules
 				if(!$results{$products[to_int($res[0])]}) { $results{$products[to_int($res[0])]} = 0; }
 				$results{$products[to_int($res[0])]} ++;
 			}
-			elsif(to_int($q->param('report')) == 4 || to_int($q->param('report')) == 7 || to_int($q->param('report')) == 8 || to_int($q->param('report')) == 13)
+			elsif(to_int($q->param('report')) == 4 || to_int($q->param('report')) == 7 || to_int($q->param('report')) == 8 || to_int($q->param('report')) == 13 || to_int($q->param('report')) == 16)
 			{
 				if(!$results{$res[0]}) { $results{$res[0]} = 0; }
 				$results{$res[0]} ++;
