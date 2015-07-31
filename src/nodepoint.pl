@@ -4047,9 +4047,12 @@ elsif($q->param('m')) # Modules
 					print "<p><div class='row'><div class='col-sm-6'>Related " . lc($items{'Product'}) . ": <b>";
 					if($products[$res[4]]) { print $products[$res[4]]; }
 					else { print "None"; }
-					print "</b></div><div class='col-sm-6'>Related client: <b>";
-					if($clients[$res[5]]) { print $clients[$res[5]]; }
-					else { print "None"; }					
+					if($cfg->load('comp_clients') eq "on")
+					{
+						print "</b></div><div class='col-sm-6'>Related client: <b>";
+						if($clients[$res[5]]) { print $clients[$res[5]]; }
+						else { print "None"; }
+					}			
 					print "</b></div></div></p>";
 					if(($logged_user eq $res[8] && $res[7] == 3) || $logged_lvl > 3) { print "<p>Additional information:<br><pre>" . $res[9] . "</pre></p>"; }
 					print "<p>Checkout approval: <b>";
@@ -4115,16 +4118,22 @@ elsif($q->param('m')) # Modules
 							else { print "<option value='" . $i . "'>" . $products[$i] . "</option>"; }
 						} 
 					}
-					print "</select></div><div class='col-sm-6'>Related client: <select class='form-control' name='client_id'><option>None</option>";
-					for(my $i = 1; $i < scalar(@clients); $i++)
+					print "</select></div>";
+					if($cfg->load('comp_clients') eq "on")
 					{
-						if($clients[$i]) 
+						print "<div class='col-sm-6'>Related client: <select class='form-control' name='client_id'><option>None</option>";
+						for(my $i = 1; $i < scalar(@clients); $i++)
 						{
-							 if(to_int($res[5]) == $i) { print "<option value='" . $i . "' selected>" . $clients[$i] . "</option>"; }
-							 else { print "<option value='" . $i . "'>" . $clients[$i] . "</option>"; }
-						} 
+							if($clients[$i]) 
+							{
+								 if(to_int($res[5]) == $i) { print "<option value='" . $i . "' selected>" . $clients[$i] . "</option>"; }
+								 else { print "<option value='" . $i . "'>" . $clients[$i] . "</option>"; }
+							} 
+						}
+						print "</select></div>";
 					}
-					print "</select></div></div></p>";
+					else { print "<input type='hidden' name='client_id' value='None'>"; }
+					print "</div></p>";
 					print "<p>Information provided on checkout: <textarea name='info' class='form-control'>" . $res[9] . "</textarea></p>";
 					print "<p><label><input type='checkbox' name='approval'";
 					if(to_int($res[6]) == 1) { print " checked"; }
@@ -4164,12 +4173,18 @@ elsif($q->param('m')) # Modules
 				{
 					if($products[$i]) { print "<option value='" . $i . "'>" . $products[$i] . "</option>"; } 
 				}
-				print "</select></div><div class='col-sm-6'>Related client: <select class='form-control' name='client_id'><option>None</option>";
-				for(my $i = 1; $i < scalar(@clients); $i++)
+				print "</select></div>";
+				if($cfg->load('comp_clients') eq "on")
 				{
-					if($clients[$i]) { print "<option value='" . $i . "'>" . $clients[$i] . "</option>"; } 
+					print "<div class='col-sm-6'>Related client: <select class='form-control' name='client_id'><option>None</option>";
+					for(my $i = 1; $i < scalar(@clients); $i++)
+					{
+						if($clients[$i]) { print "<option value='" . $i . "'>" . $clients[$i] . "</option>"; } 
+					}
+					print "</select></div>";
 				}
-				print "</select></div></div></p>";
+				else { print "<input type='hidden' name='client_id' value='None'>"; }
+				print "</div></p>";
 				print "<p>Information provided on checkout: <textarea name='info' class='form-control'></textarea></p>";
 				print "<p><input type='submit' name='new_item' class='btn btn-primary pull-right' value='Add item'><label><input type='checkbox' name='approval'> Require approval for checkout</label></p></form></div></div>\n";
 			}
