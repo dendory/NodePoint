@@ -8,7 +8,7 @@
 #
 
 use strict;
-use Config::Linux;
+use Config::Win32;
 use Digest::SHA qw(sha1_hex);
 use DBI;
 use CGI;
@@ -28,7 +28,7 @@ my ($cfg, $db, $sql, $cn, $cp, $cgs, $last_login, $perf);
 my $logged_user = "";
 my $logged_lvl = -1;
 my $q = new CGI;
-my $VERSION = "1.4.1";
+my $VERSION = "1.4.2";
 my %items = ("Product", "Product", "Release", "Release", "Model", "SKU/Model");
 my @itemtypes = ("None");
 my @themes = ("primary", "default", "success", "info", "warning", "danger");
@@ -179,7 +179,7 @@ sub navbar
 			if($cfg->load('comp_items') eq "on") { print "	 <li><a href='./?m=items'>Items</a></li>\n"; }
 			print "	 <li class='active'><a href='./?m=settings'>Settings</a></li>\n";
 		}
-		elsif($q->param('kb') || $q->param('m') && ($q->param('m') eq "articles" || $q->param('m') eq "add_article" || $q->param('m') eq "save_article" || $q->param('m') eq "link_article" || $q->param('m') eq "unlink_article" || $q->param('m') eq "subscribe" || $q->param('m') eq "unsubscribe"))
+		elsif($q->param('kb') || $q->param('m') && ($q->param('m') eq "articles" || $q->param('m') eq "add_article" || $q->param('m') eq "save_article" || $q->param('m') eq "unlink_article" || $q->param('m') eq "subscribe" || $q->param('m') eq "unsubscribe"))
 		{
 			print "	 <li><a href='.'>Home</a></li>\n";
 			print "	 <li><a href='./?m=products'>" . $items{"Product"} . "s</a></li>\n";
@@ -885,11 +885,11 @@ sub home
 # Connect to config
 eval
 {
-	$cfg = Config::Linux->new("NodePoint", "settings");
+	$cfg = Config::Win32->new("NodePoint", "settings");
 };
 if(!defined($cfg)) # Can't even use headers() if this fails.
 {
-	print "Content-type: text/html\n\nError: Could not access " . Config::Linux->type . ". Please ensure NodePoint has the proper permissions.";
+	print "Content-type: text/html\n\nError: Could not access " . Config::Win32->type . ". Please ensure NodePoint has the proper permissions.";
 	exit(0);
 };
 
@@ -2979,6 +2979,9 @@ elsif($q->param('m')) # Modules
 			$assigned =~ s/\b$logged_user\b//g;
 			if($q->param('ticket_assign_self')) { $assigned .= " " . $logged_user; }
 			my $changes = "";
+			if($cfg->load('comp_articles') eq "on" && $q->param('link_article') && $q->param('link_article') ne "")
+			{ $changes .= "Linked article: " . to_int($q->param('link_article')) . "\n"; }
+			if($q->param("notify_user")) { $changes .= "Notified user: " . sanitize_alpha($q->param('notify_user')) . "\n"; }
 			$sql = $db->prepare("SELECT ROWID,* FROM tickets WHERE ROWID = ?;");
 			$sql->execute(to_int($q->param('t')));
 			my (@us, $creator);
@@ -2990,7 +2993,6 @@ elsif($q->param('m')) # Modules
 				if($res[7] ne $lnk) { $changes .= $cfg->load('custom_name') . ": \"" . $res[7] . "\" => \"" . $lnk . "\"\n"; }
 				if($res[8] ne sanitize_alpha($q->param('ticket_status'))) { $changes .= "Status: " . $res[8] . " => " . sanitize_alpha($q->param('ticket_status')) . "\n"; }
 				if($res[9] ne $resolution) { $changes .= "Resolution: \"" . $res[9] . "\" => \"" . $resolution . "\"\n"; }
-				if($q->param("notify_user")) { $changes .= "Notified user: " . sanitize_alpha($q->param('notify_user')) . "\n"; }
 				@us = split(' ', $res[4]);
 				$creator = $res[3];
 			}
@@ -3013,6 +3015,11 @@ elsif($q->param('m')) # Modules
 				$sql->execute(to_int($q->param('t')), sanitize_alpha(lc($q->param('notify_user'))));
 				notify(sanitize_alpha($q->param('notify_user')), "Ticket (" . to_int($q->param('t')) . ") requires your attention", "The ticket \"" . $q->param('ticket_title') . "\" has been modified:\n\nModified by: " . $logged_user . "\n" . $cfg->load('custom_name') . ": " . $lnk . "\nStatus: " . sanitize_alpha($q->param('ticket_status')) . "\nResolution: " . $resolution . "\nAssigned to: " . $assigned . "\nDescription: " . $q->param('ticket_desc') . "\n\n" . $changes);
 			}
+			if($cfg->load('comp_articles') eq "on" && $q->param('link_article') && $q->param('link_article') ne "")
+			{
+				$sql = $db->prepare("INSERT INTO kblink VALUES (?, ?);");
+				$sql->execute(to_int($q->param('t')), to_int($q->param('link_article')));
+			}
 		}
 		else
 		{
@@ -3022,24 +3029,6 @@ elsif($q->param('m')) # Modules
 			if(!$q->param('ticket_releases')) { $text .= "<span class='label label-danger'>Ticket " . lc($items{"Release"}) . "s</span> "; }
 			if(!$q->param('ticket_desc')) { $text .= "<span class='label label-danger'>Ticket description</span> "; }
 			if(!$q->param('ticket_resolution')) { $text .= "<span class='label label-danger'>Ticket resolution</span> "; }
-			$text .= " Please go back and try again.";
-			msg($text, 0);
-		}
-	}
-	elsif($q->param('m') eq "link_article" && $logged_lvl > 1)
-	{
-		headers("Articles");
-		if($q->param('articleid') && $q->param('ticketid'))
-		{
-			$sql = $db->prepare("INSERT INTO kblink VALUES (?, ?);");
-			$sql->execute(to_int($q->param('ticketid')), to_int($q->param('articleid')));
-			msg("Article linked to ticket <b>" . to_int($q->param('ticketid')) . "</b>. Press <a href='./?m=view_ticket&t=" . to_int($q->param('ticketid')) . "'>here</a> to continue.", 3);
-		}
-		else
-		{
-			my $text = "Required fields missing: ";
-			if(!$q->param('ticketid')) { $text .= "<span class='label label-danger'>Ticket ID</span> "; }
-			if(!$q->param('articleid')) { $text .= "<span class='label label-danger'>Article ID</span> "; }
 			$text .= " Please go back and try again.";
 			msg($text, 0);
 		}
@@ -3230,6 +3219,14 @@ elsif($q->param('m')) # Modules
 				else { print "<p>Description:<br><pre>" . $res[6] . "</pre></p>\n"; }
 				if($logged_lvl > 2 && $q->param('edit'))
 				{ 
+					if($cfg->load('comp_articles') eq "on")
+					{
+						print "<div class='row'><div class='col-sm-8'>Link article: <select class='form-control' name='link_article'><option></option>";
+						my $sql2 = $db->prepare("SELECT ROWID,title FROM kb WHERE published = 1 AND (productid = ? OR productid = 0);");
+						$sql2->execute(to_int($res[1]));
+						while(my @res2 = $sql2->fetchrow_array()) { print "<option value=" . $res2[0] . ">" . $res2[1] . "</option>"; }
+						print "</select></div></div>";
+					}
 					print "<p><div class='row'>";
 					if($cfg->load('comp_time') eq "on") { print "<div class='col-sm-4'>Time spent (in <b>hours</b>): <input type='text' name='time_spent' class='form-control' value='0'></div>"; }
 					print "<div class='col-sm-4'>Notify user: <select name='notify_user' class='form-control'><option selected></option>";
@@ -3239,14 +3236,6 @@ elsif($q->param('m')) # Modules
 					print "</select></div>";
 					if($cfg->load('comp_time') ne "on") { print "<div class='col-sm-4'></div>"; }
 					print "<div class='col-sm-4'><input class='btn btn-primary pull-right' type='submit' value='Update ticket'></div></div></p></form><hr>\n"; 
-				}
-				if($logged_lvl > 1 && $cfg->load('comp_articles') eq "on")
-				{
-					print "<div class='row'><div class='col-sm-8'><form method='GET' action='./'><input type='hidden' name='m' value='link_article'><input type='hidden' name='ticketid' value='" . to_int($q->param('t')) . "'><select class='form-control' name='articleid'>";
-					$sql = $db->prepare("SELECT ROWID,title FROM kb WHERE published = 1 AND (productid = ? OR productid = 0);");
-					$sql->execute(to_int($res[1]));
-					while(my @res2 = $sql->fetchrow_array()) { print "<option value=" . $res2[0] . ">" . $res2[1] . "</option>"; }
-					print "</select></div><div class='col-sm-4'><input class='btn btn-primary pull-right' type='submit' value='Link article to this ticket'></form></div></div><hr>";
 				}
 				if($logged_lvl > 2 && !$q->param('edit'))
 				{

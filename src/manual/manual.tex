@@ -10,10 +10,10 @@
 % Conditional compilation for Windows and Linux
 \usepackage{ifthen}
 \newboolean{Windows}
-\setboolean{Windows}{false} % change to false for Linux
+\setboolean{Windows}{true} % change to false for Linux
 \ifthenelse{\boolean{Windows}}
-{\def\NodePointManual{NodePoint Manual - Windows version 1.4.1}}
-{\def\NodePointManual{NodePoint Manual - Linux version 1.4.1}}
+{\def\NodePointManual{NodePoint IT System - Windows version 1.4.2}}
+{\def\NodePointManual{NodePoint IT System - Linux version 1.4.2}}
 
 % Margins and paper type
 \geometry{a4paper, right=1.5cm, left=1.5cm, top=2cm, bottom=1.5cm}
@@ -81,7 +81,7 @@
 
 \section{Introduction}
 
-NodePoint is a ticket management platform based on the Bootstrap framework. It is meant to be simple to setup and use, yet still offers most features one would expect in such a system. It is provided as freely available open source software under the MIT License.
+NodePoint is an IT platform based on the Bootstrap framework providing a number of component for tickets management, inventory control, support articles, tasks and more. It is meant to be simple to setup and use, yet still offers most features one would expect in such a system. It is provided as freely available open source software under the MIT License.
 
 Here are some of the available features:
 
@@ -179,6 +179,10 @@ This can be your own user name, or you can create a dedicated user in \textit{Ad
 
 Make sure that NodePoint has Read/Write access to the database file specified in the initial configuration. By default this is \texttt{C:\textbackslash nodepoint\textbackslash db\textbackslash nodepoint.db}. This should be the user you configured in the initial setup. You can use Windows Explorer to right click on the file and check under the Security tab.
 
+\subsubsection{If you get the error The page you are requesting cannot be served because of the ISAPI and CGI Restriction list settings on the Web server}
+
+Go to \textit{IIS Manager -> ISAPI and CGI Restrictions} and make sure NodePoint is listed. If not, click on \textbf{Edit Feature Settings} and enable unspecified CGI modules.
+
 \subsubsection{If the server tries to download the file instead of executing it}
 
 Make sure you have the \textit{CGI} and \textit{ISAPI Extensions} IIS features installed and enable \textbf{Execute} under \textit{IIS Manager -> Handler Mappings -> CGI-exe -> Edit Feature Permissions}:
@@ -186,10 +190,6 @@ Make sure you have the \textit{CGI} and \textit{ISAPI Extensions} IIS features i
 \begin{figure}[h]
 \includegraphics{handlermapping.jpg}
 \end{figure}
-
-\subsubsection{If you get the error The page you are requesting cannot be served because of the ISAPI and CGI Restriction list settings on the Web server}
-
-Go to \textit{IIS Manager -> ISAPI and CGI Restrictions} and make sure NodePoint is listed. If not, click on \textbf{Edit Feature Settings} and enable unspecified CGI modules.
 
 \subsubsection{If you forgot your admin password}
 
@@ -272,9 +272,14 @@ Here are some examples of scripts available:
 \begin{itemize}
 \item Batch import of tickets from a CSV file.
 \item Desktop ticket support client.
-\item Create tickets from an email inbox.
+\item Create tickets from an email IMAP inbox.
 \end{itemize}
 
+\subsection{Additional customization}
+
+While NodePoint was created to support many features and provide several customization options, there are cases where you may have additional needs. This is why the source is freely available on GitHub for you to modify.
+
+Alternatively, paid support, maintenance and customization options are also available from the web site. You can contact \texttt{sales@nodepoint.ca} for further inquiries.
 
 \clearpage
 \section{Configuration}
@@ -420,7 +425,7 @@ Both followed and assigned tickets are listed on the user's home page. Finally, 
 \subsection{Support Articles}
 The \textbf{Articles} page hosts articles that can be used to document common use cases, common issues, or to build a knowledge base for your organization. Articles are created in \textit{draft} mode, which hides them from users with an access level lower than 4. Only once they are published are they visible to all users.
 
-Users with at least access level 2 can link articles to tickets. These can be used to assign related documentation to issues, or used as categories. Linked tickets (except closed ones) are listed on the article's page, which makes it easy to track which tickets are assigned to a specific article.
+Users with at least access level 3 can link articles to tickets. These can be used to assign related documentation to issues, or used as categories. Linked tickets (except closed ones) are listed on the article's page, which makes it easy to track which tickets are assigned to a specific article.
 
 \subsection{Time Tracking}
 When updating a ticket, users can track the time they spent on the issue, which will be added to the time table for that ticket. A total of all the time spent on tickets by a specific user is shown on the \textbf{Settings} page. A report is also available with the total time spent by all users.
