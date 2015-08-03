@@ -10,7 +10,7 @@
 % Conditional compilation for Windows and Linux
 \usepackage{ifthen}
 \newboolean{Windows}
-\setboolean{Windows}{true} % change to false for Linux
+\setboolean{Windows}{false} % change to false for Linux
 \ifthenelse{\boolean{Windows}}
 {\def\NodePointManual{NodePoint IT System - Windows version 1.4.2}}
 {\def\NodePointManual{NodePoint IT System - Linux version 1.4.2}}
@@ -470,6 +470,11 @@ Users with checked out items will see a list of items on their home page, and ca
 
 An \textit{items} field is available to be used in custom ticket forms, which will display a list of checked out items that the user can file tickets about. Finally, a checkout plugin can be used to accomplish some automated task when an item is checked out, approved or assigned to a user.
 
+\subsection{Billing}
+The Billing component allows you to assign tickets to clients with either a fixed rate or an hourly rate. As such, this component requires the Tickets Management and Clients Directory components to be enabled. For hourly rates, the Time Tracking component must also be enabled.
+
+When editing a ticket, a user of level 3 of higher can select a client from the drop down list, among clients that have been entered in the directory. Once tickets have been assigned to a client, the list of tickets with hours spent are listed on that client's page. The cost and currency can also be adjusted on that page.
+
 \clearpage
 \section{JSON API}
 NodePoint provides a JSON based REST API that can be used to accomplish some basic tasks. This can be useful to integrate the system with existing products, or to use with custom scripts. Each API call requires either the \textit{read} or \textit{write} key. The calls can be made using GET or POST.
@@ -603,6 +608,22 @@ Here is a list of commands:
 
 \begin{itemize}
 \item api=list\_items
+\item key=<read key>
+\end{itemize}
+
+\subsection{Show time tracking}
+
+\begin{itemize}
+\item api=show\_time
+\item id=<ticket id>
+\item key=<read key>
+\end{itemize}
+
+\subsection{Show billing information}
+
+\begin{itemize}
+\item api=show\_billing
+\item client=<client name>
 \item key=<read key>
 \end{itemize}
 

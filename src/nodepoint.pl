@@ -8,7 +8,7 @@
 #
 
 use strict;
-use Config::Win32;
+use Config::Linux;
 use Digest::SHA qw(sha1_hex);
 use DBI;
 use CGI;
@@ -170,7 +170,7 @@ sub navbar
 			if($cfg->load('comp_items') eq "on") { print "	 <li><a href='./?m=items'>Items</a></li>\n"; }
 			print "	 <li><a href='./?m=settings'>Settings</a></li>\n";
 		}
-		elsif($q->param('m') && ($q->param('m') eq "settings" || $q->param('m') eq "confirm_delete" || $q->param('m') eq "clear_log" || $q->param('m') eq "stats" || $q->param('m') eq "change_lvl" || $q->param('m') eq "confirm_email" || $q->param('m') eq "reset_pass" || $q->param('m') eq "logout" || $q->param('m') eq "add_client" || $q->param('m') eq  "view_client" || $q->param('m') eq "save_client") || $q->param('create_form') || $q->param('edit_form') || $q->param('save_form'))
+		elsif($q->param('m') && ($q->param('m') eq "settings" || $q->param('m') eq "confirm_delete" || $q->param('m') eq "clear_log" || $q->param('m') eq "stats" || $q->param('m') eq "change_lvl" || $q->param('m') eq "confirm_email" || $q->param('m') eq "reset_pass" || $q->param('m') eq "logout" || $q->param('m') eq "add_client" || $q->param('m') eq  "view_client" || $q->param('m') eq "save_client" || $q->param('m') eq "set_defaults") || $q->param('create_form') || $q->param('edit_form') || $q->param('save_form'))
 		{
 			print "	 <li><a href='.'>Home</a></li>\n";
 			print "	 <li><a href='./?m=products'>" . $items{"Product"} . "s</a></li>\n";
@@ -449,6 +449,18 @@ sub db_check
 		$sql->execute();
 	};
 	$sql->finish();
+	$sql = $db->prepare("SELECT * FROM billing WHERE 0 = 1;") or do
+	{
+		$sql = $db->prepare("CREATE TABLE billing (ticketid INT, client TEXT);");
+		$sql->execute();
+	};
+	$sql->finish();
+	$sql = $db->prepare("SELECT * FROM billing_defaults WHERE 0 = 1;") or do
+	{
+		$sql = $db->prepare("CREATE TABLE billing_defaults (client TEXT, type INT, currency TEXT, cost REAL);");
+		$sql->execute();
+	};
+	$sql->finish();
 }
 
 # Log an event
@@ -497,6 +509,7 @@ sub save_config
 	$cfg->save("comp_articles", $q->param('comp_articles'));
 	$cfg->save("comp_time", $q->param('comp_time'));
 	$cfg->save("comp_shoutbox", $q->param('comp_shoutbox'));
+	$cfg->save("comp_billing", $q->param('comp_billing'));
 	$cfg->save("comp_steps", $q->param('comp_steps'));
 	$cfg->save("comp_clients", $q->param('comp_clients'));
 	$cfg->save("comp_items", $q->param('comp_items'));
@@ -885,11 +898,11 @@ sub home
 # Connect to config
 eval
 {
-	$cfg = Config::Win32->new("NodePoint", "settings");
+	$cfg = Config::Linux->new("NodePoint", "settings");
 };
 if(!defined($cfg)) # Can't even use headers() if this fails.
 {
-	print "Content-type: text/html\n\nError: Could not access " . Config::Win32->type . ". Please ensure NodePoint has the proper permissions.";
+	print "Content-type: text/html\n\nError: Could not access " . Config::Linux->type . ". Please ensure NodePoint has the proper permissions.";
 	exit(0);
 };
 
@@ -939,7 +952,7 @@ if($cfg->load("items_managed"))
 if($q->param('site_name') && $q->param('db_address') && $logged_user ne "" && $logged_user eq $cfg->load('admin_name')) # Save config by admin
 {
 	headers("Settings");
-	if($q->param('site_name') && $q->param('db_address') && $q->param('admin_name') && $q->param('custom_name') && defined($q->param('default_lvl')) && $q->param('default_vis') && $q->param('api_write') && defined($q->param('theme_color')) &&  $q->param('api_imp') && $q->param('api_read') && $q->param('comp_tickets') && $q->param('comp_articles') && $q->param('comp_time') && $q->param('comp_shoutbox') && $q->param('comp_clients') && $q->param('comp_items') && $q->param('comp_steps')) # All required values have been filled out
+	if($q->param('site_name') && $q->param('db_address') && $q->param('admin_name') && $q->param('custom_name') && defined($q->param('default_lvl')) && $q->param('default_vis') && $q->param('api_write') && defined($q->param('theme_color')) &&  $q->param('api_imp') && $q->param('api_read') && $q->param('comp_tickets') && $q->param('comp_articles') && $q->param('comp_time') && $q->param('comp_shoutbox') && $q->param('comp_billing') && $q->param('comp_clients') && $q->param('comp_items') && $q->param('comp_steps')) # All required values have been filled out
 	{
 		# Test database settings
 		$db = DBI->connect("dbi:SQLite:dbname=" . $q->param('db_address'), '', '', { RaiseError => 0, PrintError => 0 }) or do { msg("Could not verify database settings. Please hit back and try again.<br><br>" . $DBI::errstr, 0); exit(0); };
@@ -963,6 +976,7 @@ if($q->param('site_name') && $q->param('db_address') && $logged_user ne "" && $l
 		if(!$q->param('comp_articles')) { $text .= "<span class='label label-danger'>Component: Support articles</span> "; }
 		if(!$q->param('comp_time')) { $text .= "<span class='label label-danger'>Component: Time tracking</span> "; }
 		if(!$q->param('comp_shoutbox')) { $text .= "<span class='label label-danger'>Component: Shoutbox</span> "; }
+		if(!$q->param('comp_billing')) { $text .= "<span class='label label-danger'>Component: Billing</span> "; }
 		if(!$q->param('comp_items')) { $text .= "<span class='label label-danger'>Component: Inventory Control</span> "; }
 		if(!$q->param('comp_clients')) { $text .= "<span class='label label-danger'>Component: Clients Directory</span> "; }
 		if(!$q->param('comp_steps')) { $text .= "<span class='label label-danger'>Component: Tasks Management</span> "; }
@@ -1050,7 +1064,8 @@ elsif(!$cfg->load("db_address") || !$cfg->load("site_name")) # first use
 				print "<p><div class='row'><div class='col-sm-4'>Component: Clients Directory</div><div class='col-sm-4'><input type='checkbox' name='comp_clients' checked></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Component: Tasks Management</div><div class='col-sm-4'><input type='checkbox' name='comp_steps' checked></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Component: Inventory Control</div><div class='col-sm-4'><input type='checkbox' name='comp_items' checked></div></div></p>\n";
-				print "<p>See the <a href='./manual.pdf'>manual</a> file for detailed instructions.<input class='btn btn-primary pull-right' type='submit' value='Save'></p></form>\n"; 
+				print "<p><div class='row'><div class='col-sm-4'>Component: Billing</div><div class='col-sm-4'><input type='checkbox' name='comp_billing' checked></div></div></p>\n";
+				print "<p>See the <a href='./manual.pdf'>manual</a> file for detailed information.<input class='btn btn-primary pull-right' type='submit' value='Save'></p></form>\n"; 
 			}
 			else
 			{
@@ -1186,6 +1201,86 @@ elsif($q->param('api')) # API calls
 			print "}\n";
 		}
 	}
+	elsif($q->param('api') eq "show_billing")
+	{
+		if(!$q->param('client'))
+		{
+			print "{\n";
+			print " \"message\": \"Missing 'client' argument.\",\n";
+			print " \"status\": \"ERR_MISSING_ARGUMENT\"\n";
+			print "}\n";
+		}
+		elsif(!$q->param('key'))
+		{
+			print "{\n";
+			print " \"message\": \"Missing 'key' argument.\",\n";
+			print " \"status\": \"ERR_MISSING_ARGUMENT\"\n";
+			print "}\n";
+		}
+		elsif($q->param('key') ne $cfg->load('api_read'))
+		{
+			print "{\n";
+			print " \"message\": \"Invalid 'key' value.\",\n";
+			print " \"status\": \"ERR_INVALID_KEY\"\n";
+			print "}\n";
+		}
+		else
+		{
+			my $cost = 10.0;
+			my $currency = "USD";
+			my $type = 0;
+			if($cfg->load('comp_time') eq "on") { $type = 1; }
+			$sql = $db->prepare("SELECT type,currency,cost FROM billing_defaults WHERE client = ?;");
+			$sql->execute(sanitize_html($q->param('client')));
+			while(my @res = $sql->fetchrow_array())
+			{
+				$type = $res[0];
+				$currency = $res[1];
+				$cost = $res[2];
+			}
+			print "{\n";
+			print " \"message\": \"Billing.\",\n";
+			print " \"status\": \"OK\",\n";
+			if($type == 0) { print " \"type\": \"Fixed\",\n"; }
+			else { print " \"type\": \"Hourly\",\n"; }
+			print " \"currency\": \"" . $currency . "\",\n";
+			print " \"cost\": \"" . $cost . "\",\n";
+			print " \"billable\": [\n";
+			$sql = $db->prepare("SELECT ticketid FROM billing WHERE client = ?;");
+			$sql->execute(sanitize_html($q->param('client')));
+			my $total = 0;
+			my $found = 0;
+			while(my @res = $sql->fetchrow_array())
+			{
+				if($found) { print ",\n"; }
+				$found = 1;
+				print "  {\n";
+				print "   \"ticket_id\": \"" . $res[0] . "\",\n";
+				my $curhours = 0;
+				my $sql2 = $db->prepare("SELECT spent FROM timetracking WHERE ticketid = ?;");
+				$sql2->execute($res[0]);
+				while(my @res2 = $sql2->fetchrow_array())
+				{
+					$curhours += to_float($res2[0]);
+				}
+				print "   \"hours\": \"" . $curhours . "\",\n";
+				if($cfg->load('comp_time') eq "on" && $type == 1)
+				{
+					print "   \"cost\": \"" . $curhours * to_float($cost) . "\",\n";
+					$total += $curhours * to_float($cost);
+				}
+				else
+				{
+					print "   \"cost\": \"" . $cost . "\",\n";
+					$total += $cost;
+				}
+				print "  }";
+			}
+			print "\n ],\n";
+			print " \"total\": \"" . $total . "\"\n";
+			print "}\n";
+		}
+	}
 	elsif($q->param('api') eq "list_tasks")
 	{
 		if(!$q->param('user'))
@@ -1227,6 +1322,52 @@ elsif($q->param('api')) # API calls
 				print "   \"description\": \"" . $res[1] . "\",\n";
 				print "   \"completion\": \"" . $res[3] . "\",\n";
 				print "   \"due\": \"" . $res[4] . "\"\n";
+				print "  }";
+			}
+			print "\n ]\n";
+			print "}\n";
+		}
+	}
+	elsif($q->param('api') eq "show_time")
+	{
+		if(!$q->param('id'))
+		{
+			print "{\n";
+			print " \"message\": \"Missing 'id' argument.\",\n";
+			print " \"status\": \"ERR_MISSING_ARGUMENT\"\n";
+			print "}\n";
+		}
+		elsif(!$q->param('key'))
+		{
+			print "{\n";
+			print " \"message\": \"Missing 'key' argument.\",\n";
+			print " \"status\": \"ERR_MISSING_ARGUMENT\"\n";
+			print "}\n";
+		}
+		elsif($q->param('key') ne $cfg->load('api_read'))
+		{
+			print "{\n";
+			print " \"message\": \"Invalid 'key' value.\",\n";
+			print " \"status\": \"ERR_INVALID_KEY\"\n";
+			print "}\n";
+		}
+		else
+		{
+			print "{\n";
+			print " \"message\": \"Time tracking.\",\n";
+			print " \"status\": \"OK\",\n";
+			print " \"time\": [\n";
+			my $found = 0;
+			$sql = $db->prepare("SELECT * FROM timetracking WHERE ticketid = ?;");
+			$sql->execute(to_int($q->param('id')));
+			while(my @res = $sql->fetchrow_array())
+			{
+				if($found) { print ",\n"; }
+				$found = 1;
+				print "  {\n";
+				print "   \"name\": \"" . $res[1] . "\",\n";
+				print "   \"hours\": \"" . $res[2] . "\",\n";
+				print "   \"date\": \"" . $res[3] . "\"\n";
 				print "  }";
 			}
 			print "\n ]\n";
@@ -2204,7 +2345,11 @@ elsif($q->param('m')) # Modules
 			if($cfg->load("comp_items") eq "on") { print "<option selected>on</option><option>off</option>"; }
 			else { print "<option>on</option><option selected>off</option>"; }
 			print "</select></td></tr>\n";
-			print "</table>The admin password will be left unchanged if empty.<br>See the <a href='./manual.pdf'>manual</a> file for detailed instructions.<input class='btn btn-primary pull-right' type='submit' value='Save settings'></form></div></div>\n";
+			print "<tr><td>Component: Billing</td><td><select class='form-control' name='comp_billing'>";
+			if($cfg->load("comp_billing") eq "on") { print "<option selected>on</option><option>off</option>"; }
+			else { print "<option>on</option><option selected>off</option>"; }
+			print "</select></td></tr>\n";
+			print "</table>The admin password will be left unchanged if empty.<br>See the <a href='./manual.pdf'>manual</a> file for detailed information.<input class='btn btn-primary pull-right' type='submit' value='Save settings'></form></div></div>\n";
 			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Log (last 200 events)</h3></div><div class='panel-body'>\n";
 			print "<form style='display:inline' method='POST' action='.'><input type='hidden' name='m' value='clear_log'><input class='btn btn-danger pull-right' type='submit' value='Clear log'><br></form><a name='log'></a><p>Filter log by events:<br><a href='./?m=settings#log'>All</a> | <a href='./?m=settings&filter_log=Failed#log'>Failed logins</a> | <a href='./?m=settings&filter_log=Success#log'>Successful logins</a> | <a href='./?m=settings&filter_log=level#log'>Level changes</a> | <a href='./?m=settings&filter_log=password#log'>Password changes</a> | <a href='./?m=settings&filter_log=new#log'>New users</a> | <a href='./?m=settings&filter_log=setting#log'>Settings updated</a> | <a href='./?m=settings&filter_log=notification#log'>Email notifications</a> | <a href='./?m=settings&filter_log=LDAP:#log'>Active Directory</a> | <a href='./?m=settings&filter_log=deleted:#log'>Deletes</a></p>\n";
 			print "<table class='table table-striped'><tr><th>IP address</th><th>User</th><th>Event</th><th>Time</th></tr>\n";
@@ -2251,9 +2396,18 @@ elsif($q->param('m')) # Modules
 			msg("Client updated. Press <a href='./?m=view_client&c=" . to_int($q->param('c')) . "'>here</a> to continue.", 3);
 		}
 	}
+	elsif($q->param('m') eq "set_defaults" && $q->param('client') && $q->param('c') && $logged_lvl > 4)
+	{
+		headers("Clients");
+		$sql = $db->prepare("DELETE FROM billing_defaults WHERE client = ?;");
+		$sql->execute(sanitize_html($q->param('client')));
+		$sql = $db->prepare("INSERT INTO billing_defaults VALUES (?, ?, ?, ?);");
+		$sql->execute(sanitize_html($q->param('client')), to_int($q->param('type')), sanitize_alpha($q->param('currency')), to_float($q->param('cost')));
+		msg("Client defaults updated. Press <a href='./?m=view_client&c=" . to_int($q->param('c')) . "'>here</a> to continue.", 3);
+	}
 	elsif($q->param('m') eq "view_client" && $q->param('c') && $logged_lvl > 1)
 	{
-		headers("Settings");
+		headers("Clients");
 		$sql = $db->prepare("SELECT * FROM clients WHERE ROWID = ?;");
 		$sql->execute(to_int($q->param('c')));
 		while(my @res = $sql->fetchrow_array())
@@ -2279,6 +2433,66 @@ elsif($q->param('m')) # Modules
 				if($logged_lvl > 4) { print "<form method='POST' action='.'><input type='hidden' name='m' value='view_client'><input type='hidden' name='c' value='" . to_int($q->param('c')) . "'><input type='submit' class='btn btn-primary pull-right' name='edit' value='Edit client'></form>"; }
 			}
 			print "</div></div>\n";
+			if($cfg->load('comp_billing') eq "on" && $cfg->load('comp_tickets') eq "on")
+			{
+				my $cost = 10.0;
+				my $currency = "USD";
+				my $type = 0;
+				if($cfg->load('comp_time') eq "on") { $type = 1; }
+				my $sql2 = $db->prepare("SELECT type,currency,cost FROM billing_defaults WHERE client = ?;");
+				$sql2->execute($res[0]);
+				while(my @res2 = $sql2->fetchrow_array())
+				{
+					$type = $res2[0];
+					$currency = $res2[1];
+					$cost = $res2[2];
+				}
+				print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Billing</h3></div><div class='panel-body'>";
+				if($logged_lvl > 4)
+				{
+					print "<form method='POST' action='.'><input type='hidden' name='m' value='set_defaults'><input type='hidden' name='c' value='" . to_int($q->param('c')) . "'><input type='hidden' name='client' value='" . $res[0] . "'><div class='row'><div class='col-sm-3'>Type: <select class='form-control' name='type'><option value='0'";
+					if($type == 0) { print " selected"; }
+					print ">Fixed</option><option value='1'";
+					if($type == 1) { print " selected"; }
+					print ">Hourly</option></select></div><div class='col-sm-3'>Cost: <input type='number' class='form-control' name='cost' value='" . to_float($cost) . "'></div><div class='col-sm-3'>Currency: <input type='text' maxlength='4' class='form-control' name='currency' value='" . $currency . "'></div><div class='col-sm-3'><input type='submit' value='Set' class='btn btn-primary pull-right'></div></div></form>";
+				}
+				else
+				{
+					print "<div class='row'><div class='col-sm-4'>Type: <b>";
+					if($type == 0) { print "Fixed"; }
+					else { print "Hourly"; }
+					print "</b></div><div class='col-sm-4'>Cost: <b>" . $cost . "</b></div><div class='col-sm-4'>Currency: <b>" . $currency . "</b></div></div>";
+				}
+				print "<p><table class='table table-striped'><tr><th>Ticket ID</th><th>Hours</th><th>Cost</th></tr>";
+				$sql2 = $db->prepare("SELECT ticketid FROM billing WHERE client = ?;");
+				$sql2->execute($res[0]);
+				my $total = 0;
+				while(my @res2 = $sql2->fetchrow_array())
+				{
+					print "<tr><td><a href='./?m=view_ticket&t=" . $res2[0] . "'>" . $res2[0] . "</td><td>";
+					my $curhours = 0;
+					my $sql3 = $db->prepare("SELECT spent FROM timetracking WHERE ticketid = ?;");
+					$sql3->execute($res2[0]);
+					while(my @res3 = $sql3->fetchrow_array())
+					{
+						$curhours += to_float($res3[0]);
+					}
+					print $curhours . "</td><td>\$";
+					if($cfg->load('comp_time') eq "on" && $type == 1)
+					{
+						print $curhours * to_float($cost);
+						$total += $curhours * to_float($cost);
+					}
+					else
+					{
+						print $cost;
+						$total += $cost;
+					}
+					print "</td></tr>\n";
+				}
+				print "<tr><th>Total:</th><th></th><th>\$" . $total . "</th></tr>\n";
+				print "</table></p></div></div>\n";
+			}
 		}
 		if($cfg->load('comp_items') eq "on")
 		{
@@ -3015,6 +3229,16 @@ elsif($q->param('m')) # Modules
 				$sql->execute(to_int($q->param('t')), sanitize_alpha(lc($q->param('notify_user'))));
 				notify(sanitize_alpha($q->param('notify_user')), "Ticket (" . to_int($q->param('t')) . ") requires your attention", "The ticket \"" . $q->param('ticket_title') . "\" has been modified:\n\nModified by: " . $logged_user . "\n" . $cfg->load('custom_name') . ": " . $lnk . "\nStatus: " . sanitize_alpha($q->param('ticket_status')) . "\nResolution: " . $resolution . "\nAssigned to: " . $assigned . "\nDescription: " . $q->param('ticket_desc') . "\n\n" . $changes);
 			}
+			if($cfg->load('comp_billing') eq "on")
+			{
+				$sql = $db->prepare("DELETE FROM billing WHERE ticketid = ?");
+				$sql->execute(to_int($q->param('t')));
+				if($q->param('billable') && $q->param('billable') ne "")
+				{
+					$sql = $db->prepare("INSERT INTO billing VALUES (?, ?)");
+					$sql->execute(to_int($q->param('t')), sanitize_html($q->param('billable')));
+				}
+			}
 			if($cfg->load('comp_articles') eq "on" && $q->param('link_article') && $q->param('link_article') ne "")
 			{
 				$sql = $db->prepare("INSERT INTO kblink VALUES (?, ?);");
@@ -3213,29 +3437,63 @@ elsif($q->param('m')) # Modules
 					if($cfg->load('custom_type') eq "Link") { print $cfg->load('custom_name') . ": <a href='" . $res[7] . "'><b>" . $res[7] . "</b></a></div></div></p>\n"; }
 					else { print $cfg->load('custom_name') . ": <b>" . $res[7] . "</b></div></div></p>\n"; }
 				}
-				if($logged_lvl > 2 && $q->param('edit')) { print "<p>Title: <input type='text' class='form-control' name='ticket_title' value='" . $res[5] . "'></p>"; }
-				else { print "<p>Title: <b>" . $res[5] . "</b></p>"; }
+				if($logged_lvl > 2 && $q->param('edit')) { print "<p>Title: <input type='text' class='form-control' name='ticket_title' maxlength='50' value='" . $res[5] . "'></p>"; }
+				else
+				{ 
+					print ""; 
+					if($cfg->load('comp_billing') eq "on" && $cfg->load('comp_clients') eq "on")
+					{
+						print "<p><div class='row'><div class='col-sm-6'>Title: <b>" . $res[5] . "</b></div><div class='col-sm-6'>Billable to: <b>";
+						my $sql2 = $db->prepare("SELECT client FROM billing WHERE ticketid = ?;");
+						$sql2->execute(to_int($q->param('t')));
+						while(my @res2 = $sql2->fetchrow_array()) { print $res2[0]; }
+						print "</b></div></div></p>";
+					}
+					else { print "<p>Title: <b>" . $res[5] . "</b></p>"; }
+				}
 				if($logged_lvl > 2 && $q->param('edit')) { print "<p>Description:<br><textarea class='form-control' name='ticket_desc' rows='20'>" . $res[6] . "</textarea></p>\n"; }
-				else { print "<p>Description:<br><pre>" . $res[6] . "</pre></p>\n"; }
+				else { print "<p>Description:<br><pre>" . $res[6] . "</pre></p>"; }
 				if($logged_lvl > 2 && $q->param('edit'))
 				{ 
+					print "<div class='row'>";
+					if($cfg->load('comp_billing') eq "on" && $cfg->load('comp_clients') eq "on")
+					{
+						if($cfg->load('comp_articles') eq "on") { print "<div class='col-sm-4'>Billable to: "; }
+						else { print "<div class='col-sm-8'>Billable to: "; }
+						my $sql2 = $db->prepare("SELECT client FROM billing WHERE ticketid = ?;");
+						$sql2->execute(to_int($q->param('t')));
+						my $client = "";
+						while(my @res2 = $sql2->fetchrow_array()) { $client = $res2[0]; }
+						print "<select class='form-control' name='billable'><option></option>";
+						$sql2 = $db->prepare("SELECT name FROM clients WHERE status != 'Closed';");
+						$sql2->execute();
+						while(my @res2 = $sql2->fetchrow_array())
+						{
+							if($client eq $res2[0]) { print "<option selected>" . $res2[0] . "</option>"; }
+							else { print "<option>" . $res2[0] . "</option>"; } 
+						}
+						print "</select></div>";
+					}
 					if($cfg->load('comp_articles') eq "on")
 					{
-						print "<div class='row'><div class='col-sm-8'>Link article: <select class='form-control' name='link_article'><option></option>";
+						if($cfg->load('comp_billing') eq "on" && $cfg->load('comp_clients') eq "on") { print "<div class='col-sm-4'>"; }
+						else { print "<div class='col-sm-8'>"; }
+						print "Link article: <select class='form-control' name='link_article'><option></option>";
 						my $sql2 = $db->prepare("SELECT ROWID,title FROM kb WHERE published = 1 AND (productid = ? OR productid = 0);");
 						$sql2->execute(to_int($res[1]));
 						while(my @res2 = $sql2->fetchrow_array()) { print "<option value=" . $res2[0] . ">" . $res2[1] . "</option>"; }
-						print "</select></div></div>";
+						print "</select></div>";
 					}
-					print "<p><div class='row'>";
-					if($cfg->load('comp_time') eq "on") { print "<div class='col-sm-4'>Time spent (in <b>hours</b>): <input type='text' name='time_spent' class='form-control' value='0'></div>"; }
-					print "<div class='col-sm-4'>Notify user: <select name='notify_user' class='form-control'><option selected></option>";
+					print "</div><div class='row'>";
+					if($cfg->load('comp_time') eq "on") { print "<div class='col-sm-4'>Time spent (in <b>hours</b>): <input type='text' name='time_spent' class='form-control' value='0'></div><div class='col-sm-4'>"; }
+					else { print "<div class='col-sm-8'>"; }
+					print "Notify user: <select name='notify_user' class='form-control'><option selected></option>";
 					my $sql2 = $db->prepare("SELECT name FROM users WHERE level > 0 ORDER BY name;");
 					$sql2->execute();
 					while(my @res2 = $sql2->fetchrow_array()) { print "<option>" . $res2[0] . "</option>"; }
 					print "</select></div>";
 					if($cfg->load('comp_time') ne "on") { print "<div class='col-sm-4'></div>"; }
-					print "<div class='col-sm-4'><input class='btn btn-primary pull-right' type='submit' value='Update ticket'></div></div></p></form><hr>\n"; 
+					print "<div class='col-sm-4'><input class='btn btn-primary pull-right' type='submit' value='Update ticket'></div></div></form><hr>\n"; 
 				}
 				if($logged_lvl > 2 && !$q->param('edit'))
 				{
