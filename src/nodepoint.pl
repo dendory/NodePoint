@@ -1701,7 +1701,7 @@ elsif($q->param('api')) # API calls
 				my $confirm = join'', map +(0..9,'a'..'z','A'..'Z')[rand(10+26*2)], 1..16;
 				$sql = $db->prepare("INSERT INTO users VALUES(?, ?, ?, ?, ?, ?);");
 				print " \"message\": \"User added.\",\n";
-				print " \"status\": \"OK\"\n";
+				print " \"status\": \"OK\",\n";
 				if($q->param('email'))
 				{ 
 					$sql->execute(sanitize_alpha($q->param('user')), sha1_hex($q->param('password')), sanitize_email($q->param('email')), to_int($cfg->load('default_lvl')), "Never", $confirm); 
@@ -1709,7 +1709,7 @@ elsif($q->param('api')) # API calls
 					print " \"confirm\": \"" . $confirm . "\",\n";
 				}
 				else { $sql->execute(sanitize_alpha($q->param('user')), sha1_hex($q->param('password')), "", to_int($cfg->load('default_lvl')), "Never", ""); }
-				print " \"user\": \"" . sanitize_alpha($q->param('user')) . "\",\n";
+				print " \"user\": \"" . sanitize_alpha($q->param('user')) . "\"\n";
 				logevent("Add new user: " . sanitize_alpha($q->param('user')));
 			}
 			print "}\n";
