@@ -8,7 +8,7 @@
 #
 
 use strict;
-use Config::Linux;
+use Config::Win32;
 use Digest::SHA qw(sha1_hex);
 use DBI;
 use CGI;
@@ -28,7 +28,7 @@ my ($cfg, $db, $sql, $cn, $cp, $cgs, $last_login, $perf);
 my $logged_user = "";
 my $logged_lvl = -1;
 my $q = new CGI;
-my $VERSION = "1.4.2";
+my $VERSION = "1.4.3";
 my %items = ("Product", "Product", "Release", "Release", "Model", "SKU/Model");
 my @itemtypes = ("None");
 my @themes = ("primary", "default", "success", "info", "warning", "danger");
@@ -898,11 +898,11 @@ sub home
 # Connect to config
 eval
 {
-	$cfg = Config::Linux->new("NodePoint", "settings");
+	$cfg = Config::Win32->new("NodePoint", "settings");
 };
 if(!defined($cfg)) # Can't even use headers() if this fails.
 {
-	print "Content-type: text/html\n\nError: Could not access " . Config::Linux->type . ". Please ensure NodePoint has the proper permissions.";
+	print "Content-type: text/html\n\nError: Could not access " . Config::Win32->type . ". Please ensure NodePoint has the proper permissions.";
 	exit(0);
 };
 
@@ -3465,7 +3465,7 @@ elsif($q->param('m')) # Modules
 						my $client = "";
 						while(my @res2 = $sql2->fetchrow_array()) { $client = $res2[0]; }
 						print "<select class='form-control' name='billable'><option></option>";
-						$sql2 = $db->prepare("SELECT name FROM clients WHERE status != 'Closed';");
+						$sql2 = $db->prepare("SELECT name FROM clients WHERE status != 'Closed' ORDER BY name;");
 						$sql2->execute();
 						while(my @res2 = $sql2->fetchrow_array())
 						{
@@ -3662,7 +3662,7 @@ elsif($q->param('m')) # Modules
 						elsif(to_int($customform[($i*2)+3]) == 11)
 						{
 							print "<select class='form-control' name='field" . $i . "'>";
-							my $sql2 = $db->prepare("SELECT name FROM clients WHERE status != 'Closed';");
+							my $sql2 = $db->prepare("SELECT name FROM clients WHERE status != 'Closed' ORDER BY name;");
 							$sql2->execute();
 							while(my @res2 = $sql2->fetchrow_array()) { print "<option>" . $res2[0] . "</option>"; }
 							print "</select>";
@@ -4088,11 +4088,11 @@ elsif($q->param('m')) # Modules
 	{
 		headers("Items");
 		my @products;
-		$sql = $db->prepare("SELECT ROWID,name FROM products;");
+		$sql = $db->prepare("SELECT ROWID,name FROM products ORDER BY name;");
 		$sql->execute();
 		while(my @res = $sql->fetchrow_array()) { $products[$res[0]] = $res[1]; }
 		my @clients;
-		$sql = $db->prepare("SELECT ROWID,name FROM clients;");
+		$sql = $db->prepare("SELECT ROWID,name FROM clients ORDER BY name;");
 		$sql->execute();
 		while(my @res = $sql->fetchrow_array()) { $clients[$res[0]] = $res[1]; }
 		if($q->param('new_item'))
