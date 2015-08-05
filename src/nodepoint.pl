@@ -4086,7 +4086,6 @@ elsif($q->param('m')) # Modules
 	}
 	elsif($q->param('m') eq "items" && $cfg->load('comp_items') eq "on")
 	{
-		headers("Items");
 		my @products;
 		$sql = $db->prepare("SELECT ROWID,name FROM products ORDER BY name;");
 		$sql->execute();
@@ -4095,6 +4094,24 @@ elsif($q->param('m')) # Modules
 		$sql = $db->prepare("SELECT ROWID,name FROM clients ORDER BY name;");
 		$sql->execute();
 		while(my @res = $sql->fetchrow_array()) { $clients[$res[0]] = $res[1]; }
+		if($q->param('csv'))
+		{
+			print $q->header(-type => "text/csv", -attachment => "items.csv");
+			print "ID,Type,Name,Serial,Status\n";
+			$sql = $db->prepare("SELECT ROWID,* FROM items;"); 
+			$sql->execute();
+			while(my @res = $sql->fetchrow_array())
+			{
+				print $res[0] . ",\"" . $res[2] . "\",\"" . $res[1] . "\",\"" . $res[3] . "\",\"";
+				if(to_int($res[7]) == 0) { print "Unavailable"; }
+				elsif(to_int($res[7]) == 1) { print "Available"; }
+				elsif(to_int($res[7]) == 2) { print "Waiting approval for: " . $res[8]; }
+				else { print "Checked out by: " . $res[8]; }
+				print "\"\n";
+			}
+			quit(0);
+		}
+		else { headers("Items"); }
 		if($q->param('new_item'))
 		{
 			if(!$q->param('name') || !$q->param('type') || !$q->param('product_id') || !$q->param('client_id') || !$q->param('serial')) 
@@ -4455,7 +4472,7 @@ elsif($q->param('m')) # Modules
 					print "</table><hr><h4>Items list</h4>\n";
 				}
 			}
-			print "<p><form method='GET' action='.'><div class='row'><div class='col-sm-2'><input type='hidden' name='m' value='items'><select name='sort' class='form-control'><option value=''>Sort by:</option><option>Type</option><option>Name</option><option>Serial</option><option>Status</option></select></div><div class='col-sm-4'><input type='submit' class='btn btn-primary' value='Sort'></div></div></form></p>";
+			print "<p><form method='GET' action='.'><div class='row'><div class='col-sm-2'><input type='hidden' name='m' value='items'><select name='sort' class='form-control'><option value=''>Sort by:</option><option>Type</option><option>Name</option><option>Serial</option><option>Status</option></select></div><div class='col-sm-10'><input type='submit' class='btn btn-primary' value='Sort'> &nbsp; <input class='btn btn-primary pull-right' type='submit' name='csv' value='Export as CSV'></div></div></form></p>";
 			print "<table class='table table-striped'><tr><th>Type</th><th>Name</th><th>Serial</th><th>Status</th></tr>\n";
 			if($q->param('sort') && (lc($q->param('sort')) eq 'type' || lc($q->param('sort')) eq 'name' || lc($q->param('sort')) eq 'serial' || lc($q->param('sort')) eq 'status'))
 			{
