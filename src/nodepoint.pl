@@ -117,7 +117,7 @@ sub navbar
 			if($cfg->load('comp_articles') eq "on") { print "	 <li><a href='./?m=articles'>Articles</a></li>\n"; }
 			if($cfg->load('comp_items') eq "on") { print "	 <li><a href='./?m=items'>Items</a></li>\n"; }
 		}
-		elsif($q->param('m') && ($q->param('m') eq "tickets" || $q->param('m') eq "view_ticket"))
+		elsif($q->param('m') && ($q->param('m') eq "tickets" || $q->param('m') eq "view_ticket" || $q->param('m') eq "add_ticket" || $q->param('m') eq "new_ticket"))
 		{
 			print "	 <li><a href='.'>Login</a></li>\n";
 			print "	 <li><a href='./?m=products'>" . $items{"Product"} . "s</a></li>\n";
@@ -487,7 +487,8 @@ sub save_config
 	$cfg->save("default_vis", $q->param('default_vis'));
 	$cfg->save("default_lvl", to_int($q->param('default_lvl')));
 	$cfg->save("upload_lvl", to_int($q->param('upload_lvl')));
-	$cfg->save("allow_registrations", $q->param('allow_registrations'));    
+	$cfg->save("allow_registrations", $q->param('allow_registrations'));
+	$cfg->save("guest_tickets", $q->param('guest_tickets'));
 	$cfg->save("smtp_server", $q->param('smtp_server'));    
 	$cfg->save("smtp_port", $q->param('smtp_port'));    
 	$cfg->save("smtp_from", $q->param('smtp_from'));
@@ -1027,6 +1028,7 @@ elsif(!$cfg->load("db_address") || !$cfg->load("site_name")) # first use
 				print "<p><div class='row'><div class='col-sm-4'>Ticket visibility:</div><div class='col-sm-4'><select name='default_vis' style='width:300px'><option>Public</option><option>Private</option><option>Restricted</option></select></div></div></p>\n";
 				print "<p>Tickets will have a default visibility when created. Public tickets can be seen by people not logged in, while private tickets require people to be logged in to view. Restricted ones can only be seen by authors and users with the <b>2 - Restricted view</b> level, ideal for helpdesk/support portals.</p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Allow user registrations:</div><div class='col-sm-4'><input type='checkbox' name='allow_registrations' checked=checked></div></div></p>\n";
+				print "<p><div class='row'><div class='col-sm-4'>Allow guest tickets:</div><div class='col-sm-4'><input type='checkbox' name='guest_tickets'></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Default access level:</div><div class='col-sm-4'><select name='default_lvl' style='width:300px'><option value=5>5 - Users management</option><option value=4>4 - Projects management</option><option value=3>3 - Tickets management</option><option value=2>2 - Restricted view</option><option value=1 selected=selected>1 - Authorized users</option><option value=0>0 - Unauthorized users</option></select></div></div></p>\n";
 				print "<p>New registered users will be assigned a default access level, which can then be modified by users with the <b>5 - Users management</b> level. These are the access levels, with each rank having the lower permissions as well:</p>\n";
 				print "<table class='table table-striped'><tr><th>Level</th><th>Name</th><th>Description</th></tr><tr><td>6</td><td>NodePoint Admin</td><td>Can change basic NodePoint settings</td></tr><td>5</td><td>Users management</td><td>Can manage users, reset passwords, edit clients</td></tr><tr><td>4</td><td>Projects management</td><td>Can add, retire and edit projects, edit articles and items</td></tr><tr><td>3</td><td>Tickets management</td><td>Can create releases, update tickets, track time</td></tr><tr><td>2</td><td>Restricted view</td><td>Can view statistics, restricted tickets and products</td></tr><tr><td>1</td><td>Authorized users</td><td>Can create tickets and comments</td></tr><tr><td>0</td><td>Unauthorized users</td><td>Can view private tickets</td></tr></table>\n";
@@ -2285,6 +2287,10 @@ elsif($q->param('m')) # Modules
 			print "<tr><td>Default access level</td><td><input class='form-control' type='text' name='default_lvl' value=\"" . to_int($cfg->load("default_lvl")) . "\"></td></tr>\n";
 			print "<tr><td>Allow registrations</td><td><select class='form-control' name='allow_registrations'>";
 			if($cfg->load("allow_registrations") eq "on") { print "<option selected>on</option><option>off</option>"; }
+			else { print "<option>on</option><option selected>off</option>"; }
+			print "</select></td></tr>\n";
+			print "<tr><td>Allow guest tickets</td><td><select class='form-control' name='guest_tickets'>";
+			if($cfg->load("guest_tickets") eq "on") { print "<option selected>on</option><option>off</option>"; }
 			else { print "<option>on</option><option selected>off</option>"; }
 			print "</select></td></tr>\n";
 			print "<tr><td>API read key</td><td><input class='form-control' type='text' name='api_read' value=\"" . $cfg->load("api_read") . "\"></td></tr>\n";
@@ -3549,8 +3555,9 @@ elsif($q->param('m')) # Modules
 			}
 		}
 	}
-	elsif($q->param('m') eq "add_ticket" && $logged_lvl > 0 && $q->param('product_id'))
+	elsif($q->param('m') eq "add_ticket" && ($logged_lvl > 0 || $cfg->load("guest_tickets") eq "on") && $q->param('product_id'))
 	{
+		if($logged_user eq "") { $logged_user = "Guest"; } 
 		headers("Tickets");
 		my @customform;
 		my $description = "";
@@ -3624,7 +3631,7 @@ elsif($q->param('m')) # Modules
 			msg($text, 0);
 		}
 	}
-	elsif($q->param('m') eq "new_ticket" && $logged_lvl > 0 && $q->param('product_id'))
+	elsif($q->param('m') eq "new_ticket" && ($logged_lvl > 0 || $cfg->load("guest_tickets") eq "on") && $q->param('product_id'))
 	{
 		headers("Tickets");
 		$sql = $db->prepare("SELECT ROWID,* FROM products WHERE ROWID = ?;");
@@ -3671,7 +3678,8 @@ elsif($q->param('m')) # Modules
 						{
 							print "<select class='form-control' name='field" . $i . "'>";
 							my $sql2 = $db->prepare("SELECT serial FROM items WHERE user = ?;");
-							$sql2->execute($logged_user);
+							if($logged_user ne "") { $sql2->execute($logged_user); }
+							else { $sql2->execute("Guest"); }
 							while(my @res2 = $sql2->fetchrow_array()) { print "<option>" . $res2[0] . "</option>"; }
 							print "</select>";
 						}
@@ -4026,7 +4034,7 @@ elsif($q->param('m')) # Modules
 			exit(0);
 		}
 		headers("Tickets");
-		if($logged_lvl > 0)  # add new ticket pane
+		if($logged_lvl > 0  || $cfg->load("guest_tickets") eq "on")  # add new ticket pane
 		{
 			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Create a new ticket</h3></div><div class='panel-body'><form method='POST' action='.'>\n";
 			print "<p><div class='row'><div class='col-sm-8'>Select a " . lc($items{"Product"}) . " name: <select class='form-control' name='product_id'>";

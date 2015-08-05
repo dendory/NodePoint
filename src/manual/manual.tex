@@ -10,10 +10,10 @@
 % Conditional compilation for Windows and Linux
 \usepackage{ifthen}
 \newboolean{Windows}
-\setboolean{Windows}{false} % change to false for Linux
+\setboolean{Windows}{true} % change to false for Linux
 \ifthenelse{\boolean{Windows}}
-{\def\NodePointManual{NodePoint IT System - Windows version 1.4.2}}
-{\def\NodePointManual{NodePoint IT System - Linux version 1.4.2}}
+{\def\NodePointManual{NodePoint IT System - Windows version 1.4.3}}
+{\def\NodePointManual{NodePoint IT System - Linux version 1.4.3}}
 
 % Margins and paper type
 \geometry{a4paper, right=1.5cm, left=1.5cm, top=2cm, bottom=1.5cm}
@@ -305,10 +305,12 @@ These are the default configuration values for NodePoint. They have to be define
 \item \textbf{Site name:} The name shown at the top left of the interface.
 \item \textbf{Public notice:} This notice is shown on every page. Leave empty to remove the notice.
 \item \textbf{Bootstrap template:} This is a CSS file used by NodePoint. It should be a valid Bootstrap template, or could contain extra CSS elements you wish to use. The default file is \texttt{default.css} and contains a few such elements.
+\item \textbf{Interface theme color:} The color of panels in the interface.
 \item \textbf{Favicon:} This is the icon shown by web browsers in the URL bar.
 \item \textbf{Ticket visibility:} When set to \textit{Public}, all tickets will be visible by logged in and guest users. When set to \textit{Private}, people need to log in to view tickets. \textit{Restricted} prevents people without at least the Restricted View access level from viewing others' tickets. This is a good choice for IT/Helpdesk systems.
 \item \textbf{Default access level:} The access level for new users. The default is 1.
 \item \textbf{Allow registrations:} Allow guest users to register a new account. If set to no, the only way to add new accounts is if a user with Users Management access adds one.
+\item \textbf{Allow guest tickets:} Allow guest users to file tickets.
 \item \textbf{API read key:} Used for some API operations.
 \item \textbf{API write key:} Used for some API operations.
 \item \textbf{Allow user impersonation:} Allows API calls to specify a \textit{from\_user} parameter when creating a ticket.
@@ -326,8 +328,10 @@ These are the default configuration values for NodePoint. They have to be define
 \item \textbf{Custom ticket type:} The type of field. If \textit{text}, then the entries will be shown as text. If \textit{URL}, then links will be assumed. If \textit{checkbox}, then users will have to select yes or no.
 \item \textbf{Active Directory server:} Enter your domain controller address to enable AD integration. Users will be created dynamically as they first log on, and passwords will be checked against AD using LDAP.
 \item \textbf{Active Directory domain:} The domain to use for AD integration (in NT4 format).
-\item \textbf{Components:} Activate components that you require. This does not remove their functionality, only hiding them from the interface. See chapter 4.
+\item \textbf{Components:} Activate components that you require. This does not remove their functionality, only hiding them from the interface.\\\\See chapter 4 for information about components.
 \end{itemize}
+
+\clearpage
 
 \section{Users and activity}
 NodePoint provides a simple way to manage users based on their access levels. Users have a specific level, which determines what shows up to them in the interface and what they can do. They can also enter an optional email address for notifications. Email addresses must be confirmed through the sending of an automated token when they first register, if email notifications are turned on. Users also have a password which can be changed by the user under the \textbf{Settings} page, or reset by someone with the Users Management level.
