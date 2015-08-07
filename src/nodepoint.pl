@@ -1015,8 +1015,8 @@ elsif(!$cfg->load("db_address") || !$cfg->load("site_name")) # first use
 		}
 		else
 		{
-			if($q->remote_addr eq "127.0.0.1" || $q->remote_addr eq "::1")
-			{
+#			if($q->remote_addr eq "127.0.0.1" || $q->remote_addr eq "::1")
+#			{
 				msg("Initial configuration not found! Create it now.", 2);
 				print "<h3>Initial configuration</h3><p>These settings will be saved in the " . $cfg->type . ". It allows NodePoint to connect to the database server and sets various default values.</p>\n";
 				print "<form method='POST' action='.'>\n";
@@ -1068,11 +1068,11 @@ elsif(!$cfg->load("db_address") || !$cfg->load("site_name")) # first use
 				print "<p><div class='row'><div class='col-sm-4'>Component: Inventory Control</div><div class='col-sm-4'><input type='checkbox' name='comp_items' checked></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Component: Billing</div><div class='col-sm-4'><input type='checkbox' name='comp_billing' checked></div></div></p>\n";
 				print "<p>See the <a href='./manual.pdf'>manual</a> file for detailed information.<input class='btn btn-primary pull-right' type='submit' value='Save'></p></form>\n"; 
-			}
-			else
-			{
-				msg("Initial configuration not found! It needs to be created from <b>localhost</b> only.", 0);
-			}
+#			}
+#			else
+#			{
+#				msg("Initial configuration not found! It needs to be created from <b>localhost</b> only.", 0);
+#			}
 		}
 		footers();
 	}
