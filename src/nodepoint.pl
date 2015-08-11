@@ -3681,6 +3681,7 @@ elsif($q->param('m')) # Modules
 						elsif(to_int($customform[($i*2)+3]) == 7) { print "<select class='form-control' name='field" . $i . "'><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option></select>"; }
 						elsif(to_int($customform[($i*2)+3]) == 8) { print "<input type='text' class='form-control' name='field" . $i . "' value='" . $ENV{REMOTE_ADDR} . "' readonly>"; }
 						elsif(to_int($customform[($i*2)+3]) == 10) { print "<input type='text' class='form-control datepicker' name='field" . $i . "' placeholder='mm/dd/yyyy'>"; }
+						elsif(to_int($customform[($i*2)+3]) == 13) { print "<input type='tel' class='form-control' name='field" . $i . "' placeholder='(nnn) nnn-nnnn'>"; }
 						elsif(to_int($customform[($i*2)+3]) == 11)
 						{
 							if($cfg->load("comp_billing") eq "on") { print "<input type='hidden' name='client' value='field" . $i . "'>"; }
@@ -4617,7 +4618,9 @@ elsif(($q->param('create_form') || $q->param('edit_form') || $q->param('save_for
 			if(to_int($q->param('edit_form')) > 0) { if(to_int($res[($i*2)+3]) == 8) { print " selected"; } }
 			print ">IP address</option><option value=9";
 			if(to_int($q->param('edit_form')) > 0) { if(to_int($res[($i*2)+3]) == 9) { print " selected"; } }
-			print ">Satisfaction scale</option><option value=10";
+			print ">Satisfaction scale</option><option value=13";
+			if(to_int($q->param('edit_form')) > 0) { if(to_int($res[($i*2)+3]) == 13) { print " selected"; } }
+			print ">Phone number</option><option value=10";
 			if(to_int($q->param('edit_form')) > 0) { if(to_int($res[($i*2)+3]) == 10) { print " selected"; } }
 			print ">Date</option>";
 			if($cfg->load('comp_clients') eq "on")
