@@ -8,7 +8,7 @@
 #
 
 use strict;
-use Config::Linux;
+use Config::Win32;
 use Digest::SHA qw(sha1_hex);
 use DBI;
 use CGI;
@@ -28,7 +28,7 @@ my ($cfg, $db, $sql, $cn, $cp, $cgs, $last_login, $perf);
 my $logged_user = "";
 my $logged_lvl = -1;
 my $q = new CGI;
-my $VERSION = "1.4.3";
+my $VERSION = "1.4.4";
 my %items = ("Product", "Product", "Release", "Release", "Model", "SKU/Model");
 my @itemtypes = ("None");
 my @themes = ("primary", "default", "success", "info", "warning", "danger");
@@ -899,11 +899,11 @@ sub home
 # Connect to config
 eval
 {
-	$cfg = Config::Linux->new("NodePoint", "settings");
+	$cfg = Config::Win32->new("NodePoint", "settings");
 };
 if(!defined($cfg)) # Can't even use headers() if this fails.
 {
-	print "Content-type: text/html\n\nError: Could not access " . Config::Linux->type . ". Please ensure NodePoint has the proper permissions.";
+	print "Content-type: text/html\n\nError: Could not access " . Config::Win32->type . ". Please ensure NodePoint has the proper permissions.";
 	exit(0);
 };
 
@@ -3614,6 +3614,21 @@ elsif($q->param('m')) # Modules
 				{
 					notify($assign, "New ticket created", "A new ticket was created for a product assigned to you:\n\nUser: " . $logged_user . "\nTitle: " . sanitize_html($title) . "\n" . $cfg->load('custom_name') . ": " . $lnk . "\nDescription: " . sanitize_html($description));
 				}
+				if($q->param('client'))
+				{
+					$sql = $db->prepare("SELECT last_insert_rowid();");
+					$sql->execute();
+					my $lastrowid = 0;
+					while(my @res = $sql->fetchrow_array())
+					{
+						$lastrowid = to_int($res[0]);
+					}
+					if($lastrowid != 0)
+					{
+						$sql = $db->prepare("INSERT INTO billing VALUES (?, ?);");
+						$sql->execute($lastrowid, sanitize_html($q->param($q->param('client'))));
+					}
+				}
 				msg("Ticket successfully added. Press <a href='./?m=tickets'>here</a> to continue.", 3);
 			}
 		}
@@ -3668,6 +3683,7 @@ elsif($q->param('m')) # Modules
 						elsif(to_int($customform[($i*2)+3]) == 10) { print "<input type='text' class='form-control datepicker' name='field" . $i . "' placeholder='mm/dd/yyyy'>"; }
 						elsif(to_int($customform[($i*2)+3]) == 11)
 						{
+							if($cfg->load("comp_billing") eq "on") { print "<input type='hidden' name='client' value='field" . $i . "'>"; }
 							print "<select class='form-control' name='field" . $i . "'>";
 							my $sql2 = $db->prepare("SELECT name FROM clients WHERE status != 'Closed' ORDER BY name;");
 							$sql2->execute();
