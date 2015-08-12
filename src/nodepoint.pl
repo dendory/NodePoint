@@ -3574,6 +3574,7 @@ elsif($q->param('m')) # Modules
 				{
 					$description .= $customform[($i*2)+2] . " \t ";
 					if($q->param('field'.$i)) { $description .= $q->param('field'.$i); }
+					elsif($q->param('upload'.$i)) { $description .= $q->param('upload'.$i); }
 					$description .= "\n\n"; 
 				}
 			}
@@ -3614,19 +3615,53 @@ elsif($q->param('m')) # Modules
 				{
 					notify($assign, "New ticket created", "A new ticket was created for a product assigned to you:\n\nUser: " . $logged_user . "\nTitle: " . sanitize_html($title) . "\n" . $cfg->load('custom_name') . ": " . $lnk . "\nDescription: " . sanitize_html($description));
 				}
-				if($q->param('client'))
+				$sql = $db->prepare("SELECT last_insert_rowid();");
+				$sql->execute();
+				my $lastrowid = 0;
+				while(my @res = $sql->fetchrow_array())
 				{
-					$sql = $db->prepare("SELECT last_insert_rowid();");
-					$sql->execute();
-					my $lastrowid = 0;
-					while(my @res = $sql->fetchrow_array())
-					{
-						$lastrowid = to_int($res[0]);
-					}
-					if($lastrowid != 0)
+					$lastrowid = to_int($res[0]);
+				}
+				if($lastrowid != 0)
+				{
+					if($q->param('client'))
 					{
 						$sql = $db->prepare("INSERT INTO billing VALUES (?, ?);");
 						$sql->execute($lastrowid, sanitize_html($q->param($q->param('client'))));
+					}
+					for(my $i = 0; $i < 10; $i++)
+					{
+						if($customform[($i*2)+2] && $q->param('upload'.$i) && $cfg->load('upload_folder'))
+						{
+							eval
+							{
+								my $lightweight_fh = $q->upload('upload'.$i);
+								if(defined $lightweight_fh)
+								{
+									my $tmpfilename = $q->tmpFileName($lightweight_fh);
+									my $file_size = (-s $tmpfilename);
+									if($file_size > 999000)
+									{
+										msg("File size is too large, upload aborted for: " . sanitize_html($q->param('upload'.$i)), 4);
+									}
+									else
+									{
+										my $io_handle = $lightweight_fh->handle;
+										binmode($io_handle);
+										my ($buffer, $bytesread);
+										my $filedata = Data::GUID->new;
+										my $filename = substr(sanitize_html($q->param('upload'.$i)), 0, 40);
+										open(my $OUTFILE, ">", $cfg->load('upload_folder') . $cfg->sep . $filedata) or die $@;
+										while($bytesread = $io_handle->read($buffer,1024))
+										{
+											print $OUTFILE $buffer;
+										}
+										$sql = $db->prepare("INSERT INTO comments VALUES (?, ?, ?, ?, ?, ?, ?);");
+										$sql->execute($lastrowid, $logged_user, $customform[($i*2)+2], now(), "Never", $filedata, $filename);
+									}
+								}
+							};
+						}
 					}
 				}
 				msg("Ticket successfully added. Press <a href='./?m=tickets'>here</a> to continue.", 3);
@@ -3682,6 +3717,7 @@ elsif($q->param('m')) # Modules
 						elsif(to_int($customform[($i*2)+3]) == 8) { print "<input type='text' class='form-control' name='field" . $i . "' value='" . $ENV{REMOTE_ADDR} . "' readonly>"; }
 						elsif(to_int($customform[($i*2)+3]) == 10) { print "<input type='text' class='form-control datepicker' name='field" . $i . "' placeholder='mm/dd/yyyy'>"; }
 						elsif(to_int($customform[($i*2)+3]) == 13) { print "<input type='tel' class='form-control' name='field" . $i . "' placeholder='(nnn) nnn-nnnn'>"; }
+						elsif(to_int($customform[($i*2)+3]) == 14) { print "<input type='file' name='upload" . $i . "'>"; }
 						elsif(to_int($customform[($i*2)+3]) == 11)
 						{
 							if($cfg->load("comp_billing") eq "on") { print "<input type='hidden' name='client' value='field" . $i . "'>"; }
@@ -4618,7 +4654,9 @@ elsif(($q->param('create_form') || $q->param('edit_form') || $q->param('save_for
 			if(to_int($q->param('edit_form')) > 0) { if(to_int($res[($i*2)+3]) == 8) { print " selected"; } }
 			print ">IP address</option><option value=9";
 			if(to_int($q->param('edit_form')) > 0) { if(to_int($res[($i*2)+3]) == 9) { print " selected"; } }
-			print ">Satisfaction scale</option><option value=13";
+			print ">Satisfaction scale</option><option value=14";
+			if(to_int($q->param('edit_form')) > 0) { if(to_int($res[($i*2)+3]) == 14) { print " selected"; } }
+			print ">File upload</option><option value=13";
 			if(to_int($q->param('edit_form')) > 0) { if(to_int($res[($i*2)+3]) == 13) { print " selected"; } }
 			print ">Phone number</option><option value=10";
 			if(to_int($q->param('edit_form')) > 0) { if(to_int($res[($i*2)+3]) == 10) { print " selected"; } }
