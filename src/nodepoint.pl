@@ -8,7 +8,7 @@
 #
 
 use strict;
-use Config::Win32;
+use Config::Linux;
 use Digest::SHA qw(sha1_hex);
 use DBI;
 use CGI;
@@ -899,11 +899,11 @@ sub home
 # Connect to config
 eval
 {
-	$cfg = Config::Win32->new("NodePoint", "settings");
+	$cfg = Config::Linux->new("NodePoint", "settings");
 };
 if(!defined($cfg)) # Can't even use headers() if this fails.
 {
-	print "Content-type: text/html\n\nError: Could not access " . Config::Win32->type . ". Please ensure NodePoint has the proper permissions.";
+	print "Content-type: text/html\n\nError: Could not access " . Config::Linux->type . ". Please ensure NodePoint has the proper permissions.";
 	exit(0);
 };
 
@@ -3717,7 +3717,11 @@ elsif($q->param('m')) # Modules
 						elsif(to_int($customform[($i*2)+3]) == 8) { print "<input type='text' class='form-control' name='field" . $i . "' value='" . $ENV{REMOTE_ADDR} . "' readonly>"; }
 						elsif(to_int($customform[($i*2)+3]) == 10) { print "<input type='text' class='form-control datepicker' name='field" . $i . "' placeholder='mm/dd/yyyy'>"; }
 						elsif(to_int($customform[($i*2)+3]) == 13) { print "<input type='tel' class='form-control' name='field" . $i . "' placeholder='(nnn) nnn-nnnn'>"; }
-						elsif(to_int($customform[($i*2)+3]) == 14) { print "<input type='file' name='upload" . $i . "'>"; }
+						elsif(to_int($customform[($i*2)+3]) == 14) 
+						{ 
+							 if($logged_lvl >= to_int($cfg->load('upload_lvl'))) { print "<input type='file' name='upload" . $i . "'>"; }
+							 else { print "<input type='text' value='File uploads not available for your access level.' class='form-control' disabled>"; }
+						}
 						elsif(to_int($customform[($i*2)+3]) == 11)
 						{
 							if($cfg->load("comp_billing") eq "on") { print "<input type='hidden' name='client' value='field" . $i . "'>"; }

@@ -10,7 +10,7 @@
 % Conditional compilation for Windows and Linux
 \usepackage{ifthen}
 \newboolean{Windows}
-\setboolean{Windows}{true} % change to false for Linux
+\setboolean{Windows}{false} % change to false for Linux
 \ifthenelse{\boolean{Windows}}
 {\def\NodePointManual{NodePoint IT System - Windows version 1.4.4}}
 {\def\NodePointManual{NodePoint IT System - Linux version 1.4.4}}
@@ -254,13 +254,15 @@ This does mean that you can access the data directly using a SQLite client. This
 \subsection{Security concerns}
 By default, data stored in the database is accessible from anyone with login access to the server. As such, only administrators should be given physical access to the server used. User passwords are stored in a hashed format, both for the administrator and regular users.
 
-Using SSL is highly recommended and does not impact the operation of NodePoint at all. Simply add an encryption certificate to your web server and access the product as normally.
+Using SSL is highly recommended and does not impact the operation of NodePoint at all. Simply add an encryption certificate to your web server and access the product normally.
 
 NodePoint is a stateless system, which means that users are re-authenticated at every operation. This means that things like cookie highjacking or manipulation will not allow a user to gain access if their password becomes invalid. While there is no ban or lock function in the product, a user with a proper access level can reset the password of another user which effectively locks them out. Note that users cannot be deleted in order to avoid many items and operations becoming orphaned.
 
 The API provided uses a read and write key. This means that all operations are done as a special \textit{api} user. Different amounts of secrecy can be used for the two keys, such as users having access to a script that exposes the read key, but the write key only being used on a server side script. If \textbf{User Impersonation} is configured, the API calls can specify a specific user for a number of operations as well.
 
 If you specify a SMTP server for email notifications along with a username and password, these will be stored in plain text. This is unavoidable for NodePoint to be able to log into your email server. It is recommended that you use IP based filtering instead of a specific account.
+
+NodePoint provides a file upload system. This can be used to upload project images, file attachments to comments, and file upload fields on custom forms. Users may use this feature to upload malicious files. You should use an anti-virus software to scan for potential threats. You can also restrict the access level required to upload files on the \textbf{Settings} page, or disable uploads completely.
 
 Finally, while NodePoint offers Active Directory integration, note that this is done using LDAP Simple Bind, not Kerberos, in order to allow both the Windows and Linux version to support this feature. LDAP over SSL can be implemented to provide encryption.
 
