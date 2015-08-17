@@ -8,7 +8,7 @@
 #
 
 use strict;
-use Config::Linux;
+use Config::Win32;
 use Digest::SHA qw(sha1_hex);
 use DBI;
 use CGI;
@@ -28,7 +28,7 @@ my ($cfg, $db, $sql, $cn, $cp, $cgs, $last_login, $perf);
 my $logged_user = "";
 my $logged_lvl = -1;
 my $q = new CGI;
-my $VERSION = "1.4.4";
+my $VERSION = "1.4.5";
 my %items = ("Product", "Product", "Release", "Release", "Model", "SKU/Model");
 my @itemtypes = ("None");
 my @themes = ("primary", "default", "success", "info", "warning", "danger");
@@ -899,11 +899,11 @@ sub home
 # Connect to config
 eval
 {
-	$cfg = Config::Linux->new("NodePoint", "settings");
+	$cfg = Config::Win32->new("NodePoint", "settings");
 };
 if(!defined($cfg)) # Can't even use headers() if this fails.
 {
-	print "Content-type: text/html\n\nError: Could not access " . Config::Linux->type . ". Please ensure NodePoint has the proper permissions.";
+	print "Content-type: text/html\n\nError: Could not access " . Config::Win32->type . ". Please ensure NodePoint has the proper permissions.";
 	exit(0);
 };
 
@@ -4395,16 +4395,16 @@ elsif($q->param('m')) # Modules
 					print "</b></p><p>";
 					if($logged_lvl > 3) 
 					{
-						print "<form method='GET' action='.'><input type='hidden' name='m' value='items'><input type='hidden' name='i' value='" . to_int($q->param('i')) . "'><input type='submit' class='btn btn-primary pull-right' name='edit' value='Edit item'></form>"; 
+						print "<form style='display:inline' method='GET' action='.'><input type='hidden' name='m' value='items'><input type='hidden' name='i' value='" . to_int($q->param('i')) . "'><input type='submit' class='btn btn-primary pull-right' name='edit' value='Edit item'></form>"; 
 					}
 					if($logged_lvl > 0 && $res[7] == 1)
 					{
-						print "<form method='GET' action='.'><input type='hidden' name='m' value='items'><input type='hidden' name='i' value='" . to_int($q->param('i')) . "'><input type='submit' class='btn btn-primary' name='checkout' value='";
+						print "<form style='display:inline' method='GET' action='.'><input type='hidden' name='m' value='items'><input type='hidden' name='i' value='" . to_int($q->param('i')) . "'><input type='submit' class='btn btn-primary' name='checkout' value='";
 						if(to_int($res[6]) == 1) { print "Request"; }
 						else { print "Checkout"; }
 						print "'></form>"; 
 					}
-					print "</p>";
+					print " <form style='display:inline' method='GET' action='http://chart.apis.google.com/chart'><input type='hidden' name='cht' value='qr'><input type='hidden' name='chs' value='300x300'><input type='hidden' name='chld' value='H|0'><input type='hidden' name='chl' value='" . $res[3] . "'><input type='submit' class='btn btn-primary' value='QR'></form></p>";
 				}
 				elsif($logged_lvl > 3)
 				{
