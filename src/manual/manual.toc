@@ -1,17 +1,16 @@
 \select@language {english}
-\contentsline {section}{\numberline {1}Introduction}{3}{section.1}
-\contentsline {subsection}{\numberline {1.1}Requirements}{4}{subsection.1.1}
-\contentsline {subsection}{\numberline {1.2}Installation}{4}{subsection.1.2}
-\contentsline {subsection}{\numberline {1.3}Upgrading}{4}{subsection.1.3}
-\contentsline {subsection}{\numberline {1.4}Uninstalling}{4}{subsection.1.4}
-\contentsline {subsection}{\numberline {1.5}Troubleshooting}{4}{subsection.1.5}
-\contentsline {subsubsection}{\numberline {1.5.1}If setup.bat fails}{4}{subsubsection.1.5.1}
-\contentsline {subsubsection}{\numberline {1.5.2}If you get the error Could not access Registry}{5}{subsubsection.1.5.2}
-\contentsline {subsubsection}{\numberline {1.5.3}If you get the error Could not access database file}{5}{subsubsection.1.5.3}
-\contentsline {subsubsection}{\numberline {1.5.4}If you get the error The page you are requesting cannot be served because of the ISAPI and CGI Restriction list settings on the Web server}{5}{subsubsection.1.5.4}
-\contentsline {subsubsection}{\numberline {1.5.5}If the server tries to download the file instead of executing it}{5}{subsubsection.1.5.5}
-\contentsline {subsubsection}{\numberline {1.5.6}If you forgot your admin password}{6}{subsubsection.1.5.6}
-\contentsline {subsubsection}{\numberline {1.5.7}If email notifications don't work}{6}{subsubsection.1.5.7}
+\contentsline {section}{\numberline {1}Introduction}{4}{section.1}
+\contentsline {subsection}{\numberline {1.1}Requirements}{5}{subsection.1.1}
+\contentsline {subsection}{\numberline {1.2}Installation}{5}{subsection.1.2}
+\contentsline {subsection}{\numberline {1.3}Upgrading}{5}{subsection.1.3}
+\contentsline {subsection}{\numberline {1.4}Uninstalling}{5}{subsection.1.4}
+\contentsline {subsection}{\numberline {1.5}Troubleshooting}{5}{subsection.1.5}
+\contentsline {subsubsection}{\numberline {1.5.1}If you get a 500 server error}{5}{subsubsection.1.5.1}
+\contentsline {subsubsection}{\numberline {1.5.2}You see a list of files in your browser instead of the proper interface}{6}{subsubsection.1.5.2}
+\contentsline {subsubsection}{\numberline {1.5.3}If you get the error Could not access configuration file or initial settings don't seem to save}{6}{subsubsection.1.5.3}
+\contentsline {subsubsection}{\numberline {1.5.4}If you get the error Could not access database}{6}{subsubsection.1.5.4}
+\contentsline {subsubsection}{\numberline {1.5.5}If you forgot your admin password}{6}{subsubsection.1.5.5}
+\contentsline {subsubsection}{\numberline {1.5.6}If email notifications don't work}{6}{subsubsection.1.5.6}
 \contentsline {subsection}{\numberline {1.6}Best practices}{6}{subsection.1.6}
 \contentsline {subsubsection}{\numberline {1.6.1}Backups}{6}{subsubsection.1.6.1}
 \contentsline {subsubsection}{\numberline {1.6.2}Restores}{7}{subsubsection.1.6.2}
@@ -52,6 +51,8 @@
 \contentsline {subsection}{\numberline {5.12}List clients}{20}{subsection.5.12}
 \contentsline {subsection}{\numberline {5.13}Add item}{20}{subsection.5.13}
 \contentsline {subsection}{\numberline {5.14}List items}{20}{subsection.5.14}
-\contentsline {subsection}{\numberline {5.15}Show time tracking}{21}{subsection.5.15}
-\contentsline {subsection}{\numberline {5.16}Show billing information}{21}{subsection.5.16}
+\contentsline {subsection}{\numberline {5.15}Assign item}{21}{subsection.5.15}
+\contentsline {subsection}{\numberline {5.16}Return item}{21}{subsection.5.16}
+\contentsline {subsection}{\numberline {5.17}Show time tracking}{21}{subsection.5.17}
+\contentsline {subsection}{\numberline {5.18}Show billing information}{21}{subsection.5.18}
 \contentsline {section}{\numberline {6}License}{22}{section.6}

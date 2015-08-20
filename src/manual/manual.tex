@@ -10,7 +10,7 @@
 % Conditional compilation for Windows and Linux
 \usepackage{ifthen}
 \newboolean{Windows}
-\setboolean{Windows}{true} % change to false for Linux
+\setboolean{Windows}{false} % change to false for Linux
 \ifthenelse{\boolean{Windows}}
 {\def\NodePointManual{NodePoint IT System - Windows version 1.4.5}}
 {\def\NodePointManual{NodePoint IT System - Linux version 1.4.5}}
@@ -616,6 +616,23 @@ Here is a list of commands:
 \begin{itemize}
 \item api=list\_items
 \item key=<read key>
+\end{itemize}
+
+\subsection{Assign item}
+
+\begin{itemize}
+\item api=assign\_item
+\item key=<write key>
+\item id=<item id>
+\item user=<user>
+\end{itemize}
+
+\subsection{Return item}
+
+\begin{itemize}
+\item api=return\_item
+\item key=<write key>
+\item id=<item id>
 \end{itemize}
 
 \subsection{Show time tracking}

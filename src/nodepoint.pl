@@ -8,7 +8,7 @@
 #
 
 use strict;
-use Config::Win32;
+use Config::Linux;
 use Digest::SHA qw(sha1_hex);
 use DBI;
 use CGI;
@@ -919,11 +919,11 @@ sub home
 # Connect to config
 eval
 {
-	$cfg = Config::Win32->new("NodePoint", "settings");
+	$cfg = Config::Linux->new("NodePoint", "settings");
 };
 if(!defined($cfg)) # Can't even use headers() if this fails.
 {
-	print "Content-type: text/html\n\nError: Could not access " . Config::Win32->type . ". Please ensure NodePoint has the proper permissions.";
+	print "Content-type: text/html\n\nError: Could not access " . Config::Linux->type . ". Please ensure NodePoint has the proper permissions.";
 	exit(0);
 };
 
@@ -1653,6 +1653,100 @@ elsif($q->param('api')) # API calls
 				print " \"message\": \"Password changed.\",\n";
 				print " \"status\": \"OK\"\n";
 			}
+			print "}\n";
+		}
+	}
+	elsif($q->param('api') eq "assign_item")
+	{
+		if(!$q->param('user'))
+		{
+			print "{\n";
+			print " \"message\": \"Missing 'user' argument.\",\n";
+			print " \"status\": \"ERR_MISSING_ARGUMENT\"\n";
+			print "}\n";
+		}
+		elsif(!$q->param('id'))
+		{
+			print "{\n";
+			print " \"message\": \"Missing 'id' argument.\",\n";
+			print " \"status\": \"ERR_MISSING_ARGUMENT\"\n";
+			print "}\n";
+		}
+		elsif(!$q->param('key'))
+		{
+			print "{\n";
+			print " \"message\": \"Missing 'key' argument.\",\n";
+			print " \"status\": \"ERR_MISSING_ARGUMENT\"\n";
+			print "}\n";
+		}
+		elsif($q->param('key') ne $cfg->load('api_write'))
+		{
+			print "{\n";
+			print " \"message\": \"Invalid 'key' value.\",\n";
+			print " \"status\": \"ERR_INVALID_KEY\"\n";
+			print "}\n";
+		}
+		else
+		{
+			my $sql2 = $db->prepare("UPDATE items SET user = ?, status = ? WHERE ROWID = ?;");
+			$sql2->execute(sanitize_alpha($q->param('user')), 3, to_int($q->param('id')));
+			$sql2 = $db->prepare("INSERT INTO checkouts VALUES (?, ?, ?, ?);");
+			$sql2->execute(to_int($q->param('id')), "api", "Assigned to " . sanitize_alpha($q->param('user')), now());
+			$sql2 = $db->prepare("SELECT ROWID,* FROM items WHERE ROWID = ?;");
+			$sql2->execute(to_int($q->param('id')));
+			while(my @res2 = $sql2->fetchrow_array())
+			{
+				notify(sanitize_alpha($q->param('user')), "Item assigned to you", "An item has been assigned to you.\n\nItem name: " . $res2[1] . "\nItem type: " . $res2[2] . "\nSerial number: " . $res2[3] . "\nAdditional information: " . $res2[9]);
+				if($cfg->load('checkout_plugin'))
+				{
+					my $cmd = $cfg->load('checkout_plugin');
+					my $u = sanitize_alpha($q->param('user'));
+					my $s = $res2[3];
+					$cmd =~ s/\%user\%/\"$u\"/g;
+					$cmd =~ s/\%serial\%/\"$s\"/g;
+					$cmd =~ s/\n/ /g;
+					$cmd =~ s/\r/ /g;
+					system($cmd);
+				}					
+			}
+			print "{\n";
+			print " \"message\": \"Item assigned.\",\n";
+			print " \"status\": \"OK\"\n";
+			print "}\n";
+		}
+	}
+	elsif($q->param('api') eq "return_item")
+	{
+		if(!$q->param('id'))
+		{
+			print "{\n";
+			print " \"message\": \"Missing 'id' argument.\",\n";
+			print " \"status\": \"ERR_MISSING_ARGUMENT\"\n";
+			print "}\n";
+		}
+		elsif(!$q->param('key'))
+		{
+			print "{\n";
+			print " \"message\": \"Missing 'key' argument.\",\n";
+			print " \"status\": \"ERR_MISSING_ARGUMENT\"\n";
+			print "}\n";
+		}
+		elsif($q->param('key') ne $cfg->load('api_write'))
+		{
+			print "{\n";
+			print " \"message\": \"Invalid 'key' value.\",\n";
+			print " \"status\": \"ERR_INVALID_KEY\"\n";
+			print "}\n";
+		}
+		else
+		{
+			my $sql2 = $db->prepare("UPDATE items SET user = ?, status = ? WHERE ROWID = ?;");
+			$sql2->execute("", 1, to_int($q->param('id')));
+			$sql2 = $db->prepare("INSERT INTO checkouts VALUES (?, ?, ?, ?);");
+			$sql2->execute(to_int($q->param('id')), "api", "Item returned.", now());
+			print "{\n";
+			print " \"message\": \"Item returned.\",\n";
+			print " \"status\": \"OK\"\n";
 			print "}\n";
 		}
 	}
