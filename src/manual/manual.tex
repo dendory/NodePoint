@@ -10,10 +10,10 @@
 % Conditional compilation for Windows and Linux
 \usepackage{ifthen}
 \newboolean{Windows}
-\setboolean{Windows}{false} % change to false for Linux
+\setboolean{Windows}{true} % change to false for Linux
 \ifthenelse{\boolean{Windows}}
-{\def\NodePointManual{NodePoint IT System - Windows version 1.4.4}}
-{\def\NodePointManual{NodePoint IT System - Linux version 1.4.4}}
+{\def\NodePointManual{NodePoint IT System - Windows version 1.4.5}}
+{\def\NodePointManual{NodePoint IT System - Linux version 1.4.5}}
 
 % Margins and paper type
 \geometry{a4paper, right=1.5cm, left=1.5cm, top=2cm, bottom=1.5cm}
@@ -267,7 +267,7 @@ NodePoint provides a file upload system. This can be used to upload project imag
 Finally, while NodePoint offers Active Directory integration, note that this is done using LDAP Simple Bind, not Kerberos, in order to allow both the Windows and Linux version to support this feature. LDAP over SSL can be implemented to provide encryption.
 
 \subsection{Support}
-If you need any functionality that is not covered by the base product, check out the \textbf{Resources} section of the web site where various scripts can be found. You can use the plugin options along with the JSON API to extend the functionality of the product. You can also contact support at \texttt{support@nodepoint.ca} if you have any request or question.
+If you need any functionality that is not covered by the base product, check out the \textbf{Resources} section of the web site where various scripts can be found. You can use the plugin options along with the JSON API to extend the functionality of the product.
 
 Here are some examples of scripts available:
 
@@ -281,7 +281,7 @@ Here are some examples of scripts available:
 
 While NodePoint was created to support many features and provide several customization options, there are cases where you may have additional needs. This is why the source is freely available on GitHub for you to modify.
 
-Alternatively, paid support, maintenance and customization options are also available from the web site. You can contact \texttt{sales@nodepoint.ca} for further inquiries.
+Alternatively, you can contact the author at \texttt{dendory@live.ca} if you have any suggestions for future versions of the product.
 
 \clearpage
 \section{Configuration}
@@ -323,6 +323,7 @@ These are the default configuration values for NodePoint. They have to be define
 \item \textbf{Support email:} The email from which email notifications come from.
 \item \textbf{Notifications plugin:} Call an application or script when a notification is sent. You can use the following variables here: \textit{\%user\%}, \textit{\%title\%} and \textit{\%message\%}. For example: \texttt{echo \%message\% >> ..\textbackslash \%user\%.log}
 \item \textbf{Checkout plugin:} Call an application or script when an inventory item is checked out or approved. You can use the following variables here: \textit{\%user\%} and \textit{\%serial\%}. For example: \texttt{python add\_license.py -item \%serial\% -user \%user\%}
+\item \textbf{Task completion plugin:} Call an application or script when a user completes (100\%) a task assigned to them. Variables allowed are: \textit{\%user\%}, \textit{\%task\%}, \textit{\%product\%} and \textit{\%due\%}. For example: \texttt{echo \%user\% completed task \%task\% due on \%due\% >> tasks.log}
 \item \textbf{Upload folder:} Where product images and comment files are stored. Leave empty to disable uploads.
 \item \textbf{Minimum upload level:} The minimum access level a user must have to attach files to comments.
 \item \textbf{Items managed:} The type of items NodePoint should manage. This is purely a UI customization.

@@ -504,6 +504,7 @@ sub save_config
 	$cfg->save("custom_type", $q->param('custom_type'));
 	$cfg->save("ext_plugin", $q->param('ext_plugin'));
 	$cfg->save("checkout_plugin", $q->param('checkout_plugin'));
+	$cfg->save("task_plugin", $q->param('task_plugin'));
 	$cfg->save("ad_server", $q->param('ad_server'));
 	$cfg->save("ad_domain", $q->param('ad_domain'));
 	$cfg->save("comp_tickets", $q->param('comp_tickets'));
@@ -805,6 +806,25 @@ sub home
 		{
 			$sql = $db->prepare("UPDATE steps SET completion = ? WHERE user = ? AND ROWID = ?;");
 			$sql->execute(to_int($q->param('completion')), $logged_user, to_int($q->param('set_step')));	
+			if($cfg->load('task_plugin') && to_int($q->param('completion')) == 100)
+			{
+				$sql = $db->prepare("SELECT productid,name,due FROM steps WHERE ROWID = ?;");
+				$sql->execute(to_int($q->param('set_step')));
+				while(my @res = $sql->fetchrow_array())
+				{
+					my $cmd = $cfg->load('task_plugin');
+					my $s0 = $res[0];
+					my $s1 = $res[1];
+					my $s2 = $res[2];
+					$cmd =~ s/\%product\%/\"$s0\"/g;
+					$cmd =~ s/\%task\%/\"$s1\"/g;
+					$cmd =~ s/\%due\%/\"$s2\"/g;
+					$cmd =~ s/\%user\%/\"$logged_user\"/g;
+					$cmd =~ s/\n/ /g;
+					$cmd =~ s/\r/ /g;
+					system($cmd);
+				}
+			}
 		}
 		my @products;
 		$sql = $db->prepare("SELECT ROWID,* FROM products;");
@@ -1046,6 +1066,7 @@ elsif(!$cfg->load("db_address") || !$cfg->load("site_name")) # first use
 				print "<p>If a SMTP server host name is entered, NodePoint will attempt to send an email when new tickets are created, or changes occur.</p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Notifications plugin:</div><div class='col-sm-4'><input type='text' style='width:300px' name='ext_plugin' value=''></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Checkout plugin:</div><div class='col-sm-4'><input type='text' style='width:300px' name='checkout_plugin' value=''></div></div></p>\n";
+				print "<p><div class='row'><div class='col-sm-4'>Task completion plugin:</div><div class='col-sm-4'><input type='text' style='width:300px' name='task_plugin' value=''></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Admin username:</div><div class='col-sm-4'><input type='text' style='width:300px' name='admin_name' value='admin'></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Admin password:</div><div class='col-sm-4'><input style='width:300px' type='password' name='admin_pass'></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Public notice:</div><div class='col-sm-4'><input type='text' style='width:300px' name='motd' value='Welcome to NodePoint. Remember to be courteous when writing tickets. Contact the help desk for any problem.'></div></div></p>\n";
@@ -2306,6 +2327,7 @@ elsif($q->param('m')) # Modules
 			print "<tr><td>Support email</td><td><input class='form-control' type='text' name='smtp_from' value=\"" . $cfg->load("smtp_from") . "\"></td></tr>\n";
 			print "<tr><td>Notifications plugin</td><td><input class='form-control' type='text' name='ext_plugin' value=\"" . $cfg->load("ext_plugin") . "\"></td></tr>\n";
 			print "<tr><td>Checkout plugin</td><td><input class='form-control' type='text' name='checkout_plugin' value=\"" . $cfg->load("checkout_plugin") . "\"></td></tr>\n";
+			print "<tr><td>Task completion plugin</td><td><input class='form-control' type='text' name='task_plugin' value=\"" . $cfg->load("task_plugin") . "\"></td></tr>\n";
 			print "<tr><td>Upload folder</td><td><input class='form-control' type='text' name='upload_folder' value=\"" . $cfg->load("upload_folder") . "\"></td></tr>\n";
 			print "<tr><td>Minimum upload level</td><td><input class='form-control' type='text' name='upload_lvl' value=\"" . to_int($cfg->load("upload_lvl")) . "\"></td></tr>\n";
 			print "<tr><td>Items managed</td><td><select class='form-control' name='items_managed'>";
