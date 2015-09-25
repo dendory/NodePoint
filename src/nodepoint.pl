@@ -293,7 +293,12 @@ sub login
 		print "<div class='help-block with-errors'></div></div>";
 		print "<p><input class='btn btn-primary' type='submit' value='Register'></p></form>\n";
 	}
-	print "</div></div></center>\n";
+	print "</div></div>";
+	if($cfg->load("smtp_server") && !$cfg->load("ad_server"))
+	{
+		print "<p style='font-size:12px'><a href='./?m=lostpass'>Forgot your password?</a></p>";
+	}
+	print "</center>\n";
 }
 
 # Sanitize functions
@@ -458,6 +463,12 @@ sub db_check
 	$sql = $db->prepare("SELECT * FROM billing_defaults WHERE 0 = 1;") or do
 	{
 		$sql = $db->prepare("CREATE TABLE billing_defaults (client TEXT, type INT, currency TEXT, cost REAL);");
+		$sql->execute();
+	};
+	$sql->finish();
+	$sql = $db->prepare("SELECT * FROM lostpass WHERE 0 = 1;") or do
+	{
+		$sql = $db->prepare("CREATE TABLE lostpass (user TEXT, code TEXT);");
 		$sql->execute();
 	};
 	$sql->finish();
@@ -3954,6 +3965,79 @@ elsif($q->param('m')) # Modules
 				print "<input type='hidden' name='ticketid' value='" . to_int($q->param('ticketid')) . "'>Are you sure you want to delete ticket <b>" . to_int($q->param('ticketid')) . "</b>?";			
 			}
 			print "<input type='submit' class='btn btn-danger pull-right' value='Confirm'></form></p>";
+		}
+	}
+	elsif($q->param('m') eq "lostpass")
+	{
+		headers("Password reset");
+		if($cfg->load("smtp_server") && !$cfg->load("ad_server"))
+		{
+			if($q->param('user') && $q->param('code')) # Step 3
+			{
+				my $found = 0;
+				my $newpass = "";
+				$sql = $db->prepare("SELECT ROWID FROM lostpass WHERE user = ? AND code = ?;");
+				$sql->execute(sanitize_alpha($q->param('user')), sanitize_alpha($q->param('code')));
+				while(my @res = $sql->fetchrow_array())
+				{
+					$newpass = join'', map +(0..9,'a'..'z','A'..'Z')[rand(10+26*2)], 1..8;
+					my $sql2 = $db->prepare("DELETE FROM lostpass WHERE user = ?");
+					$sql2->execute(sanitize_alpha($q->param('user')));
+					$sql2 = $db->prepare("UPDATE users SET pass = ? WHERE name = ?");
+					$sql2->execute(sha1_hex($newpass), sanitize_alpha($q->param('user')));
+					notify(sanitize_alpha($q->param('user')), "Password reset", "Your password has successfully been reset from the lost password form. If you believe this was done in error, please contact your system administrator.");
+					logevent("Password change: " . sanitize_alpha($q->param('user')));
+					$found = 1; 
+				}
+				print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'><span class='pull-right'>Step 3/3</span>Password reset</h3></div><div class='panel-body'>";
+				if($found == 1)
+				{
+					print "<p>Your password has successfully been reset. Your new password is: <b>" . $newpass . "</b></p><p>You can now login using this password. Once logged in, you can change your password from the <i>Settings</i> page.</p>";
+				}
+				else
+				{
+					print "<p>Invalid code. Please go back and try again.</p>";
+				}
+				print "</div></div>";
+			
+			}
+			elsif($q->param('user')) # Step 2
+			{
+				my $found = 0;
+				$sql = $db->prepare("SELECT confirm,email FROM users WHERE name = ?;");
+				$sql->execute(sanitize_alpha($q->param('user')));
+				while(my @res = $sql->fetchrow_array())
+				{
+					if($res[0] eq "" && $res[1] ne "")
+					{
+						my $code = join'', map +(0..9,'a'..'z','A'..'Z')[rand(10+26*2)], 1..16;
+						my $sql2 = $db->prepare("DELETE FROM lostpass WHERE user = ?");
+						$sql2->execute(sanitize_alpha($q->param('user')));
+						$sql2 = $db->prepare("INSERT INTO lostpass VALUES (?, ?)");
+						$sql2->execute(sanitize_alpha($q->param('user')), $code);
+						notify(sanitize_alpha($q->param('user')), "Password reset code", "A password reset was initiated from the lost password form for the account " . sanitize_alpha($q->param('user')) . ". To continue with this reset, please enter the following confirmation code:  " . $code);
+						$found = 1; 
+					}
+				}
+				print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'><span class='pull-right'>Step 2/3</span>Password reset</h3></div><div class='panel-body'>";
+				if($found == 1)
+				{
+					print "<p>A confirmation code has been sent to your registered email address. Enter it here:</p>";
+					print "<p><form method='GET' action='.'><input type='hidden' name='m' value='lostpass'><input type='hidden' name='user' value='" . sanitize_alpha($q->param('user')) . "'><input type='text' name='code' placeholder='Confirmation code' class='form-control'><br><input type='submit' class='btn btn-primary pull-right' value='Confirm'></form></p>";
+				}
+				else
+				{
+					print "<p>The specified user does not have a confirmed email address. The process cannot continue.</p>";
+				}
+				print "</div></div>";
+			}
+			else # Step 1
+			{
+				print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'><span class='pull-right'>Step 1/3</span>Password reset</h3></div><div class='panel-body'>";
+				print "<p>You can reset your password by using this form. Enter your user name:</p>";
+				print "<p><form method='GET' action='.'><input type='hidden' name='m' value='lostpass'><input type='text' name='user' placeholder='User name' class='form-control'><br><input type='submit' class='btn btn-primary pull-right' value='Next'></form></p>";
+				print "</div></div>";
+			}
 		}
 	}
 	elsif($q->param('m') eq "stats" && $q->param('report') && $logged_lvl > 1)
