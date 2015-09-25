@@ -8,7 +8,7 @@
 #
 
 use strict;
-use Config::Linux;
+use Config::Win32;
 use Digest::SHA qw(sha1_hex);
 use DBI;
 use CGI;
@@ -28,7 +28,7 @@ my ($cfg, $db, $sql, $cn, $cp, $cgs, $last_login, $perf);
 my $logged_user = "";
 my $logged_lvl = -1;
 my $q = new CGI;
-my $VERSION = "1.4.5";
+my $VERSION = "1.4.6";
 my %items = ("Product", "Product", "Release", "Release", "Model", "SKU/Model");
 my @itemtypes = ("None");
 my @themes = ("primary", "default", "success", "info", "warning", "danger");
@@ -919,11 +919,11 @@ sub home
 # Connect to config
 eval
 {
-	$cfg = Config::Linux->new("NodePoint", "settings");
+	$cfg = Config::Win32->new("NodePoint", "settings");
 };
 if(!defined($cfg)) # Can't even use headers() if this fails.
 {
-	print "Content-type: text/html\n\nError: Could not access " . Config::Linux->type . ". Please ensure NodePoint has the proper permissions.";
+	print "Content-type: text/html\n\nError: Could not access " . Config::Win32->type . ". Please ensure NodePoint has the proper permissions.";
 	exit(0);
 };
 
@@ -3847,6 +3847,14 @@ elsif($q->param('m')) # Modules
 							while(my @res2 = $sql2->fetchrow_array()) { print "<option>" . $res2[0] . "</option>"; }
 							print "</select>";
 						}
+						elsif(to_int($customform[($i*2)+3]) == 15)
+						{
+							print "<select class='form-control' name='field" . $i . "'>";
+							my $sql2 = $db->prepare("SELECT title FROM kb WHERE published = 1 ORDER BY title;");
+							$sql2->execute();
+							while(my @res2 = $sql2->fetchrow_array()) { print "<option>" . $res2[0] . "</option>"; }
+							print "</select>";
+						}
 						elsif(to_int($customform[($i*2)+3]) == 12)
 						{
 							print "<select class='form-control' name='field" . $i . "'>";
@@ -4792,6 +4800,12 @@ elsif(($q->param('create_form') || $q->param('edit_form') || $q->param('save_for
 				print "<option value=12";
 				if(to_int($q->param('edit_form')) > 0) { if(to_int($res[($i*2)+3]) == 12) { print " selected"; } }
 				print ">Checked out item</option>";
+			}
+			if($cfg->load('comp_articles') eq "on")
+			{
+				print "<option value=15";
+				if(to_int($q->param('edit_form')) > 0) { if(to_int($res[($i*2)+3]) == 15) { print " selected"; } }
+				print ">Published articles</option>";
 			}
 			print "</td></tr>";
 		}
