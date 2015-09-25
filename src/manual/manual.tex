@@ -6,6 +6,7 @@
 % Document class
 \documentclass[11pt]{article}
 \usepackage{geometry}
+\usepackage{listings} 
 
 % Conditional compilation for Windows and Linux
 \usepackage{ifthen}
@@ -256,7 +257,7 @@ By default, data stored in the database is accessible from anyone with login acc
 
 Using SSL is highly recommended and does not impact the operation of NodePoint at all. Simply add an encryption certificate to your web server and access the product normally.
 
-NodePoint is a stateless system, which means that users are re-authenticated at every operation. This means that things like cookie highjacking or manipulation will not allow a user to gain access if their password becomes invalid. While there is no ban or lock function in the product, a user with a proper access level can reset the password of another user which effectively locks them out. Note that users cannot be deleted in order to avoid many items and operations becoming orphaned.
+NodePoint is a stateless system, which means that users are re-authenticated at every operation. This means that things like cookie hijacking or manipulation will not allow a user to gain access if their password becomes invalid. Note that users cannot be deleted in order to avoid many items and operations becoming orphaned. To remove permissions from a user, setting their access level to 0 is the best way to proceed. If email notifications are enabled and Active Directory integration is disabled, users can also reset their own passwords through the \textit{lost password} form.
 
 The API provided uses a read and write key. This means that all operations are done as a special \textit{api} user. Different amounts of secrecy can be used for the two keys, such as users having access to a script that exposes the read key, but the write key only being used on a server side script. If \textbf{User Impersonation} is configured, the API calls can specify a specific user for a number of operations as well.
 
@@ -367,7 +368,7 @@ Management of user passwords and access levels can be done by anyone with access
 
 From there you can see a list of users, their email addresses, access levels, last logins along with the options to change their access levels and reset their passwords. Note that email notifications will only be sent out to users who confirmed their email addresses.
 
-Note that while there is no lock or ban function, resetting a password accomplishes the same thing. A reset can also be done for a user who loses their password as well.
+Note that while there is no lock or ban function, setting the access level to 0 restricts most functions. This panel also allows passwords to be reset.
 
 Finally, new users can be created from that panel. If the \textbf{Allow Registrations} option is enabled, people can also register new user accounts from the login screen.
 
@@ -650,6 +651,26 @@ Here is a list of commands:
 \item client=<client name>
 \item key=<read key>
 \end{itemize}
+
+\subsection{Code example}
+The following code snippet is a Python example of how to access the API. This script connects to a local NodePoint instance and lists all the users:
+
+\begin{lstlisting}
+import json
+import urllib.request
+import urllib.parse
+
+post_params = {'api': 'list_users', 'key': '0qvG4DkOz8NZnkuhn4aczck7r3qQVYS4'}
+
+post_args = urllib.parse.urlencode(post_params)
+data = post_args.encode()
+stream = urllib.request.urlopen('http://localhost/nodepoint/', data)
+result = stream.read()
+charset = stream.info().get_param('charset', 'utf8')
+users = json.loads(result.decode(charset))
+for user in users['users']:
+    print(user['name'])
+\end{lstlisting}
 
 \clearpage
 \section{License}
