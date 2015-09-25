@@ -3855,6 +3855,14 @@ elsif($q->param('m')) # Modules
 							while(my @res2 = $sql2->fetchrow_array()) { print "<option>" . $res2[0] . "</option>"; }
 							print "</select>";
 						}
+						elsif(to_int($customform[($i*2)+3]) == 16)
+						{
+							print "<select class='form-control' name='field" . $i . "'>";
+							my $sql2 = $db->prepare("SELECT name FROM steps WHERE productid = ? AND user = ? AND completion < 100 ORDER BY name;");
+							$sql2->execute(to_int($q->param('product_id')), $logged_user);
+							while(my @res2 = $sql2->fetchrow_array()) { print "<option>" . $res2[0] . "</option>"; }
+							print "</select>";
+						}
 						elsif(to_int($customform[($i*2)+3]) == 12)
 						{
 							print "<select class='form-control' name='field" . $i . "'>";
@@ -4806,6 +4814,12 @@ elsif(($q->param('create_form') || $q->param('edit_form') || $q->param('save_for
 				print "<option value=15";
 				if(to_int($q->param('edit_form')) > 0) { if(to_int($res[($i*2)+3]) == 15) { print " selected"; } }
 				print ">Published articles</option>";
+			}
+			if($cfg->load('comp_steps') eq "on")
+			{
+				print "<option value=16";
+				if(to_int($q->param('edit_form')) > 0) { if(to_int($res[($i*2)+3]) == 16) { print " selected"; } }
+				print ">Assigned tasks</option>";
 			}
 			print "</td></tr>";
 		}
