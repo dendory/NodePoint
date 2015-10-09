@@ -2297,7 +2297,7 @@ elsif($q->param('m')) # Modules
 			print "</table>";
 			if($logged_lvl > 4)
 			{
-				print "<h4>Add a new client:</h4><form method='POST' action='.' data-toggle='validator' role='form'><input type='hidden' name='m' value='add_client'><p><div class='row'><div class='col-sm-6'><input type='text' class='form-control' name='name' placeholder='Client name' maxlength='50' required></div><div class='col-sm-6'><select class='form-control' name='status'><option>Prospect</option><option>Contact</option><option>Paid</option><option>Unpaid</option><option>Closed</option></select></div></div></p><p><input type='text' class='form-control' name='contact' placeholder='Contact' maxlength='99' required></p><p><textarea class='form-control' name='notes' placeholder='Notes'></textarea></p><p><input type='submit' value='Add client' class='btn btn-primary pull-right'></form>";
+				print "<h4>Add a new client:</h4><form method='POST' action='.' data-toggle='validator' role='form'><input type='hidden' name='m' value='add_client'><p><div class='row'><div class='col-sm-6'><input type='text' class='form-control' name='name' placeholder='Client name' maxlength='50' required></div><div class='col-sm-6'><select class='form-control' name='status'><option>Prospect</option><option>Contact</option><option>Supplier</option><option>Paid</option><option>Unpaid</option><option>Closed</option></select></div></div></p><p><input type='text' class='form-control' name='contact' placeholder='Contact' maxlength='99' required></p><p><textarea class='form-control' name='notes' placeholder='Notes'></textarea></p><p><input type='submit' value='Add client' class='btn btn-primary pull-right'></form>";
 			}
 			print "</div></div>\n";
 		}
@@ -2640,6 +2640,8 @@ elsif($q->param('m')) # Modules
 				print ">Prospect</option><option";
 				if($res[1] eq "Contact") { print " selected"; }
 				print ">Contact</option><option";
+				if($res[1] eq "Supplier") { print " selected"; }
+				print ">Supplier</option><option";
 				if($res[1] eq "Paid") { print " selected"; }
 				print ">Paid</option><option";
 				if($res[1] eq "Unpaid") { print " selected"; }
