@@ -8,7 +8,7 @@
 #
 
 use strict;
-use Config::Linux;
+use Config::Win32;
 use Digest::SHA qw(sha1_hex);
 use DBI;
 use CGI;
@@ -28,7 +28,7 @@ my ($cfg, $db, $sql, $cn, $cp, $cgs, $last_login, $perf);
 my $logged_user = "";
 my $logged_lvl = -1;
 my $q = new CGI;
-my $VERSION = "1.4.6";
+my $VERSION = "1.4.7";
 my %items = ("Product", "Product", "Release", "Release", "Model", "SKU/Model");
 my @itemtypes = ("None");
 my @themes = ("primary", "default", "success", "info", "warning", "danger");
@@ -170,7 +170,7 @@ sub navbar
 			if($cfg->load('comp_items') eq "on") { print "	 <li><a href='./?m=items'>Items</a></li>\n"; }
 			print "	 <li><a href='./?m=settings'>Settings</a></li>\n";
 		}
-		elsif($q->param('m') && ($q->param('m') eq "settings" || $q->param('m') eq "confirm_delete" || $q->param('m') eq "clear_log" || $q->param('m') eq "stats" || $q->param('m') eq "change_lvl" || $q->param('m') eq "confirm_email" || $q->param('m') eq "reset_pass" || $q->param('m') eq "logout" || $q->param('m') eq "add_client" || $q->param('m') eq  "view_client" || $q->param('m') eq "save_client" || $q->param('m') eq "set_defaults") || $q->param('create_form') || $q->param('edit_form') || $q->param('save_form'))
+		elsif($q->param('m') && ($q->param('m') eq "settings" || $q->param('m') eq "confirm_delete" || $q->param('m') eq "clear_log" || $q->param('m') eq "stats" || $q->param('m') eq "change_lvl" || $q->param('m') eq "confirm_email" || $q->param('m') eq "reset_pass" || $q->param('m') eq "logout" || $q->param('m') eq "add_client" || $q->param('m') eq  "view_client" || $q->param('m') eq "save_client" || $q->param('m') eq "summary" || $q->param('m') eq "set_defaults") || $q->param('create_form') || $q->param('edit_form') || $q->param('save_form'))
 		{
 			print "	 <li><a href='.'>Home</a></li>\n";
 			print "	 <li><a href='./?m=products'>" . $items{"Product"} . "s</a></li>\n";
@@ -930,11 +930,11 @@ sub home
 # Connect to config
 eval
 {
-	$cfg = Config::Linux->new("NodePoint", "settings");
+	$cfg = Config::Win32->new("NodePoint", "settings");
 };
 if(!defined($cfg)) # Can't even use headers() if this fails.
 {
-	print "Content-type: text/html\n\nError: Could not access " . Config::Linux->type . ". Please ensure NodePoint has the proper permissions.";
+	print "Content-type: text/html\n\nError: Could not access " . Config::Win32->type . ". Please ensure NodePoint has the proper permissions.";
 	exit(0);
 };
 
@@ -2274,8 +2274,8 @@ elsif($q->param('m')) # Modules
 			}
 			while(my @res = $sql->fetchrow_array())
 			{
-				if($cfg->load('ad_server')) { print "<tr><td>" . $res[0] . "</td><td>" . $res[2] . "</td><td>" . $res[3] . "</td><td><a href='./?m=change_lvl&u=" . $res[0] . "'>Change access level</a></td><td>Managed by AD</td><td>" . $res[4] . "</td></tr>\n"; }
-				else { print "<tr><td>" . $res[0] . "</td><td>" . $res[2] . "</td><td>" . $res[3] . "</td><td><a href='./?m=change_lvl&u=" . $res[0] . "'>Change access level</a></td><td><a href='./?m=reset_pass&u=" . $res[0] . "'>Reset password</a></td><td>" . $res[4] . "</td></tr>\n"; }
+				if($cfg->load('ad_server')) { print "<tr><td><a href='./?m=summary&u=" . $res[0] . "'>" . $res[0] . "</a></td><td>" . $res[2] . "</td><td>" . $res[3] . "</td><td><a href='./?m=change_lvl&u=" . $res[0] . "'>Change access level</a></td><td>Managed by AD</td><td>" . $res[4] . "</td></tr>\n"; }
+				else { print "<tr><td><a href='./?m=summary&u=" . $res[0] . "'>" . $res[0] . "</a></td><td>" . $res[2] . "</td><td>" . $res[3] . "</td><td><a href='./?m=change_lvl&u=" . $res[0] . "'>Change access level</a></td><td><a href='./?m=reset_pass&u=" . $res[0] . "'>Reset password</a></td><td>" . $res[4] . "</td></tr>\n"; }
 			}
 			print "</table>\n";
 			if(!$cfg->load('ad_server'))
@@ -2528,6 +2528,93 @@ elsif($q->param('m')) # Modules
 			$sql->execute(sanitize_html($q->param('status')), sanitize_html($q->param('contact')), $notes, now(), to_int($q->param('c')));
 			msg("Client updated. Press <a href='./?m=view_client&c=" . to_int($q->param('c')) . "'>here</a> to continue.", 3);
 		}
+	}
+	elsif($q->param('m') eq "summary" && $q->param('u') && $logged_lvl > 4)
+	{
+		headers("Summary");
+		my $u = sanitize_alpha($q->param('u'));
+		print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Summary for: " . $u . "</h3></div><div class='panel-body'><table class='table table-striped'><tr><th>Key</th><th>Value</th></tr>\n";
+
+		$sql = $db->prepare("SELECT loggedin,level,email,confirm FROM users WHERE name = ?");
+		$sql->execute($u);
+		while(my @res = $sql->fetchrow_array())
+		{
+			print "<tr><td>Last login time</td><td>" . $res[0] . "</td></tr>";
+			print "<tr><td>Access level</td><td>" . $res[1] . "</td></tr>";
+			print "<tr><td>Email address</td><td>" . $res[2] . "</td></tr>";
+			if($res[3] eq "") { print "<tr><td>Confirmed email</td><td>True</td></tr>"; }
+			else { print "<tr><td>Confirmed email</td><td>False</td></tr>"; }
+		}
+	
+		if($cfg->load('comp_tickets') eq "on")
+		{
+			$sql = $db->prepare("SELECT COUNT(*) FROM tickets WHERE createdby = ?");
+			$sql->execute($u);
+			while(my @res = $sql->fetchrow_array())
+			{
+				print "<tr><td>Tickets created</td><td>" . $res[0] . "</td></tr>";
+			}
+			$sql = $db->prepare("SELECT COUNT(*) FROM tickets WHERE status != 'Closed' AND assignedto LIKE ?;");
+			$sql->execute("%" . $u . "%");
+			while(my @res = $sql->fetchrow_array())
+			{
+				print "<tr><td>Active tickets assigned</td><td>" . $res[0] . "</td></tr>";
+			}
+			$sql = $db->prepare("SELECT COUNT(*) FROM comments WHERE name = ?;");
+			$sql->execute($u);
+			while(my @res = $sql->fetchrow_array())
+			{
+				print "<tr><td>Comments created</td><td>" . $res[0] . "</td></tr>";
+			}
+			$sql = $db->prepare("SELECT COUNT(*) FROM escalate WHERE user = ?;");
+			$sql->execute($u);
+			while(my @res = $sql->fetchrow_array())
+			{
+				print "<tr><td>Pending ticket notifications</td><td>" . $res[0] . "</td></tr>";
+			}
+		}
+
+		if($cfg->load('comp_time') eq "on")
+		{
+			$sql = $db->prepare("SELECT spent FROM timetracking WHERE name = ?");
+			$sql->execute($u);
+			my $timespent = 0.0;
+			while(my @res = $sql->fetchrow_array())
+			{
+				$timespent += to_float($res[0]);
+			}		
+			print "<tr><td>Hours spent on tickets</td><td>" . $timespent . "</td></tr>";
+		}
+
+		if($cfg->load('comp_steps') eq "on")
+		{
+			my $m = localtime->strftime('%m');
+			my $y = localtime->strftime('%Y');
+			my $d = localtime->strftime('%d');
+			$sql = $db->prepare("SELECT due FROM steps WHERE user = ? AND completion < 100;");
+			$sql->execute($u);
+			my $overduetasks = 0;
+			my $totaltasks = 0;
+			while(my @res = $sql->fetchrow_array())
+			{
+				my @dueby = split(/\//, $res[0]);
+				if($dueby[2] < $y || ($dueby[2] == $y && $dueby[0] < $m) || ($dueby[2] == $y && $dueby[0] == $m && $dueby[1] < $d)) { $overduetasks++; }
+				$totaltasks++;
+			}
+			print "<tr><td>Active tasks</td><td>" . $totaltasks . "</td></tr>";
+			print "<tr><td>Overdue tasks</td><td>" . $overduetasks . "</td></tr>";
+		}
+	
+		if($cfg->load('comp_items') eq "on")
+		{
+			$sql = $db->prepare("SELECT COUNT(*) FROM items WHERE user = ?");
+			$sql->execute($u);
+			while(my @res = $sql->fetchrow_array())
+			{
+				print "<tr><td>Checked out items</td><td>" . $res[0] . "</td></tr>";
+			}
+		}
+		print "</table></div></div>";
 	}
 	elsif($q->param('m') eq "set_defaults" && $q->param('client') && $q->param('c') && $logged_lvl > 4)
 	{

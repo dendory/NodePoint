@@ -13,8 +13,8 @@
 \newboolean{Windows}
 \setboolean{Windows}{false} % change to false for Linux
 \ifthenelse{\boolean{Windows}}
-{\def\NodePointManual{NodePoint IT System - Windows version 1.4.6}}
-{\def\NodePointManual{NodePoint IT System - Linux version 1.4.6}}
+{\def\NodePointManual{NodePoint IT System - Windows version 1.4.7}}
+{\def\NodePointManual{NodePoint IT System - Linux version 1.4.7}}
 
 % Margins and paper type
 \geometry{a4paper, right=1.5cm, left=1.5cm, top=2cm, bottom=1.5cm}
@@ -286,7 +286,7 @@ Alternatively, you can contact the author at \texttt{dendory@live.ca} if you hav
 
 \clearpage
 \section{Configuration}
-Basic configuration options are defined the first time you access the product. To prevent outsiders from resetting your configuration in the event that the data is lost, the initial configuration must be done from the local host. The same information is available both from this initial configuration and at any point from the \textbf{Settings} page while logged in as the product administrator.
+Basic configuration options are defined the first time you access the product. The same information is available both from this initial configuration and at any point from the \textbf{Settings} page while logged in as the product administrator.
 
 \subsection{Initial configuration}
 When you first access NodePoint, you are presented with this screen:
@@ -366,9 +366,7 @@ Management of user passwords and access levels can be done by anyone with access
 \includegraphics{userman.jpg}
 \end{figure}
 
-From there you can see a list of users, their email addresses, access levels, last logins along with the options to change their access levels and reset their passwords. Note that email notifications will only be sent out to users who confirmed their email addresses.
-
-Note that while there is no lock or ban function, setting the access level to 0 restricts most functions. This panel also allows passwords to be reset.
+From there you can see a list of users, their email addresses, access levels, last logins along with the options to change their access levels and reset their passwords. Note that email notifications will only be sent out to users who confirmed their email addresses. While there is no lock or ban function, setting the access level to 0 restricts most functions. This panel also allows passwords to be reset. You can see a summary page about a user by clicking on their names.
 
 Finally, new users can be created from that panel. If the \textbf{Allow Registrations} option is enabled, people can also register new user accounts from the login screen.
 
