@@ -472,6 +472,12 @@ sub db_check
 		$sql->execute();
 	};
 	$sql->finish();
+	$sql = $db->prepare("SELECT * FROM disabled WHERE 0 = 1;") or do
+	{
+		$sql = $db->prepare("CREATE TABLE disabled (user TEXT);");
+		$sql->execute();
+	};
+	$sql->finish();
 }
 
 # Log an event
@@ -541,6 +547,12 @@ sub check_user
 	}
 	else
 	{
+		$sql = $db->prepare("SELECT * FROM disabled WHERE user = ?;");
+		$sql->execute(sanitize_alpha($n));
+		while(my @res = $sql->fetchrow_array())
+		{
+			return;
+		}
 		if($cfg->load("ad_domain") && $cfg->load("ad_server"))
 		{
 			eval
@@ -2533,8 +2545,21 @@ elsif($q->param('m')) # Modules
 	{
 		headers("Summary");
 		my $u = sanitize_alpha($q->param('u'));
+		if($q->param('enable_user'))
+		{
+			$sql = $db->prepare("DELETE FROM disabled WHERE user = ?");
+			$sql->execute($u);
+			msg("User login enabled.", 3);
+			logevent("Enabled: " . $u);
+		}
+		if($q->param('disable_user'))
+		{
+			$sql = $db->prepare("INSERT INTO disabled VALUES (?)");
+			$sql->execute($u);
+			msg("User login disabled.", 3);
+			logevent("Disabled: " . $u);
+		}
 		print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Summary for: " . $u . "</h3></div><div class='panel-body'><table class='table table-striped'><tr><th>Key</th><th>Value</th></tr>\n";
-
 		$sql = $db->prepare("SELECT loggedin,level,email,confirm FROM users WHERE name = ?");
 		$sql->execute($u);
 		while(my @res = $sql->fetchrow_array())
@@ -2614,7 +2639,18 @@ elsif($q->param('m')) # Modules
 				print "<tr><td>Checked out items</td><td>" . $res[0] . "</td></tr>";
 			}
 		}
-		print "</table></div></div>";
+		print "</table>";
+		$sql = $db->prepare("SELECT * FROM disabled WHERE user = ?;");
+		$sql->execute($u);
+		my $userisbanned = 0;
+		while(my @res = $sql->fetchrow_array())
+		{
+			$userisbanned = 1;
+		}
+		print "<form method='GET' action='.'><input type='hidden' name='m' value='summary'><input type='hidden' name='u' value='" . $u . "'>";
+		if($userisbanned == 0) { print "<input type='submit' class='btn btn-danger pull-right' name='disable_user' value='Disable login'>"; }
+		else { print "<input type='submit' class='btn btn-success pull-right' name='enable_user' value='Enable login'>"; }
+		print "</form></div></div>";
 	}
 	elsif($q->param('m') eq "set_defaults" && $q->param('client') && $q->param('c') && $logged_lvl > 4)
 	{
