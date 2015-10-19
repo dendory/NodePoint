@@ -8,7 +8,7 @@
 #
 
 use strict;
-use Config::Win32;
+use Config::Linux;
 use Digest::SHA qw(sha1_hex);
 use DBI;
 use CGI;
@@ -520,6 +520,7 @@ sub save_config
 	$cfg->save("custom_name", $q->param('custom_name'));
 	$cfg->save("custom_type", $q->param('custom_type'));
 	$cfg->save("ext_plugin", $q->param('ext_plugin'));
+	$cfg->save("auth_plugin", $q->param('auth_plugin'));
 	$cfg->save("checkout_plugin", $q->param('checkout_plugin'));
 	$cfg->save("task_plugin", $q->param('task_plugin'));
 	$cfg->save("ad_server", $q->param('ad_server'));
@@ -587,6 +588,41 @@ sub check_user
 					$sql->execute($logged_user, "*********", "", to_int($cfg->load('default_lvl')), now(), "");
 				}
 			}; # check silently since headers may not be set			
+		}
+		elsif($cfg->load('auth_plugin'))
+		{
+			eval
+			{
+				my $cmd = $cfg->load('auth_plugin');
+				$cmd =~ s/\%user\%/\"$n\"/g;
+				$cmd =~ s/\%pass\%/\"$p\"/g;
+				$cmd =~ s/\n/ /g;
+				$cmd =~ s/\r/ /g;
+				system($cmd);
+				if ($? != 0)
+				{
+					logevent("AUTH: [" . $? . "] " . $!);
+					return; 
+				}
+				$logged_user = lc($n);
+				$logged_lvl = $cfg->load("default_lvl");
+				$cn = $q->cookie(-name => "np_name", -value => $logged_user);
+				$cp = $q->cookie(-name => "np_key", -value => encode_base64(RC4($cfg->load("api_read"), $p), ""));
+				$sql = $db->prepare("SELECT * FROM users WHERE name = ?;");
+				$sql->execute($n);
+				my $found = 0;
+				while(my @res = $sql->fetchrow_array())
+				{ 
+					$found = 1;
+					$logged_lvl = to_int($res[3]);
+					$last_login = $res[4];
+				}
+				if(!$found)
+				{
+					$sql = $db->prepare("INSERT INTO users VALUES(?, ?, ?, ?, ?, ?);");
+					$sql->execute($logged_user, "*********", "", to_int($cfg->load('default_lvl')), now(), "");
+				}
+			};
 		}
 		else
 		{
@@ -942,11 +978,11 @@ sub home
 # Connect to config
 eval
 {
-	$cfg = Config::Win32->new("NodePoint", "settings");
+	$cfg = Config::Linux->new("NodePoint", "settings");
 };
 if(!defined($cfg)) # Can't even use headers() if this fails.
 {
-	print "Content-type: text/html\n\nError: Could not access " . Config::Win32->type . ". Please ensure NodePoint has the proper permissions.";
+	print "Content-type: text/html\n\nError: Could not access " . Config::Linux->type . ". Please ensure NodePoint has the proper permissions.";
 	exit(0);
 };
 
@@ -1087,9 +1123,6 @@ elsif(!$cfg->load("db_address") || !$cfg->load("site_name")) # first use
 				print "<p><div class='row'><div class='col-sm-4'>SMTP password:</div><div class='col-sm-4'><input type='password' style='width:300px' name='smtp_pass' value=''></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Support email:</div><div class='col-sm-4'><input type='text' style='width:300px' name='smtp_from' value='admin\@company.com'></div></div></p>\n";
 				print "<p>If a SMTP server host name is entered, NodePoint will attempt to send an email when new tickets are created, or changes occur.</p>\n";
-				print "<p><div class='row'><div class='col-sm-4'>Notifications plugin:</div><div class='col-sm-4'><input type='text' style='width:300px' name='ext_plugin' value=''></div></div></p>\n";
-				print "<p><div class='row'><div class='col-sm-4'>Checkout plugin:</div><div class='col-sm-4'><input type='text' style='width:300px' name='checkout_plugin' value=''></div></div></p>\n";
-				print "<p><div class='row'><div class='col-sm-4'>Task completion plugin:</div><div class='col-sm-4'><input type='text' style='width:300px' name='task_plugin' value=''></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Admin username:</div><div class='col-sm-4'><input type='text' style='width:300px' name='admin_name' value='admin'></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Admin password:</div><div class='col-sm-4'><input style='width:300px' type='password' name='admin_pass'></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Public notice:</div><div class='col-sm-4'><input type='text' style='width:300px' name='motd' value='Welcome to NodePoint. Remember to be courteous when writing tickets. Contact the help desk for any problem.'></div></div></p>\n";
@@ -1102,6 +1135,11 @@ elsif(!$cfg->load("db_address") || !$cfg->load("site_name")) # first use
 				print "<p><div class='row'><div class='col-sm-4'>Active Directory server:</div><div class='col-sm-4'><input type='text' style='width:300px' name='ad_server' value=''></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Active Directory domain:</div><div class='col-sm-4'><input type='text' style='width:300px' name='ad_domain' value=''></div></div></p>\n";
 				print "<p>To validate logins against an Active Directory domain, enter your domain controller address and domain name (NT4 format) here.</p>\n";
+				print "<p>These plugins allow you to extend NodePoint. See the manual for details:</p>";
+				print "<p><div class='row'><div class='col-sm-4'>Authentication plugin:</div><div class='col-sm-4'><input type='text' style='width:300px' name='auth_plugin' value=''></div></div></p>\n";
+				print "<p><div class='row'><div class='col-sm-4'>Notifications plugin:</div><div class='col-sm-4'><input type='text' style='width:300px' name='ext_plugin' value=''></div></div></p>\n";
+				print "<p><div class='row'><div class='col-sm-4'>Checkout plugin:</div><div class='col-sm-4'><input type='text' style='width:300px' name='checkout_plugin' value=''></div></div></p>\n";
+				print "<p><div class='row'><div class='col-sm-4'>Task completion plugin:</div><div class='col-sm-4'><input type='text' style='width:300px' name='task_plugin' value=''></div></div></p>\n";
 				print "<p>Select which major components of NodePoint you want to activate:</p>";
 				print "<p><div class='row'><div class='col-sm-4'>Component: Tickets Management</div><div class='col-sm-4'><input type='checkbox' name='comp_tickets' checked></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Component: Support Articles</div><div class='col-sm-4'><input type='checkbox' name='comp_articles' checked></div></div></p>\n";
@@ -2442,9 +2480,6 @@ elsif($q->param('m')) # Modules
 			print "<tr><td>SMTP username</td><td><input class='form-control' type='text' name='smtp_user' value=\"" . $cfg->load("smtp_user") . "\"></td></tr>\n";
 			print "<tr><td>SMTP password</td><td><input class='form-control' type='password' name='smtp_pass' value=\"" . $cfg->load("smtp_pass") . "\"></td></tr>\n";
 			print "<tr><td>Support email</td><td><input class='form-control' type='text' name='smtp_from' value=\"" . $cfg->load("smtp_from") . "\"></td></tr>\n";
-			print "<tr><td>Notifications plugin</td><td><input class='form-control' type='text' name='ext_plugin' value=\"" . $cfg->load("ext_plugin") . "\"></td></tr>\n";
-			print "<tr><td>Checkout plugin</td><td><input class='form-control' type='text' name='checkout_plugin' value=\"" . $cfg->load("checkout_plugin") . "\"></td></tr>\n";
-			print "<tr><td>Task completion plugin</td><td><input class='form-control' type='text' name='task_plugin' value=\"" . $cfg->load("task_plugin") . "\"></td></tr>\n";
 			print "<tr><td>Upload folder</td><td><input class='form-control' type='text' name='upload_folder' value=\"" . $cfg->load("upload_folder") . "\"></td></tr>\n";
 			print "<tr><td>Minimum upload level</td><td><input class='form-control' type='text' name='upload_lvl' value=\"" . to_int($cfg->load("upload_lvl")) . "\"></td></tr>\n";
 			print "<tr><td>Items managed</td><td><select class='form-control' name='items_managed'>";
@@ -2462,6 +2497,10 @@ elsif($q->param('m')) # Modules
 			print "</select></td></tr>\n";
 			print "<tr><td>Active Directory server</td><td><input class='form-control' type='text' name='ad_server' value=\"" . $cfg->load("ad_server") . "\"></td></tr>\n";
 			print "<tr><td>Active Directory domain</td><td><input class='form-control' type='text' name='ad_domain' value=\"" . $cfg->load("ad_domain") . "\"></td></tr>\n";
+			print "<tr><td>Plugin: Authentication</td><td><input class='form-control' type='text' name='auth_plugin' value=\"" . $cfg->load("auth_plugin") . "\"></td></tr>\n";
+			print "<tr><td>Plugin: Notifications</td><td><input class='form-control' type='text' name='ext_plugin' value=\"" . $cfg->load("ext_plugin") . "\"></td></tr>\n";
+			print "<tr><td>Plugin: Checkout</td><td><input class='form-control' type='text' name='checkout_plugin' value=\"" . $cfg->load("checkout_plugin") . "\"></td></tr>\n";
+			print "<tr><td>Plugin: Task completion</td><td><input class='form-control' type='text' name='task_plugin' value=\"" . $cfg->load("task_plugin") . "\"></td></tr>\n";
 			print "<tr><td>Component: Tickets Management</td><td><select class='form-control' name='comp_tickets'>";
 			if($cfg->load("comp_tickets") eq "on") { print "<option selected>on</option><option>off</option>"; }
 			else { print "<option>on</option><option selected>off</option>"; }

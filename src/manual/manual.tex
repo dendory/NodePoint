@@ -11,7 +11,7 @@
 % Conditional compilation for Windows and Linux
 \usepackage{ifthen}
 \newboolean{Windows}
-\setboolean{Windows}{false} % change to false for Linux
+\setboolean{Windows}{true} % change to false for Linux
 \ifthenelse{\boolean{Windows}}
 {\def\NodePointManual{NodePoint IT System - Windows version 1.4.7}}
 {\def\NodePointManual{NodePoint IT System - Linux version 1.4.7}}
@@ -322,9 +322,6 @@ These are the default configuration values for NodePoint. They have to be define
 \item \textbf{SMTP username:} User for SMTP connections, if your mail server requires authentication.
 \item \textbf{SMTP password:} Password for SMTP connections, if your mail server requires authentication.
 \item \textbf{Support email:} The email from which email notifications come from.
-\item \textbf{Notifications plugin:} Call an application or script when a notification is sent. You can use the following variables here: \textit{\%user\%}, \textit{\%title\%} and \textit{\%message\%}. For example: \texttt{echo \%message\% >> ..\textbackslash \%user\%.log}
-\item \textbf{Checkout plugin:} Call an application or script when an inventory item is checked out or approved. You can use the following variables here: \textit{\%user\%} and \textit{\%serial\%}. For example: \texttt{python add\_license.py -item \%serial\% -user \%user\%}
-\item \textbf{Task completion plugin:} Call an application or script when a user completes (100\%) a task assigned to them. Variables allowed are: \textit{\%user\%}, \textit{\%task\%}, \textit{\%product\%} and \textit{\%due\%}. For example: \texttt{echo \%user\% completed task \%task\% due on \%due\% >> tasks.log}
 \item \textbf{Upload folder:} Where product images and comment files are stored. Leave empty to disable uploads.
 \item \textbf{Minimum upload level:} The minimum access level a user must have to attach files to comments.
 \item \textbf{Items managed:} The type of items NodePoint should manage. This is purely a UI customization.
@@ -332,6 +329,10 @@ These are the default configuration values for NodePoint. They have to be define
 \item \textbf{Custom ticket type:} The type of field. If \textit{text}, then the entries will be shown as text. If \textit{URL}, then links will be assumed. If \textit{checkbox}, then users will have to select yes or no.
 \item \textbf{Active Directory server:} Enter your domain controller address to enable AD integration. Users will be created dynamically as they first log on, and passwords will be checked against AD using LDAP.
 \item \textbf{Active Directory domain:} The domain to use for AD integration (in NT4 format).
+\item \textbf{Authentication plugin:} Use an external script or application to authenticate users. This can be used instead of the built-in users management or Active Directory integration if you have some other process to authenticate users. It must return 0 for success, 1 for failure. The following variables can be used: \textit{\%user\%} and \textit{\%pass\%}. For example: \texttt{python auth.py -userid \%user\% -passwd \%pass\%}
+\item \textbf{Notifications plugin:} Call an application or script when a notification is sent. You can use the following variables here: \textit{\%user\%}, \textit{\%title\%} and \textit{\%message\%}. For example: \texttt{echo \%message\% >> ..\textbackslash \%user\%.log}
+\item \textbf{Checkout plugin:} Call an application or script when an inventory item is checked out or approved. You can use the following variables here: \textit{\%user\%} and \textit{\%serial\%}. For example: \texttt{python add\_license.py -item \%serial\% -user \%user\%}
+\item \textbf{Task completion plugin:} Call an application or script when a user completes (100\%) a task assigned to them. Variables allowed are: \textit{\%user\%}, \textit{\%task\%}, \textit{\%product\%} and \textit{\%due\%}. For example: \texttt{echo \%user\% completed task \%task\% due on \%due\% >> tasks.log}
 \item \textbf{Components:} Activate components that you require. This does not remove their functionality, only hiding them from the interface.\\\\See chapter 4 for information about components.
 \end{itemize}
 
