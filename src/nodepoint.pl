@@ -533,6 +533,7 @@ sub save_config
 	$cfg->save("auth_plugin", $q->param('auth_plugin'));
 	$cfg->save("checkout_plugin", $q->param('checkout_plugin'));
 	$cfg->save("task_plugin", $q->param('task_plugin'));
+	$cfg->save("ticket_plugin", $q->param('ticket_plugin'));
 	$cfg->save("ad_server", $q->param('ad_server'));
 	$cfg->save("ad_domain", $q->param('ad_domain'));
 	$cfg->save("comp_tickets", $q->param('comp_tickets'));
@@ -1150,6 +1151,7 @@ elsif(!$cfg->load("db_address") || !$cfg->load("site_name")) # first use
 				print "<p><div class='row'><div class='col-sm-4'>Notifications plugin:</div><div class='col-sm-4'><input type='text' style='width:300px' name='ext_plugin' value=''></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Checkout plugin:</div><div class='col-sm-4'><input type='text' style='width:300px' name='checkout_plugin' value=''></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Task completion plugin:</div><div class='col-sm-4'><input type='text' style='width:300px' name='task_plugin' value=''></div></div></p>\n";
+				print "<p><div class='row'><div class='col-sm-4'>Ticket resolution plugin:</div><div class='col-sm-4'><input type='text' style='width:300px' name='ticket_plugin' value=''></div></div></p>\n";
 				print "<p>Select which major components of NodePoint you want to activate:</p>";
 				print "<p><div class='row'><div class='col-sm-4'>Component: Tickets Management</div><div class='col-sm-4'><input type='checkbox' name='comp_tickets' checked></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Component: Support Articles</div><div class='col-sm-4'><input type='checkbox' name='comp_articles' checked></div></div></p>\n";
@@ -2500,6 +2502,7 @@ elsif($q->param('m')) # Modules
 			print "<tr><td>Plugin: Notifications</td><td><input class='form-control' type='text' name='ext_plugin' value=\"" . $cfg->load("ext_plugin") . "\"></td></tr>\n";
 			print "<tr><td>Plugin: Checkout</td><td><input class='form-control' type='text' name='checkout_plugin' value=\"" . $cfg->load("checkout_plugin") . "\"></td></tr>\n";
 			print "<tr><td>Plugin: Task completion</td><td><input class='form-control' type='text' name='task_plugin' value=\"" . $cfg->load("task_plugin") . "\"></td></tr>\n";
+			print "<tr><td>Plugin: Ticket resolution</td><td><input class='form-control' type='text' name='ticket_plugin' value=\"" . $cfg->load("ticket_plugin") . "\"></td></tr>\n";
 			print "<tr><td>Component: Tickets Management</td><td><select class='form-control' name='comp_tickets'>";
 			if($cfg->load("comp_tickets") eq "on") { print "<option selected>on</option><option>off</option>"; }
 			else { print "<option>on</option><option selected>off</option>"; }
@@ -3562,6 +3565,26 @@ elsif($q->param('m')) # Modules
 			{
 				$sql = $db->prepare("INSERT INTO kblink VALUES (?, ?);");
 				$sql->execute(to_int($q->param('t')), to_int($q->param('link_article')));
+			}
+			if($cfg->load('ticket_plugin'))
+			{
+				my $cmd = $cfg->load('ticket_plugin');
+				my $s0 = sanitize_alpha($q->param('ticket_status'));
+				my $s1 = $resolution;
+				my $s2 = to_int($q->param('t'));
+				my $s3 = "";
+				if($q->param('billable') && $q->param('billable') ne "")
+				{
+					$s3 = sanitize_html($q->param('billable'));
+				}
+				$cmd =~ s/\%status\%/\"$s0\"/g;
+				$cmd =~ s/\%resolution\%/\"$s1\"/g;
+				$cmd =~ s/\%ticket\%/\"$s2\"/g;
+				$cmd =~ s/\%client\%/\"$s3\"/g;
+				$cmd =~ s/\%user\%/\"$logged_user\"/g;
+				$cmd =~ s/\n/ /g;
+				$cmd =~ s/\r/ /g;
+				system($cmd);
 			}
 		}
 		else

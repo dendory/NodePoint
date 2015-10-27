@@ -11,7 +11,7 @@
 % Conditional compilation for Windows and Linux
 \usepackage{ifthen}
 \newboolean{Windows}
-\setboolean{Windows}{false} % change to false for Linux
+\setboolean{Windows}{true} % change to false for Linux
 \ifthenelse{\boolean{Windows}}
 {\def\NodePointManual{NodePoint IT System - Windows version 1.4.8}}
 {\def\NodePointManual{NodePoint IT System - Linux version 1.4.8}}
@@ -333,6 +333,7 @@ These are the default configuration values for NodePoint. They have to be define
 \item \textbf{Notifications plugin:} Call an application or script when a notification is sent. You can use the following variables here: \textit{\%user\%}, \textit{\%title\%} and \textit{\%message\%}. For example: \texttt{echo \%message\% >> ..\textbackslash \%user\%.log}
 \item \textbf{Checkout plugin:} Call an application or script when an inventory item is checked out or approved. You can use the following variables here: \textit{\%user\%} and \textit{\%serial\%}. For example: \texttt{python add\_license.py -item \%serial\% -user \%user\%}
 \item \textbf{Task completion plugin:} Call an application or script when a user completes (100\%) a task assigned to them. Variables allowed are: \textit{\%user\%}, \textit{\%task\%}, \textit{\%product\%} and \textit{\%due\%}. For example: \texttt{echo \%user\% completed task \%task\% due on \%due\% >> tasks.log}
+\item \textbf{Ticket resolution plugin:} You can call a script or application every time a ticket is updated, along with the \%user\% who made the change, the new \%status\% of the \%ticket\%, the billable \%client\% and the \%resolution\%. Example: \texttt{echo \%ticket\%,\%user\%,\%status\%,\%resolution\%,\%client\% >> tickets.csv}
 \item \textbf{Components:} Activate components that you require. This does not remove their functionality, only hiding them from the interface.\\\\See chapter 4 for information about components.
 \end{itemize}
 
