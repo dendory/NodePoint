@@ -28,7 +28,7 @@ my ($cfg, $db, $sql, $cn, $cp, $cgs, $last_login, $perf);
 my $logged_user = "";
 my $logged_lvl = -1;
 my $q = new CGI;
-my $VERSION = "1.4.7";
+my $VERSION = "1.4.8";
 my %items = ("Product", "Product", "Release", "Release", "Model", "SKU/Model");
 my @itemtypes = ("None");
 my @themes = ("primary", "default", "success", "info", "warning", "danger");
@@ -115,7 +115,6 @@ sub navbar
 			print "	 <li class='active'><a href='./?m=products'>" . $items{"Product"} . "s</a></li>\n";
 			if($cfg->load('comp_tickets') eq "on") { print "	 <li><a href='./?m=tickets'>Tickets</a></li>\n"; }
 			if($cfg->load('comp_articles') eq "on") { print "	 <li><a href='./?m=articles'>Articles</a></li>\n"; }
-			if($cfg->load('comp_items') eq "on") { print "	 <li><a href='./?m=items'>Items</a></li>\n"; }
 		}
 		elsif($q->param('m') && ($q->param('m') eq "tickets" || $q->param('m') eq "view_ticket" || $q->param('m') eq "add_ticket" || $q->param('m') eq "new_ticket"))
 		{
@@ -123,7 +122,6 @@ sub navbar
 			print "	 <li><a href='./?m=products'>" . $items{"Product"} . "s</a></li>\n";
 			if($cfg->load('comp_tickets') eq "on") { print "	 <li class='active'><a href='./?m=tickets'>Tickets</a></li>\n"; }
 			if($cfg->load('comp_articles') eq "on") { print "	 <li><a href='./?m=articles'>Articles</a></li>\n"; }
-			if($cfg->load('comp_items') eq "on") { print "	 <li><a href='./?m=items'>Items</a></li>\n"; }
 		}
 		elsif($q->param('kb') || ($q->param('m') && $q->param('m') eq "articles"))
 		{
@@ -131,15 +129,6 @@ sub navbar
 			print "	 <li><a href='./?m=products'>" . $items{"Product"} . "s</a></li>\n";
 			if($cfg->load('comp_tickets') eq "on") { print "	 <li><a href='./?m=tickets'>Tickets</a></li>\n"; }
 			if($cfg->load('comp_articles') eq "on") { print "	 <li class='active'><a href='./?m=articles'>Articles</a></li>\n"; }
-			if($cfg->load('comp_items') eq "on") { print "	 <li><a href='./?m=items'>Items</a></li>\n"; }
-		}
-		elsif($q->param('m') && $q->param('m') eq "items")
-		{
-			print "	 <li><a href='.'>Login</a></li>\n";
-			print "	 <li><a href='./?m=products'>" . $items{"Product"} . "s</a></li>\n";
-			if($cfg->load('comp_tickets') eq "on") { print "	 <li><a href='./?m=tickets'>Tickets</a></li>\n"; }
-			if($cfg->load('comp_articles') eq "on") { print "	 <li><a href='./?m=articles'>Articles</a></li>\n"; }
-			if($cfg->load('comp_items') eq "on") { print "	 <li class='active'><a href='./?m=items'>Items</a></li>\n"; }
 		}
 		else
 		{
@@ -147,7 +136,6 @@ sub navbar
 			print "	 <li><a href='./?m=products'>" . $items{"Product"} . "s</a></li>\n";
 			if($cfg->load('comp_tickets') eq "on") { print "	 <li><a href='./?m=tickets'>Tickets</a></li>\n"; }
 			if($cfg->load('comp_articles') eq "on") { print "	 <li><a href='./?m=articles'>Articles</a></li>\n"; }
-			if($cfg->load('comp_items') eq "on") { print "	 <li><a href='./?m=items'>Items</a></li>\n"; }
 		}	    
 	}
 	else
@@ -159,6 +147,7 @@ sub navbar
 			if($cfg->load('comp_tickets') eq "on") { print "	 <li class='active'><a href='./?m=tickets'>Tickets</a></li>\n"; }
 			if($cfg->load('comp_articles') eq "on") { print "	 <li><a href='./?m=articles'>Articles</a></li>\n"; }
 			if($cfg->load('comp_items') eq "on") { print "	 <li><a href='./?m=items'>Items</a></li>\n"; }
+			if($cfg->load('comp_clients') eq "on") { print "	 <li><a href='./?m=clients'>Clients</a></li>\n"; }
 			print "	 <li><a href='./?m=settings'>Settings</a></li>\n";
 		}
 		elsif($q->param('m') && ($q->param('m') eq "products" || $q->param('m') eq "add_product" ||$q->param('m') eq "view_product" || $q->param('m') eq "edit_product" || $q->param('m') eq "add_release" || $q->param('m') eq "add_step" || $q->param('m') eq "delete_step" || $q->param('m') eq "delete_release"))
@@ -168,16 +157,28 @@ sub navbar
 			if($cfg->load('comp_tickets') eq "on") { print "	 <li><a href='./?m=tickets'>Tickets</a></li>\n"; }
 			if($cfg->load('comp_articles') eq "on") { print "	 <li><a href='./?m=articles'>Articles</a></li>\n"; }
 			if($cfg->load('comp_items') eq "on") { print "	 <li><a href='./?m=items'>Items</a></li>\n"; }
+			if($cfg->load('comp_clients') eq "on") { print "	 <li><a href='./?m=clients'>Clients</a></li>\n"; }
 			print "	 <li><a href='./?m=settings'>Settings</a></li>\n";
 		}
-		elsif($q->param('m') && ($q->param('m') eq "settings" || $q->param('m') eq "confirm_delete" || $q->param('m') eq "clear_log" || $q->param('m') eq "stats" || $q->param('m') eq "change_lvl" || $q->param('m') eq "confirm_email" || $q->param('m') eq "reset_pass" || $q->param('m') eq "logout" || $q->param('m') eq "add_client" || $q->param('m') eq  "view_client" || $q->param('m') eq "save_client" || $q->param('m') eq "summary" || $q->param('m') eq "set_defaults") || $q->param('create_form') || $q->param('edit_form') || $q->param('save_form'))
+		elsif($q->param('m') && ($q->param('m') eq "settings" || $q->param('m') eq "confirm_delete" || $q->param('m') eq "clear_log" || $q->param('m') eq "stats" || $q->param('m') eq "change_lvl" || $q->param('m') eq "confirm_email" || $q->param('m') eq "reset_pass" || $q->param('m') eq "logout" || $q->param('m') eq "summary") || $q->param('create_form') || $q->param('edit_form') || $q->param('save_form'))
 		{
 			print "	 <li><a href='.'>Home</a></li>\n";
 			print "	 <li><a href='./?m=products'>" . $items{"Product"} . "s</a></li>\n";
 			if($cfg->load('comp_tickets') eq "on") { print "	 <li><a href='./?m=tickets'>Tickets</a></li>\n"; }
 			if($cfg->load('comp_articles') eq "on") { print "	 <li><a href='./?m=articles'>Articles</a></li>\n"; }
 			if($cfg->load('comp_items') eq "on") { print "	 <li><a href='./?m=items'>Items</a></li>\n"; }
+			if($cfg->load('comp_clients') eq "on") { print "	 <li><a href='./?m=clients'>Clients</a></li>\n"; }
 			print "	 <li class='active'><a href='./?m=settings'>Settings</a></li>\n";
+		}
+		elsif($q->param('m') && ($q->param('m') eq "clients" || $q->param('m') eq "add_client" || $q->param('m') eq  "view_client" || $q->param('m') eq "save_client" || $q->param('m') eq "set_defaults"))
+		{
+			print "	 <li><a href='.'>Home</a></li>\n";
+			print "	 <li><a href='./?m=products'>" . $items{"Product"} . "s</a></li>\n";
+			if($cfg->load('comp_tickets') eq "on") { print "	 <li><a href='./?m=tickets'>Tickets</a></li>\n"; }
+			if($cfg->load('comp_articles') eq "on") { print "	 <li><a href='./?m=articles'>Articles</a></li>\n"; }
+			if($cfg->load('comp_items') eq "on") { print "	 <li><a href='./?m=items'>Items</a></li>\n"; }
+			if($cfg->load('comp_clients') eq "on") { print "	 <li class='active'><a href='./?m=clients'>Clients</a></li>\n"; }
+			print "	 <li><a href='./?m=settings'>Settings</a></li>\n";
 		}
 		elsif($q->param('kb') || $q->param('m') && ($q->param('m') eq "articles" || $q->param('m') eq "add_article" || $q->param('m') eq "save_article" || $q->param('m') eq "unlink_article" || $q->param('m') eq "subscribe" || $q->param('m') eq "unsubscribe"))
 		{
@@ -186,6 +187,7 @@ sub navbar
 			if($cfg->load('comp_tickets') eq "on") { print "	 <li><a href='./?m=tickets'>Tickets</a></li>\n"; }
 			if($cfg->load('comp_articles') eq "on") { print "	 <li class='active'><a href='./?m=articles'>Articles</a></li>\n"; }
 			if($cfg->load('comp_items') eq "on") { print "	 <li><a href='./?m=items'>Items</a></li>\n"; }
+			if($cfg->load('comp_clients') eq "on") { print "	 <li><a href='./?m=clients'>Clients</a></li>\n"; }
 			print "	 <li><a href='./?m=settings'>Settings</a></li>\n";
 		}
 		elsif($q->param('m') && $q->param('m') eq "items")
@@ -195,6 +197,7 @@ sub navbar
 			if($cfg->load('comp_tickets') eq "on") { print "	 <li><a href='./?m=tickets'>Tickets</a></li>\n"; }
 			if($cfg->load('comp_articles') eq "on") { print "	 <li><a href='./?m=articles'>Articles</a></li>\n"; }
 			if($cfg->load('comp_items') eq "on") { print "	 <li class='active'><a href='./?m=items'>Items</a></li>\n"; }
+			if($cfg->load('comp_clients') eq "on") { print "	 <li><a href='./?m=clients'>Clients</a></li>\n"; }
 			print "	 <li><a href='./?m=settings'>Settings</a></li>\n";
 		}
 		else
@@ -204,6 +207,7 @@ sub navbar
 			if($cfg->load('comp_tickets') eq "on") { print "	 <li><a href='./?m=tickets'>Tickets</a></li>\n"; }
 			if($cfg->load('comp_articles') eq "on") { print "	 <li><a href='./?m=articles'>Articles</a></li>\n"; }
 			if($cfg->load('comp_items') eq "on") { print "	 <li><a href='./?m=items'>Items</a></li>\n"; }
+			if($cfg->load('comp_clients') eq "on") { print "	 <li><a href='./?m=clients'>Clients</a></li>\n"; }
 			print "	 <li><a href='./?m=settings'>Settings</a></li>\n";
 		}
 		if($cfg->load('comp_tickets') eq "on") 
@@ -2341,22 +2345,6 @@ elsif($q->param('m')) # Modules
 			}
 			print "</div></div>\n";
 		}
-		if($logged_lvl > 1 && $cfg->load('comp_clients') eq "on")
-		{
-			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Clients directory</h3></div><div class='panel-body'><table class='table table-striped'><tr><th>ID</th><th>Name</th><th>Contact</th><th>Status</th></tr>\n";
-			$sql = $db->prepare("SELECT ROWID,* FROM clients ORDER BY name;");
-			$sql->execute();
-			while(my @res = $sql->fetchrow_array())
-			{
-				print "<tr><td>" . $res[0] . "</td><td><a href='./?m=view_client&c=" . $res[0] . "'>" . $res[1] . "</a></td><td>" . $res[3] . "</td><td>" . $res[2] . "</td></tr>";
-			}		
-			print "</table>";
-			if($logged_lvl > 4)
-			{
-				print "<h4>Add a new client:</h4><form method='POST' action='.' data-toggle='validator' role='form'><input type='hidden' name='m' value='add_client'><p><div class='row'><div class='col-sm-6'><input type='text' class='form-control' name='name' placeholder='Client name' maxlength='50' required></div><div class='col-sm-6'><select class='form-control' name='status'><option>Prospect</option><option>Contact</option><option>Supplier</option><option>Paid</option><option>Unpaid</option><option>Closed</option></select></div></div></p><p><input type='text' class='form-control' name='contact' placeholder='Contact' maxlength='99' required></p><p><textarea class='form-control' name='notes' placeholder='Notes'></textarea></p><p><input type='submit' value='Add client' class='btn btn-primary pull-right'></form>";
-			}
-			print "</div></div>\n";
-		}
 		if($logged_lvl > 1)
 		{
 			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Statistics</h3></div><div class='panel-body'>\n";
@@ -2565,14 +2553,37 @@ elsif($q->param('m')) # Modules
 			print "</table></div></div>\n";
 		}
 	}
+	elsif($q->param('m') eq "clients" && $logged_user ne "" && $cfg->load('comp_clients') eq "on")
+	{
+		headers("Clients");
+		if($logged_lvl > 4)
+		{
+			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Add a new client</h3></div><div class='panel-body'>\n";
+			print "<form method='POST' action='.' data-toggle='validator' role='form'><input type='hidden' name='m' value='add_client'><p><div class='row'><div class='col-sm-6'><input type='text' class='form-control' name='name' placeholder='Client name' maxlength='50' required></div><div class='col-sm-6'><select class='form-control' name='status'><option>Prospect</option><option>Contact</option><option>Supplier</option><option>Paid</option><option>Unpaid</option><option>Closed</option></select></div></div></p><p><input type='text' class='form-control' name='contact' placeholder='Contact' maxlength='99' required></p><p><textarea class='form-control' name='notes' placeholder='Notes'></textarea></p><p><input type='submit' value='Add client' class='btn btn-primary pull-right'></form>";
+			print "</div></div>\n";
+		}
+		print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Clients directory</h3></div><div class='panel-body'><table class='table table-striped'><tr><th>ID</th><th>Name</th><th>Contact</th><th>Status</th></tr>\n";
+		$sql = $db->prepare("SELECT ROWID,* FROM clients ORDER BY name;");
+		$sql->execute();
+		while(my @res = $sql->fetchrow_array())
+		{
+			print "<tr><td>" . $res[0] . "</td><td>";
+			if($logged_lvl > 1) { print "<a href='./?m=view_client&c=" . $res[0] . "'>"; }
+			print $res[1];
+			if($logged_lvl > 1) { print "</a>"; }
+			print "</td><td>" . $res[3] . "</td><td>" . $res[2] . "</td></tr>";
+		}		
+		print "</table>";
+		print "</div></div>\n";
+	}
 	elsif($q->param('m') eq "save_client" && $q->param('c') && $logged_lvl > 4)
 	{
-		headers("Settings");
+		headers("Clients");
 		if($q->param('delete'))
 		{
 			$sql = $db->prepare("DELETE FROM clients WHERE ROWID = ?;");
 			$sql->execute(to_int($q->param('c')));
-			msg("Client removed. Press <a href='./?m=settings'>here</a> to continue.", 3);		
+			msg("Client removed. Press <a href='./?m=clients'>here</a> to continue.", 3);		
 		}
 		elsif(!$q->param('contact') || !$q->param('status'))
 		{
@@ -2821,7 +2832,7 @@ elsif($q->param('m')) # Modules
 	}
 	elsif($q->param('m') eq "add_client" && $logged_lvl > 4)
 	{
-		headers("Settings");
+		headers("Clients");
 		if(!$q->param('name') || !$q->param('contact') || !$q->param('status'))
 		{
 			my $text = "Required fields missing: ";
@@ -2837,7 +2848,7 @@ elsif($q->param('m')) # Modules
 			if($q->param('notes')) { $notes = sanitize_html($q->param('notes')); }
 			$sql = $db->prepare("INSERT INTO clients VALUES (?, ?, ?, ?, ?);");
 			$sql->execute(sanitize_html($q->param('name')), sanitize_html($q->param('status')), sanitize_html($q->param('contact')), $notes, now());
-			msg("Client added. Press <a href='./?m=settings'>here</a> to continue.", 3);
+			msg("Client added. Press <a href='./?m=clients'>here</a> to continue.", 3);
 		}
 	}
 	elsif($q->param('m') eq "clear_log" && $logged_lvl > 5)
@@ -4566,7 +4577,7 @@ elsif($q->param('m')) # Modules
 		}
 		print "</table></div></div>\n";
 	}
-	elsif($q->param('m') eq "items" && $cfg->load('comp_items') eq "on")
+	elsif($q->param('m') eq "items" && $cfg->load('comp_items') eq "on" && $logged_user ne "")
 	{
 		my @products;
 		$sql = $db->prepare("SELECT ROWID,name FROM products ORDER BY name;");

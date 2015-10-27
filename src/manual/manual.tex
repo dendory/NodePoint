@@ -11,10 +11,10 @@
 % Conditional compilation for Windows and Linux
 \usepackage{ifthen}
 \newboolean{Windows}
-\setboolean{Windows}{true} % change to false for Linux
+\setboolean{Windows}{false} % change to false for Linux
 \ifthenelse{\boolean{Windows}}
-{\def\NodePointManual{NodePoint IT System - Windows version 1.4.7}}
-{\def\NodePointManual{NodePoint IT System - Linux version 1.4.7}}
+{\def\NodePointManual{NodePoint IT System - Windows version 1.4.8}}
+{\def\NodePointManual{NodePoint IT System - Linux version 1.4.8}}
 
 % Margins and paper type
 \geometry{a4paper, right=1.5cm, left=1.5cm, top=2cm, bottom=1.5cm}
@@ -452,7 +452,7 @@ The tasks management component can be used to manage products or projects, creat
 New tasks created will send an email notification to the user assigned to the task, and all tasks will show on the user's home page. There, users can modify the completion rate for each item. Completed and overdue tasks will also be highlighted.
 
 \subsection{Clients Directory}
-The clients directory can be used to keep track of clients or contacts from the \textbf{Settings} page. New clients can be added along with specific information such as email, phone number or notes by users of access level 5, details seen by users of level 2 and higher. The following statuses can be assigned to clients:
+The clients directory can be used to keep track of clients or contacts from the \textbf{Clients} page. New clients can be added along with specific information such as email, phone number or notes by users of access level 5, details seen by users of level 2 and higher. The following statuses can be assigned to clients:
 
 \begin{itemize}
 \item \textbf{Prospect:} A prospective client.
