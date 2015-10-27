@@ -8,7 +8,7 @@
 #
 
 use strict;
-use Config::Linux;
+use Config::Win32;
 use Digest::SHA qw(sha1_hex);
 use DBI;
 use CGI;
@@ -475,6 +475,12 @@ sub db_check
 	$sql = $db->prepare("SELECT * FROM disabled WHERE 0 = 1;") or do
 	{
 		$sql = $db->prepare("CREATE TABLE disabled (user TEXT);");
+		$sql->execute();
+	};
+	$sql->finish();
+	$sql = $db->prepare("SELECT * FROM default_form WHERE 0 = 1;") or do
+	{
+		$sql = $db->prepare("CREATE TABLE default_form (form INT);");
 		$sql->execute();
 	};
 	$sql->finish();
@@ -978,11 +984,11 @@ sub home
 # Connect to config
 eval
 {
-	$cfg = Config::Linux->new("NodePoint", "settings");
+	$cfg = Config::Win32->new("NodePoint", "settings");
 };
 if(!defined($cfg)) # Can't even use headers() if this fails.
 {
-	print "Content-type: text/html\n\nError: Could not access " . Config::Linux->type . ". Please ensure NodePoint has the proper permissions.";
+	print "Content-type: text/html\n\nError: Could not access " . Config::Win32->type . ". Please ensure NodePoint has the proper permissions.";
 	exit(0);
 };
 
@@ -2420,6 +2426,10 @@ elsif($q->param('m')) # Modules
 			$sql = $db->prepare("SELECT ROWID,* FROM products;");
 			$sql->execute();
 			while(my @res = $sql->fetchrow_array()) { $products[$res[0]] = $res[1]; }
+			$sql = $db->prepare("SELECT * FROM default_form;");
+			$sql->execute();
+			my $defaultform = -1;
+			while(my @res = $sql->fetchrow_array()) { $defaultform = to_int($res[0]); }
 			$sql = $db->prepare("SELECT ROWID,* FROM forms;");
 			$sql->execute();
 			while(my @res = $sql->fetchrow_array())
@@ -2427,6 +2437,7 @@ elsif($q->param('m')) # Modules
 				print "<tr><td>";
  				if($products[$res[1]]) { print $products[$res[1]]; }
 				else { print "None"; }
+				if($res[0] == $defaultform) { print " <b>(default form)</b>"; }
 				print "</td><td><a href='./?edit_form=" . $res[0] . "'>" . $res[2] . "</a></td><td>" . $res[23] . "</td></tr>\n";
 			}
 			print "</table><form method='GET' action='./'><input type='hidden' name='create_form' value='1'><input type='submit' value='Create new custom form' class='pull-right btn btn-primary'></form></p></div></div>\n";
@@ -3856,6 +3867,19 @@ elsif($q->param('m')) # Modules
 		$sql = $db->prepare("SELECT * FROM forms WHERE productid = ?;");
 		$sql->execute(to_int($q->param('product_id')));
 		@customform = $sql->fetchrow_array();
+		if(!@customform)
+		{
+			$sql = $db->prepare("SELECT * FROM default_form;");
+			$sql->execute();
+			my $formid = -1;
+			while(my @res = $sql->fetchrow_array()) { $formid = to_int($res[0]); }
+			if($formid != -1)
+			{
+				$sql = $db->prepare("SELECT * FROM forms WHERE ROWID = ?;");
+				$sql->execute($formid);
+				@customform = $sql->fetchrow_array();
+			}
+		}
 		if(@customform)
 		{
 			if($q->param('field0')) { $title = $q->param('field0'); }
@@ -3864,7 +3888,7 @@ elsif($q->param('m')) # Modules
 				if($customform[($i*2)+2])
 				{
 					$description .= $customform[($i*2)+2] . " \t ";
-					if($q->param('field'.$i)) { $description .= $q->param('field'.$i); }
+					if(defined($q->param('field'.$i))) { $description .= $q->param('field'.$i); }
 					elsif($q->param('upload'.$i)) { $description .= $q->param('upload'.$i); }
 					$description .= "\n\n"; 
 				}
@@ -3985,6 +4009,19 @@ elsif($q->param('m')) # Modules
 			$sql = $db->prepare("SELECT * FROM forms WHERE productid = ?;");
 			$sql->execute(to_int($q->param('product_id')));
 			@customform = $sql->fetchrow_array();
+			if(!@customform)
+			{
+				$sql = $db->prepare("SELECT * FROM default_form;");
+				$sql->execute();
+				my $formid = -1;
+				while(my @res = $sql->fetchrow_array()) { $formid = to_int($res[0]); }
+				if($formid != -1)
+				{
+					$sql = $db->prepare("SELECT * FROM forms WHERE ROWID = ?;");
+					$sql->execute($formid);
+					@customform = $sql->fetchrow_array();
+				}
+			}
 			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Create a new ticket</h3></div><div class='panel-body'><form method='POST' action='.' enctype='multipart/form-data'>\n";
 			print "<p><div class='row'><div class='col-sm-6'>" . $items{"Product"} . " name: <b>" . $product . "</b><input type='hidden' name='product_id' value='" . to_int($q->param('product_id')) . "'></div><div class='col-sm-6' style='text-align:right'>" . $items{"Release"} . ": <select name='release_id'>";
 			$sql = $db->prepare("SELECT ROWID,* FROM releases WHERE productid = ?;");
@@ -4961,11 +4998,37 @@ elsif(($q->param('create_form') || $q->param('edit_form') || $q->param('save_for
 			{
 				$sql = $db->prepare("INSERT INTO forms VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);");
 				$sql->execute(to_int($q->param('product_id')), sanitize_html($q->param('form_name')), sanitize_html($q->param('field0')), sanitize_html($q->param('field0type')), sanitize_html($q->param('field1')), sanitize_html($q->param('field1type')), sanitize_html($q->param('field2')), sanitize_html($q->param('field2type')), sanitize_html($q->param('field3')), sanitize_html($q->param('field3type')), sanitize_html($q->param('field4')), sanitize_html($q->param('field4type')), sanitize_html($q->param('field5')), sanitize_html($q->param('field5type')), sanitize_html($q->param('field6')), sanitize_html($q->param('field6type')), sanitize_html($q->param('field7')), sanitize_html($q->param('field7type')), sanitize_html($q->param('field8')), sanitize_html($q->param('field8type')), sanitize_html($q->param('field9')), sanitize_html($q->param('field9type')), now());
+				if($q->param('make_default'))
+				{
+					$sql = $db->prepare("SELECT last_insert_rowid();");
+					$sql->execute();
+					my $rowid = -1;
+					while(my @res = $sql->fetchrow_array()) { $rowid = to_int($res[0]); }
+					if($rowid != -1)
+					{
+						$sql = $db->prepare("DELETE FROM default_form");
+						$sql->execute();
+						$sql = $db->prepare("INSERT INTO default_form VALUES (?)");
+						$sql->execute($rowid);
+					}
+				}
 			}
 			else
 			{
 				$sql = $db->prepare("UPDATE forms SET productid = ?, formname = ?, field0 = ?, field0type = ?, field1 = ?, field1type = ?, field2 = ?, field2type = ?, field3 = ?, field3type = ?, field4 = ?, field4type = ?, field5 = ?, field5type = ?, field6 = ?, field6type = ?, field7 = ?, field7type = ?, field8 = ?, field8type = ?, field9 = ?, field9type = ?, modified = ? WHERE ROWID = ?;");
 				$sql->execute(to_int($q->param('product_id')), sanitize_html($q->param('form_name')), sanitize_html($q->param('field0')), sanitize_html($q->param('field0type')), sanitize_html($q->param('field1')), sanitize_html($q->param('field1type')), sanitize_html($q->param('field2')), sanitize_html($q->param('field2type')), sanitize_html($q->param('field3')), sanitize_html($q->param('field3type')), sanitize_html($q->param('field4')), sanitize_html($q->param('field4type')), sanitize_html($q->param('field5')), sanitize_html($q->param('field5type')), sanitize_html($q->param('field6')), sanitize_html($q->param('field6type')), sanitize_html($q->param('field7')), sanitize_html($q->param('field7type')), sanitize_html($q->param('field8')), sanitize_html($q->param('field8type')), sanitize_html($q->param('field9')), sanitize_html($q->param('field9type')), now(), to_int($q->param('save_form')));
+				if($q->param('make_default'))
+				{
+					$sql = $db->prepare("DELETE FROM default_form");
+					$sql->execute();
+					$sql = $db->prepare("INSERT INTO default_form VALUES (?)");
+					$sql->execute(to_int($q->param('save_form')));
+				}
+				else
+				{
+					$sql = $db->prepare("DELETE FROM default_form WHERE form = ?");
+					$sql->execute(to_int($q->param('save_form')));				
+				}
 			}
 			msg("Custom form saved. Press <a href='./?m=settings'>here</a> to continue.", 3);
 		}
@@ -5071,7 +5134,15 @@ elsif(($q->param('create_form') || $q->param('edit_form') || $q->param('save_for
 			}
 			print "</td></tr>";
 		}
-		print "</table><p><input type='submit' class='btn btn-primary pull-right' value='Save'></p></form></div></div>";
+		print "</table><p><input type='submit' class='btn btn-primary pull-right' value='Save'><label><input name='make_default' type='checkbox'";
+		if(to_int($q->param('edit_form')) > 0)
+		{
+			$sql = $db->prepare("SELECT * FROM default_form WHERE form = ?;");
+			$sql->execute(to_int($q->param('edit_form')));
+			while(my @res = $sql->fetchrow_array())
+			{ print " checked"; }
+		}
+		print "> Make this the default form</label></p></form></div></div>";
 	}
 	footers();
 }
