@@ -21,14 +21,16 @@ sub new
 		$app = "Default";
 	}
 	my $filename = "../nodepoint.cfg";
-	if(!-e $filename)
+	if(!-w $filename)
 	{
-		open(F, ">" . $filename) or Carp::croak "Config: Could create configuration file " . $filename;
-		print F "dummy value\n";
-		close(F);
+		return undef;
 	}
 	my $config = new Config::Simple($filename) or Carp::croak "Config: Could not access " . $filename;
-	my $self = bless({ cfg => $config}, $class);
+	my $self;
+	if($config)
+	{
+		$self = bless({ cfg => $config}, $class);
+	}
 	return $self;
 }
 
