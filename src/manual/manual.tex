@@ -11,10 +11,10 @@
 % Conditional compilation for Windows and Linux
 \usepackage{ifthen}
 \newboolean{Windows}
-\setboolean{Windows}{true} % change to false for Linux
+\setboolean{Windows}{false} % change to false for Linux
 \ifthenelse{\boolean{Windows}}
-{\def\NodePointManual{NodePoint IT System - Windows version 1.4.8}}
-{\def\NodePointManual{NodePoint IT System - Linux version 1.4.8}}
+{\def\NodePointManual{NodePoint IT System - Windows version 1.5.0}}
+{\def\NodePointManual{NodePoint IT System - Linux version 1.5.0}}
 
 % Margins and paper type
 \geometry{a4paper, right=1.5cm, left=1.5cm, top=2cm, bottom=1.5cm}
@@ -472,7 +472,7 @@ The Inventory Control component allows users with access level 4 or higher to ad
 \includegraphics{items.jpg}
 \end{figure}
 
-When a user checks out an item, additional information such as item location, lock codes or other secret data can be displayed on the item's page and sent through email to that user, so that the person can retrieve it. This information field is otherwise hidden from other users. If approval is required, a notification will be sent to all available users with level 4 or higher. They can then decide to approve or deny the request.
+When a user checks out an item, additional information such as item location, lock codes or other secret data can be displayed on the item's page and sent through email to that user, so that the person can retrieve it. This information field is otherwise hidden from other users. If approval is required, a notification will be sent to all available users with level 4 or higher. They can then decide to approve or deny the request. Items can have an expiration date, after which checkouts will be disabled.
 
 Users with checked out items will see a list of items on their home page, and can then return the item, making it available to other users. A checkout history is kept for each item and shown on the item page, showing all past requests and events. Items can also be manually assigned to users, or made unavailable, preventing any user from requesting or checking them out.
 

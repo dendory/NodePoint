@@ -8,7 +8,7 @@
 #
 
 use strict;
-use Config::Win32;
+use Config::Linux;
 use Digest::SHA qw(sha1_hex);
 use DBI;
 use CGI;
@@ -1027,11 +1027,11 @@ sub home
 # Connect to config
 eval
 {
-	$cfg = Config::Win32->new("NodePoint", "settings");
+	$cfg = Config::Linux->new("NodePoint", "settings");
 };
 if(!defined($cfg)) # Can't even use headers() if this fails.
 {
-	print "Content-type: text/html\n\nError: Could not access " . Config::Win32->type . ". Please ensure NodePoint has the proper permissions.";
+	print "Content-type: text/html\n\nError: Could not access " . Config::Linux->type . ". Please ensure NodePoint has the proper permissions.";
 	exit(0);
 };
 
@@ -1604,6 +1604,13 @@ elsif($q->param('api')) # API calls
 			$sql->execute();
 			while(my @res = $sql->fetchrow_array())
 			{
+				my $expdate = "";
+				my $sql3 = $db->prepare("SELECT date FROM item_expiration WHERE itemid = ?;");
+				$sql3->execute(to_int($res[0]));
+				while(my @res3 = $sql3->fetchrow_array())
+				{
+					$expdate = $res3[0];
+				}
 				if($found) { print ",\n"; }
 				$found = 1;
 				print "  {\n";
@@ -1615,6 +1622,7 @@ elsif($q->param('api')) # API calls
 				print "   \"client_id\": \"" . $res[5] . "\",\n";
 				print "   \"approval\": \"" . $res[6] . "\",\n";
 				print "   \"status\": \"" . $res[7] . "\",\n";
+				print "   \"expiration\": \"" . $expdate . "\",\n";
 				print "   \"user\": \"" . $res[8] . "\"\n";
 				print "  }";
 			}
