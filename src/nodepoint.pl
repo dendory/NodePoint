@@ -18,7 +18,6 @@ use Data::GUID;
 use File::Type;
 use Scalar::Util qw(looks_like_number);
 use Net::LDAP;
-use Crypt::RC4;
 use MIME::Base64;
 use Time::HiRes qw(time);
 use Time::Piece;
@@ -491,6 +490,12 @@ sub db_check
 	$sql = $db->prepare("SELECT * FROM sessions WHERE 0 = 1;") or do
 	{
 		$sql = $db->prepare("CREATE TABLE sessions (user TEXT, session TEXT, ip TEXT, expire INT);");
+		$sql->execute();
+	};
+	$sql->finish();
+	$sql = $db->prepare("SELECT * FROM item_expiration WHERE 0 = 1;") or do
+	{
+		$sql = $db->prepare("CREATE TABLE item_expiration (itemid INT, date TEXT);");
 		$sql->execute();
 	};
 	$sql->finish();
@@ -1877,7 +1882,7 @@ elsif($q->param('api')) # API calls
 			my $sql2 = $db->prepare("UPDATE items SET user = ?, status = ? WHERE ROWID = ?;");
 			$sql2->execute("", 1, to_int($q->param('id')));
 			$sql2 = $db->prepare("INSERT INTO checkouts VALUES (?, ?, ?, ?);");
-			$sql2->execute(to_int($q->param('id')), "api", "Item returned.", now());
+			$sql2->execute(to_int($q->param('id')), "api", "Returned", now());
 			print "{\n";
 			print " \"message\": \"Item returned.\",\n";
 			print " \"status\": \"OK\"\n";
@@ -2384,7 +2389,7 @@ elsif($q->param('m')) # Modules
 		{
 			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Users management</h3></div><div class='panel-body'>\n";
 			print "<p>Filter users by access level: <a href='./?m=settings'>All</a> | <a href='./?m=settings&filter_users=0'>0</a> | <a href='./?m=settings&filter_users=1'>1</a> | <a href='./?m=settings&filter_users=2'>2</a> | <a href='./?m=settings&filter_users=3'>3</a> | <a href='./?m=settings&filter_users=4'>4</a> | <a href='./?m=settings&filter_users=5'>5</a></p>";
-			print "<table class='table table-striped'><tr><th>User name</th><th>Email</th><th>Level</th><th>Change access level</th><th>Reset password</th><th>Last login</th></tr>\n";
+			print "<table class='table table-striped'><tr><th>User name</th><th>Email</th><th>Level</th><th>Last login</th></tr>\n";
 			if(defined($q->param("filter_users")))
 			{
 				$sql = $db->prepare("SELECT * FROM users WHERE level = ? ORDER BY name;");
@@ -2397,8 +2402,7 @@ elsif($q->param('m')) # Modules
 			}
 			while(my @res = $sql->fetchrow_array())
 			{
-				if($cfg->load('ad_server')) { print "<tr><td><a href='./?m=summary&u=" . $res[0] . "'>" . $res[0] . "</a></td><td>" . $res[2] . "</td><td>" . $res[3] . "</td><td><a href='./?m=change_lvl&u=" . $res[0] . "'>Change access level</a></td><td>Managed by AD</td><td>" . $res[4] . "</td></tr>\n"; }
-				else { print "<tr><td><a href='./?m=summary&u=" . $res[0] . "'>" . $res[0] . "</a></td><td>" . $res[2] . "</td><td>" . $res[3] . "</td><td><a href='./?m=change_lvl&u=" . $res[0] . "'>Change access level</a></td><td><a href='./?m=reset_pass&u=" . $res[0] . "'>Reset password</a></td><td>" . $res[4] . "</td></tr>\n"; }
+				print "<tr><td><a href='./?m=summary&u=" . $res[0] . "'>" . $res[0] . "</a></td><td>" . $res[2] . "</td><td>" . $res[3] . "</td><td>" . $res[4] . "</td></tr>\n";
 			}
 			print "</table>\n";
 			if(!$cfg->load('ad_server'))
@@ -2466,8 +2470,8 @@ elsif($q->param('m')) # Modules
 			if($cfg->load('comp_tickets') eq "on") { print "<option value='3'>Tickets created per " . lc($items{"Product"}) . "</option><option value='10'>New and open tickets per " . lc($items{"Product"}) . "</option><option value='4'>Tickets created per user</option><option value='5'>Tickets created per day</option><option value='6'>Tickets created per month</option><option value='7'>Tickets per status</option><option value='9'>Tickets assigned per user</option><option value='12'>Comment file attachments</option>"; }
 			if($cfg->load('comp_shoutbox') eq "on") { print "<option value='14'>Full shoutbox history</option>"; }
 			if($cfg->load('comp_clients') eq "on") { print "<option value='16'>Clients per status</option>"; }
-			if($cfg->load('comp_items') eq "on") { print "<option value='15'>Items checked out per user</option>"; }
-			print "<option value='8'>Users per access level</option><option value='17'>User sessions</option></select></div><div class='col-sm-6'><span class='pull-right'><input class='btn btn-primary' type='submit' value='Show report'> &nbsp; <input class='btn btn-primary' type='submit' name='csv' value='Export as CSV'></span></div></div></form></p></div><div class='help-block with-errors'></div></div>\n";
+			if($cfg->load('comp_items') eq "on") { print "<option value='15'>Items checked out per user</option><option value='18'>Item expiration dates</option>"; }
+			print "<option value='8'>Users per access level</option><option value='17'>Active user sessions</option></select></div><div class='col-sm-6'><span class='pull-right'><input class='btn btn-primary' type='submit' value='Show report'> &nbsp; <input class='btn btn-primary' type='submit' name='csv' value='Export as CSV'></span></div></div></form></p></div><div class='help-block with-errors'></div></div>\n";
 		}
 		if($logged_lvl > 3 && $cfg->load('comp_tickets') eq "on")
 		{
@@ -2772,7 +2776,16 @@ elsif($q->param('m')) # Modules
 		{
 			$userisbanned = 1;
 		}
-		print "<form method='GET' action='.'><input type='hidden' name='m' value='summary'><input type='hidden' name='u' value='" . $u . "'>";
+		print "<form style='display:inline-block' method='GET' action='.'><input type='hidden' name='m' value='change_lvl'><input type='hidden' name='u' value='" . $u . "'><input type='submit' class='btn btn-primary pull-right' value='Change access level'></form>&nbsp;<form style='display:inline-block' method='GET' action='.'><input type='hidden' name='m' value='reset_pass'><input type='hidden' name='u' value='" . $u . "'>";
+		if($cfg->load("ad_domain") && $cfg->load("ad_server"))
+		{
+			print "<input type='submit' class='btn btn-default pull-right' value='Password managed by AD' disabled>";
+		}
+		else
+		{
+			print "<input type='submit' class='btn btn-primary pull-right' value='Reset password'>";
+		}
+		print "</form><form style='display:inline-block' class='pull-right' method='GET' action='.'><input type='hidden' name='m' value='summary'><input type='hidden' name='u' value='" . $u . "'>";
 		if($userisbanned == 0) { print "<input type='submit' class='btn btn-danger pull-right' name='disable_user' value='Disable login'>"; }
 		else { print "<input type='submit' class='btn btn-success pull-right' name='enable_user' value='Enable login'>"; }
 		print "</form></div></div>";
@@ -4358,7 +4371,7 @@ elsif($q->param('m')) # Modules
 		{
 			if($q->param('csv')) { print "\"Ticket ID\",\"Hours spent\"\n"; }
 			else { print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>All time spent per ticket</h3></div><div class='panel-body'><table class='table table-striped'><tr><th>Ticket ID</th><th>Hours spent</th></tr>"; }
-			$sql = $db->prepare("SELECT * FROM timetracking ORDER BY ticketid;");		
+			$sql = $db->prepare("SELECT * FROM timetracking ORDER BY ticketid;");
 		}
 		elsif(to_int($q->param('report')) == 16)
 		{
@@ -4369,8 +4382,14 @@ elsif($q->param('m')) # Modules
 		elsif(to_int($q->param('report')) == 17)
 		{
 			if($q->param('csv')) { print "\"User\",\"IP\"\n"; }
-			else { print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>User sessions</h3></div><div class='panel-body'><table class='table table-striped'><tr><th>User</th><th>IP</th></tr>"; }
+			else { print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Active user sessions</h3></div><div class='panel-body'><table class='table table-striped'><tr><th>User</th><th>IP</th></tr>"; }
 			$sql = $db->prepare("SELECT ip,user FROM sessions;");
+		}
+		elsif(to_int($q->param('report')) == 18)
+		{
+			if($q->param('csv')) { print "\"Item\",\"Date\"\n"; }
+			else { print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Item expiration dates</h3></div><div class='panel-body'><table class='table table-striped'><tr><th>Item</th><th>Date</th></tr>"; }
+			$sql = $db->prepare("SELECT date,itemid FROM item_expiration;");
 		}
 		elsif(to_int($q->param('report')) == 11)
 		{
@@ -4464,7 +4483,7 @@ elsif($q->param('m')) # Modules
 				if(!$results{$res[1]}) { $results{$res[1]} = 0; }
 				$results{$res[1]} += to_float($res[2]);
 			}
-			elsif(to_int($q->param('report')) == 12 || to_int($q->param('report')) == 15 || to_int($q->param('report')) == 17)
+			elsif(to_int($q->param('report')) == 12 || to_int($q->param('report')) == 15 || to_int($q->param('report')) == 17 || to_int($q->param('report')) == 18)
 			{
 				$results{$res[1]} = $res[0];
 			}
@@ -4671,6 +4690,10 @@ elsif($q->param('m')) # Modules
 	}
 	elsif($q->param('m') eq "items" && $cfg->load('comp_items') eq "on" && $logged_user ne "")
 	{
+		my $expired = 0;
+		my $m = localtime->strftime('%m');
+		my $y = localtime->strftime('%Y');
+		my $d = localtime->strftime('%d');
 		my @products;
 		$sql = $db->prepare("SELECT ROWID,name FROM products ORDER BY name;");
 		$sql->execute();
@@ -4687,9 +4710,20 @@ elsif($q->param('m')) # Modules
 			$sql->execute();
 			while(my @res = $sql->fetchrow_array())
 			{
+				my $sql3 = $db->prepare("SELECT date FROM item_expiration WHERE itemid = ?;");
+				$sql3->execute(to_int($res[0]));
+				while(my @res3 = $sql3->fetchrow_array())
+				{
+					my @expby = split(/\//, $res3[0]);
+					if($expby[2] < $y || ($expby[2] == $y && $expby[0] < $m) || ($expby[2] == $y && $expby[0] == $m && $expby[1] < $d)) { $expired = 1; }
+				}
 				print $res[0] . ",\"" . $res[2] . "\",\"" . $res[1] . "\",\"" . $res[3] . "\",\"";
 				if(to_int($res[7]) == 0) { print "Unavailable"; }
-				elsif(to_int($res[7]) == 1) { print "Available"; }
+				elsif(to_int($res[7]) == 1) 
+				{
+					if($expired == 1) { print "Expired"; }
+					else { print "Available"; } 
+				}
 				elsif(to_int($res[7]) == 2) { print "Waiting approval for: " . $res[8]; }
 				else { print "Checked out by: " . $res[8]; }
 				print "\"\n";
@@ -4757,7 +4791,7 @@ elsif($q->param('m')) # Modules
 				$sql2 = $db->prepare("UPDATE items SET user = ?, status = ? WHERE ROWID = ?;");
 				$sql2->execute("", 1, to_int($q->param('i')));
 				$sql2 = $db->prepare("INSERT INTO checkouts VALUES (?, ?, ?, ?);");
-				$sql2->execute(to_int($q->param('i')), $logged_user, "Denied", now());
+				$sql2->execute(to_int($q->param('i')), $logged_user, "Approval denied", now());
 				msg("Checkout request denied.", 3);
 			}
 			if($q->param('approve') && $logged_lvl > 3)
@@ -4765,7 +4799,7 @@ elsif($q->param('m')) # Modules
 				my $sql2 = $db->prepare("UPDATE items SET status = ? WHERE ROWID = ?;");
 				$sql2->execute(3, to_int($q->param('i')));
 				$sql2 = $db->prepare("INSERT INTO checkouts VALUES (?, ?, ?, ?);");
-				$sql2->execute(to_int($q->param('i')), $logged_user, "Approved", now());
+				$sql2->execute(to_int($q->param('i')), $logged_user, "Checkout approved", now());
 				msg("Checkout request approved.", 3);
 				$sql2 = $db->prepare("SELECT ROWID,* FROM items WHERE ROWID = ?;");
 				$sql2->execute(to_int($q->param('i')));
@@ -4809,6 +4843,41 @@ elsif($q->param('m')) # Modules
 						system($cmd);
 					}					
 				}
+			}
+			if($q->param('expiration') && $logged_lvl > 3)
+			{
+				my $sql2 = $db->prepare("DELETE FROM item_expiration WHERE itemid = ?;");
+				$sql2->execute(to_int($q->param('i')));
+				if($q->param('exp_date'))
+				{
+					if($q->param('exp_date') !~ m/[0-9]{2}\/[0-9]{2}\/[0-9]{4}/)
+					{
+						msg("Expiration date must be in the format: mm/dd/yyyy. Please go back and try again.", 0);
+					}
+					else
+					{
+						$sql2 = $db->prepare("INSERT INTO item_expiration VALUES (?, ?);");
+						$sql2->execute(to_int($q->param('i')), sanitize_html($q->param('exp_date')));
+						msg("Item expiration date set to <b>" . sanitize_html($q->param('exp_date')) . "</b>.", 3);
+						$sql2 = $db->prepare("INSERT INTO checkouts VALUES (?, ?, ?, ?);");
+						$sql2->execute(to_int($q->param('i')), $logged_user, "Expiration set to " . sanitize_html($q->param('exp_date')), now());
+					}
+				}
+				else
+				{
+					msg("Item expiration date removed.", 3);
+					$sql2 = $db->prepare("INSERT INTO checkouts VALUES (?, ?, ?, ?);");
+					$sql2->execute(to_int($q->param('i')), $logged_user, "Expiration date removed", now());				
+				}
+			}
+			my $expdate = "";
+			$sql = $db->prepare("SELECT date FROM item_expiration WHERE itemid = ?;");
+			$sql->execute(to_int($q->param('i')));
+			while(my @res = $sql->fetchrow_array())
+			{
+				$expdate = $res[0];
+				my @expby = split(/\//, $expdate);
+				if($expby[2] < $y || ($expby[2] == $y && $expby[0] < $m) || ($expby[2] == $y && $expby[0] == $m && $expby[1] < $d)) { $expired = 1; }
 			}
 			if($q->param('unavailable') && $logged_lvl > 3)
 			{
@@ -4902,22 +4971,26 @@ elsif($q->param('m')) # Modules
 						if($clients[$res[5]]) { print $clients[$res[5]]; }
 						else { print "None"; }
 					}			
-					print "</b></div></div></p>";
-					if(($logged_user eq $res[8] && $res[7] == 3) || $logged_lvl > 3) { print "<p>Additional information:<br><pre>" . $res[9] . "</pre></p>"; }
-					print "<p>Checkout approval: <b>";
+					print "</b></div></div></p><p><div class='row'><div class='col-sm-6'>Checkout approval: <b>";
 					if(to_int($res[6]) == 1) { print "Required"; }
 					else { print "Not required"; } 	
-					print "</b></p><p>Status: <b>";
+					print "</b></div><div class='col-sm-6'>Expiration date: <b>" . $expdate . "</b></div></div></p>";
+					if(($logged_user eq $res[8] && $res[7] == 3) || $logged_lvl > 3) { print "<p>Additional information:<br><pre>" . $res[9] . "</pre></p>"; }
+					print "<p>Status: <b>";
 					if(to_int($res[7]) == 0) { print "Unavailable"; }
-					elsif(to_int($res[7]) == 1) { print "Available"; }
+					elsif(to_int($res[7]) == 1) 
+					{
+						if($expired == 1) { print "Expired"; } 
+						else { print "Available"; } 
+					}
 					elsif(to_int($res[7]) == 2) { print "Waiting approval for: " . $res[8]; }
 					else { print "Checked out by: " . $res[8]; }
-					print "</b></p><p>";
+					print "</b></p>";
 					if($logged_lvl > 3) 
 					{
 						print "<form style='display:inline' method='GET' action='.'><input type='hidden' name='m' value='items'><input type='hidden' name='i' value='" . to_int($q->param('i')) . "'><input type='submit' class='btn btn-primary pull-right' name='edit' value='Edit item'></form>"; 
 					}
-					if($logged_lvl > 0 && $res[7] == 1)
+					if($logged_lvl > 0 && $res[7] == 1 && $expired == 0)
 					{
 						print "<form style='display:inline' method='GET' action='.'><input type='hidden' name='m' value='items'><input type='hidden' name='i' value='" . to_int($q->param('i')) . "'><input type='submit' class='btn btn-primary' name='checkout' value='";
 						if(to_int($res[6]) == 1) { print "Request"; }
@@ -4928,7 +5001,7 @@ elsif($q->param('m')) # Modules
 				}
 				elsif($logged_lvl > 3)
 				{
-					print "<form method='POST' action='.'><input type='hidden' name='m' value='items'><input type='hidden' name='i' value='" . to_int($q->param('i')) . "'>\n";
+					print "<form method='POST' action='.' data-toggle='validator' role='form'><input type='hidden' name='m' value='items'><input type='hidden' name='i' value='" . to_int($q->param('i')) . "'>\n";
 					print "<p><div class='row'><div class='col-sm-6'>Item type: <select name='type' class='form-control'><option";
 					if($res[2] eq "Desktop") { print " selected"; }
 					print ">Desktop</option><option";
@@ -4995,7 +5068,12 @@ elsif($q->param('m')) # Modules
 					my $sql2 = $db->prepare("SELECT name FROM users WHERE level > 0 ORDER BY name;");
 					$sql2->execute();
 					while(my @res2 = $sql2->fetchrow_array()) { print "<option>" . $res2[0] . "</option>"; }
-					print "</select></div><div class='col-sm-8'><input type='submit' name='assign' class='btn btn-primary pull-right' value='Assign'></div></div></p></form>";
+					print "</select></div><div class='col-sm-2'><br><input type='submit' name='assign' class='btn btn-primary' value='Assign'></div>";
+					print "<div class='col-sm-4'>Set expiration date: <input name='exp_date' class='form-control datepicker' placeholder='mm/dd/yyyy' value ='";
+					$sql2 = $db->prepare("SELECT date FROM item_expiration WHERE itemid = ?;");
+					$sql2->execute(to_int($q->param('i')));
+					while(my @res2 = $sql2->fetchrow_array()) { print $res2[0]; }
+					print "'></div><div class='col-sm-2'><br><input type='submit' name='expiration' class='btn btn-primary' value='Set'></div></div></p></form>";
 				}
 				print "</div></div>\n";
 			}
@@ -5071,12 +5149,24 @@ elsif($q->param('m')) # Modules
 			}
 			while(my @res = $sql->fetchrow_array())
 			{
+				my $sql3 = $db->prepare("SELECT date FROM item_expiration WHERE itemid = ?;");
+				$sql3->execute(to_int($res[0]));
+				while(my @res3 = $sql3->fetchrow_array())
+				{
+					my @expby = split(/\//, $res3[0]);
+					if($expby[2] < $y || ($expby[2] == $y && $expby[0] < $m) || ($expby[2] == $y && $expby[0] == $m && $expby[1] < $d)) { $expired = 1; }
+				}
 				print "<tr><td>" . $res[2] . "</td><td><a href='./?m=items&i=" . $res[0] . "'>" . $res[1] . "</a></td><td>" . $res[3] . "</td><td>";
 				if(to_int($res[7]) == 0) { print "<font color='red'>Unavailable</font>"; }
-				elsif(to_int($res[7]) == 1) { print "<font color='green'>Available</font>"; }
+				elsif(to_int($res[7]) == 1) 
+				{
+					if($expired == 1) { print "<font color='purple'>Expired</font>"; }
+					else { print "<font color='green'>Available</font>"; } 
+				}
 				elsif(to_int($res[7]) == 2) { print "<font color='orange'>Waiting approval for: " . $res[8] . "</font>"; }
 				else { print "<font color='red'>Checked out by: " . $res[8] . "</font>"; }
 				print "</td></tr>\n";
+				$expired = 0;
 			}
 			print "</table></div></div>\n";
 		}
