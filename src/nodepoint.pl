@@ -4389,9 +4389,9 @@ elsif($q->param('m')) # Modules
 		}
 		elsif(to_int($q->param('report')) == 17)
 		{
-			if($q->param('csv')) { print "\"User\",\"IP\"\n"; }
-			else { print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Active user sessions</h3></div><div class='panel-body'><table class='table table-striped'><tr><th>User</th><th>IP</th></tr>"; }
-			$sql = $db->prepare("SELECT ip,user FROM sessions;");
+			if($q->param('csv')) { print "\"Timestamp\",\"User\"\n"; }
+			else { print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Active user sessions</h3></div><div class='panel-body'><table class='table table-striped'><tr><th>Timestamp</th><th>User</th></tr>"; }
+			$sql = $db->prepare("SELECT user,expire FROM sessions;");
 		}
 		elsif(to_int($q->param('report')) == 18)
 		{
