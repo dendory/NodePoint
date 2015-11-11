@@ -2467,7 +2467,7 @@ elsif($q->param('m')) # Modules
 			if($cfg->load('comp_shoutbox') eq "on") { print "<option value='14'>Full shoutbox history</option>"; }
 			if($cfg->load('comp_clients') eq "on") { print "<option value='16'>Clients per status</option>"; }
 			if($cfg->load('comp_items') eq "on") { print "<option value='15'>Items checked out per user</option>"; }
-			print "<option value='8'>Users per access level</option></select></div><div class='col-sm-6'><span class='pull-right'><input class='btn btn-primary' type='submit' value='Show report'> &nbsp; <input class='btn btn-primary' type='submit' name='csv' value='Export as CSV'></span></div></div></form></p></div><div class='help-block with-errors'></div></div>\n";
+			print "<option value='8'>Users per access level</option><option value='17'>User sessions</option></select></div><div class='col-sm-6'><span class='pull-right'><input class='btn btn-primary' type='submit' value='Show report'> &nbsp; <input class='btn btn-primary' type='submit' name='csv' value='Export as CSV'></span></div></div></form></p></div><div class='help-block with-errors'></div></div>\n";
 		}
 		if($logged_lvl > 3 && $cfg->load('comp_tickets') eq "on")
 		{
@@ -4366,6 +4366,12 @@ elsif($q->param('m')) # Modules
 			else { print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Clients per status</h3></div><div class='panel-body'><table class='table table-striped'><tr><th>Status</th><th>Clients</th></tr>"; }
 			$sql = $db->prepare("SELECT status FROM clients;");
 		}
+		elsif(to_int($q->param('report')) == 17)
+		{
+			if($q->param('csv')) { print "\"User\",\"IP\"\n"; }
+			else { print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>User sessions</h3></div><div class='panel-body'><table class='table table-striped'><tr><th>User</th><th>IP</th></tr>"; }
+			$sql = $db->prepare("SELECT ip,user FROM sessions;");
+		}
 		elsif(to_int($q->param('report')) == 11)
 		{
 			if($q->param('csv')) { print "\"Ticket ID\",\"Hours spent\"\n"; }
@@ -4458,7 +4464,7 @@ elsif($q->param('m')) # Modules
 				if(!$results{$res[1]}) { $results{$res[1]} = 0; }
 				$results{$res[1]} += to_float($res[2]);
 			}
-			elsif(to_int($q->param('report')) == 12 || to_int($q->param('report')) == 15)
+			elsif(to_int($q->param('report')) == 12 || to_int($q->param('report')) == 15 || to_int($q->param('report')) == 17)
 			{
 				$results{$res[1]} = $res[0];
 			}
