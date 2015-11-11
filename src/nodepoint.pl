@@ -8,7 +8,7 @@
 #
 
 use strict;
-use Config::Linux;
+use Config::Win32;
 use Digest::SHA qw(sha1_hex);
 use DBI;
 use CGI;
@@ -28,7 +28,7 @@ my ($cfg, $db, $sql, $cn, $cp, $cgs, $last_login, $perf);
 my $logged_user = "";
 my $logged_lvl = -1;
 my $q = new CGI;
-my $VERSION = "1.4.8";
+my $VERSION = "1.5.0";
 my %items = ("Product", "Product", "Release", "Release", "Model", "SKU/Model");
 my @itemtypes = ("None");
 my @themes = ("primary", "default", "success", "info", "warning", "danger");
@@ -488,6 +488,12 @@ sub db_check
 		$sql->execute();
 	};
 	$sql->finish();
+	$sql = $db->prepare("SELECT * FROM sessions WHERE 0 = 1;") or do
+	{
+		$sql = $db->prepare("CREATE TABLE sessions (user TEXT, session TEXT, ip TEXT, expire INT);");
+		$sql->execute();
+	};
+	$sql->finish();
 }
 
 # Log an event
@@ -550,16 +556,21 @@ sub save_config
 sub check_user
 {
 	my ($n, $p) = @_;
+	my $session = join'', map +(0..9,'a'..'z','A'..'Z')[rand(10+26*2)], 1..32;
 	if(sha1_hex($p) eq $cfg->load("admin_pass") && lc($n) eq lc($cfg->load("admin_name")))
 	{
 		$logged_user = $cfg->load("admin_name");
 		$logged_lvl = 6;
 		$cn = $q->cookie(-name => "np_name", -value => $logged_user);
-		$cp = $q->cookie(-name => "np_key", -value => encode_base64(RC4($cfg->load("api_read"), $p), ""));
+		$cp = $q->cookie(-name => "np_key", -value => $session);
+		$sql = $db->prepare("DELETE FROM sessions WHERE user = ?;");
+		$sql->execute($logged_user);
+		$sql = $db->prepare("INSERT INTO sessions VALUES (?, ?, ?, ?);");
+		$sql->execute($logged_user, $session, $q->remote_addr, to_int(time+36000));
 	}
 	else
 	{
-		$sql = $db->prepare("SELECT * FROM disabled WHERE user = ?;");
+		$sql = $db->prepare("SELECT * FROM disabled WHERE user = ? COLLATE NOCASE;");
 		$sql->execute(sanitize_alpha($n));
 		while(my @res = $sql->fetchrow_array())
 		{
@@ -583,8 +594,12 @@ sub check_user
 				$logged_user = lc($n);
 				$logged_lvl = $cfg->load("default_lvl");
 				$cn = $q->cookie(-name => "np_name", -value => $logged_user);
-				$cp = $q->cookie(-name => "np_key", -value => encode_base64(RC4($cfg->load("api_read"), $p), ""));
-				$sql = $db->prepare("SELECT * FROM users WHERE name = ?;");
+				$cp = $q->cookie(-name => "np_key", -value => $session);
+				$sql = $db->prepare("DELETE FROM sessions WHERE user = ?;");
+				$sql->execute($logged_user);
+				$sql = $db->prepare("INSERT INTO sessions VALUES (?, ?, ?, ?);");
+				$sql->execute($logged_user, $session, $q->remote_addr, to_int(time+36000));
+				$sql = $db->prepare("SELECT * FROM users WHERE name = ? COLLATE NOCASE;");
 				$sql->execute($n);
 				my $found = 0;
 				while(my @res = $sql->fetchrow_array())
@@ -597,6 +612,11 @@ sub check_user
 				{
 					$sql = $db->prepare("INSERT INTO users VALUES(?, ?, ?, ?, ?, ?);");
 					$sql->execute($logged_user, "*********", "", to_int($cfg->load('default_lvl')), now(), "");
+				}
+				else
+				{
+					$sql = $db->prepare("UPDATE users SET loggedin = ? WHERE name = ?;");
+					$sql->execute(now(), $logged_user);
 				}
 			}; # check silently since headers may not be set			
 		}
@@ -618,8 +638,12 @@ sub check_user
 				$logged_user = lc($n);
 				$logged_lvl = $cfg->load("default_lvl");
 				$cn = $q->cookie(-name => "np_name", -value => $logged_user);
-				$cp = $q->cookie(-name => "np_key", -value => encode_base64(RC4($cfg->load("api_read"), $p), ""));
-				$sql = $db->prepare("SELECT * FROM users WHERE name = ?;");
+				$cp = $q->cookie(-name => "np_key", -value => $session);
+				$sql = $db->prepare("DELETE FROM sessions WHERE user = ?;");
+				$sql->execute($logged_user);
+				$sql = $db->prepare("INSERT INTO sessions VALUES (?, ?, ?, ?);");
+				$sql->execute($logged_user, $session, $q->remote_addr, to_int(time+36000));
+				$sql = $db->prepare("SELECT * FROM users WHERE name = ? COLLATE NOCASE;");
 				$sql->execute($n);
 				my $found = 0;
 				while(my @res = $sql->fetchrow_array())
@@ -632,6 +656,11 @@ sub check_user
 				{
 					$sql = $db->prepare("INSERT INTO users VALUES(?, ?, ?, ?, ?, ?);");
 					$sql->execute($logged_user, "*********", "", to_int($cfg->load('default_lvl')), now(), "");
+				}
+				else
+				{
+					$sql = $db->prepare("UPDATE users SET loggedin = ? WHERE name = ?;");
+					$sql->execute(now(), $logged_user);
 				}
 			};
 		}
@@ -651,7 +680,11 @@ sub check_user
 						$sql = $db->prepare("UPDATE users SET loggedin = ? WHERE name = ?;");
 						$sql->execute(now(), $res[0]);
 						$cn = $q->cookie(-name => "np_name", -value => $logged_user);
-						$cp = $q->cookie(-name => "np_key", -value => encode_base64(RC4($cfg->load("api_read"), $p), ""));
+						$cp = $q->cookie(-name => "np_key", -value => $session);
+						$sql = $db->prepare("DELETE FROM sessions WHERE user = ?;");
+						$sql->execute($logged_user);
+						$sql = $db->prepare("INSERT INTO sessions VALUES (?, ?, ?, ?);");
+						$sql->execute($logged_user, $session, $q->remote_addr, to_int(time+36000));
 						last;
 					}
 				}
@@ -989,11 +1022,11 @@ sub home
 # Connect to config
 eval
 {
-	$cfg = Config::Linux->new("NodePoint", "settings");
+	$cfg = Config::Win32->new("NodePoint", "settings");
 };
 if(!defined($cfg)) # Can't even use headers() if this fails.
 {
-	print "Content-type: text/html\n\nError: Could not access " . Config::Linux->type . ". Please ensure NodePoint has the proper permissions.";
+	print "Content-type: text/html\n\nError: Could not access " . Config::Win32->type . ". Please ensure NodePoint has the proper permissions.";
 	exit(0);
 };
 
@@ -1005,9 +1038,37 @@ if($cfg->load("db_address"))
 }
 
 # Check cookies
-if($q->cookie('np_name') && $q->cookie('np_key') && $cfg->load("api_read"))
+if($q->cookie('np_name') && $q->cookie('np_key'))
 {
-	check_user($q->cookie('np_name'), RC4($cfg->load("api_read"), decode_base64($q->cookie('np_key'))));
+	eval
+	{
+		$sql = $db->prepare("SELECT * FROM sessions WHERE session = ? AND ip = ? AND user = ? AND expire > ?;");
+		$sql->execute($q->cookie('np_key'), $q->remote_addr, sanitize_alpha($q->cookie('np_name')), to_int(time));
+		while(my @res = $sql->fetchrow_array())
+		{
+			my $sql2 = $db->prepare("SELECT * FROM disabled WHERE user = ? COLLATE NOCASE;");
+			$sql2->execute(sanitize_alpha($q->cookie('np_name')));
+			while(my @res = $sql2->fetchrow_array())
+			{
+				return;
+			}
+			if($res[0] eq $cfg->load("admin_name"))
+			{
+				$logged_user = $cfg->load("admin_name");
+				$logged_lvl = 6;
+			}
+			else
+			{
+				$sql2 = $db->prepare("SELECT * FROM users WHERE name = ?;");
+				$sql2->execute($res[0]);
+				while(my @res2 = $sql2->fetchrow_array())
+				{
+					$logged_user = $res2[0];
+					$logged_lvl = to_int($res2[3]);
+				}
+			}
+		}
+	}; # check silently since headers may not be set
 }
 
 # Check items tracked
@@ -2943,6 +3004,8 @@ elsif($q->param('m')) # Modules
 		$cn = $q->cookie(-name => "np_name", -value => "");
 		$cp = $q->cookie(-name => "np_key", -value => "");
 		headers("Settings");
+		$sql = $db->prepare("DELETE FROM sessions WHERE user = ?;");
+		$sql->execute($logged_user);
 		msg("You have now logged out. Press <a href='.'>here</a> to go back to the login page.", 3);
 	}
 	elsif($q->param('m') eq "change_lvl" && $logged_lvl > 4 && $q->param('u') && defined($q->param('newlvl')))
