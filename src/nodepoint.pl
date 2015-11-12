@@ -8,7 +8,7 @@
 #
 
 use strict;
-use Config::Linux;
+use Config::Win32;
 use Digest::SHA qw(sha1_hex);
 use DBI;
 use CGI;
@@ -27,7 +27,7 @@ my ($cfg, $db, $sql, $cn, $cp, $cgs, $last_login, $perf);
 my $logged_user = "";
 my $logged_lvl = -1;
 my $q = new CGI;
-my $VERSION = "1.5.0";
+my $VERSION = "1.5.1";
 my %items = ("Product", "Product", "Release", "Release", "Model", "SKU/Model");
 my @itemtypes = ("None");
 my @themes = ("primary", "default", "success", "info", "warning", "danger");
@@ -1012,7 +1012,7 @@ sub home
 		while(my @res = $sql->fetchrow_array())
 		{
 			print "<tr><td>" . $res[2] . "</td><td><a href='./?m=items&i=" . $res[0] . "'>" . $res[1] . "</a></td><td>";
-			if($res[7] == 2) { print "<input type='submit' name='checkin' class='btn btn-default pull-right' value='Waiting approval' disabled>"; }
+			if($res[7] == 2) { print "<input type='submit' name='checkin' class='btn btn-default pull-right' value='Waiting approval' disabled>" . $res[3]; }
 			else { print "<form method='POST' action='.'><input type='hidden' name='m' value='items'><input type='hidden' name='i' value='" . $res[0] . "'><input type='submit' name='checkin' value='Return' class='btn btn-primary pull-right'>" . $res[3] . "</form>"; }
 			print "</td></tr>\n";
 		}
@@ -1027,11 +1027,11 @@ sub home
 # Connect to config
 eval
 {
-	$cfg = Config::Linux->new("NodePoint", "settings");
+	$cfg = Config::Win32->new("NodePoint", "settings");
 };
 if(!defined($cfg)) # Can't even use headers() if this fails.
 {
-	print "Content-type: text/html\n\nError: Could not access " . Config::Linux->type . ". Please ensure NodePoint has the proper permissions.";
+	print "Content-type: text/html\n\nError: Could not access " . Config::Win32->type . ". Please ensure NodePoint has the proper permissions.";
 	exit(0);
 };
 
@@ -4196,10 +4196,10 @@ elsif($q->param('m')) # Modules
 						elsif(to_int($customform[($i*2)+3]) == 12)
 						{
 							print "<select class='form-control' name='field" . $i . "'>";
-							my $sql2 = $db->prepare("SELECT serial FROM items WHERE user = ?;");
+							my $sql2 = $db->prepare("SELECT name,serial FROM items WHERE user = ?;");
 							if($logged_user ne "") { $sql2->execute($logged_user); }
 							else { $sql2->execute("Guest"); }
-							while(my @res2 = $sql2->fetchrow_array()) { print "<option>" . $res2[0] . "</option>"; }
+							while(my @res2 = $sql2->fetchrow_array()) { print "<option>" . $res2[0] . " (" . $res2[1] . ")</option>"; }
 							print "</select>";
 						}
 						elsif(to_int($customform[($i*2)+3]) == 9) { print "<select class='form-control' name='field" . $i . "'><option>Extremely</option><option>A lot</option><option>Moderately</option><option>Slightly</option><option>Not at all</option></select>"; }
