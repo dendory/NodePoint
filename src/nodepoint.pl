@@ -8,7 +8,7 @@
 #
 
 use strict;
-use Config::Win32;
+use Config::Linux;
 use Digest::SHA qw(sha1_hex);
 use DBI;
 use CGI;
@@ -27,7 +27,7 @@ my ($cfg, $db, $sql, $cn, $cp, $cgs, $last_login, $perf);
 my $logged_user = "";
 my $logged_lvl = -1;
 my $q = new CGI;
-my $VERSION = "1.5.1";
+my $VERSION = "1.5.0";
 my %items = ("Product", "Product", "Release", "Release", "Model", "SKU/Model");
 my @itemtypes = ("None");
 my @themes = ("primary", "default", "success", "info", "warning", "danger");
@@ -515,38 +515,39 @@ sub logevent
 # Basic configuration
 sub save_config
 {
-	$cfg->save("db_address", $q->param('db_address'));
+	$cfg->save("db_address", sanitize_html($q->param('db_address')));
 	$cfg->save("admin_name", sanitize_alpha($q->param('admin_name')));
 	if($q->param("admin_pass")) { $cfg->save("admin_pass", sha1_hex($q->param('admin_pass'))); }
 	$cfg->save("site_name", sanitize_html($q->param('site_name')));
-	$cfg->save("motd", $q->param('motd'));
-	$cfg->save("css_template", $q->param('css_template'));
-	$cfg->save("favicon", $q->param('favicon'));
+	$cfg->save("motd", sanitize_html($q->param('motd')));
+	$cfg->save("css_template", sanitize_html($q->param('css_template')));
+	$cfg->save("favicon", sanitize_html($q->param('favicon')));
 	$cfg->save("default_vis", $q->param('default_vis'));
 	$cfg->save("default_lvl", to_int($q->param('default_lvl')));
 	$cfg->save("upload_lvl", to_int($q->param('upload_lvl')));
 	$cfg->save("allow_registrations", $q->param('allow_registrations'));
 	$cfg->save("guest_tickets", $q->param('guest_tickets'));
-	$cfg->save("smtp_server", $q->param('smtp_server'));    
-	$cfg->save("smtp_port", $q->param('smtp_port'));    
-	$cfg->save("smtp_from", $q->param('smtp_from'));
-	$cfg->save("smtp_user", $q->param('smtp_user'));    
+	$cfg->save("smtp_server", sanitize_html($q->param('smtp_server')));    
+	$cfg->save("smtp_port", to_int($q->param('smtp_port')));    
+	$cfg->save("smtp_from", sanitize_html($q->param('smtp_from')));
+	$cfg->save("smtp_user", sanitize_html($q->param('smtp_user')));    
 	$cfg->save("smtp_pass", $q->param('smtp_pass'));    
-	$cfg->save("api_read", $q->param('api_read'));
-	$cfg->save("api_write", $q->param('api_write'));
+	$cfg->save("api_read", sanitize_html($q->param('api_read')));
+	$cfg->save("api_write", sanitize_html($q->param('api_write')));
 	$cfg->save("api_imp", $q->param('api_imp'));
 	$cfg->save("theme_color", $q->param('theme_color'));
-	$cfg->save("upload_folder", $q->param('upload_folder'));
+	$cfg->save("upload_folder", sanitize_html($q->param('upload_folder')));
 	$cfg->save("items_managed", $q->param('items_managed'));
-	$cfg->save("custom_name", $q->param('custom_name'));
+	$cfg->save("custom_name", sanitize_html($q->param('custom_name')));
 	$cfg->save("custom_type", $q->param('custom_type'));
-	$cfg->save("ext_plugin", $q->param('ext_plugin'));
-	$cfg->save("auth_plugin", $q->param('auth_plugin'));
-	$cfg->save("checkout_plugin", $q->param('checkout_plugin'));
-	$cfg->save("task_plugin", $q->param('task_plugin'));
-	$cfg->save("ticket_plugin", $q->param('ticket_plugin'));
-	$cfg->save("ad_server", $q->param('ad_server'));
-	$cfg->save("ad_domain", $q->param('ad_domain'));
+	$cfg->save("ext_plugin", sanitize_html($q->param('ext_plugin')));
+	$cfg->save("auth_plugin", sanitize_html($q->param('auth_plugin')));
+	$cfg->save("checkout_plugin", sanitize_html($q->param('checkout_plugin')));
+	$cfg->save("task_plugin", sanitize_html($q->param('task_plugin')));
+	$cfg->save("ticket_plugin", sanitize_html($q->param('ticket_plugin')));
+	$cfg->save("newticket_plugin", sanitize_html($q->param('newticket_plugin')));
+	$cfg->save("ad_server", sanitize_html($q->param('ad_server')));
+	$cfg->save("ad_domain", sanitize_html($q->param('ad_domain')));
 	$cfg->save("comp_tickets", $q->param('comp_tickets'));
 	$cfg->save("comp_articles", $q->param('comp_articles'));
 	$cfg->save("comp_time", $q->param('comp_time'));
@@ -1027,11 +1028,11 @@ sub home
 # Connect to config
 eval
 {
-	$cfg = Config::Win32->new("NodePoint", "settings");
+	$cfg = Config::Linux->new("NodePoint", "settings");
 };
 if(!defined($cfg)) # Can't even use headers() if this fails.
 {
-	print "Content-type: text/html\n\nError: Could not access " . Config::Win32->type . ". Please ensure NodePoint has the proper permissions.";
+	print "Content-type: text/html\n\nError: Could not access " . Config::Linux->type . ". Please ensure NodePoint has the proper permissions.";
 	exit(0);
 };
 
@@ -1207,7 +1208,7 @@ elsif(!$cfg->load("db_address") || !$cfg->load("site_name")) # first use
 				print "<p><div class='row'><div class='col-sm-4'>Minimum upload level:</div><div class='col-sm-4'><select name='upload_lvl' style='width:300px'><option value=5>5 - Users management</option><option value=4>4 - Projects management</option><option value=3>3 - Tickets management</option><option value=2>2 - Restricted view</option><option value=1 selected=selected>1 - Authorized users</option><option value=0>0 - Unauthorized users</option></select></div></div></p>\n";
 				print "<p>The upload folder should be a local folder with write access and is used for product images and comment attachments. If left empty, uploads will be disabled.</p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Items managed:</div><div class='col-sm-4'><select style='width:300px' name='items_managed'><option selected>Products with models and releases</option><option selected>Projects with goals and milestones</option><option>Resources with locations and updates</option><option>Applications with platforms and versions</option><option>Assets with types and instances</option></select></div></div></p>\n";
-				print "<p><div class='row'><div class='col-sm-4'>Custom ticket field:</div><div class='col-sm-4'><input type='text' style='width:300px' name='custom_name' value='Related tickets'></div></div></p>\n";
+				print "<p><div class='row'><div class='col-sm-4'>Custom ticket field:</div><div class='col-sm-4'><input type='text' style='width:300px' name='custom_name' value='Related keywords'></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Custom field type:</div><div class='col-sm-4'><select style='width:300px' name='custom_type'><option>Text</option><option>Link</option><option>Checkbox</option></select></div></div></p>\n";
 				print "<p>To validate logins against an Active Directory domain, enter your domain controller address and domain name (NT4 format) here:</p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Active Directory server:</div><div class='col-sm-4'><input type='text' style='width:300px' name='ad_server' value=''></div></div></p>\n";
@@ -1217,6 +1218,7 @@ elsif(!$cfg->load("db_address") || !$cfg->load("site_name")) # first use
 				print "<p><div class='row'><div class='col-sm-4'>Notifications plugin:</div><div class='col-sm-4'><input type='text' style='width:300px' name='ext_plugin' value=''></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Checkout plugin:</div><div class='col-sm-4'><input type='text' style='width:300px' name='checkout_plugin' value=''></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Task completion plugin:</div><div class='col-sm-4'><input type='text' style='width:300px' name='task_plugin' value=''></div></div></p>\n";
+				print "<p><div class='row'><div class='col-sm-4'>New ticket plugin:</div><div class='col-sm-4'><input type='text' style='width:300px' name='newticket_plugin' value=''></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Ticket resolution plugin:</div><div class='col-sm-4'><input type='text' style='width:300px' name='ticket_plugin' value=''></div></div></p>\n";
 				print "<p>Select which major components of NodePoint you want to activate:</p>";
 				print "<p><div class='row'><div class='col-sm-4'>Component: Tickets Management</div><div class='col-sm-4'><input type='checkbox' name='comp_tickets' checked></div></div></p>\n";
@@ -2065,6 +2067,24 @@ elsif($q->param('api')) # API calls
 				{
 					notify($res[1], "New ticket created", "A new ticket was created for one of your products:\n\nUser: api\nTitle: " . sanitize_html($q->param('title')) . "\n" . $cfg->load('custom_name') . ": " . $custom . "\nDescription: " . sanitize_html($q->param('description')));
 				}
+				if($cfg->load('newticket_plugin'))
+				{
+					my $cmd = $cfg->load('newticket_plugin');
+					my $s0 = to_int($q->param('product_id'));
+					my $s1 = sanitize_html($q->param('release_id'));
+					my $s2 = sanitize_html($q->param('title'));
+					my $s3 = sanitize_html($q->param('description'));
+					my $s4 = $rowid;
+					$cmd =~ s/\%product\%/\"$s0\"/g;
+					$cmd =~ s/\%release\%/\"$s1\"/g;
+					$cmd =~ s/\%title\%/\"$s2\"/g;
+					$cmd =~ s/\%description\%/\"$s3\"/g;
+					$cmd =~ s/\%ticket\%/\"$s4\"/g;
+					$cmd =~ s/\%user\%/\"$from_user\"/g;
+					$cmd =~ s/\n/ /g;
+					$cmd =~ s/\r/ /g;
+					system($cmd);
+				}
 			}
 		}
 	}
@@ -2575,6 +2595,7 @@ elsif($q->param('m')) # Modules
 			print "<tr><td>Plugin: Notifications</td><td><input class='form-control' type='text' name='ext_plugin' value=\"" . $cfg->load("ext_plugin") . "\"></td></tr>\n";
 			print "<tr><td>Plugin: Checkout</td><td><input class='form-control' type='text' name='checkout_plugin' value=\"" . $cfg->load("checkout_plugin") . "\"></td></tr>\n";
 			print "<tr><td>Plugin: Task completion</td><td><input class='form-control' type='text' name='task_plugin' value=\"" . $cfg->load("task_plugin") . "\"></td></tr>\n";
+			print "<tr><td>Plugin: New tickets</td><td><input class='form-control' type='text' name='newticket_plugin' value=\"" . $cfg->load("newticket_plugin") . "\"></td></tr>\n";
 			print "<tr><td>Plugin: Ticket resolution</td><td><input class='form-control' type='text' name='ticket_plugin' value=\"" . $cfg->load("ticket_plugin") . "\"></td></tr>\n";
 			print "<tr><td>Component: Tickets Management</td><td><select class='form-control' name='comp_tickets'>";
 			if($cfg->load("comp_tickets") eq "on") { print "<option selected>on</option><option>off</option>"; }
@@ -4057,6 +4078,24 @@ elsif($q->param('m')) # Modules
 				}
 				if($lastrowid != 0)
 				{
+					if($cfg->load('newticket_plugin'))
+					{
+						my $cmd = $cfg->load('newticket_plugin');
+						my $s0 = to_int($q->param('product_id'));
+						my $s1 = sanitize_html($q->param('release_id'));
+						my $s2 = sanitize_html($title);
+						my $s3 = sanitize_html($description);
+						my $s4 = $lastrowid;
+						$cmd =~ s/\%product\%/\"$s0\"/g;
+						$cmd =~ s/\%release\%/\"$s1\"/g;
+						$cmd =~ s/\%title\%/\"$s2\"/g;
+						$cmd =~ s/\%description\%/\"$s3\"/g;
+						$cmd =~ s/\%ticket\%/\"$s4\"/g;
+						$cmd =~ s/\%user\%/\"$logged_user\"/g;
+						$cmd =~ s/\n/ /g;
+						$cmd =~ s/\r/ /g;
+						system($cmd);
+					}
 					if($q->param('client'))
 					{
 						$sql = $db->prepare("INSERT INTO billing VALUES (?, ?);");
