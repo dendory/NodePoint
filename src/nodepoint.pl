@@ -2819,18 +2819,69 @@ elsif($q->param('m')) # Modules
 		else { print "<input type='submit' class='btn btn-success pull-right' name='enable_user' value='Enable login'>"; }
 		print "</form></div></div>";
 	}
-	elsif($q->param('m') eq "set_defaults" && $q->param('client') && $q->param('c') && $logged_lvl > 4)
-	{
-		headers("Clients");
-		$sql = $db->prepare("DELETE FROM billing_defaults WHERE client = ?;");
-		$sql->execute(sanitize_html($q->param('client')));
-		$sql = $db->prepare("INSERT INTO billing_defaults VALUES (?, ?, ?, ?);");
-		$sql->execute(sanitize_html($q->param('client')), to_int($q->param('type')), sanitize_alpha($q->param('currency')), to_float($q->param('cost')));
-		msg("Client defaults updated. Press <a href='./?m=view_client&c=" . to_int($q->param('c')) . "'>here</a> to continue.", 3);
-	}
 	elsif($q->param('m') eq "view_client" && $q->param('c') && $logged_lvl > 1)
 	{
+		if($q->param('csv') && $cfg->load('comp_billing') eq "on")
+		{
+			my $client_name = "";
+			$sql = $db->prepare("SELECT * FROM clients WHERE ROWID = ?;");
+			$sql->execute(to_int($q->param('c')));
+			while(my @res = $sql->fetchrow_array())
+			{
+				$client_name = $res[0];
+			}
+			my $cost = 10.0;
+			my $currency = "USD";
+			my $type = 0;
+			if($cfg->load('comp_time') eq "on") { $type = 1; }
+			my $sql2 = $db->prepare("SELECT type,currency,cost FROM billing_defaults WHERE client = ?;");
+			$sql2->execute($client_name);
+			while(my @res2 = $sql2->fetchrow_array())
+			{
+				$type = $res2[0];
+				$currency = $res2[1];
+				$cost = $res2[2];
+			}
+			print $q->header(-type => "text/csv", -attachment => "billing.csv");
+			print "Ticket,Hours,Cost\n";
+			$sql2 = $db->prepare("SELECT ticketid FROM billing WHERE client = ?;");
+			$sql2->execute($client_name);
+			my $total = 0;
+			while(my @res2 = $sql2->fetchrow_array())
+			{
+				print $res2[0] . ",";
+				my $curhours = 0;
+				my $sql3 = $db->prepare("SELECT spent FROM timetracking WHERE ticketid = ?;");
+				$sql3->execute($res2[0]);
+				while(my @res3 = $sql3->fetchrow_array())
+				{
+					$curhours += to_float($res3[0]);
+				}
+				print $curhours . ",\$";
+				if($cfg->load('comp_time') eq "on" && $type == 1)
+				{
+					print $curhours * to_float($cost);
+					$total += $curhours * to_float($cost);
+				}
+				else
+				{
+					print $cost;
+					$total += $cost;
+				}
+				print "\n";
+				}
+			print "Total,,\$" . $total . "\n";
+			quit(0);
+		}
 		headers("Clients");
+		if($q->param('set_defaults') && $q->param('c') && $logged_lvl > 4)
+		{
+			$sql = $db->prepare("DELETE FROM billing_defaults WHERE client = ?;");
+			$sql->execute(sanitize_html($q->param('set_defaults')));
+			$sql = $db->prepare("INSERT INTO billing_defaults VALUES (?, ?, ?, ?);");
+			$sql->execute(sanitize_html($q->param('set_defaults')), to_int($q->param('type')), sanitize_alpha($q->param('currency')), to_float($q->param('cost')));
+			msg("Client default values updated.", 3);
+		}
 		$sql = $db->prepare("SELECT * FROM clients WHERE ROWID = ?;");
 		$sql->execute(to_int($q->param('c')));
 		while(my @res = $sql->fetchrow_array())
@@ -2875,11 +2926,11 @@ elsif($q->param('m')) # Modules
 				print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Billing</h3></div><div class='panel-body'>";
 				if($logged_lvl > 4)
 				{
-					print "<form method='POST' action='.'><input type='hidden' name='m' value='set_defaults'><input type='hidden' name='c' value='" . to_int($q->param('c')) . "'><input type='hidden' name='client' value='" . $res[0] . "'><div class='row'><div class='col-sm-3'>Type: <select class='form-control' name='type'><option value='0'";
+					print "<form method='POST' action='.'><input type='hidden' name='m' value='view_client'><input type='hidden' name='c' value='" . to_int($q->param('c')) . "'><input type='hidden' name='set_defaults' value='" . $res[0] . "'><div class='row'><div class='col-sm-3'>Type: <select class='form-control' name='type'><option value='0'";
 					if($type == 0) { print " selected"; }
 					print ">Fixed</option><option value='1'";
 					if($type == 1) { print " selected"; }
-					print ">Hourly</option></select></div><div class='col-sm-3'>Cost: <input type='number' class='form-control' name='cost' value='" . to_float($cost) . "'></div><div class='col-sm-3'>Currency: <input type='text' maxlength='4' class='form-control' name='currency' value='" . $currency . "'></div><div class='col-sm-3'><input type='submit' value='Set' class='btn btn-primary pull-right'></div></div></form>";
+					print ">Hourly</option></select></div><div class='col-sm-3'>Cost: <input type='number' class='form-control' name='cost' value='" . to_float($cost) . "'></div><div class='col-sm-3'>Currency: <input type='text' maxlength='4' class='form-control' name='currency' value='" . $currency . "'></div><div class='col-sm-3'><span class='pull-right'><input type='submit' value='Set' class='btn btn-primary'> &nbsp; <input class='btn btn-primary' type='submit' name='csv' value='Export as CSV'></span></div></div></form>";
 				}
 				else
 				{
