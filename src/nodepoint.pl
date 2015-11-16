@@ -8,7 +8,7 @@
 #
 
 use strict;
-use Config::Win32;
+use Config::Linux;
 use Digest::SHA qw(sha1_hex);
 use DBI;
 use CGI;
@@ -1051,11 +1051,11 @@ sub home
 # Connect to config
 eval
 {
-	$cfg = Config::Win32->new("NodePoint", "settings");
+	$cfg = Config::Linux->new("NodePoint", "settings");
 };
 if(!defined($cfg)) # Can't even use headers() if this fails.
 {
-	print "Content-type: text/html\n\nError: Could not access " . Config::Win32->type . ". Please ensure NodePoint has the proper permissions.";
+	print "Content-type: text/html\n\nError: Could not access " . Config::Linux->type . ". Please ensure NodePoint has the proper permissions.";
 	exit(0);
 };
 
@@ -2066,12 +2066,12 @@ elsif($q->param('api')) # API calls
 			}
 			else
 			{
-				my $custom = "";
+				my $lnk = "Normal";
 				my $from_user = "api";
 				if(lc($cfg->load('api_imp')) eq "on" && $q->param('from_user')) { $from_user = sanitize_alpha($q->param('from_user')); }
-				if($q->param('custom')) { $custom = sanitize_html($q->param('custom')); }
+				if($q->param('priority')) { $lnk = sanitize_alpha($q->param('priority')); }
 				$sql = $db->prepare("INSERT INTO tickets VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);");
-				$sql->execute(to_int($q->param('product_id')), sanitize_html($q->param('release_id')), $from_user, "", sanitize_html($q->param('title')), sanitize_html($q->param('description')), $custom, "New", "", "", now(), "Never");
+				$sql->execute(to_int($q->param('product_id')), sanitize_html($q->param('release_id')), $from_user, "", sanitize_html($q->param('title')), sanitize_html($q->param('description')), $lnk, "New", "", "", now(), "Never");
 				$sql = $db->prepare("SELECT last_insert_rowid();");
 				$sql->execute();
 				my $rowid = -1;
@@ -2084,7 +2084,7 @@ elsif($q->param('api')) # API calls
 				$sql->execute(to_int($q->param('product_id')));
 				while(my @res = $sql->fetchrow_array())
 				{
-					notify($res[1], "New ticket created", "A new ticket was created for one of your products:\n\nUser: api\nTitle: " . sanitize_html($q->param('title')) . "\nDescription: " . sanitize_html($q->param('description')));
+					notify($res[1], "New ticket created", "A new ticket was created for one of your " . lc($items{"Product"}) . "s:\n\nUser: api\nTitle: " . sanitize_html($q->param('title')) . "\nDescription: " . sanitize_html($q->param('description')));
 				}
 				if($cfg->load('newticket_plugin'))
 				{
@@ -4131,11 +4131,11 @@ elsif($q->param('m')) # Modules
 				$sql->execute(to_int($q->param('product_id')));
 				while(my @res = $sql->fetchrow_array())
 				{
-					notify($res[1], "New ticket created", "A new ticket was created for one of your products:\n\nUser: " . $logged_user . "\nTitle: " . sanitize_html($title) . "\nPriority: " . $lnk . "\nDescription: " . sanitize_html($description));
+					notify($res[1], "New ticket created", "A new ticket was created for one of your " . lc($items{"Product"}) . "s:\n\nUser: " . $logged_user . "\nTitle: " . sanitize_html($title) . "\nPriority: " . $lnk . "\nDescription: " . sanitize_html($description));
 				}
 				foreach my $assign (split(' ', $assignedto))
 				{
-					notify($assign, "New ticket created", "A new ticket was created for a product assigned to you:\n\nUser: " . $logged_user . "\nTitle: " . sanitize_html($title) . "\nPriority: " . $lnk . "\nDescription: " . sanitize_html($description));
+					notify($assign, "New ticket created", "A new ticket was created for a " . lc($items{"Product"}) . " assigned to you:\n\nUser: " . $logged_user . "\nTitle: " . sanitize_html($title) . "\nPriority: " . $lnk . "\nDescription: " . sanitize_html($description));
 				}
 				$sql = $db->prepare("SELECT last_insert_rowid();");
 				$sql->execute();

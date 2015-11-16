@@ -11,7 +11,7 @@
 % Conditional compilation for Windows and Linux
 \usepackage{ifthen}
 \newboolean{Windows}
-\setboolean{Windows}{true} % change to false for Linux
+\setboolean{Windows}{false} % change to false for Linux
 \ifthenelse{\boolean{Windows}}
 {\def\NodePointManual{NodePoint IT System - Windows version 1.5.1}}
 {\def\NodePointManual{NodePoint IT System - Linux version 1.5.1}}
@@ -325,8 +325,6 @@ These are the default configuration values for NodePoint. They have to be define
 \item \textbf{Upload folder:} Where product images and comment files are stored. Leave empty to disable uploads.
 \item \textbf{Minimum upload level:} The minimum access level a user must have to attach files to comments.
 \item \textbf{Items managed:} The type of items NodePoint should manage. This is purely a UI customization.
-\item \textbf{Custom ticket field:} The name of the third ticket field in the default form (after \textit{title} and \textit{description}). This can be used to ask users who fill in tickets to list related tickets, or any other information relevant to your particular installation.
-\item \textbf{Custom ticket type:} The type of field. If \textit{text}, then the entries will be shown as text. If \textit{URL}, then links will be assumed. If \textit{checkbox}, then users will have to select yes or no.
 \item \textbf{Active Directory server:} Enter your domain controller address to enable AD integration. Users will be created dynamically as they first log on, and passwords will be checked against AD using LDAP.
 \item \textbf{Active Directory domain:} The domain to use for AD integration (in NT4 format).
 \item \textbf{Authentication plugin:} Use an external script or application to authenticate users. This can be used instead of the built-in users management or Active Directory integration if you have some other process to authenticate users. It must return 0 for success, 1 for failure. The following variables can be used: \textit{\%user\%} and \textit{\%pass\%}. For example: \texttt{python auth.py -userid \%user\% -passwd \%pass\%}
@@ -398,9 +396,9 @@ User activity can be monitored through two graphs along with a number of reports
 NodePoint is divided into multiple components that you can enable or disable in the configuration as a product administrator. You can turn them on or off depending on your needs. For example, a help desk portal could have the \textbf{Tickets Management}, \textbf{Time Tracking} and \textbf{Support Articles} components enabled, while a project management portal could have only the \textbf{Tasks Management} component enabled.
 
 \subsection{Tickets Management}
-Users who have an access level of 1 or higher can enter tickets on the \textbf{Tickets} page. The default form asks for a title, description and a custom entry type, configurable in the initial settings. Custom forms can also be designed and assigned to projects by users of access level 4 and above. These custom forms can have up to 10 fields, each field can be a text area, a check box, satisfaction rating, and so on. Projects that have a custom form assigned will display that form to users instead of the default one.
+Users who have an access level of 1 or higher can enter tickets on the \textbf{Tickets} page. The default form asks for a title and description. Custom forms can also be designed and assigned to projects by users of access level 4 and above. These custom forms can have up to 10 fields, each field can be a text area, a check box, satisfaction rating, priority, and so on. Projects that have a custom form assigned will display that form to users instead of the default one.
 
-Users with access level 3 or above can modify tickets. When a ticket is modified, the description is updated to show who modified it, and what parameters were changed, such as the title, description, status and resolution. Open tickets do not require a resolution, but every other status does. The list of tickets can be filtered based on project, status and so on.
+Users with access level 3 or above can modify tickets. When a ticket is modified, the description is updated to show who modified it, and what parameters were changed, such as the title, description, status and resolution. Open tickets do not require a resolution, but each other status does. The list of tickets can be filtered based on project, status and so on.
 
 \subsubsection{Custom forms}
 To use custom forms, follow these steps:
@@ -551,7 +549,7 @@ Here is a list of commands:
 \item release\_id=<release id>
 \item title=<ticket title>
 \item description=<ticket description>
-\item custom=<custom field>
+\item priority=<Low|Normal|High>
 \item from\_user=<valid user>
 \end{itemize}
 
