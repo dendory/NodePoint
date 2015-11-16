@@ -538,8 +538,6 @@ sub save_config
 	$cfg->save("theme_color", $q->param('theme_color'));
 	$cfg->save("upload_folder", sanitize_html($q->param('upload_folder')));
 	$cfg->save("items_managed", $q->param('items_managed'));
-	$cfg->save("custom_name", sanitize_html($q->param('custom_name')));
-	$cfg->save("custom_type", $q->param('custom_type'));
 	$cfg->save("ext_plugin", sanitize_html($q->param('ext_plugin')));
 	$cfg->save("auth_plugin", sanitize_html($q->param('auth_plugin')));
 	$cfg->save("checkout_plugin", sanitize_html($q->param('checkout_plugin')));
@@ -877,12 +875,19 @@ sub home
 	if($logged_lvl > 0 && $cfg->load('comp_tickets') eq "on")
 	{
 		print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Tickets you created</h3></div><div class='panel-body'><table class='table table-striped'>\n";
-		print "<tr><th>ID</th><th>" . $items{"Product"} . "</th><th>" . $items{"Release"} . "</th><th>Title</th><th>Status</th><th>Last modified</th></tr>\n";
+		print "<tr><th>ID</th><th>" . $items{"Product"} . "</th><th>Title</th><th>Status</th><th>Last modified</th></tr>\n";
 		$sql = $db->prepare("SELECT ROWID,* FROM tickets WHERE status != 'Closed' ORDER BY ROWID DESC");
 		$sql->execute();
 		while(my @res = $sql->fetchrow_array())
 		{
-			if($products[$res[1]] && $res[3] eq $logged_user) { print "<tr><td>" . $res[0] . "</td><td>" . $products[$res[1]] . "</td><td>" . $res[2] . "</td><td><a href='./?m=view_ticket&t=" . $res[0] . "'>" . $res[5] . "</a></td><td>" . $res[8] . "</td><td>" . $res[12] . "</td></tr>\n"; }
+			if($products[$res[1]] && $res[3] eq $logged_user) 
+			{ 
+				print "<tr><td><nobr>";
+				if($res[7] eq "High") { print "<img src='icons/high.png'> "; }
+				elsif($res[7] eq "Low") { print "<img src='icons/low.png'> "; }
+				else { print "<img src='icons/normal.png'> "; }
+				print $res[0] . "</nobr></td><td>" . $products[$res[1]] . "</td><td><a href='./?m=view_ticket&t=" . $res[0] . "'>" . $res[5] . "</a></td><td>" . $res[8] . "</td><td>" . $res[12] . "</td></tr>\n"; 
+			}
 		}
 		print "</table></div></div>";
 	}
@@ -890,12 +895,19 @@ sub home
 	if($cfg->load('comp_tickets') eq "on")
 	{
 		print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Tickets you follow</h3></div><div class='panel-body'><table class='table table-striped'>\n";
-		print "<tr><th>ID</th><th>" . $items{"Product"} . "</th><th>User</th><th>Title</th><th>Status</th><th>Last modified</th></tr>\n";
+		print "<tr><th>ID</th><th>" . $items{"Product"} . "</th><th>Title</th><th>Status</th><th>Last modified</th></tr>\n";
 		$sql = $db->prepare("SELECT ROWID,* FROM tickets WHERE status != 'Closed' ORDER BY ROWID DESC;");
 		$sql->execute();
 		while(my @res = $sql->fetchrow_array())
 		{
-			if($products[$res[1]] && $res[10] =~ /\b$logged_user\b/) { print "<tr><td>" . $res[0] . "</td><td>" . $products[$res[1]] . "</td><td>" . $res[3] . "</td><td><a href='./?m=view_ticket&t=" . $res[0] . "'>" . $res[5] . "</a></td><td>" . $res[8] . "</td><td>" . $res[12] . "</td></tr>\n"; }
+			if($products[$res[1]] && $res[10] =~ /\b$logged_user\b/) 
+			{ 
+				print "<tr><td><nobr>";
+				if($res[7] eq "High") { print "<img src='icons/high.png'> "; }
+				elsif($res[7] eq "Low") { print "<img src='icons/low.png'> "; }
+				else { print "<img src='icons/normal.png'> "; }
+				print $res[0] . "</nobr></td><td>" . $products[$res[1]] . "</td><td><a href='./?m=view_ticket&t=" . $res[0] . "'>" . $res[5] . "</a></td><td>" . $res[8] . "</td><td>" . $res[12] . "</td></tr>\n"; 
+			}
 		}
 		print "</table></div></div>";
 	}
@@ -903,12 +915,19 @@ sub home
 	if($logged_lvl > 2 && $cfg->load('comp_tickets') eq "on")
 	{
 		print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Tickets assigned to you</h3></div><div class='panel-body'><table class='table table-striped'>\n";
-		print "<tr><th>ID</th><th>" . $items{"Product"} . "</th><th>User</th><th>Title</th><th>Status</th><th>Last modified</th></tr>\n";
+		print "<tr><th>ID</th><th>" . $items{"Product"} . "</th><th>Title</th><th>Status</th><th>Last modified</th></tr>\n";
 		$sql = $db->prepare("SELECT ROWID,* FROM tickets WHERE status != 'Closed' ORDER BY ROWID DESC;");
 		$sql->execute();
 		while(my @res = $sql->fetchrow_array())
 		{
-			if($products[$res[1]] && $res[4] =~ /\b$logged_user\b/) { print "<tr><td>" . $res[0] . "</td><td>" . $products[$res[1]] . "</td><td>" . $res[3] . "</td><td><a href='./?m=view_ticket&t=" . $res[0] . "'>" . $res[5] . "</a></td><td>" . $res[8] . "</td><td>" . $res[12] . "</td></tr>\n"; }
+			if($products[$res[1]] && $res[4] =~ /\b$logged_user\b/) 
+			{ 
+				print "<tr><td><nobr>";
+				if($res[7] eq "High") { print "<img src='icons/high.png'> "; }
+				elsif($res[7] eq "Low") { print "<img src='icons/low.png'> "; }
+				else { print "<img src='icons/normal.png'> "; }
+				print $res[0] . "</nobr></td><td>" . $products[$res[1]] . "</td><td><a href='./?m=view_ticket&t=" . $res[0] . "'>" . $res[5] . "</a></td><td>" . $res[8] . "</td><td>" . $res[12] . "</td></tr>\n"; 
+			}
 		}
 		print "</table></div></div>";
 	}
@@ -1114,7 +1133,7 @@ if($cfg->load("items_managed"))
 if($q->param('site_name') && $q->param('db_address') && $logged_user ne "" && $logged_user eq $cfg->load('admin_name')) # Save config by admin
 {
 	headers("Settings");
-	if($q->param('site_name') && $q->param('db_address') && $q->param('admin_name') && $q->param('custom_name') && defined($q->param('default_lvl')) && $q->param('default_vis') && $q->param('api_write') && defined($q->param('theme_color')) &&  $q->param('api_imp') && $q->param('api_read') && $q->param('comp_tickets') && $q->param('comp_articles') && $q->param('comp_time') && $q->param('comp_shoutbox') && $q->param('comp_billing') && $q->param('comp_clients') && $q->param('comp_items') && $q->param('comp_steps')) # All required values have been filled out
+	if($q->param('site_name') && $q->param('db_address') && $q->param('admin_name') && defined($q->param('default_lvl')) && $q->param('default_vis') && $q->param('api_write') && defined($q->param('theme_color')) &&  $q->param('api_imp') && $q->param('api_read') && $q->param('comp_tickets') && $q->param('comp_articles') && $q->param('comp_time') && $q->param('comp_shoutbox') && $q->param('comp_billing') && $q->param('comp_clients') && $q->param('comp_items') && $q->param('comp_steps')) # All required values have been filled out
 	{
 		# Test database settings
 		$db = DBI->connect("dbi:SQLite:dbname=" . $q->param('db_address'), '', '', { RaiseError => 0, PrintError => 0 }) or do { msg("Could not verify database settings. Please hit back and try again.<br><br>" . $DBI::errstr, 0); exit(0); };
@@ -1133,7 +1152,6 @@ if($q->param('site_name') && $q->param('db_address') && $logged_user ne "" && $l
 		if(!$q->param('api_write')) { $text .= "<span class='label label-danger'>API write key</span> "; }
 		if(!$q->param('api_imp')) { $text .= "<span class='label label-danger'>Allow user impersonation</span> "; }
 		if(!defined($q->param('theme_color'))) { $text .= "<span class='label label-danger'>Interface theme color</span> "; }
-		if(!$q->param('custom_name')) { $text .= "<span class='label label-danger'>Custom ticket field</span> "; }
 		if(!$q->param('comp_tickets')) { $text .= "<span class='label label-danger'>Component: Tickets management</span> "; }
 		if(!$q->param('comp_articles')) { $text .= "<span class='label label-danger'>Component: Support articles</span> "; }
 		if(!$q->param('comp_time')) { $text .= "<span class='label label-danger'>Component: Time tracking</span> "; }
@@ -1150,7 +1168,7 @@ if($q->param('site_name') && $q->param('db_address') && $logged_user ne "" && $l
 elsif(!$cfg->load("db_address") || !$cfg->load("site_name")) # first use
 {
 	headers("Initial configuration");
-	if($q->param('site_name') && $q->param('db_address') && $q->param('custom_name') && $q->param('admin_name') && $q->param('admin_pass') && $q->param('default_lvl') && $q->param('default_vis') && $q->param('api_write') && $q->param('api_read')) # All required values have been filled out
+	if($q->param('site_name') && $q->param('db_address') && $q->param('admin_name') && $q->param('admin_pass') && $q->param('default_lvl') && $q->param('default_vis') && $q->param('api_write') && $q->param('api_read')) # All required values have been filled out
 	{
 		# Test database settings
 		$db = DBI->connect("dbi:SQLite:dbname=" . $q->param('db_address'), '', '', { RaiseError => 0, PrintError => 0 }) or do { msg("Could not verify database settings. Please hit back and try again.<br><br>" . $DBI::errstr, 0); exit(0); };
@@ -1170,7 +1188,6 @@ elsif(!$cfg->load("db_address") || !$cfg->load("site_name")) # first use
 			if(!$q->param('default_vis')) { $text .= "<span class='label label-danger'>Ticket visibility</span> "; }
 			if(!$q->param('api_read')) { $text .= "<span class='label label-danger'>API read key</span> "; }
 			if(!$q->param('api_write')) { $text .= "<span class='label label-danger'>API write key</span> "; }
-			if(!$q->param('custom_name')) { $text .= "<span class='label label-danger'>Custom ticket field</span> "; }
 			$text .= " Please go back and try again.";
 			msg($text, 0);
 		}
@@ -1212,8 +1229,6 @@ elsif(!$cfg->load("db_address") || !$cfg->load("site_name")) # first use
 				print "<p><div class='row'><div class='col-sm-4'>Minimum upload level:</div><div class='col-sm-4'><select name='upload_lvl' style='width:300px'><option value=5>5 - Users management</option><option value=4>4 - Projects management</option><option value=3>3 - Tickets management</option><option value=2>2 - Restricted view</option><option value=1 selected=selected>1 - Authorized users</option><option value=0>0 - Unauthorized users</option></select></div></div></p>\n";
 				print "<p>The upload folder should be a local folder with write access and is used for product images and comment attachments. If left empty, uploads will be disabled.</p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Items managed:</div><div class='col-sm-4'><select style='width:300px' name='items_managed'><option selected>Products with models and releases</option><option selected>Projects with goals and milestones</option><option>Resources with locations and updates</option><option>Applications with platforms and versions</option><option>Assets with types and instances</option></select></div></div></p>\n";
-				print "<p><div class='row'><div class='col-sm-4'>Custom ticket field:</div><div class='col-sm-4'><input type='text' style='width:300px' name='custom_name' value='Related keywords'></div></div></p>\n";
-				print "<p><div class='row'><div class='col-sm-4'>Custom field type:</div><div class='col-sm-4'><select style='width:300px' name='custom_type'><option>Text</option><option>Link</option><option>Checkbox</option></select></div></div></p>\n";
 				print "<p>To validate logins against an Active Directory domain, enter your domain controller address and domain name (NT4 format) here:</p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Active Directory server:</div><div class='col-sm-4'><input type='text' style='width:300px' name='ad_server' value=''></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Active Directory domain:</div><div class='col-sm-4'><input type='text' style='width:300px' name='ad_domain' value=''></div></div></p>\n";
@@ -2069,7 +2084,7 @@ elsif($q->param('api')) # API calls
 				$sql->execute(to_int($q->param('product_id')));
 				while(my @res = $sql->fetchrow_array())
 				{
-					notify($res[1], "New ticket created", "A new ticket was created for one of your products:\n\nUser: api\nTitle: " . sanitize_html($q->param('title')) . "\n" . $cfg->load('custom_name') . ": " . $custom . "\nDescription: " . sanitize_html($q->param('description')));
+					notify($res[1], "New ticket created", "A new ticket was created for one of your products:\n\nUser: api\nTitle: " . sanitize_html($q->param('title')) . "\nDescription: " . sanitize_html($q->param('description')));
 				}
 				if($cfg->load('newticket_plugin'))
 				{
@@ -2586,12 +2601,6 @@ elsif($q->param('m')) # Modules
 			elsif($cfg->load("items_managed") eq "Applications with platforms and versions") { print "<option>Products with models and releases</option><option>Projects with goals and milestones</option><option>Resources with locations and updates</option><option selected>Applications with platforms and versions</option><option>Assets with types and instances</option>"; }
 			elsif($cfg->load("items_managed") eq "Assets with types and instances") { print "<option>Products with models and releases</option><option>Projects with goals and milestones</option><option>Resources with locations and updates</option><option>Applications with platforms and versions</option><option selected>Assets with types and instances</option>"; }
 			else { print "<option selected>Products with models and releases</option><option>Projects with goals and milestones</option><option>Resources with locations and updates</option><option>Applications with platforms and versions</option><option>Assets with types and instances</option>"; }
-			print "</select></td></tr>\n";			
-			print "<tr><td>Custom ticket field</td><td><input class='form-control' type='text' name='custom_name' value=\"" . $cfg->load("custom_name") . "\"></td></tr>\n";
-			print "<tr><td>Custom field type</td><td><select class='form-control' name='custom_type'>";
-			if($cfg->load("custom_type") eq "Link") { print "<option>Text</option><option selected>Link</option><option>Checkbox</option>"; }
-			elsif($cfg->load("custom_type") eq "Checkbox") { print "<option>Text</option><option>Link</option><option selected>Checkbox</option>"; }
-			else { print "<option selected>Text</option><option>Link</option><option>Checkbox</option>"; }
 			print "</select></td></tr>\n";
 			print "<tr><td>Active Directory server</td><td><input class='form-control' type='text' name='ad_server' value=\"" . $cfg->load("ad_server") . "\"></td></tr>\n";
 			print "<tr><td>Active Directory domain</td><td><input class='form-control' type='text' name='ad_domain' value=\"" . $cfg->load("ad_domain") . "\"></td></tr>\n";
@@ -3668,8 +3677,8 @@ elsif($q->param('m')) # Modules
 		{
 			my $resolution = "";
 			if($q->param('ticket_resolution')) { $resolution = sanitize_html($q->param('ticket_resolution')); }
-			my $lnk = "";
-			if($q->param('ticket_link')) { $lnk = sanitize_html($q->param('ticket_link')); }
+			my $lnk = "Normal";
+			if($q->param('ticket_priority')) { $lnk = sanitize_html($q->param('ticket_priority')); }
 			my $assigned = "";
 			if($q->param('ticket_assigned')) { $assigned = sanitize_html($q->param('ticket_assigned')); }
 			$assigned =~ s/\b$logged_user\b//g;
@@ -3686,7 +3695,7 @@ elsif($q->param('m')) # Modules
 				if($res[2] ne sanitize_html($q->param('ticket_releases'))) { $changes .= $items{"Release"} . "s: \"" . $res[2] . "\" => \"" . sanitize_html($q->param('ticket_releases')) . "\"\n"; }
 				if(trim($res[4]) ne trim($assigned)) { $changes .= "Assigned to: " . $res[4] . " => " . $assigned . "\n"; }
 				if($res[5] ne sanitize_html($q->param('ticket_title'))) { $changes .= "Title: \"" . $res[5] . "\" => \"" . sanitize_html($q->param('ticket_title')) . "\"\n"; }
-				if($res[7] ne $lnk) { $changes .= $cfg->load('custom_name') . ": \"" . $res[7] . "\" => \"" . $lnk . "\"\n"; }
+				if($res[7] ne $lnk) { $changes .= "Priority: \"" . $res[7] . "\" => \"" . $lnk . "\"\n"; }
 				if($res[8] ne sanitize_alpha($q->param('ticket_status'))) { $changes .= "Status: " . $res[8] . " => " . sanitize_alpha($q->param('ticket_status')) . "\n"; }
 				if($res[9] ne $resolution) { $changes .= "Resolution: \"" . $res[9] . "\" => \"" . $resolution . "\"\n"; }
 				@us = split(' ', $res[4]);
@@ -3696,9 +3705,9 @@ elsif($q->param('m')) # Modules
 			$sql->execute($lnk, $resolution, sanitize_alpha($q->param('ticket_status')), sanitize_html($q->param('ticket_title')), sanitize_html($q->param('ticket_desc')) . "\n\n--- " . now() . " ---\nTicket modified by: " . $logged_user . "\n" . $changes, $assigned, sanitize_html($q->param('ticket_releases')), now(), to_int($q->param('t')));
 			foreach my $u (@us)
 			{
-				notify($u, "Ticket (" . to_int($q->param('t')) . ") assigned to you has been modified", "The ticket \"" . $q->param('ticket_title') . "\" has been modified:\n\nModified by: " . $logged_user . "\n" . $cfg->load('custom_name') . ": " . $lnk . "\nStatus: " . sanitize_alpha($q->param('ticket_status')) . "\nResolution: " . $resolution . "\nAssigned to: " . $assigned . "\nDescription: " . $q->param('ticket_desc') . "\n\n" . $changes);
+				notify($u, "Ticket (" . to_int($q->param('t')) . ") assigned to you has been modified", "The ticket \"" . $q->param('ticket_title') . "\" has been modified:\n\nModified by: " . $logged_user . "\nPriority: " . $lnk . "\nStatus: " . sanitize_alpha($q->param('ticket_status')) . "\nResolution: " . $resolution . "\nAssigned to: " . $assigned . "\nDescription: " . $q->param('ticket_desc') . "\n\n" . $changes);
 			}
-			if($creator) { notify($creator, "Your ticket (" . to_int($q->param('t')) . ") has been modified", "The ticket \"" . $q->param('ticket_title') . "\" has been modified:\n\nModified by: " . $logged_user . "\n" . $cfg->load('custom_name') . ": " . $lnk . "\nStatus: " . sanitize_alpha($q->param('ticket_status')) . "\nResolution: " . $resolution . "\nAssigned to: " . $assigned . "\nDescription: " . $q->param('ticket_desc') . "\n\n" . $changes); }
+			if($creator) { notify($creator, "Your ticket (" . to_int($q->param('t')) . ") has been modified", "The ticket \"" . $q->param('ticket_title') . "\" has been modified:\n\nModified by: " . $logged_user . "\nPriority: " . $lnk . "\nStatus: " . sanitize_alpha($q->param('ticket_status')) . "\nResolution: " . $resolution . "\nAssigned to: " . $assigned . "\nDescription: " . $q->param('ticket_desc') . "\n\n" . $changes); }
 			msg("Ticket updated. Press <a href='./?m=view_ticket&t=" . to_int($q->param('t')) . "'>here</a> to continue.", 3);
 			if($q->param("time_spent") && to_float($q->param("time_spent")) != 0)
 			{
@@ -3709,7 +3718,7 @@ elsif($q->param('m')) # Modules
 			{
 				$sql = $db->prepare("INSERT INTO escalate VALUES (?, ?);");
 				$sql->execute(to_int($q->param('t')), sanitize_alpha(lc($q->param('notify_user'))));
-				notify(sanitize_alpha($q->param('notify_user')), "Ticket (" . to_int($q->param('t')) . ") requires your attention", "The ticket \"" . $q->param('ticket_title') . "\" has been modified:\n\nModified by: " . $logged_user . "\n" . $cfg->load('custom_name') . ": " . $lnk . "\nStatus: " . sanitize_alpha($q->param('ticket_status')) . "\nResolution: " . $resolution . "\nAssigned to: " . $assigned . "\nDescription: " . $q->param('ticket_desc') . "\n\n" . $changes);
+				notify(sanitize_alpha($q->param('notify_user')), "Ticket (" . to_int($q->param('t')) . ") requires your attention", "The ticket \"" . $q->param('ticket_title') . "\" has been modified:\n\nModified by: " . $logged_user . "\nPriority: " . $lnk . "\nStatus: " . sanitize_alpha($q->param('ticket_status')) . "\nResolution: " . $resolution . "\nAssigned to: " . $assigned . "\nDescription: " . $q->param('ticket_desc') . "\n\n" . $changes);
 			}
 			if($cfg->load('comp_billing') eq "on")
 			{
@@ -3933,11 +3942,20 @@ elsif($q->param('m')) # Modules
 				if($logged_lvl > 2 && $q->param('edit')) { print "<input type='text' class='form-control' name='ticket_releases' value='" . $res[2] . "'>"; }
 				else { print "<b>" . $res[2] . "</b>"; }
 				print "</div><div class='col-sm-6'>";
-				if($logged_lvl > 2 && $q->param('edit')) { print $cfg->load('custom_name') . ": <input type='text' class='form-control' name='ticket_link' value='" . $res[7] . "'></div></div></p>\n"; }
+				if($logged_lvl > 2 && $q->param('edit'))
+				{ 
+					print "Priority: <select class='form-control' name='ticket_priority'>";
+					if($res[7] eq "High") { print "<option selected>High</option><option>Normal</option><option>Low</option>"; }
+					elsif($res[7] eq "Low") { print "<option>High</option><option>Normal</option><option selected>Low</option>"; }
+					else { print "<option>High</option><option selected>Normal</option><option>Low</option>"; }
+					print "</select></div></div></p>\n"; }
 				else
 				{
-					if($cfg->load('custom_type') eq "Link") { print $cfg->load('custom_name') . ": <a href='" . $res[7] . "'><b>" . $res[7] . "</b></a></div></div></p>\n"; }
-					else { print $cfg->load('custom_name') . ": <b>" . $res[7] . "</b></div></div></p>\n"; }
+					print "Priority: <b>";
+					if($res[7] eq "High") { print "<img src='icons/high.png'> High"; }
+					elsif($res[7] eq "Low") { print "<img src='icons/low.png'> Low"; }
+					else { print "<img src='icons/normal.png'> Normal"; }
+					print "</b></div></div></p>\n";
 				}
 				if($logged_lvl > 2 && $q->param('edit')) { print "<p>Title: <input type='text' class='form-control' name='ticket_title' maxlength='50' value='" . $res[5] . "'></p>"; }
 				else
@@ -4058,6 +4076,7 @@ elsif($q->param('m')) # Modules
 		my @customform;
 		my $description = "";
 		my $title;
+		my $lnk = "Normal";
 		$sql = $db->prepare("SELECT * FROM forms WHERE productid = ?;");
 		$sql->execute(to_int($q->param('product_id')));
 		@customform = $sql->fetchrow_array();
@@ -4084,6 +4103,7 @@ elsif($q->param('m')) # Modules
 					$description .= $customform[($i*2)+2] . " \t ";
 					if(defined($q->param('field'.$i))) { $description .= $q->param('field'.$i); }
 					elsif($q->param('upload'.$i)) { $description .= $q->param('upload'.$i); }
+					elsif($q->param('priority'.$i)) { $description .= $q->param('priority'.$i); $lnk = sanitize_alpha($q->param('priority'.$i)); }
 					$description .= "\n\n"; 
 				}
 			}
@@ -4101,13 +4121,6 @@ elsif($q->param('m')) # Modules
 			}
 			else
 			{
-				my $lnk = "";
-				if($q->param('ticket_link')) { $lnk = sanitize_html($q->param('ticket_link')); }
-				if($cfg->load('custom_type') eq "Checkbox")
-				{
-					if($lnk eq "on") { $lnk = "Yes"; }
-					else { $lnk = "No"; }
-				}
 				my $assignedto = "";
 				$sql = $db->prepare("SELECT user FROM autoassign WHERE productid = ?;");
 				$sql->execute(to_int($q->param('product_id')));
@@ -4118,11 +4131,11 @@ elsif($q->param('m')) # Modules
 				$sql->execute(to_int($q->param('product_id')));
 				while(my @res = $sql->fetchrow_array())
 				{
-					notify($res[1], "New ticket created", "A new ticket was created for one of your products:\n\nUser: " . $logged_user . "\nTitle: " . sanitize_html($title) . "\n" . $cfg->load('custom_name') . ": " . $lnk . "\nDescription: " . sanitize_html($description));
+					notify($res[1], "New ticket created", "A new ticket was created for one of your products:\n\nUser: " . $logged_user . "\nTitle: " . sanitize_html($title) . "\nPriority: " . $lnk . "\nDescription: " . sanitize_html($description));
 				}
 				foreach my $assign (split(' ', $assignedto))
 				{
-					notify($assign, "New ticket created", "A new ticket was created for a product assigned to you:\n\nUser: " . $logged_user . "\nTitle: " . sanitize_html($title) . "\n" . $cfg->load('custom_name') . ": " . $lnk . "\nDescription: " . sanitize_html($description));
+					notify($assign, "New ticket created", "A new ticket was created for a product assigned to you:\n\nUser: " . $logged_user . "\nTitle: " . sanitize_html($title) . "\nPriority: " . $lnk . "\nDescription: " . sanitize_html($description));
 				}
 				$sql = $db->prepare("SELECT last_insert_rowid();");
 				$sql->execute();
@@ -4271,6 +4284,10 @@ elsif($q->param('m')) # Modules
 							while(my @res2 = $sql2->fetchrow_array()) { print "<option>" . $res2[0] . "</option>"; }
 							print "</select>";
 						}
+						elsif(to_int($customform[($i*2)+3]) == 17)
+						{
+							print "<select class='form-control' name='priority" . $i . "'><option>High</option><option selected>Normal</option><option>Low</option></select>";
+						}
 						elsif(to_int($customform[($i*2)+3]) == 15)
 						{
 							print "<select class='form-control' name='field" . $i . "'>";
@@ -4306,8 +4323,6 @@ elsif($q->param('m')) # Modules
 			{
 				print "<p><input class='form-control' placeholder='Ticket title' type='text' name='ticket_title' maxlength='99'></p>\n";
 				print "<p><textarea placeholder='Description' class='form-control' name='ticket_desc' rows='5'></textarea></p>\n";
-				if($cfg->load('custom_type') eq "Checkbox") { print "<p>" . $cfg->load('custom_name') . ": <input type='checkbox' name='ticket_link'></p>\n"; }
-				else { print "<p><input placeholder=\"" . $cfg->load('custom_name') . "\" type='text' name='ticket_link' class='form-control'></p>\n"; }
 			}
 			print "<input type='hidden' name='m' value='add_ticket'><input class='btn btn-primary pull-right' type='submit' value='Create ticket'></form></div></div>\n";
 			$sql = $db->prepare("SELECT ROWID,* FROM products WHERE ROWID = ?;");
@@ -4698,7 +4713,7 @@ elsif($q->param('m')) # Modules
 		if($q->param('csv'))
 		{
 			print $q->header(-type => "text/csv", -attachment => "tickets.csv");
-			print "ID," . $items{"Product"} . ",User,Title,Description,\"" . $cfg->load('custom_name') . "\",Status,Resolution,Created,Modified\n";
+			print "ID," . $items{"Product"} . ",User,Title,Description,Priority,Status,Resolution,Created,Modified\n";
 			if($q->param('filter_status') && $q->param('filter_status') ne "All" && $q->param('filter_product') && $q->param('filter_product') ne "All")
 			{
 				$sql = $db->prepare("SELECT ROWID,* FROM tickets WHERE status = ? AND productid = ? ORDER BY ROWID DESC LIMIT " . $limit . ";");
@@ -4757,7 +4772,7 @@ elsif($q->param('m')) # Modules
 		my $search = "";
 		if($q->param('search')) { $search = sanitize_html($q->param('search')); }
 		print "<p><form method='GET' action='.'><div class='row'><div class='col-sm-8'>Custom search:<input type='hidden' name='m' value='tickets'><input placeholder='Search terms' class='form-control' type='text' name='search' value='" . $search . "'></div><div class='col-sm-4'> <input class='btn btn-primary pull-right' type='submit' value='Search'></div></div></p>";
-		print "<table class='table table-striped'><tr><th>ID</th><th>" . $items{"Product"} . "</th><th>User</th><th>Title</th><th>Status</th><th>Date</th></tr>\n";
+		print "<table class='table table-striped'><tr><th>ID</th><th>" . $items{"Product"} . "</th><th>Title</th><th>Status</th><th>Date</th></tr>\n";
 		if($q->param('filter_status') && $q->param('filter_status') ne "All" && $q->param('filter_product') && $q->param('filter_product') ne "All")
 		{
 			$sql = $db->prepare("SELECT ROWID,* FROM tickets WHERE status = ? AND productid = ? ORDER BY ROWID DESC LIMIT 1000;");
@@ -4786,7 +4801,13 @@ elsif($q->param('m')) # Modules
 		while(my @res = $sql->fetchrow_array())
 		{
 			if($products[$res[1]] && (($cfg->load("default_vis") eq "Public" || ($cfg->load("default_vis") eq "Private" && $logged_lvl > -1) || ($res[3] eq $logged_user) || $logged_lvl > 1)))
-			{ print "<tr><td>" . $res[0] . "</td><td>" . $products[$res[1]] . "</td><td>" . $res[3] . "</td><td><a href='./?m=view_ticket&t=" . $res[0] . "'>" . $res[5] . "</a></td><td>" . $res[8] . "</td><td>" . $res[11] . "</td></tr>\n"; }
+			{ 
+				print "<tr><td><nobr>";
+				if($res[7] eq "High") { print "<img src='icons/high.png'> "; }
+				elsif($res[7] eq "Low") { print "<img src='icons/low.png'> "; }
+				else { print "<img src='icons/normal.png'> "; }
+				print $res[0] . "</nobr></td><td>" . $products[$res[1]] . "</td><td><a href='./?m=view_ticket&t=" . $res[0] . "'>" . $res[5] . "</a></td><td>" . $res[8] . "</td><td>" . $res[11] . "</td></tr>\n"; 
+			}
 		}
 		print "</table></div></div>\n";
 	}
@@ -5406,7 +5427,9 @@ elsif(($q->param('create_form') || $q->param('edit_form') || $q->param('save_for
 			if(to_int($q->param('edit_form')) > 0) { if(to_int($res[($i*2)+3]) == 13) { print " selected"; } }
 			print ">Phone number</option><option value=10";
 			if(to_int($q->param('edit_form')) > 0) { if(to_int($res[($i*2)+3]) == 10) { print " selected"; } }
-			print ">Date</option>";
+			print ">Date</option><option value=17";
+			if(to_int($q->param('edit_form')) > 0) { if(to_int($res[($i*2)+3]) == 17) { print " selected"; } }
+			print ">Ticket priority</option>";
 			if($cfg->load('comp_clients') eq "on")
 			{
 				print "<option value=11";
@@ -5512,11 +5535,15 @@ elsif($q->param('kb') && $cfg->load('comp_articles') eq "on")
 				$sql->execute(to_int($q->param('kb')));
 				while(my @res2 = $sql->fetchrow_array())
 				{
-					my $sql2 = $db->prepare("SELECT title,status ticketid FROM tickets WHERE ROWID = ? AND status != 'Closed';");
+					my $sql2 = $db->prepare("SELECT title,status,link ticketid FROM tickets WHERE ROWID = ? AND status != 'Closed';");
 					$sql2->execute(to_int($res2[0]));
 					while(my @res3 = $sql2->fetchrow_array())
 					{
-						print "<tr><td>" . $res2[0] . "</td><td><a href='./?m=view_ticket&t=" . $res2[0] . "'>" . $res3[0] . "</a></td><td>" . $res3[1] . "</td>";
+						print "<tr><td><nobr>";
+						if($res3[2] eq "High") { print "<img src='icons/high.png'> "; }
+						elsif($res3[2] eq "Low") { print "<img src='icons/low.png'> "; }
+						else { print "<img src='icons/normal.png'> "; }
+						print $res2[0] . "</nobr></td><td><a href='./?m=view_ticket&t=" . $res2[0] . "'>" . $res3[0] . "</a></td><td>" . $res3[1] . "</td>";
 						if($logged_lvl > 3) { print "<td><a href='./?m=unlink_article&articleid=" . to_int($q->param('kb')) . "&ticketid=" . $res2[0] . "'>Unlink</a></td>"; }
 						print "</tr>\n";
 					} 
