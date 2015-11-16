@@ -8,7 +8,7 @@
 #
 
 use strict;
-use Config::Linux;
+use Config::Win32;
 use Digest::SHA qw(sha1_hex);
 use DBI;
 use CGI;
@@ -27,7 +27,7 @@ my ($cfg, $db, $sql, $cn, $cp, $cgs, $last_login, $perf);
 my $logged_user = "";
 my $logged_lvl = -1;
 my $q = new CGI;
-my $VERSION = "1.5.0";
+my $VERSION = "1.5.1";
 my %items = ("Product", "Product", "Release", "Release", "Model", "SKU/Model");
 my @itemtypes = ("None");
 my @themes = ("primary", "default", "success", "info", "warning", "danger");
@@ -1028,11 +1028,11 @@ sub home
 # Connect to config
 eval
 {
-	$cfg = Config::Linux->new("NodePoint", "settings");
+	$cfg = Config::Win32->new("NodePoint", "settings");
 };
 if(!defined($cfg)) # Can't even use headers() if this fails.
 {
-	print "Content-type: text/html\n\nError: Could not access " . Config::Linux->type . ". Please ensure NodePoint has the proper permissions.";
+	print "Content-type: text/html\n\nError: Could not access " . Config::Win32->type . ". Please ensure NodePoint has the proper permissions.";
 	exit(0);
 };
 
@@ -4738,6 +4738,7 @@ elsif($q->param('m')) # Modules
 	elsif($q->param('m') eq "items" && $cfg->load('comp_items') eq "on" && $logged_user ne "")
 	{
 		my $expired = 0;
+		my $expdate = "";
 		my $m = localtime->strftime('%m');
 		my $y = localtime->strftime('%Y');
 		my $d = localtime->strftime('%d');
@@ -4752,16 +4753,19 @@ elsif($q->param('m')) # Modules
 		if($q->param('csv'))
 		{
 			print $q->header(-type => "text/csv", -attachment => "items.csv");
-			print "ID,Type,Name,Serial,Status\n";
+			print "ID,Type,Name,Serial,Status,Expire\n";
 			$sql = $db->prepare("SELECT ROWID,* FROM items;"); 
 			$sql->execute();
 			while(my @res = $sql->fetchrow_array())
 			{
+				$expdate = "";
+				$expired = 0;
 				my $sql3 = $db->prepare("SELECT date FROM item_expiration WHERE itemid = ?;");
 				$sql3->execute(to_int($res[0]));
 				while(my @res3 = $sql3->fetchrow_array())
 				{
-					my @expby = split(/\//, $res3[0]);
+					$expdate = $res3[0];
+					my @expby = split(/\//, $expdate);
 					if($expby[2] < $y || ($expby[2] == $y && $expby[0] < $m) || ($expby[2] == $y && $expby[0] == $m && $expby[1] < $d)) { $expired = 1; }
 				}
 				print $res[0] . ",\"" . $res[2] . "\",\"" . $res[1] . "\",\"" . $res[3] . "\",\"";
@@ -4773,7 +4777,7 @@ elsif($q->param('m')) # Modules
 				}
 				elsif(to_int($res[7]) == 2) { print "Waiting approval for: " . $res[8]; }
 				else { print "Checked out by: " . $res[8]; }
-				print "\"\n";
+				print "\",\"" . $expdate . "\"\n";
 			}
 			quit(0);
 		}
@@ -4917,7 +4921,7 @@ elsif($q->param('m')) # Modules
 					$sql2->execute(to_int($q->param('i')), $logged_user, "Expiration date removed", now());				
 				}
 			}
-			my $expdate = "";
+			$expdate = "";
 			$sql = $db->prepare("SELECT date FROM item_expiration WHERE itemid = ?;");
 			$sql->execute(to_int($q->param('i')));
 			while(my @res = $sql->fetchrow_array())
