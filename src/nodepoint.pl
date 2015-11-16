@@ -831,18 +831,22 @@ sub home
 	if(!$q->cookie('np_gs'))
 	{
 		print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Getting started</h3></div><div class='panel-body'>\n";
-		print "<p>Use the " . $items{"Product"} . "s tab to browse available " . lc($items{"Product"}) . "s along with their " . lc($items{"Release"}) . "s. You can view basic information about them and see their description.";
-		if($cfg->load('comp_tickets') eq "on") { print " Use the Tickets tab to browse current tickets and comments."; }
-		if($cfg->load('comp_articles') eq "on") { print " The Articles tab contains related support articles."; }
-		if($cfg->load('comp_items') eq "on") { print " The Items tab contains inventory items you can checkout."; }
-		print " You can also change your email address and password under the Settings tab.</p>\n";
-		print "<p>Your current access level is <b>" . $logged_lvl . "</b>. This gives you the following permissions:</p>\n";
-		if($logged_lvl > 0) { print "<p>As an <span class='label label-success'>Authorized User</span>, you can add new tickets to specific " . lc($items{"Product"}) . "s and " . lc($items{"Release"}) . "s, or comment on existing ones.</p>\n"; }
-		if($logged_lvl > 1) { print "<p>Since you have <span class='label label-success'>Restricted View</span> permission, you can view statistics and view restricted products and tickets, those which may not be visible to normal users.</p>\n"; }
-		if($logged_lvl > 2) { print "<p>With <span class='label label-success'>Tickets Management</span> access, you can modify existing tickets entered by other users, such as change the status, add a resolution, or edit title and description. You can assign yourself to tickets, auto-assign to " . lc($items{"Product"}) . "s, and you can also add new " . lc($items{"Release"}) . "s under the " . $items{"Product"} . "s tab.</p>\n"; }
-		if($logged_lvl > 3) { print "<p>As a <span class='label label-success'>" . $items{"Product"} . "s Management</span> user, you can add new " . lc($items{"Product"}) . "s, edit existing ones, change their visibility, and edit articles. Archiving a product will prevent users from adding new tickets for it.</p>\n" }
-		if($logged_lvl > 4) { print "<p>With the <span class='label label-success'>Users Managemenet</span> access level, you have the ability to edit users under the Settings tab. You can reset passwords and change access levels, along with adding new users. You can delete comments under the Tickets tab and edit items.</p>\n"; }
-		if($logged_lvl > 5) { print "<p>Since you are logged in as <span class='label label-success'>NodePoint Administrator</span>, you can edit initial settings under the Settings tab. Note that it is good practice to use a lower access user to do your daily tasks.</p>\n" }
+		print "<p>Use the <b>" . $items{"Product"} . "s</b> tab to browse available " . lc($items{"Product"}) . "s along with their " . lc($items{"Release"}) . "s. You can view basic information about them and see their description.";
+		if($cfg->load('comp_tickets') eq "on") { print " Use the <b>Tickets</b> tab to browse current tickets and comments."; }
+		if($cfg->load('comp_articles') eq "on") { print " The <b>Articles</b> tab contains related support articles."; }
+		if($cfg->load('comp_items') eq "on") { print " The <b>Items</b> tab contains inventory items you can checkout."; }
+		if($cfg->load('comp_clients') eq "on") { print " The <b>Clients</b> tab contains a list of contacts."; }
+		print " You can also change your email address and password under the <b>Settings</b> tab.</p>\n";
+		print "<p>Your current access level is <b>" . $logged_lvl . "</b>.</p>\n";
+		$sql = $db->prepare("SELECT * FROM users;");
+		$sql->execute();
+		while(my @res = $sql->fetchrow_array())
+		{
+			if($res[0] eq $logged_user && $res[2] ne "" && $res[5] ne "" && $cfg->load('smtp_server'))
+			{
+				print "<p>Your email address is not currently confirmed. Make sure you go to the Settings tab to enter your confirmation code. You can also change your email address if you did not receive your confirmation email.</p>\n";
+			}
+		}
 		print "</div></div>\n";
 	}
 
