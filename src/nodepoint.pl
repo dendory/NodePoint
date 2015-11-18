@@ -8,7 +8,7 @@
 #
 
 use strict;
-use Config::Linux;
+use Config::Win32;
 use Digest::SHA qw(sha1_hex);
 use DBI;
 use CGI;
@@ -27,7 +27,7 @@ my ($cfg, $db, $sql, $cn, $cp, $cgs, $last_login, $perf);
 my $logged_user = "";
 my $logged_lvl = -1;
 my $q = new CGI;
-my $VERSION = "1.5.1";
+my $VERSION = "1.5.2";
 my %items = ("Product", "Product", "Release", "Release", "Model", "SKU/Model");
 my @itemtypes = ("None");
 my @themes = ("primary", "default", "success", "info", "warning", "danger");
@@ -1051,11 +1051,11 @@ sub home
 # Connect to config
 eval
 {
-	$cfg = Config::Linux->new("NodePoint", "settings");
+	$cfg = Config::Win32->new("NodePoint", "settings");
 };
 if(!defined($cfg)) # Can't even use headers() if this fails.
 {
-	print "Content-type: text/html\n\nError: Could not access " . Config::Linux->type . ". Please ensure NodePoint has the proper permissions.";
+	print "Content-type: text/html\n\nError: Could not access " . Config::Win32->type . ". Please ensure NodePoint has the proper permissions.";
 	exit(0);
 };
 
@@ -2107,6 +2107,62 @@ elsif($q->param('api')) # API calls
 			}
 		}
 	}
+	elsif($q->param('api') eq "add_client")
+	{
+		if(!$q->param('status'))
+		{
+			print "{\n";
+			print " \"message\": \"Missing 'status' argument.\",\n";
+			print " \"status\": \"ERR_MISSING_ARGUMENT\"\n";
+			print "}\n";
+		}
+		elsif(lc($q->param('status')) ne "contact" && lc($q->param('status')) ne "prospect" && lc($q->param('status')) ne "supplier" && lc($q->param('status')) ne "paid" && lc($q->param('status')) ne "unpaid")
+		{
+			print "{\n";
+			print " \"message\": \"Invalid 'status' value. Must be one of: Prospect, Contact, Supplier, Paid, Unpaid.\",\n";
+			print " \"status\": \"ERR_INVALID_ARGUMENT\"\n";
+			print "}\n";
+		}
+		elsif(!$q->param('name'))
+		{
+			print "{\n";
+			print " \"message\": \"Missing 'name' argument.\",\n";
+			print " \"status\": \"ERR_MISSING_ARGUMENT\"\n";
+			print "}\n";
+		}
+		elsif(!$q->param('contact'))
+		{
+			print "{\n";
+			print " \"message\": \"Missing 'contact' argument.\",\n";
+			print " \"status\": \"ERR_MISSING_ARGUMENT\"\n";
+			print "}\n";
+		}
+		elsif(!$q->param('key'))
+		{
+			print "{\n";
+			print " \"message\": \"Missing 'key' argument.\",\n";
+			print " \"status\": \"ERR_MISSING_ARGUMENT\"\n";
+			print "}\n";
+		}
+		elsif($q->param('key') ne $cfg->load('api_write'))
+		{
+			print "{\n";
+			print " \"message\": \"Invalid 'key' value.\",\n";
+			print " \"status\": \"ERR_INVALID_KEY\"\n";
+			print "}\n";
+		}
+		else
+		{
+			my $notes = "";
+			if($q->param('notes')) { $notes = sanitize_html($q->param('notes')); }
+			$sql = $db->prepare("INSERT INTO clients VALUES (?, ?, ?, ?, ?);");
+			$sql->execute(sanitize_html($q->param('name')), ucfirst(lc(sanitize_html($q->param('status')))), sanitize_html($q->param('contact')), $notes, now());
+			print "{\n";
+			print " \"message\": \"Client added.\",\n";
+			print " \"status\": \"OK\"\n";
+			print "}\n";
+		}
+	}
 	elsif($q->param('api') eq "add_item")
 	{
 		if(!$q->param('type'))
@@ -2175,9 +2231,93 @@ elsif($q->param('api')) # API calls
 		else
 		{
 			$sql = $db->prepare("INSERT INTO items VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);");
-			$sql->execute(sanitize_html($q->param('name')), ucfirst(sanitize_alpha($q->param('type'))), sanitize_html($q->param('serial')), to_int($q->param('product_id')), to_int($q->param('client_id')), to_int($q->param('approval')), 1, "", sanitize_html($q->param('info')));
+			$sql->execute(sanitize_html($q->param('name')), ucfirst(lc(sanitize_alpha($q->param('type')))), sanitize_html($q->param('serial')), to_int($q->param('product_id')), to_int($q->param('client_id')), to_int($q->param('approval')), 1, "", sanitize_html($q->param('info')));
 			print "{\n";
 			print " \"message\": \"Item added.\",\n";
+			print " \"status\": \"OK\"\n";
+			print "}\n";
+		}
+	}
+	elsif($q->param('api') eq "update_item")
+	{
+		if(!$q->param('id'))
+		{
+			print "{\n";
+			print " \"message\": \"Missing 'id' argument.\",\n";
+			print " \"status\": \"ERR_MISSING_ARGUMENT\"\n";
+			print "}\n";
+		}
+		elsif(!$q->param('key'))
+		{
+			print "{\n";
+			print " \"message\": \"Missing 'key' argument.\",\n";
+			print " \"status\": \"ERR_MISSING_ARGUMENT\"\n";
+			print "}\n";
+		}
+		elsif($q->param('key') ne $cfg->load('api_write'))
+		{
+			print "{\n";
+			print " \"message\": \"Invalid 'key' value.\",\n";
+			print " \"status\": \"ERR_INVALID_KEY\"\n";
+			print "}\n";
+		}
+		else
+		{
+			if($q->param('expiration'))
+			{
+				if($q->param('expiration') !~ m/[0-9]{2}\/[0-9]{2}\/[0-9]{4}/)
+				{
+					print "{\n";
+					print " \"message\": \"Expiration format must be mm/dd/yyyy.\",\n";
+					print " \"status\": \"ERR_INVALID_ARGUMENT\"\n";
+					print "}\n";
+					quit(0);
+				}
+				else
+				{
+					$sql = $db->prepare("DELETE FROM item_expiration WHERE itemid = ?;");
+					$sql->execute(to_int($q->param('id')));
+					$sql = $db->prepare("INSERT INTO item_expiration VALUES (?, ?);");
+					$sql->execute(to_int($q->param('id')), sanitize_html($q->param('expiration')));
+				}
+			}
+			if($q->param('type'))
+			{
+				$sql = $db->prepare("UPDATE items SET type = ? WHERE ROWID = ?;");
+				$sql->execute(ucfirst(lc(sanitize_html($q->param('type')))), to_int($q->param('id')));
+			}
+			if($q->param('serial'))
+			{
+				$sql = $db->prepare("UPDATE items SET serial = ? WHERE ROWID = ?;");
+				$sql->execute(sanitize_html($q->param('serial')), to_int($q->param('id')));
+			}
+			if($q->param('info'))
+			{
+				$sql = $db->prepare("UPDATE items SET info = ? WHERE ROWID = ?;");
+				$sql->execute(sanitize_html($q->param('info')), to_int($q->param('id')));
+			}
+			if($q->param('name'))
+			{
+				$sql = $db->prepare("UPDATE items SET name = ? WHERE ROWID = ?;");
+				$sql->execute(sanitize_html($q->param('name')), to_int($q->param('id')));
+			}
+			if($q->param('product_id'))
+			{
+				$sql = $db->prepare("UPDATE items SET productid = ? WHERE ROWID = ?;");
+				$sql->execute(to_int($q->param('product_id')), to_int($q->param('id')));
+			}
+			if($q->param('client_id'))
+			{
+				$sql = $db->prepare("UPDATE items SET clientid = ? WHERE ROWID = ?;");
+				$sql->execute(to_int($q->param('client_id')), to_int($q->param('id')));
+			}
+			if($q->param('approval'))
+			{
+				$sql = $db->prepare("UPDATE items SET approval = ? WHERE ROWID = ?;");
+				$sql->execute(to_int($q->param('approval')), to_int($q->param('id')));
+			}
+			print "{\n";
+			print " \"message\": \"Item updated.\",\n";
 			print " \"status\": \"OK\"\n";
 			print "}\n";
 		}
@@ -2672,8 +2812,17 @@ elsif($q->param('m')) # Modules
 			print "<form method='POST' action='.' data-toggle='validator' role='form'><input type='hidden' name='m' value='add_client'><p><div class='row'><div class='col-sm-6'><input type='text' class='form-control' name='name' placeholder='Client name' maxlength='50' required></div><div class='col-sm-6'><select class='form-control' name='status'><option>Prospect</option><option>Contact</option><option>Supplier</option><option>Paid</option><option>Unpaid</option><option>Closed</option></select></div></div></p><p><input type='text' class='form-control' name='contact' placeholder='Contact' maxlength='99' required></p><p><textarea class='form-control' name='notes' placeholder='Notes'></textarea></p><p><input type='submit' value='Add client' class='btn btn-primary pull-right'></form>";
 			print "</div></div>\n";
 		}
-		print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Clients directory</h3></div><div class='panel-body'><table class='table table-striped'><tr><th>ID</th><th>Name</th><th>Contact</th><th>Status</th></tr>\n";
-		$sql = $db->prepare("SELECT ROWID,* FROM clients ORDER BY name;");
+		print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Clients directory</h3></div><div class='panel-body'>";
+		print "<p><form method='GET' action='.'><div class='row'><div class='col-sm-2'><input type='hidden' name='m' value='clients'><select name='sort' class='form-control'><option value=''>Sort by:</option><option>Name</option><option>Contact</option><option>Status</option></select></div><div class='col-sm-10'><input type='submit' class='btn btn-primary' value='Sort'></div></div></form></p>";
+		print "<table class='table table-striped'><tr><th>ID</th><th>Name</th><th>Contact</th><th>Status</th></tr>\n";
+		if($q->param('sort') && (lc($q->param('sort')) eq 'name' || lc($q->param('sort')) eq 'contact' || lc($q->param('sort')) eq 'status'))
+		{
+			$sql = $db->prepare("SELECT ROWID,* FROM clients ORDER BY " . sanitize_alpha(lc($q->param('sort'))) . ";"); 
+		}
+		else 
+		{ 
+			$sql = $db->prepare("SELECT ROWID,* FROM clients;");
+		}
 		$sql->execute();
 		while(my @res = $sql->fetchrow_array())
 		{

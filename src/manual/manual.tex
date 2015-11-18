@@ -11,10 +11,10 @@
 % Conditional compilation for Windows and Linux
 \usepackage{ifthen}
 \newboolean{Windows}
-\setboolean{Windows}{false} % change to false for Linux
+\setboolean{Windows}{true} % change to false for Linux
 \ifthenelse{\boolean{Windows}}
-{\def\NodePointManual{NodePoint IT System - Windows version 1.5.1}}
-{\def\NodePointManual{NodePoint IT System - Linux version 1.5.1}}
+{\def\NodePointManual{NodePoint IT System - Windows version 1.5.2}}
+{\def\NodePointManual{NodePoint IT System - Linux version 1.5.2}}
 
 % Margins and paper type
 \geometry{a4paper, right=1.5cm, left=1.5cm, top=2cm, bottom=1.5cm}
@@ -487,29 +487,23 @@ When editing a ticket, a user of level 3 of higher can select a client from the 
 \section{JSON API}
 NodePoint provides a JSON based REST API that can be used to accomplish some basic tasks. This can be useful to integrate the system with existing products, or to use with custom scripts. Each API call requires either the \textit{read} or \textit{write} key. The calls can be made using GET or POST.
 
-Here is a list of commands:
-
-\subsection{Show ticket}
-
-\begin{itemize}
-\item api=show\_ticket
-\item key=<read key>
-\item id=<ticket id>
-\end{itemize}
-
-\subsection{List tickets by product}
-
-\begin{itemize}
-\item api=list\_tickets
-\item key=<read key>
-\item product\_id=<product id>
-\end{itemize}
+Here is a list of commands. Arguments in \textit{italics} are optional:
 
 \subsection{List users}
 
 \begin{itemize}
 \item api=list\_users
 \item key=<read key>
+\end{itemize}
+
+\subsection{Add new user}
+
+\begin{itemize}
+\item api=add\_user
+\item key=<write key>
+\item user=<user name>
+\item password=<password>
+\item email=<email>
 \end{itemize}
 
 \subsection{Verify user password}
@@ -530,14 +524,30 @@ Here is a list of commands:
 \item password=<password>
 \end{itemize}
 
-\subsection{Add new user}
+\subsection{List tickets by product}
 
 \begin{itemize}
-\item api=add\_user
+\item api=list\_tickets
+\item key=<read key>
+\item product\_id=<product id>
+\end{itemize}
+
+\subsection{Show ticket}
+
+\begin{itemize}
+\item api=show\_ticket
+\item key=<read key>
+\item id=<ticket id>
+\end{itemize}
+
+\subsection{Add release}
+
+\begin{itemize}
+\item api=add\_release
 \item key=<write key>
-\item user=<user name>
-\item password=<password>
-\item email=<email>
+\item product\_id=<product id>
+\item release\_id=<release id>
+\item notes=<notes>
 \end{itemize}
 
 \subsection{Add ticket}
@@ -549,8 +559,8 @@ Here is a list of commands:
 \item release\_id=<release id>
 \item title=<ticket title>
 \item description=<ticket description>
-\item priority=<Low|Normal|High>
-\item from\_user=<valid user>
+\item \textit{priority=<Low|Normal|High>}
+\item \textit{from\_user=<valid user>}
 \end{itemize}
 
 \subsection{Add comment}
@@ -562,14 +572,20 @@ Here is a list of commands:
 \item comment=<comment>
 \end{itemize}
 
-\subsection{Add release}
+\subsection{Show time tracking}
 
 \begin{itemize}
-\item api=add\_release
-\item key=<write key>
-\item product\_id=<product id>
-\item release\_id=<release id>
-\item notes=<notes>
+\item api=show\_time
+\item id=<ticket id>
+\item key=<read key>
+\end{itemize}
+
+\subsection{Show billing information}
+
+\begin{itemize}
+\item api=show\_billing
+\item client=<client name>
+\item key=<read key>
 \end{itemize}
 
 \subsection{Add task}
@@ -589,6 +605,17 @@ Here is a list of commands:
 \item api=list\_tasks
 \item key=<read key>
 \item user=<user>
+\end{itemize}
+
+\subsection{Add client}
+
+\begin{itemize}
+\item api=add\_client
+\item key=<write key>
+\item name=<client name>
+\item status=<client status>
+\item contact=<contact address>
+\item \textit{notes=<notes>}
 \end{itemize}
 
 \subsection{List clients}
@@ -636,20 +663,19 @@ Here is a list of commands:
 \item id=<item id>
 \end{itemize}
 
-\subsection{Show time tracking}
+\subsection{Update item}
 
 \begin{itemize}
-\item api=show\_time
-\item id=<ticket id>
-\item key=<read key>
-\end{itemize}
-
-\subsection{Show billing information}
-
-\begin{itemize}
-\item api=show\_billing
-\item client=<client name>
-\item key=<read key>
+\item api=update\_item
+\item key=<write key>
+\item \textit{product\_id=<product id>}
+\item \textit{client\_id=<client id>}
+\item \textit{approval=<0|1>}
+\item \textit{type=<item type>}
+\item \textit{name=<item name>}
+\item \textit{serial=<serial number>}
+\item \textit{info=<additional information>}
+\item \textit{expiration=<mm/dd/yyyy>}
 \end{itemize}
 
 \subsection{Code example}
