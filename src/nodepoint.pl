@@ -8,7 +8,7 @@
 #
 
 use strict;
-use Config::Win32;
+use Config::Linux;
 use Digest::SHA qw(sha1_hex);
 use DBI;
 use CGI;
@@ -1052,11 +1052,11 @@ sub home
 # Connect to config
 eval
 {
-	$cfg = Config::Win32->new("NodePoint", "settings");
+	$cfg = Config::Linux->new("NodePoint", "settings");
 };
 if(!defined($cfg)) # Can't even use headers() if this fails.
 {
-	print "Content-type: text/html\n\nError: Could not access " . Config::Win32->type . ". Please ensure NodePoint has the proper permissions.";
+	print "Content-type: text/html\n\nError: Could not access " . Config::Linux->type . ". Please ensure NodePoint has the proper permissions.";
 	exit(0);
 };
 
@@ -2562,9 +2562,9 @@ elsif($q->param('m')) # Modules
 					$email = $res[2];
 				}
 			}		    
-			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Change email</h3></div><div class='panel-body'>\n";
+			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Change your email</h3></div><div class='panel-body'>\n";
 			print "<div class='form-group'><p><form method='POST' action='.' data-toggle='validator' role='form'><input type='hidden' name='m' value='change_email'><div class='row'><div class='col-sm-6'>To change your notification email address, enter a new address here. Leave empty to disable notifications:</div><div class='col-sm-6'><input type='email' name='new_email' class='form-control' data-error='Must be a valid email.' placeholder='Email address' maxlength='99' value='" . $email . "'></div></div></p><div class='help-block with-errors'></div></div><input class='btn btn-primary pull-right' type='submit' value='Change email'></form></div></div>";
-			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Change password</h3></div><div class='panel-body'>\n";
+			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Change your password</h3></div><div class='panel-body'>\n";
 			if($cfg->load("ad_server")) { print "<p>Password management is synchronized with Active Directory.</p>"; }
 			elsif($logged_user eq "demo") { print "<p>The demo account cannot change its password.</p>"; }
 			else
@@ -2652,28 +2652,53 @@ elsif($q->param('m')) # Modules
 				print ", color:'#DDDFA0', highlight: '#EDEFB0', label: 'Resolved' }";
 				print "]; var ctx1 = document.getElementById('graph1').getContext('2d'); new Chart(ctx1).Pie(data1);</script><hr>\n";
 			}
-			if($cfg->load('comp_tasks') eq "on" || $cfg->load('comp_items') eq "on")
+			if($cfg->load('comp_steps') eq "on" || $cfg->load('comp_items') eq "on" || $cfg->load('comp_time') eq "on")
 			{
-				print "<h4>Due tasks and item expirations:</h4>\n<script src='fullcalendar-moment.js'></script>\n<script src='fullcalendar.js'></script>\n<script>\n\$(document).ready(function(){\$('#calendar').fullCalendar({\nheader: {left: 'prev,next today', center: 'title', right: 'month,basicWeek,basicDay'}, editable: false, eventLimit: true,\nevents: [\n{title: 'Event start', start: '2000-11-01', allDay: true, url: './'}";
-				$sql = $db->prepare("SELECT * FROM steps;");
-				$sql->execute();
-				while(my @res = $sql->fetchrow_array())
-				{ print ",\n{title: 'Task due: " . $res[2] . "', description: \"<b>Task:</b> " . $res[1] . "<br><b>User:</b> " . $res[2] . "<br><b>Completion:</b> " . $res[3] . "%\", allDay: true, color: '#BF0721', start: '" . $res[4] . "', url: './?m=view_product&p=" . to_int($res[0]) . "'}"; }
-				$sql = $db->prepare("SELECT * FROM item_expiration;");
-				$sql->execute();
-				while(my @res = $sql->fetchrow_array())
+				if($cfg->load('comp_time') ne "on")
 				{
-					my $sql2 = $db->prepare("SELECT name,serial,status,user FROM items WHERE ROWID = ?;");
-					$sql2->execute(to_int($res[0]));
-					while(my @res2 = $sql2->fetchrow_array())
+					if($cfg->load('comp_steps') ne "on") { print "<h4>Item expirations:</h4>"; }
+					elsif($cfg->load('comp_items') ne "on") { print "<h4>Due tasks:</h4>"; }
+					else { print "<h4>Due tasks and item expirations:</h4>"; }
+				}
+				else
+				{
+					if($cfg->load('comp_steps') ne "on") { print "<h4>Time spent on tickets and item expirations:</h4>"; }
+					elsif($cfg->load('comp_items') ne "on") { print "<h4>Time spent on tickets and due tasks:</h4>"; }
+					else { print "<h4>Time spent on tickets, due tasks and item expirations:</h4>"; }				
+				}
+				print "\n<script src='fullcalendar-moment.js'></script>\n<script src='fullcalendar.js'></script>\n<script>\n\$(document).ready(function(){\$('#calendar').fullCalendar({\nheader: {left: 'prev,next today', center: 'title', right: 'month,basicWeek,basicDay'}, editable: false, eventLimit: true,\nevents: [\n{title: 'Event start', start: '2000-11-01', allDay: true, url: './'}";
+				if($cfg->load('comp_steps') eq "on")
+				{
+					$sql = $db->prepare("SELECT * FROM steps;");
+					$sql->execute();
+					while(my @res = $sql->fetchrow_array())
+					{ print ",\n{title: 'Task due: " . $res[2] . "', description: \"<b>Task:</b> " . $res[1] . "<br><b>User:</b> " . $res[2] . "<br><b>Completion:</b> " . $res[3] . "%\", allDay: true, color: '#BF0721', start: '" . $res[4] . "', url: './?m=view_product&p=" . to_int($res[0]) . "'}"; }
+				}
+				if($cfg->load('comp_time') eq "on")
+				{
+					$sql = $db->prepare("SELECT * FROM timetracking;");
+					$sql->execute();
+					while(my @res = $sql->fetchrow_array())
+					{ print ",\n{title: 'Time spent: " . $res[1] . "', description: \"<b>User:</b> " . $res[1] . "<br><b>Ticket:</b> " . $res[0] . "<br><b>Time spent:</b> " . $res[2] . "h\", allDay: true, color: '#8E7D7C', start: '" . $res[3] . "', url: './?m=view_ticket&t=" . to_int($res[0]) . "'}"; }
+				}
+				if($cfg->load('comp_items') eq "on")
+				{
+					$sql = $db->prepare("SELECT * FROM item_expiration;");
+					$sql->execute();
+					while(my @res = $sql->fetchrow_array())
 					{
-						print ",\n{title: \"Item expires: " . $res2[1] . "\", description: \"<b>Name:</b> " . $res2[0] . "<br><b>Serial:</b> " . $res2[1] . "<br><b>Status:</b> ";
-						if(to_int($res2[2]) == 0) { print "<font color='red'>Unavailable</font>"; }
-						elsif(to_int($res2[2]) == 1) { print "<font color='green'>Available</font>"; }
-						elsif(to_int($res2[2]) == 2) { print "<font color='orange'>Waiting approval for: " . $res2[3] . "</font>"; }
-						else { print "<font color='red'>Checked out by: " . $res2[3] . "</font>"; }
-						print "\", allDay: true, color: '#0DAFAF', start: '" . $res[1] . "', url: './?m=items&i=" . to_int($res[0]) . "'}";
-					} 
+						my $sql2 = $db->prepare("SELECT name,serial,status,user FROM items WHERE ROWID = ?;");
+						$sql2->execute(to_int($res[0]));
+						while(my @res2 = $sql2->fetchrow_array())
+						{
+							print ",\n{title: \"Item expires: " . $res2[1] . "\", description: \"<b>Name:</b> " . $res2[0] . "<br><b>Serial:</b> " . $res2[1] . "<br><b>Status:</b> ";
+							if(to_int($res2[2]) == 0) { print "<font color='red'>Unavailable</font>"; }
+							elsif(to_int($res2[2]) == 1) { print "<font color='green'>Available</font>"; }
+							elsif(to_int($res2[2]) == 2) { print "<font color='orange'>Waiting approval for: " . $res2[3] . "</font>"; }
+							else { print "<font color='red'>Checked out by: " . $res2[3] . "</font>"; }
+							print "\", allDay: true, color: '#0DAFAF', start: '" . $res[1] . "', url: './?m=items&i=" . to_int($res[0]) . "'}";
+						} 
+					}
 				}
 				print "\n], eventRender: function(event, element) {element.tooltip({html: true, container: 'body', title: event.description});} \n});});\n</script>\n";
 				print "<div id='calendar'></div><hr>";
@@ -3871,7 +3896,7 @@ elsif($q->param('m')) # Modules
 				if($res[2] ne sanitize_html($q->param('ticket_releases'))) { $changes .= $items{"Release"} . "s: \"" . $res[2] . "\" => \"" . sanitize_html($q->param('ticket_releases')) . "\"\n"; }
 				if(trim($res[4]) ne trim($assigned)) { $changes .= "Assigned to: " . $res[4] . " => " . $assigned . "\n"; }
 				if($res[5] ne sanitize_html($q->param('ticket_title'))) { $changes .= "Title: \"" . $res[5] . "\" => \"" . sanitize_html($q->param('ticket_title')) . "\"\n"; }
-				if($res[7] ne $lnk) { $changes .= "Priority: \"" . $res[7] . "\" => \"" . $lnk . "\"\n"; }
+				if($res[7] ne $lnk) { $changes .= "Priority: " . $res[7] . " => " . $lnk . "\n"; }
 				if($res[8] ne sanitize_alpha($q->param('ticket_status'))) { $changes .= "Status: " . $res[8] . " => " . sanitize_alpha($q->param('ticket_status')) . "\n"; }
 				if($res[9] ne $resolution) { $changes .= "Resolution: \"" . $res[9] . "\" => \"" . $resolution . "\"\n"; }
 				@us = split(' ', $res[4]);
