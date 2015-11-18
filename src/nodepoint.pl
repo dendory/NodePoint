@@ -56,6 +56,9 @@ sub headers
 	print "  <meta name='viewport' content='width=device-width, initial-scale=1'>\n";
 	print "  <link rel='stylesheet' href='bootstrap.css'>\n";
 	print "  <link rel='stylesheet' href='datepicker.css'>\n";
+	print "  <link rel='stylesheet' href='fullcalendar.css'>\n";
+	print "  <script src='jquery.js'></script>\n";
+	print "  <script src='bootstrap.js'></script>\n";
 	if($cfg->load("css_template")) { print "  <link rel='stylesheet' href='" . $cfg->load("css_template") . "'>\n"; }
 	if($cfg->load("favicon")) { print "  <link rel='shortcut icon' href='" . $cfg->load("favicon") . "'>\n"; }
 	else { print "  <link rel='shortcut icon' href='favicon.gif'>\n"; }
@@ -75,8 +78,6 @@ sub footers
 	my $perf3 = $perf2 - $perf;
 	if($perf3 < 0) { $perf3 = ($perf2 + 100000) - $perf; }
 	print "  <div style='clear:both'></div><hr><div style='margin-top:-15px;font-size:9px;color:grey'><span class='pull-right'>" . $perf3 . " ms</span><i>NodePoint v" . $VERSION . "</i></div></div>\n";
-	print " <script src='jquery.js'></script>\n";
-	print " <script src='bootstrap.js'></script>\n";
 	print " <script src='validator.js'></script>\n";
 	print " <script src='markdown.js'></script>\n";
 	print " <script src='datepicker.js'></script>\n";
@@ -2604,7 +2605,7 @@ elsif($q->param('m')) # Modules
 			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Statistics</h3></div><div class='panel-body'>\n";
 			if($cfg->load('comp_tickets') eq "on")
 			{
-				print "<p><div class='row'><div class='col-sm-6'><center><h4>Number of tickets created</h4></center><canvas id='graph0'></canvas></div><div class='col-sm-6'><center><h4>Overall status distribution</h4></center><canvas id='graph1'></canvas></div></div></p>\n";
+				print "<p><div class='row'><div class='col-sm-6'><center><h4>Number of tickets created:</h4></center><canvas id='graph0'></canvas></div><div class='col-sm-6'><center><h4>Overall status distribution:</h4></center><canvas id='graph1'></canvas></div></div></p>\n";
 				print "<script src='Chart.min.js'></script><script>Chart.defaults.global.responsive = true; var data0 = { ";
 				$sql = $db->prepare("SELECT created FROM tickets ORDER BY ROWID DESC;");
 				$sql->execute();
@@ -2651,7 +2652,33 @@ elsif($q->param('m')) # Modules
 				print ", color:'#DDDFA0', highlight: '#EDEFB0', label: 'Resolved' }";
 				print "]; var ctx1 = document.getElementById('graph1').getContext('2d'); new Chart(ctx1).Pie(data1);</script><hr>\n";
 			}
-			print "<p><form method='GET' action='.'><div class='row'><div class='col-sm-6'><input type='hidden' name='m' value='stats'>Report type: <select class='form-control' name='report'>";
+			if($cfg->load('comp_tasks') eq "on" || $cfg->load('comp_items') eq "on")
+			{
+				print "<h4>Due tasks and item expirations:</h4>\n<script src='fullcalendar-moment.js'></script>\n<script src='fullcalendar.js'></script>\n<script>\n\$(document).ready(function(){\$('#calendar').fullCalendar({\nheader: {left: 'prev,next today', center: 'title', right: 'month,basicWeek,basicDay'}, editable: false, eventLimit: true,\nevents: [\n{title: 'Event start', start: '2000-11-01', allDay: true, url: './'}";
+				$sql = $db->prepare("SELECT * FROM steps;");
+				$sql->execute();
+				while(my @res = $sql->fetchrow_array())
+				{ print ",\n{title: 'Task due: " . $res[2] . "', description: \"<b>Task:</b> " . $res[1] . "<br><b>User:</b> " . $res[2] . "<br><b>Completion:</b> " . $res[3] . "%\", allDay: true, color: '#BF0721', start: '" . $res[4] . "', url: './?m=view_product&p=" . to_int($res[0]) . "'}"; }
+				$sql = $db->prepare("SELECT * FROM item_expiration;");
+				$sql->execute();
+				while(my @res = $sql->fetchrow_array())
+				{
+					my $sql2 = $db->prepare("SELECT name,serial,status,user FROM items WHERE ROWID = ?;");
+					$sql2->execute(to_int($res[0]));
+					while(my @res2 = $sql2->fetchrow_array())
+					{
+						print ",\n{title: \"Item expires: " . $res2[1] . "\", description: \"<b>Name:</b> " . $res2[0] . "<br><b>Serial:</b> " . $res2[1] . "<br><b>Status:</b> ";
+						if(to_int($res2[2]) == 0) { print "<font color='red'>Unavailable</font>"; }
+						elsif(to_int($res2[2]) == 1) { print "<font color='green'>Available</font>"; }
+						elsif(to_int($res2[2]) == 2) { print "<font color='orange'>Waiting approval for: " . $res2[3] . "</font>"; }
+						else { print "<font color='red'>Checked out by: " . $res2[3] . "</font>"; }
+						print "\", allDay: true, color: '#0DAFAF', start: '" . $res[1] . "', url: './?m=items&i=" . to_int($res[0]) . "'}";
+					} 
+				}
+				print "\n], eventRender: function(event, element) {element.tooltip({html: true, container: 'body', title: event.description});} \n});});\n</script>\n";
+				print "<div id='calendar'></div><hr>";
+			}
+			print "<p><h4>Reports:</h4><form method='GET' action='.'><div class='row'><div class='col-sm-6'><input type='hidden' name='m' value='stats'><select class='form-control' name='report'>";
 			if($cfg->load('comp_time') eq "on") { print "<option value='1'>Time spent per user</option><option value='2'>All time spent per ticket</option><option value='11'>Your time spent per ticket</option>"; }
 			if($cfg->load('comp_articles') eq "on") { print "<option value='13'>Tickets linked per article</option>"; }
 			if($cfg->load('comp_tickets') eq "on") { print "<option value='3'>Tickets created per " . lc($items{"Product"}) . "</option><option value='10'>New and open tickets per " . lc($items{"Product"}) . "</option><option value='4'>Tickets created per user</option><option value='5'>Tickets created per day</option><option value='6'>Tickets created per month</option><option value='7'>Tickets per status</option><option value='9'>Tickets assigned per user</option><option value='12'>Comment file attachments</option>"; }
