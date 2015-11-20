@@ -339,7 +339,7 @@ These are the default configuration values for NodePoint. They have to be define
 \clearpage
 
 \section{Users and activity}
-NodePoint provides a simple way to manage users based on their access levels. Users have a specific level, which determines what shows up to them in the interface and what they can do. They can also enter an optional email address for notifications. Email addresses must be confirmed through the sending of an automated token when they first register, if email notifications are turned on. Users also have a password which can be changed by the user under the \textbf{Settings} page, or reset by someone with the Users Management level.
+NodePoint provides a simple way to manage users based on their access levels. Users have a specific level, which determines what shows up to them in the interface and what they can do. They can also enter an optional email address for notifications. Email addresses must be confirmed through the sending of an automated token when they first register, if email notifications are turned on. Users also have a password which can be changed by the user under the \textbf{Users management} page, or reset by someone with the Users Management level.
 
 These are the access levels used by NodePoint along with a short description:
 
@@ -361,7 +361,7 @@ These are the access levels used by NodePoint along with a short description:
 NodePoint has a few special user accounts. The \textit{admin} account is used as product administrator and acts differently than normal user accounts. It should only be used for administrative functions. \textit{Guest} is used to specify people who are not logged in, and cannot be registered as a user account. The name \textit{api} refers to any change made using the JSON API. The \textit{demo} account can be registered normally but cannot change its own password, and is meant for product demos.
 
 \subsection{Users management}
-Management of user passwords and access levels can be done by anyone with access level 5 or higher. With the right access level, this panel will then be available in the \textbf{Settings} page:
+Management of user passwords and access levels can be done by anyone with access level 5 or higher. With the right access level, this panel will then be available in the \textbf{Tools} menu:
 
 \begin{figure}[h]
 \includegraphics{userman.jpg}
@@ -382,10 +382,10 @@ Here are the character restrictions for users:
 \subsection{Active Directory integration}
 Active Directory integration can be enabled in the initial configuration, which will link the users management panel to your domain controller. Passwords will no longer be stored in the NodePoint database. Once a user attempts to login, their credentials will be validated, then NodePoint will check if a user entry exists in the database. A new entry will be created on first login. Users still need to set their email addresses for email notifications to work. Access levels can still be assigned to users to control their access to the NodePoint interface.
 
-Authentication uses the LDAP protocol. You must specify a valid domain controller hostname or IP address for logins to work. If a login fails, you can view the log on the \textbf{Settings} page to see the error message.
+Authentication uses the LDAP protocol. You must specify a valid domain controller hostname or IP address for logins to work. If a login fails, you can view the log on the \textbf{System log} page to see the error message.
 
 \subsection{Reports}
-User activity can be monitored through two graphs along with a number of reports. The first graph shows the number of tickets entered per day for the last 7 days. The second one shows an overview of all tickets based on status. A calendar will also show time spent on tickets, due tasks and item expiration dates. Reports can be shown on the screen or downloaded as CSV documents to open in a spreadsheet application. Both are available to users of level 2 and higher on the \textbf{Settings} page.
+User activity can be monitored through two graphs along with a number of reports. The first graph shows the number of tickets entered per day for the last 7 days. The second one shows an overview of all tickets based on status. A calendar will also show time spent on tickets, due tasks and item expiration dates. Reports can be shown on the screen or downloaded as CSV documents to open in a spreadsheet application. Both are available to users of level 2 and higher on the \textbf{Statistics} page.
 
 \begin{figure}[h]
 \includegraphics{reports.jpg}
@@ -405,7 +405,7 @@ To use custom forms, follow these steps:
 
 \begin{enumerate}
 \item Add at least one project on the \textbf{Projects} page.
-\item Create a custom form on the \textbf{Settings} page.
+\item Create a custom form on the \textbf{Custom forms} page.
 \item Assign that form to the project.
 \end{enumerate}
 

@@ -148,7 +148,13 @@ sub navbar
 			if($cfg->load('comp_articles') eq "on") { print "	 <li><a href='./?m=articles'>Articles</a></li>\n"; }
 			if($cfg->load('comp_items') eq "on") { print "	 <li><a href='./?m=items'>Items</a></li>\n"; }
 			if($cfg->load('comp_clients') eq "on") { print "	 <li><a href='./?m=clients'>Clients</a></li>\n"; }
-			print "	 <li><a href='./?m=settings'>Settings</a></li>\n";
+			print "  <li class='dropdown'><a href='#' class='dropdown-toggle' data-toggle='dropdown' role='button' aria-haspopup='true' aria-expanded='false'>Tools <span class='caret'></span></a><ul class='dropdown-menu'>\n";
+			print "   <li><a href='./?m=settings'>Settings</a></li>\n";
+			if($logged_lvl > 1) { print "   <li><a href='./?m=stats'>Statistics</a></li>\n"; }
+			if($logged_lvl > 3 && $cfg->load('comp_tickets') eq "on")	{ print "   <li><a href='./?m=customforms'>Custom forms</a></li>\n"; }
+			if($logged_lvl > 4) { print "   <li><a href='./?m=users'>Users management</a></li>\n"; }
+			if($logged_lvl > 5) { print "   <li><a href='./?m=log'>System log</a></li>\n"; }
+			print "  <li role='separator' class='divider'></li><li><a href='./?m=logout'>Logout</a></li></ul></li>\n";
 		}
 		elsif($q->param('m') && ($q->param('m') eq "products" || $q->param('m') eq "add_product" ||$q->param('m') eq "view_product" || $q->param('m') eq "edit_product" || $q->param('m') eq "add_release" || $q->param('m') eq "add_step" || $q->param('m') eq "delete_step" || $q->param('m') eq "delete_release"))
 		{
@@ -158,9 +164,15 @@ sub navbar
 			if($cfg->load('comp_articles') eq "on") { print "	 <li><a href='./?m=articles'>Articles</a></li>\n"; }
 			if($cfg->load('comp_items') eq "on") { print "	 <li><a href='./?m=items'>Items</a></li>\n"; }
 			if($cfg->load('comp_clients') eq "on") { print "	 <li><a href='./?m=clients'>Clients</a></li>\n"; }
-			print "	 <li><a href='./?m=settings'>Settings</a></li>\n";
+			print "  <li class='dropdown'><a href='#' class='dropdown-toggle' data-toggle='dropdown' role='button' aria-haspopup='true' aria-expanded='false'>Tools <span class='caret'></span></a><ul class='dropdown-menu'>\n";
+			print "   <li><a href='./?m=settings'>Settings</a></li>\n";
+			if($logged_lvl > 1) { print "   <li><a href='./?m=stats'>Statistics</a></li>\n"; }
+			if($logged_lvl > 3 && $cfg->load('comp_tickets') eq "on")	{ print "   <li><a href='./?m=customforms'>Custom forms</a></li>\n"; }
+			if($logged_lvl > 4) { print "   <li><a href='./?m=users'>Users management</a></li>\n"; }
+			if($logged_lvl > 5) { print "   <li><a href='./?m=log'>System log</a></li>\n"; }
+			print "  <li role='separator' class='divider'></li><li><a href='./?m=logout'>Logout</a></li></ul></li>\n";
 		}
-		elsif($q->param('m') && ($q->param('m') eq "settings" || $q->param('m') eq "confirm_delete" || $q->param('m') eq "clear_log" || $q->param('m') eq "stats" || $q->param('m') eq "change_lvl" || $q->param('m') eq "confirm_email" || $q->param('m') eq "reset_pass" || $q->param('m') eq "logout" || $q->param('m') eq "summary") || $q->param('create_form') || $q->param('edit_form') || $q->param('save_form'))
+		elsif($q->param('m') && ($q->param('m') eq "settings" || $q->param('m') eq "stats" || $q->param('m') eq "triggers" || $q->param('m') eq "customforms" || $q->param('m') eq "users" || $q->param('m') eq "log" || $q->param('m') eq "confirm_delete" || $q->param('m') eq "clear_log" || $q->param('m') eq "stats" || $q->param('m') eq "change_lvl" || $q->param('m') eq "confirm_email" || $q->param('m') eq "reset_pass" || $q->param('m') eq "logout" || $q->param('m') eq "summary") || $q->param('create_form') || $q->param('edit_form') || $q->param('save_form'))
 		{
 			print "	 <li><a href='.'>Home</a></li>\n";
 			print "	 <li><a href='./?m=products'>" . $items{"Product"} . "s</a></li>\n";
@@ -168,7 +180,13 @@ sub navbar
 			if($cfg->load('comp_articles') eq "on") { print "	 <li><a href='./?m=articles'>Articles</a></li>\n"; }
 			if($cfg->load('comp_items') eq "on") { print "	 <li><a href='./?m=items'>Items</a></li>\n"; }
 			if($cfg->load('comp_clients') eq "on") { print "	 <li><a href='./?m=clients'>Clients</a></li>\n"; }
-			print "	 <li class='active'><a href='./?m=settings'>Settings</a></li>\n";
+			print "  <li class='dropdown active'><a href='#' class='dropdown-toggle' data-toggle='dropdown' role='button' aria-haspopup='true' aria-expanded='false'>Tools <span class='caret'></span></a><ul class='dropdown-menu'>\n";
+			print "   <li><a href='./?m=settings'>Settings</a></li>\n";
+			if($logged_lvl > 1) { print "   <li><a href='./?m=stats'>Statistics</a></li>\n"; }
+			if($logged_lvl > 3 && $cfg->load('comp_tickets') eq "on")	{ print "   <li><a href='./?m=customforms'>Custom forms</a></li>\n"; }
+			if($logged_lvl > 4) { print "   <li><a href='./?m=users'>Users management</a></li>\n"; }
+			if($logged_lvl > 5) { print "   <li><a href='./?m=log'>System log</a></li>\n"; }
+			print "  <li role='separator' class='divider'></li><li><a href='./?m=logout'>Logout</a></li></ul></li>\n";
 		}
 		elsif($q->param('m') && ($q->param('m') eq "clients" || $q->param('m') eq "add_client" || $q->param('m') eq  "view_client" || $q->param('m') eq "save_client" || $q->param('m') eq "set_defaults"))
 		{
@@ -178,7 +196,13 @@ sub navbar
 			if($cfg->load('comp_articles') eq "on") { print "	 <li><a href='./?m=articles'>Articles</a></li>\n"; }
 			if($cfg->load('comp_items') eq "on") { print "	 <li><a href='./?m=items'>Items</a></li>\n"; }
 			if($cfg->load('comp_clients') eq "on") { print "	 <li class='active'><a href='./?m=clients'>Clients</a></li>\n"; }
-			print "	 <li><a href='./?m=settings'>Settings</a></li>\n";
+			print "  <li class='dropdown'><a href='#' class='dropdown-toggle' data-toggle='dropdown' role='button' aria-haspopup='true' aria-expanded='false'>Tools <span class='caret'></span></a><ul class='dropdown-menu'>\n";
+			print "   <li><a href='./?m=settings'>Settings</a></li>\n";
+			if($logged_lvl > 1) { print "   <li><a href='./?m=stats'>Statistics</a></li>\n"; }
+			if($logged_lvl > 3 && $cfg->load('comp_tickets') eq "on")	{ print "   <li><a href='./?m=customforms'>Custom forms</a></li>\n"; }
+			if($logged_lvl > 4) { print "   <li><a href='./?m=users'>Users management</a></li>\n"; }
+			if($logged_lvl > 5) { print "   <li><a href='./?m=log'>System log</a></li>\n"; }
+			print "  <li role='separator' class='divider'></li><li><a href='./?m=logout'>Logout</a></li></ul></li>\n";
 		}
 		elsif($q->param('kb') || $q->param('m') && ($q->param('m') eq "articles" || $q->param('m') eq "add_article" || $q->param('m') eq "save_article" || $q->param('m') eq "unlink_article" || $q->param('m') eq "subscribe" || $q->param('m') eq "unsubscribe"))
 		{
@@ -188,7 +212,13 @@ sub navbar
 			if($cfg->load('comp_articles') eq "on") { print "	 <li class='active'><a href='./?m=articles'>Articles</a></li>\n"; }
 			if($cfg->load('comp_items') eq "on") { print "	 <li><a href='./?m=items'>Items</a></li>\n"; }
 			if($cfg->load('comp_clients') eq "on") { print "	 <li><a href='./?m=clients'>Clients</a></li>\n"; }
-			print "	 <li><a href='./?m=settings'>Settings</a></li>\n";
+			print "  <li class='dropdown'><a href='#' class='dropdown-toggle' data-toggle='dropdown' role='button' aria-haspopup='true' aria-expanded='false'>Tools <span class='caret'></span></a><ul class='dropdown-menu'>\n";
+			print "   <li><a href='./?m=settings'>Settings</a></li>\n";
+			if($logged_lvl > 1) { print "   <li><a href='./?m=stats'>Statistics</a></li>\n"; }
+			if($logged_lvl > 3 && $cfg->load('comp_tickets') eq "on")	{ print "   <li><a href='./?m=customforms'>Custom forms</a></li>\n"; }
+			if($logged_lvl > 4) { print "   <li><a href='./?m=users'>Users management</a></li>\n"; }
+			if($logged_lvl > 5) { print "   <li><a href='./?m=log'>System log</a></li>\n"; }
+			print "  <li role='separator' class='divider'></li><li><a href='./?m=logout'>Logout</a></li></ul></li>\n";
 		}
 		elsif($q->param('m') && $q->param('m') eq "items")
 		{
@@ -198,7 +228,13 @@ sub navbar
 			if($cfg->load('comp_articles') eq "on") { print "	 <li><a href='./?m=articles'>Articles</a></li>\n"; }
 			if($cfg->load('comp_items') eq "on") { print "	 <li class='active'><a href='./?m=items'>Items</a></li>\n"; }
 			if($cfg->load('comp_clients') eq "on") { print "	 <li><a href='./?m=clients'>Clients</a></li>\n"; }
-			print "	 <li><a href='./?m=settings'>Settings</a></li>\n";
+			print "  <li class='dropdown'><a href='#' class='dropdown-toggle' data-toggle='dropdown' role='button' aria-haspopup='true' aria-expanded='false'>Tools <span class='caret'></span></a><ul class='dropdown-menu'>\n";
+			print "   <li><a href='./?m=settings'>Settings</a></li>\n";
+			if($logged_lvl > 1) { print "   <li><a href='./?m=stats'>Statistics</a></li>\n"; }
+			if($logged_lvl > 3 && $cfg->load('comp_tickets') eq "on")	{ print "   <li><a href='./?m=customforms'>Custom forms</a></li>\n"; }
+			if($logged_lvl > 4) { print "   <li><a href='./?m=users'>Users management</a></li>\n"; }
+			if($logged_lvl > 5) { print "   <li><a href='./?m=log'>System log</a></li>\n"; }
+			print "  <li role='separator' class='divider'></li><li><a href='./?m=logout'>Logout</a></li></ul></li>\n";
 		}
 		else
 		{
@@ -208,7 +244,13 @@ sub navbar
 			if($cfg->load('comp_articles') eq "on") { print "	 <li><a href='./?m=articles'>Articles</a></li>\n"; }
 			if($cfg->load('comp_items') eq "on") { print "	 <li><a href='./?m=items'>Items</a></li>\n"; }
 			if($cfg->load('comp_clients') eq "on") { print "	 <li><a href='./?m=clients'>Clients</a></li>\n"; }
-			print "	 <li><a href='./?m=settings'>Settings</a></li>\n";
+			print "  <li class='dropdown'><a href='#' class='dropdown-toggle' data-toggle='dropdown' role='button' aria-haspopup='true' aria-expanded='false'>Tools <span class='caret'></span></a><ul class='dropdown-menu'>\n";
+			print "   <li><a href='./?m=settings'>Settings</a></li>\n";
+			if($logged_lvl > 1) { print "   <li><a href='./?m=stats'>Statistics</a></li>\n"; }
+			if($logged_lvl > 3 && $cfg->load('comp_tickets') eq "on")	{ print "   <li><a href='./?m=customforms'>Custom forms</a></li>\n"; }
+			if($logged_lvl > 4) { print "   <li><a href='./?m=users'>Users management</a></li>\n"; }
+			if($logged_lvl > 5) { print "   <li><a href='./?m=log'>System log</a></li>\n"; }
+			print "  <li role='separator' class='divider'></li><li><a href='./?m=logout'>Logout</a></li></ul></li>\n";
 		}
 		if($cfg->load('comp_tickets') eq "on") 
 		{ 
@@ -2527,7 +2569,7 @@ elsif($q->param('m')) # Modules
 	{
 		$cgs = $q->cookie(-name => "np_gs", -expires => '+3M', -value => "1");
 		headers("Settings");
-		print "<p>You are logged in as <b>" . $logged_user . "</b> and your access level is <b>" . $logged_lvl . "</b>. Press <a href='./?m=logout'>here</a> to log out.</p>\n";
+		print "<p>You are logged in as <b>" . $logged_user . "</b> and your access level is <b>" . $logged_lvl . "</b>.</p>\n";
 		if($logged_lvl > 2 && $cfg->load('comp_time') eq "on")
 		{
 			$sql = $db->prepare("SELECT * FROM timetracking WHERE name = ?;");
@@ -2572,169 +2614,6 @@ elsif($q->param('m')) # Modules
 				print "<div class='form-group'><p><form method='POST' action='.' data-toggle='validator' role='form'><input type='hidden' name='m' value='change_pass'><div class='row'><div class='col-sm-4'><input placeholder='Current password' class='form-control' type='password' name='current_pass'></div><div class='col-sm-4'><input placeholder='New password' type='password' class='form-control' name='new_pass1' data-minlength='6' id='new_pass1' required></div><div class='col-sm-4'><input class='form-control' type='password' name='new_pass2' id='inputPasswordConfirm' data-match='#new_pass1' data-match-error='Passwords do not match.' placeholder='Confirm' required></div></div></p><div class='help-block with-errors'></div><input class='btn btn-primary pull-right' type='submit' value='Change password'></form></div>";
 			}
 			print "</div></div>";
-		}
-		if($logged_lvl > 4)
-		{
-			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Users management</h3></div><div class='panel-body'>\n";
-			print "<p>Filter users by access level: <a href='./?m=settings'>All</a> | <a href='./?m=settings&filter_users=0'>0</a> | <a href='./?m=settings&filter_users=1'>1</a> | <a href='./?m=settings&filter_users=2'>2</a> | <a href='./?m=settings&filter_users=3'>3</a> | <a href='./?m=settings&filter_users=4'>4</a> | <a href='./?m=settings&filter_users=5'>5</a></p>";
-			print "<table class='table table-striped'><tr><th>User name</th><th>Email</th><th>Level</th><th>Last login</th></tr>\n";
-			if(defined($q->param("filter_users")))
-			{
-				$sql = $db->prepare("SELECT * FROM users WHERE level = ? ORDER BY name;");
-				$sql->execute(to_int($q->param("filter_users")));
-			}
-			else
-			{
-				$sql = $db->prepare("SELECT * FROM users ORDER BY name;");
-				$sql->execute();
-			}
-			while(my @res = $sql->fetchrow_array())
-			{
-				print "<tr><td><a href='./?m=summary&u=" . $res[0] . "'>" . $res[0] . "</a></td><td>" . $res[2] . "</td><td>" . $res[3] . "</td><td>" . $res[4] . "</td></tr>\n";
-			}
-			print "</table>\n";
-			if(!$cfg->load('ad_server'))
-			{
-				print "<div class='form-group'><h4>Add a new user:</h4><form method='POST' action='.' data-toggle='validator' role='form'>\n";
-				print "<p><div class='row'><div class='col-sm-6'><input type='text' name='new_name' placeholder='User name' class='form-control' maxlength='20' required></div><div class='col-sm-6'><input type='email' name='new_email' placeholder='Email address (optional)' class='form-control'></div></div></p><p><div class='row'><div class='col-sm-6'><input type='password' name='new_pass1' data-minlength='6' id='new_pass1' class='form-control' placeholder='Password' required></div><div class='col-sm-6'><input type='password' name='new_pass2' id='inputPasswordConfirm' data-match='#new_pass1' data-match-error='Passwords do not match.' placeholder='Confirm password' class='form-control' required></div></div></p><div class='help-block with-errors'></div><input class='btn btn-primary pull-right' type='submit' value='Add user'></form></div>\n";
-			}
-			print "</div></div>\n";
-		}
-		if($logged_lvl > 1)
-		{
-			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Statistics</h3></div><div class='panel-body'>\n";
-			if($cfg->load('comp_tickets') eq "on")
-			{
-				print "<p><div class='row'><div class='col-sm-6'><center><h4>Number of tickets created:</h4></center><canvas id='graph0'></canvas></div><div class='col-sm-6'><center><h4>Overall status distribution:</h4></center><canvas id='graph1'></canvas></div></div></p>\n";
-				print "<script src='Chart.min.js'></script><script>Chart.defaults.global.responsive = true; var data0 = { ";
-				$sql = $db->prepare("SELECT created FROM tickets ORDER BY ROWID DESC;");
-				$sql->execute();
-				my $i = -1;
-				my @labels = ('', '', '', '', '', '', '');
-				my @points = (0, 0, 0, 0, 0, 0, 0);
-				my $curwd = "-1";
-				while(my @res = $sql->fetchrow_array())
-				{
-					my ($weekday, $month, $day, $hms, $year) = split(' ', $res[0]);
-					if($curwd ne $month . " " . $day)
-					{
-						$i++;
-						$curwd = $month . " " . $day;
-					}
-					$labels[$i] = $month . " " . $day;
-					$points[$i]++;
-					if($i > 6) { last; }
-				}
-				print "labels: ['" . $labels[6] . "', '" . $labels[5] . "', '" . $labels[4] . "', '" . $labels[3] . "', '" . $labels[2] . "', '" . $labels[1] . "', '" . $labels[0] . "'], datasets: [{ label: 'Tickets created by day', fillColor: '#F2FBFC', strokeColor: '#97BBCC', pointColor: '#97BBCC', pointStrokeColor: '#A7CBDC', pointHighlightFill: '#A7CBDC', pointHighlightStroke: '#97BBCC', data: [" . $points[6] . "," . $points[5] . "," . $points[4] . "," . $points[3] . "," . $points[2] . "," . $points[1] . "," . $points[0] . "] }]}; var ctx0 = document.getElementById('graph0').getContext('2d'); new Chart(ctx0).Line(data0); var data1 = [{ value: ";
-				$sql = $db->prepare("SELECT COUNT(*) FROM tickets WHERE status = 'New';");
-				$sql->execute();
-				while(my @res = $sql->fetchrow_array()) { print $res[0]; }
-				print ", color:'#87ABBC', highlight: '#97BBCC', label: 'New' }, { value: ";
-				$sql = $db->prepare("SELECT COUNT(*) FROM tickets WHERE status = 'Open';");
-				$sql->execute();
-				while(my @res = $sql->fetchrow_array()) { print $res[0]; }
-				print ", color:'#EFC193', highlight: '#FFD1A3', label: 'Open' }, { value: ";
-				$sql = $db->prepare("SELECT COUNT(*) FROM tickets WHERE status = 'Invalid';");
-				$sql->execute();
-				while(my @res = $sql->fetchrow_array()) { print $res[0]; }
-				print ", color:'#CDA5EF', highlight: '#DDB5FF', label: 'Invalid' }, { value: ";
-				$sql = $db->prepare("SELECT COUNT(*) FROM tickets WHERE status = 'Hold';");
-				$sql->execute();
-				while(my @res = $sql->fetchrow_array()) { print $res[0]; }
-				print ", color:'#EF8B9C', highlight: '#FF9BAC', label: 'Hold' }, { value: ";
-				$sql = $db->prepare("SELECT COUNT(*) FROM tickets WHERE status = 'Duplicate';");
-				$sql->execute();
-				while(my @res = $sql->fetchrow_array()) { print $res[0]; }
-				print ", color:'#A3D589', highlight: '#B3E599', label: 'Duplicate' }, { value: ";
-				$sql = $db->prepare("SELECT COUNT(*) FROM tickets WHERE status = 'Resolved';");
-				$sql->execute();
-				while(my @res = $sql->fetchrow_array()) { print $res[0]; }
-				print ", color:'#DDDFA0', highlight: '#EDEFB0', label: 'Resolved' }";
-				print "]; var ctx1 = document.getElementById('graph1').getContext('2d'); new Chart(ctx1).Pie(data1);</script><hr>\n";
-			}
-			if($cfg->load('comp_steps') eq "on" || $cfg->load('comp_items') eq "on" || $cfg->load('comp_time') eq "on")
-			{
-				if($cfg->load('comp_time') ne "on")
-				{
-					if($cfg->load('comp_steps') ne "on") { print "<h4>Item expirations:</h4>"; }
-					elsif($cfg->load('comp_items') ne "on") { print "<h4>Due tasks:</h4>"; }
-					else { print "<h4>Due tasks and item expirations:</h4>"; }
-				}
-				else
-				{
-					if($cfg->load('comp_steps') ne "on") { print "<h4>Time spent on tickets and item expirations:</h4>"; }
-					elsif($cfg->load('comp_items') ne "on") { print "<h4>Time spent on tickets and due tasks:</h4>"; }
-					else { print "<h4>Time spent on tickets, due tasks and item expirations:</h4>"; }				
-				}
-				print "\n<script src='fullcalendar-moment.js'></script>\n<script src='fullcalendar.js'></script>\n<script>\n\$(document).ready(function(){\$('#calendar').fullCalendar({\nheader: {left: 'prev,next today', center: 'title', right: 'month,basicWeek,basicDay'}, editable: false, eventLimit: true,\nevents: [\n{title: 'Event start', start: '2000-11-01', allDay: true, url: './'}";
-				if($cfg->load('comp_steps') eq "on")
-				{
-					$sql = $db->prepare("SELECT * FROM steps;");
-					$sql->execute();
-					while(my @res = $sql->fetchrow_array())
-					{ print ",\n{title: 'Task due: " . $res[2] . "', description: \"<b>Task:</b> " . $res[1] . "<br><b>User:</b> " . $res[2] . "<br><b>Completion:</b> " . $res[3] . "%\", allDay: true, color: '#BF0721', start: '" . $res[4] . "', url: './?m=view_product&p=" . to_int($res[0]) . "'}"; }
-				}
-				if($cfg->load('comp_time') eq "on")
-				{
-					$sql = $db->prepare("SELECT * FROM timetracking;");
-					$sql->execute();
-					while(my @res = $sql->fetchrow_array())
-					{ print ",\n{title: 'Time spent: " . $res[1] . "', description: \"<b>User:</b> " . $res[1] . "<br><b>Ticket:</b> " . $res[0] . "<br><b>Time spent:</b> " . $res[2] . "h\", allDay: true, color: '#8E7D7C', start: '" . $res[3] . "', url: './?m=view_ticket&t=" . to_int($res[0]) . "'}"; }
-				}
-				if($cfg->load('comp_items') eq "on")
-				{
-					$sql = $db->prepare("SELECT * FROM item_expiration;");
-					$sql->execute();
-					while(my @res = $sql->fetchrow_array())
-					{
-						my $sql2 = $db->prepare("SELECT name,serial,status,user FROM items WHERE ROWID = ?;");
-						$sql2->execute(to_int($res[0]));
-						while(my @res2 = $sql2->fetchrow_array())
-						{
-							print ",\n{title: \"Item expires: " . $res2[1] . "\", description: \"<b>Name:</b> " . $res2[0] . "<br><b>Serial:</b> " . $res2[1] . "<br><b>Status:</b> ";
-							if(to_int($res2[2]) == 0) { print "<font color='red'>Unavailable</font>"; }
-							elsif(to_int($res2[2]) == 1) { print "<font color='green'>Available</font>"; }
-							elsif(to_int($res2[2]) == 2) { print "<font color='orange'>Waiting approval for: " . $res2[3] . "</font>"; }
-							else { print "<font color='red'>Checked out by: " . $res2[3] . "</font>"; }
-							print "\", allDay: true, color: '#0DAFAF', start: '" . $res[1] . "', url: './?m=items&i=" . to_int($res[0]) . "'}";
-						} 
-					}
-				}
-				print "\n], eventRender: function(event, element) {element.tooltip({html: true, container: 'body', title: event.description});} \n});});\n</script>\n";
-				print "<div id='calendar'></div><hr>";
-			}
-			print "<p><h4>Reports:</h4><form method='GET' action='.'><div class='row'><div class='col-sm-6'><input type='hidden' name='m' value='stats'><select class='form-control' name='report'>";
-			if($cfg->load('comp_time') eq "on") { print "<option value='1'>Time spent per user</option><option value='2'>All time spent per ticket</option><option value='11'>Your time spent per ticket</option>"; }
-			if($cfg->load('comp_articles') eq "on") { print "<option value='13'>Tickets linked per article</option>"; }
-			if($cfg->load('comp_tickets') eq "on") { print "<option value='3'>Tickets created per " . lc($items{"Product"}) . "</option><option value='10'>New and open tickets per " . lc($items{"Product"}) . "</option><option value='4'>Tickets created per user</option><option value='5'>Tickets created per day</option><option value='6'>Tickets created per month</option><option value='7'>Tickets per status</option><option value='9'>Tickets assigned per user</option><option value='12'>Comment file attachments</option>"; }
-			if($cfg->load('comp_shoutbox') eq "on") { print "<option value='14'>Full shoutbox history</option>"; }
-			if($cfg->load('comp_clients') eq "on") { print "<option value='16'>Clients per status</option>"; }
-			if($cfg->load('comp_items') eq "on") { print "<option value='15'>Items checked out per user</option><option value='18'>Item expiration dates</option>"; }
-			print "<option value='8'>Users per access level</option><option value='17'>Active user sessions</option></select></div><div class='col-sm-6'><span class='pull-right'><input class='btn btn-primary' type='submit' value='Show report'> &nbsp; <input class='btn btn-primary' type='submit' name='csv' value='Export as CSV'></span></div></div></form></p></div><div class='help-block with-errors'></div></div>\n";
-		}
-		if($logged_lvl > 3 && $cfg->load('comp_tickets') eq "on")
-		{
-			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Custom forms</h3></div><div class='panel-body'>\n";
-			print "<p><table class='table table-striped'><tr><th>Assigned " . lc($items{"Product"}) . "</th><th>Form name</th><th>Last update</th></tr>";
-			my @products;
-			$sql = $db->prepare("SELECT ROWID,* FROM products;");
-			$sql->execute();
-			while(my @res = $sql->fetchrow_array()) { $products[$res[0]] = $res[1]; }
-			$sql = $db->prepare("SELECT * FROM default_form;");
-			$sql->execute();
-			my $defaultform = -1;
-			while(my @res = $sql->fetchrow_array()) { $defaultform = to_int($res[0]); }
-			$sql = $db->prepare("SELECT ROWID,* FROM forms;");
-			$sql->execute();
-			while(my @res = $sql->fetchrow_array())
-			{
-				print "<tr><td>";
- 				if($products[$res[1]]) { print $products[$res[1]]; }
-				else { print "None"; }
-				if($res[0] == $defaultform) { print " <b>(default form)</b>"; }
-				print "</td><td><a href='./?edit_form=" . $res[0] . "'>" . $res[2] . "</a></td><td>" . $res[23] . "</td></tr>\n";
-			}
-			print "</table><form method='GET' action='./'><input type='hidden' name='create_form' value='1'><input type='submit' value='Create new custom form' class='pull-right btn btn-primary'></form></p></div></div>\n";
 		}
 		if($logged_lvl > 5)
 		{
@@ -2835,25 +2714,289 @@ elsif($q->param('m')) # Modules
 			else { print "<option>on</option><option selected>off</option>"; }
 			print "</select></td></tr>\n";
 			print "</table>The admin password will be left unchanged if empty.<br>See the <a href='./manual.pdf'>manual</a> file for detailed information.<input class='btn btn-primary pull-right' type='submit' value='Save settings'></form></div></div>\n";
-			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Log (last 200 events)</h3></div><div class='panel-body'>\n";
-			print "<form style='display:inline' method='POST' action='.'><input type='hidden' name='m' value='clear_log'><input class='btn btn-danger pull-right' type='submit' value='Clear log'><br></form><a name='log'></a><p>Filter log by events:<br><a href='./?m=settings#log'>All</a> | <a href='./?m=settings&filter_log=Failed#log'>Failed logins</a> | <a href='./?m=settings&filter_log=Success#log'>Successful logins</a> | <a href='./?m=settings&filter_log=level#log'>Level changes</a> | <a href='./?m=settings&filter_log=password#log'>Password changes</a> | <a href='./?m=settings&filter_log=new#log'>New users</a> | <a href='./?m=settings&filter_log=setting#log'>Settings updated</a> | <a href='./?m=settings&filter_log=notification#log'>Email notifications</a> | <a href='./?m=settings&filter_log=LDAP:#log'>Active Directory</a> | <a href='./?m=settings&filter_log=deleted:#log'>Deletes</a></p>\n";
-			print "<table class='table table-striped'><tr><th>IP address</th><th>User</th><th>Event</th><th>Time</th></tr>\n";
-			if($q->param("filter_log"))
+		}
+	}
+	elsif($q->param('m') eq "users" && $logged_lvl > 4)
+	{
+		headers("Users management");
+		print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Users management</h3></div><div class='panel-body'>\n";
+		print "<p>Filter users by access level: <a href='./?m=users'>All</a> | <a href='./?m=users&filter_users=0'>0</a> | <a href='./?m=users&filter_users=1'>1</a> | <a href='./?m=users&filter_users=2'>2</a> | <a href='./?m=users&filter_users=3'>3</a> | <a href='./?m=users&filter_users=4'>4</a> | <a href='./?m=users&filter_users=5'>5</a></p>";
+		print "<table class='table table-striped'><tr><th>User name</th><th>Email</th><th>Level</th><th>Last login</th></tr>\n";
+		if(defined($q->param("filter_users")))
+		{
+			$sql = $db->prepare("SELECT * FROM users WHERE level = ? ORDER BY name;");
+			$sql->execute(to_int($q->param("filter_users")));
+		}
+		else
+		{
+			$sql = $db->prepare("SELECT * FROM users ORDER BY name;");
+			$sql->execute();
+		}
+		while(my @res = $sql->fetchrow_array())
+		{
+			print "<tr><td><a href='./?m=summary&u=" . $res[0] . "'>" . $res[0] . "</a></td><td>" . $res[2] . "</td><td>" . $res[3] . "</td><td>" . $res[4] . "</td></tr>\n";
+		}
+		print "</table>\n";
+		if(!$cfg->load('ad_server'))
+		{
+			print "<div class='form-group'><h4>Add a new user:</h4><form method='POST' action='.' data-toggle='validator' role='form'>\n";
+			print "<p><div class='row'><div class='col-sm-6'><input type='text' name='new_name' placeholder='User name' class='form-control' maxlength='20' required></div><div class='col-sm-6'><input type='email' name='new_email' placeholder='Email address (optional)' class='form-control'></div></div></p><p><div class='row'><div class='col-sm-6'><input type='password' name='new_pass1' data-minlength='6' id='new_pass1' class='form-control' placeholder='Password' required></div><div class='col-sm-6'><input type='password' name='new_pass2' id='inputPasswordConfirm' data-match='#new_pass1' data-match-error='Passwords do not match.' placeholder='Confirm password' class='form-control' required></div></div></p><div class='help-block with-errors'></div><input class='btn btn-primary pull-right' type='submit' value='Add user'></form></div>\n";
+		}
+		print "</div></div>\n";
+	}
+	elsif($q->param('m') eq "stats" && $logged_lvl > 1)
+	{
+		headers("Statistics");
+		print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Statistics</h3></div><div class='panel-body'>\n";
+		print "<form method='GET' action='.'><div class='row'><div class='col-sm-4'><input type='hidden' name='m' value='stats'><select name='u' class='form-control'><option value=''>All</option>";
+		$sql = $db->prepare("SELECT name FROM users WHERE level > 0 ORDER BY name;");
+		$sql->execute();
+		while(my @res = $sql->fetchrow_array())
+		{
+			 print "<option";
+			 if($q->param('u') && sanitize_alpha($q->param('u')) eq $res[0]) { print " selected"; }
+			 print ">" . $res[0] . "</option>"; 
+		}
+		print "</select></div><div class='col-sm-2'><input class='btn btn-primary' type='submit' value='Filter users'></div></div></form><hr>";
+		if($cfg->load('comp_tickets') eq "on")
+		{
+			if($q->param('u'))
+			{ print "<p><div class='row'><div class='col-sm-6'><center><h4>Number of tickets created by " . sanitize_alpha($q->param('u')) . ":</h4></center><canvas id='graph0'></canvas></div><div class='col-sm-6'><center><h4>Status distribution for tickets assigned to " . sanitize_alpha($q->param('u')) . ":</h4></center><canvas id='graph1'></canvas></div></div></p>\n"; }
+			else { print "<p><div class='row'><div class='col-sm-6'><center><h4>Number of tickets created by all users:</h4></center><canvas id='graph0'></canvas></div><div class='col-sm-6'><center><h4>Overall status distribution:</h4></center><canvas id='graph1'></canvas></div></div></p>\n"; }
+			print "<script src='Chart.min.js'></script><script>Chart.defaults.global.responsive = true; var data0 = { ";
+			if($q->param('u'))
 			{
-				$sql = $db->prepare("SELECT * FROM log DESC WHERE op LIKE ? ORDER BY key DESC LIMIT 200;");
-				$sql->execute("%" . sanitize_alpha($q->param("filter_log")) . "%");
+				$sql = $db->prepare("SELECT created FROM tickets WHERE createdby = ? ORDER BY ROWID DESC;");
+				$sql->execute(sanitize_alpha($q->param('u')));
 			}
 			else
 			{
-				$sql = $db->prepare("SELECT * FROM log ORDER BY key DESC LIMIT 200;");
+				$sql = $db->prepare("SELECT created FROM tickets ORDER BY ROWID DESC;");
 				$sql->execute();
 			}
+			my $i = -1;
+			my @labels = ('', '', '', '', '', '', '');
+			my @points = (0, 0, 0, 0, 0, 0, 0);
+			my $curwd = "-1";
 			while(my @res = $sql->fetchrow_array())
 			{
-				print "<tr><td>" . $res[0] . "</td><td>" . $res[1] . "</td><td>" . $res[2] . "</td><td>" . $res[3] . "</td></tr>\n";
+				my ($weekday, $month, $day, $hms, $year) = split(' ', $res[0]);
+				if($curwd ne $month . " " . $day)
+				{
+					$i++;
+					$curwd = $month . " " . $day;
+				}
+				$labels[$i] = $month . " " . $day;
+				$points[$i]++;
+				if($i > 6) { last; }
 			}
-			print "</table></div></div>\n";
+			print "labels: ['" . $labels[6] . "', '" . $labels[5] . "', '" . $labels[4] . "', '" . $labels[3] . "', '" . $labels[2] . "', '" . $labels[1] . "', '" . $labels[0] . "'], datasets: [{ label: 'Tickets created by day', fillColor: '#F2FBFC', strokeColor: '#97BBCC', pointColor: '#97BBCC', pointStrokeColor: '#A7CBDC', pointHighlightFill: '#A7CBDC', pointHighlightStroke: '#97BBCC', data: [" . $points[6] . "," . $points[5] . "," . $points[4] . "," . $points[3] . "," . $points[2] . "," . $points[1] . "," . $points[0] . "] }]}; var ctx0 = document.getElementById('graph0').getContext('2d'); new Chart(ctx0).Line(data0); var data1 = [{ value: ";
+			if($q->param('u'))
+			{
+				$sql = $db->prepare("SELECT COUNT(*) FROM tickets WHERE status = 'New' AND assignedto LIKE ?;");
+				$sql->execute("%" . sanitize_alpha($q->param('u')) . "%");
+			}
+			else
+			{
+				$sql = $db->prepare("SELECT COUNT(*) FROM tickets WHERE status = 'New';");
+				$sql->execute();
+			}
+			while(my @res = $sql->fetchrow_array()) { print $res[0]; }
+			print ", color:'#87ABBC', highlight: '#97BBCC', label: 'New' }, { value: ";
+			if($q->param('u'))
+			{
+				$sql = $db->prepare("SELECT COUNT(*) FROM tickets WHERE status = 'Open' AND assignedto LIKE ?;");
+				$sql->execute("%" . sanitize_alpha($q->param('u')) . "%");
+			}
+			else
+			{
+				$sql = $db->prepare("SELECT COUNT(*) FROM tickets WHERE status = 'Open';");
+				$sql->execute();
+			}
+			while(my @res = $sql->fetchrow_array()) { print $res[0]; }
+			print ", color:'#EFC193', highlight: '#FFD1A3', label: 'Open' }, { value: ";
+			if($q->param('u'))
+			{
+				$sql = $db->prepare("SELECT COUNT(*) FROM tickets WHERE status = 'Invalid' AND assignedto LIKE ?;");
+				$sql->execute("%" . sanitize_alpha($q->param('u')) . "%");
+			}
+			else
+			{
+				$sql = $db->prepare("SELECT COUNT(*) FROM tickets WHERE status = 'Invalid';");
+				$sql->execute();
+			}
+			while(my @res = $sql->fetchrow_array()) { print $res[0]; }
+			print ", color:'#CDA5EF', highlight: '#DDB5FF', label: 'Invalid' }, { value: ";
+			if($q->param('u'))
+			{
+				$sql = $db->prepare("SELECT COUNT(*) FROM tickets WHERE status = 'Hold' AND assignedto LIKE ?;");
+				$sql->execute("%" . sanitize_alpha($q->param('u')) . "%");
+			}
+			else
+			{
+				$sql = $db->prepare("SELECT COUNT(*) FROM tickets WHERE status = 'Hold';");
+				$sql->execute();
+			}
+			while(my @res = $sql->fetchrow_array()) { print $res[0]; }
+			print ", color:'#EF8B9C', highlight: '#FF9BAC', label: 'Hold' }, { value: ";
+			if($q->param('u'))
+			{
+				$sql = $db->prepare("SELECT COUNT(*) FROM tickets WHERE status = 'Duplicate' AND assignedto LIKE ?;");
+				$sql->execute("%" . sanitize_alpha($q->param('u')) . "%");
+			}
+			else
+			{
+				$sql = $db->prepare("SELECT COUNT(*) FROM tickets WHERE status = 'Duplicate';");
+				$sql->execute();
+			}
+			while(my @res = $sql->fetchrow_array()) { print $res[0]; }
+			print ", color:'#A3D589', highlight: '#B3E599', label: 'Duplicate' }, { value: ";
+			if($q->param('u'))
+			{
+				$sql = $db->prepare("SELECT COUNT(*) FROM tickets WHERE status = 'Resolved' AND assignedto LIKE ?;");
+				$sql->execute("%" . sanitize_alpha($q->param('u')) . "%");
+			}
+			else
+			{
+				$sql = $db->prepare("SELECT COUNT(*) FROM tickets WHERE status = 'Resolved';");
+				$sql->execute();
+			}
+			while(my @res = $sql->fetchrow_array()) { print $res[0]; }
+			print ", color:'#DDDFA0', highlight: '#EDEFB0', label: 'Resolved' }";
+			print "]; var ctx1 = document.getElementById('graph1').getContext('2d'); new Chart(ctx1).Pie(data1);</script><hr>\n";
 		}
+		if($cfg->load('comp_steps') eq "on" || $cfg->load('comp_items') eq "on" || $cfg->load('comp_time') eq "on")
+		{
+			if($cfg->load('comp_time') ne "on")
+			{
+				if($cfg->load('comp_steps') ne "on") { print "<h4>Item expirations:</h4>"; }
+				elsif($cfg->load('comp_items') ne "on") { print "<h4>Due tasks:</h4>"; }
+				else { print "<h4>Due tasks and item expirations:</h4>"; }
+			}
+			else
+			{
+				if($cfg->load('comp_steps') ne "on" && $cfg->load('comp_items') ne "on") { print "<h4>Time spent on tickets:</h4>"; }
+				elsif($cfg->load('comp_steps') ne "on") { print "<h4>Time spent on tickets and item expirations:</h4>"; }
+				elsif($cfg->load('comp_items') ne "on") { print "<h4>Time spent on tickets and due tasks:</h4>"; }
+				else { print "<h4>Time spent on tickets, due tasks and item expirations:</h4>"; }				
+			}
+			print "\n<script src='fullcalendar-moment.js'></script>\n<script src='fullcalendar.js'></script>\n<script>\n\$(document).ready(function(){\$('#calendar').fullCalendar({\nheader: {left: 'prev,next today', center: 'title', right: 'month,basicWeek,basicDay'}, editable: false, eventLimit: true,\nevents: [\n{title: 'Event start', start: '2000-11-01', allDay: true, url: './'}";
+			if($cfg->load('comp_steps') eq "on")
+			{
+				if($q->param('u'))
+				{
+					$sql = $db->prepare("SELECT * FROM steps WHERE name = ?;");
+					$sql->execute(sanitize_alpha($q->param('u')));
+				}
+				else
+				{
+					$sql = $db->prepare("SELECT * FROM steps;");
+					$sql->execute();
+				}
+				while(my @res = $sql->fetchrow_array())
+				{ print ",\n{title: 'Task due: " . $res[2] . "', description: \"<b>Task:</b> " . $res[1] . "<br><b>User:</b> " . $res[2] . "<br><b>Completion:</b> " . $res[3] . "%\", allDay: true, color: '#BF0721', start: '" . $res[4] . "', url: './?m=view_product&p=" . to_int($res[0]) . "'}"; }
+			}
+			if($cfg->load('comp_time') eq "on")
+			{
+				if($q->param('u'))
+				{
+					$sql = $db->prepare("SELECT * FROM timetracking WHERE name = ?;");
+					$sql->execute(sanitize_alpha($q->param('u')));
+				}
+				else
+				{
+					$sql = $db->prepare("SELECT * FROM timetracking;");
+					$sql->execute();
+				}
+				while(my @res = $sql->fetchrow_array())
+				{ print ",\n{title: 'Time spent: " . $res[1] . "', description: \"<b>User:</b> " . $res[1] . "<br><b>Ticket:</b> " . $res[0] . "<br><b>Time spent:</b> " . $res[2] . "h\", allDay: true, color: '#8E7D7C', start: '" . $res[3] . "', url: './?m=view_ticket&t=" . to_int($res[0]) . "'}"; }
+			}
+			if($cfg->load('comp_items') eq "on")
+			{
+				$sql = $db->prepare("SELECT * FROM item_expiration;");
+				$sql->execute();
+				while(my @res = $sql->fetchrow_array())
+				{
+					my $sql2;
+					if($q->param('u'))
+					{
+						$sql2 = $db->prepare("SELECT name,serial,status,user FROM items WHERE ROWID = ? AND user = ?;");
+						$sql2->execute(to_int($res[0]), sanitize_alpha($q->param('u')));
+					}
+					else
+					{
+						$sql2 = $db->prepare("SELECT name,serial,status,user FROM items WHERE ROWID = ?;");
+						$sql2->execute(to_int($res[0]));
+					}
+					while(my @res2 = $sql2->fetchrow_array())
+					{
+						print ",\n{title: \"Item expires: " . $res2[1] . "\", description: \"<b>Name:</b> " . $res2[0] . "<br><b>Serial:</b> " . $res2[1] . "<br><b>Status:</b> ";
+						if(to_int($res2[2]) == 0) { print "<font color='red'>Unavailable</font>"; }
+						elsif(to_int($res2[2]) == 1) { print "<font color='green'>Available</font>"; }
+						elsif(to_int($res2[2]) == 2) { print "<font color='orange'>Waiting approval for: " . $res2[3] . "</font>"; }
+						else { print "<font color='red'>Checked out by: " . $res2[3] . "</font>"; }
+						print "\", allDay: true, color: '#0DAFAF', start: '" . $res[1] . "', url: './?m=items&i=" . to_int($res[0]) . "'}";
+					} 
+				}
+			}
+			print "\n], eventRender: function(event, element) {element.tooltip({html: true, container: 'body', title: event.description});} \n});});\n</script>\n";
+			print "<div id='calendar'></div><hr>";
+		}
+		print "<p><h4>Reports:</h4><form method='GET' action='.'><div class='row'><div class='col-sm-6'><input type='hidden' name='m' value='stats'><select class='form-control' name='report'>";
+		if($cfg->load('comp_time') eq "on") { print "<option value='1'>Time spent per user</option><option value='2'>All time spent per ticket</option><option value='11'>Your time spent per ticket</option>"; }
+		if($cfg->load('comp_articles') eq "on") { print "<option value='13'>Tickets linked per article</option>"; }
+		if($cfg->load('comp_tickets') eq "on") { print "<option value='3'>Tickets created per " . lc($items{"Product"}) . "</option><option value='10'>New and open tickets per " . lc($items{"Product"}) . "</option><option value='4'>Tickets created per user</option><option value='5'>Tickets created per day</option><option value='6'>Tickets created per month</option><option value='7'>Tickets per status</option><option value='9'>Tickets assigned per user</option><option value='12'>Comment file attachments</option>"; }
+		if($cfg->load('comp_shoutbox') eq "on") { print "<option value='14'>Full shoutbox history</option>"; }
+		if($cfg->load('comp_clients') eq "on") { print "<option value='16'>Clients per status</option>"; }
+		if($cfg->load('comp_items') eq "on") { print "<option value='15'>Items checked out per user</option><option value='18'>Item expiration dates</option>"; }
+		print "<option value='8'>Users per access level</option><option value='17'>Active user sessions</option></select></div><div class='col-sm-6'><span class='pull-right'><input class='btn btn-primary' type='submit' value='Show report'> &nbsp; <input class='btn btn-primary' type='submit' name='csv' value='Export as CSV'></span></div></div></form></p></div><div class='help-block with-errors'></div></div>\n";
+	}
+	elsif($q->param('m') eq "customforms" && $logged_lvl > 3 && $cfg->load('comp_tickets') eq "on")
+	{
+		headers("Custom forms");
+		print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Custom forms</h3></div><div class='panel-body'>\n";
+		print "<p><table class='table table-striped'><tr><th>Assigned " . lc($items{"Product"}) . "</th><th>Form name</th><th>Last update</th></tr>";
+		my @products;
+		$sql = $db->prepare("SELECT ROWID,* FROM products;");
+		$sql->execute();
+		while(my @res = $sql->fetchrow_array()) { $products[$res[0]] = $res[1]; }
+		$sql = $db->prepare("SELECT * FROM default_form;");
+		$sql->execute();
+		my $defaultform = -1;
+		while(my @res = $sql->fetchrow_array()) { $defaultform = to_int($res[0]); }
+		$sql = $db->prepare("SELECT ROWID,* FROM forms;");
+		$sql->execute();
+		while(my @res = $sql->fetchrow_array())
+		{
+			print "<tr><td>";
+			if($products[$res[1]]) { print $products[$res[1]]; }
+			else { print "None"; }
+			if($res[0] == $defaultform) { print " <b>(default form)</b>"; }
+			print "</td><td><a href='./?edit_form=" . $res[0] . "'>" . $res[2] . "</a></td><td>" . $res[23] . "</td></tr>\n";
+		}
+		print "</table><form method='GET' action='./'><input type='hidden' name='create_form' value='1'><input type='submit' value='Create new custom form' class='pull-right btn btn-primary'></form></p></div></div>\n";
+	}
+	elsif($q->param('m') eq "log" && $logged_lvl > 5)
+	{
+		headers("System log");
+		print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Log (last 200 events)</h3></div><div class='panel-body'>\n";
+		print "<form style='display:inline' method='POST' action='.'><input type='hidden' name='m' value='clear_log'><input class='btn btn-danger pull-right' type='submit' value='Clear log'><br></form><a name='log'></a><p>Filter log by events:<br><a href='./?m=log'>All</a> | <a href='./?m=log&filter_log=Failed'>Failed logins</a> | <a href='./?m=log&filter_log=Success'>Successful logins</a> | <a href='./?m=log&filter_log=level'>Level changes</a> | <a href='./?m=log&filter_log=password'>Password changes</a> | <a href='./?m=log&filter_log=new'>New users</a> | <a href='./?m=log&filter_log=setting'>Settings updated</a> | <a href='./?m=log&filter_log=notification'>Email notifications</a> | <a href='./?m=log&filter_log=LDAP:'>Active Directory</a> | <a href='./?m=log&filter_log=deleted:'>Deletes</a></p>\n";
+		print "<table class='table table-striped'><tr><th>IP address</th><th>User</th><th>Event</th><th>Time</th></tr>\n";
+		if($q->param("filter_log"))
+		{
+			$sql = $db->prepare("SELECT * FROM log DESC WHERE op LIKE ? ORDER BY key DESC LIMIT 200;");
+			$sql->execute("%" . sanitize_alpha($q->param("filter_log")) . "%");
+		}
+		else
+		{
+			$sql = $db->prepare("SELECT * FROM log ORDER BY key DESC LIMIT 200;");
+			$sql->execute();
+		}
+		while(my @res = $sql->fetchrow_array())
+		{
+			print "<tr><td>" . $res[0] . "</td><td>" . $res[1] . "</td><td>" . $res[2] . "</td><td>" . $res[3] . "</td></tr>\n";
+		}
+		print "</table></div></div>\n";
 	}
 	elsif($q->param('m') eq "clients" && $logged_user ne "" && $cfg->load('comp_clients') eq "on")
 	{
@@ -3224,10 +3367,10 @@ elsif($q->param('m')) # Modules
 	}
 	elsif($q->param('m') eq "clear_log" && $logged_lvl > 5)
 	{
-		headers("Settings");
+		headers("System log");
 		$sql = $db->prepare("DELETE FROM log;");
 		$sql->execute();
-		msg("Log cleared. Press <a href='./?m=settings'>here</a> to continue.", 3);
+		msg("Log cleared. Press <a href='./?m=log'>here</a> to continue.", 3);
 	}
 	elsif($q->param('m') eq "confirm_email" && $logged_user ne "" && defined($q->param('code')))
 	{
@@ -3317,7 +3460,7 @@ elsif($q->param('m')) # Modules
 	}
 	elsif($q->param('m') eq "change_lvl" && $logged_lvl > 4 && $q->param('u') && defined($q->param('newlvl')))
 	{
-		headers("Settings");
+		headers("Users management");
 		if(to_int($q->param('newlvl')) < 0 || to_int($q->param('newlvl')) > 5)
 		{
 			msg("Invalid access level. Please go back and try again.", 0);
@@ -3326,24 +3469,24 @@ elsif($q->param('m')) # Modules
 		{
 			$sql = $db->prepare("UPDATE users SET level = ? WHERE name = ?;");
 			$sql->execute(to_int($q->param('newlvl')), sanitize_alpha($q->param('u')));
-			msg("Updated access level for user <b>" . sanitize_alpha($q->param('u')) . "</b>. Press <a href='./?m=settings'>here</a> to continue.", 3);
+			msg("Updated access level for user <b>" . sanitize_alpha($q->param('u')) . "</b>. Press <a href='./?m=users'>here</a> to continue.", 3);
 			logevent("Level change: " . sanitize_alpha($q->param('u')));
 		}
 	}
 	elsif($q->param('m') eq "change_lvl" && $logged_lvl > 4 && $q->param('u'))
 	{
-		headers("Settings");
+		headers("Users management");
 		print "<p><form method='POST' action='.'><input type='hidden' name='m' value='change_lvl'><input type='hidden' name='u' value='" . sanitize_alpha($q->param('u')) . "'>Select a new access level for user <b>" . sanitize_alpha($q->param('u')) . "</b>: <select name='newlvl'><option>0</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select><br><input class='btn btn-primary' type='submit' value='Change level'></form></p><br>\n";
 		print "<p>Here is a list of available NodePoint levels:</p>\n";
 		print "<table class='table table-striped'><tr><th>Level</th><th>Name</th><th>Description</th></tr><tr><td>6</td><td>NodePoint Admin</td><td>Can change basic NodePoint settings</td></tr><td>5</td><td>Users management</td><td>Can manage users, reset passwords, edit clients</td></tr><tr><td>4</td><td>" . $items{"Product"} . "s management</td><td>Can add, retire and edit " . lc($items{"Product"}) . "s, edit articles and items</td></tr><tr><td>3</td><td>Tickets management</td><td>Can create " . lc($items{"Release"}) . "s, update tickets, track time</td></tr><tr><td>2</td><td>Restricted view</td><td>Can view statistics, restricted tickets and " . lc($items{"Product"}) . "s</td></tr><tr><td>1</td><td>Authorized users</td><td>Can create tickets and comments</td></tr><tr><td>0</td><td>Unauthorized users</td><td>Can view private tickets</td></tr></table>\n";
 	}
 	elsif($q->param('m') eq "reset_pass" && $logged_lvl > 4 && $q->param('u'))
 	{
-		headers("Settings");
+		headers("Users management");
 		my $newpass = join'', map +(0..9,'a'..'z','A'..'Z')[rand(10+26*2)], 1..8;
 		$sql = $db->prepare("UPDATE users SET pass = ? WHERE name = ?;");
 		$sql->execute(sha1_hex($newpass), sanitize_alpha($q->param('u')));
-		msg("Password reset for user <b>" . sanitize_alpha($q->param('u')) . "</b>. The new password is  <b>" . $newpass . "</b>  Press <a href='./?m=settings'>here</a> to continue.", 3);
+		msg("Password reset for user <b>" . sanitize_alpha($q->param('u')) . "</b>. The new password is  <b>" . $newpass . "</b>  Press <a href='./?m=users'>here</a> to continue.", 3);
 		notify(sanitize_alpha($q->param('u')), "Password reset", "Your password has been reset by user: " . $logged_user);
 		logevent("Password change: " . sanitize_alpha($q->param('u')));
 	}
@@ -5508,7 +5651,7 @@ elsif($q->param('m')) # Modules
 }
 elsif(($q->param('create_form') || $q->param('edit_form') || $q->param('save_form')) && $logged_lvl > 3)
 {
-	headers("Settings");
+	headers("Custom forms");
 	if($q->param('save_form'))
 	{
 		if($q->param('form_name') && $q->param('field0') && defined($q->param('product_id')))
@@ -5551,7 +5694,7 @@ elsif(($q->param('create_form') || $q->param('edit_form') || $q->param('save_for
 					$sql->execute(to_int($q->param('save_form')));				
 				}
 			}
-			msg("Custom form saved. Press <a href='./?m=settings'>here</a> to continue.", 3);
+			msg("Custom form saved. Press <a href='./?m=customforms'>here</a> to continue.", 3);
 		}
 		else
 		{
@@ -5790,7 +5933,7 @@ elsif(!$cfg->load("ad_server") && $q->param('new_name') && $q->param('new_pass1'
 			if($q->param('new_email')) { $sql->execute(sanitize_alpha($q->param('new_name')), sha1_hex($q->param('new_pass1')), sanitize_email($q->param('new_email')), to_int($cfg->load('default_lvl')), "Never", $confirm); }
 			else { $sql->execute(sanitize_alpha($q->param('new_name')), sha1_hex($q->param('new_pass1')), "", to_int($cfg->load('default_lvl')), "Never", $confirm); }
 			if($logged_user eq "") { msg("User <b>" . sanitize_alpha($q->param('new_name')) . "</b> added. Press <a href='.'>here</a> to go to the login page.", 3); }
-			else { msg("User <b>" . sanitize_alpha($q->param('new_name')) . "</b> added. Press <a href='./?m=settings'>here</a> to continue.", 3); }
+			else { msg("User <b>" . sanitize_alpha($q->param('new_name')) . "</b> added. Press <a href='./?m=users'>here</a> to continue.", 3); }
 			logevent("Add new user: " . sanitize_alpha($q->param('new_name')));
 			notify(sanitize_alpha($q->param('new_name')), "Email confirmation", "You are receiving this email because a new user was created with this email address. Please confirm your email by logging into the NodePoint interface, and entering the following confirmation code under Settings: " . $confirm);
 		}
