@@ -2942,7 +2942,7 @@ elsif($q->param('m')) # Modules
 			print "\n], eventRender: function(event, element) {element.tooltip({html: true, container: 'body', title: event.description});} \n});});\n</script>\n";
 			print "<div id='calendar'></div><hr>";
 		}
-		print "<p><h4>Reports:</h4><form method='GET' action='.'><div class='row'><div class='col-sm-6'><input type='hidden' name='m' value='stats'><select class='form-control' name='report'>";
+		print "<p><h4>Reports:</h4><form method='GET' action='.'><div class='row'><div class='col-sm-6'><input type='hidden' name='m' value='stat'><select class='form-control' name='report'>";
 		if($cfg->load('comp_time') eq "on") { print "<option value='1'>Time spent per user</option><option value='2'>All time spent per ticket</option><option value='11'>Your time spent per ticket</option>"; }
 		if($cfg->load('comp_articles') eq "on") { print "<option value='13'>Tickets linked per article</option>"; }
 		if($cfg->load('comp_tickets') eq "on") { print "<option value='3'>Tickets created per " . lc($items{"Product"}) . "</option><option value='10'>New and open tickets per " . lc($items{"Product"}) . "</option><option value='4'>Tickets created per user</option><option value='5'>Tickets created per day</option><option value='6'>Tickets created per month</option><option value='7'>Tickets per status</option><option value='9'>Tickets assigned per user</option><option value='12'>Comment file attachments</option>"; }
@@ -4812,7 +4812,7 @@ elsif($q->param('m')) # Modules
 			}
 		}
 	}
-	elsif($q->param('m') eq "stats" && $q->param('report') && $logged_lvl > 1)
+	elsif($q->param('m') eq "stat" && $q->param('report') && $logged_lvl > 1)
 	{
 		my %results;
 		my $totalresults = 0;
