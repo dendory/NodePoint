@@ -8,7 +8,7 @@
 #
 
 use strict;
-use Config::Linux;
+use Config::Win32;
 use Digest::SHA qw(sha1_hex);
 use DBI;
 use CGI;
@@ -27,7 +27,7 @@ my ($cfg, $db, $sql, $cn, $cp, $cgs, $last_login, $perf);
 my $logged_user = "";
 my $logged_lvl = -1;
 my $q = new CGI;
-my $VERSION = "1.5.2";
+my $VERSION = "1.5.3";
 my %items = ("Product", "Product", "Release", "Release", "Model", "SKU/Model");
 my @itemtypes = ("None");
 my @themes = ("primary", "default", "success", "info", "warning", "danger");
@@ -172,7 +172,7 @@ sub navbar
 			if($logged_lvl > 5) { print "   <li><a href='./?m=log'>System log</a></li>\n"; }
 			print "  <li role='separator' class='divider'></li><li><a href='./?m=logout'>Logout</a></li></ul></li>\n";
 		}
-		elsif($q->param('m') && ($q->param('m') eq "settings" || $q->param('m') eq "stats" || $q->param('m') eq "triggers" || $q->param('m') eq "customforms" || $q->param('m') eq "users" || $q->param('m') eq "log" || $q->param('m') eq "confirm_delete" || $q->param('m') eq "clear_log" || $q->param('m') eq "stats" || $q->param('m') eq "change_lvl" || $q->param('m') eq "confirm_email" || $q->param('m') eq "reset_pass" || $q->param('m') eq "logout" || $q->param('m') eq "summary") || $q->param('create_form') || $q->param('edit_form') || $q->param('save_form'))
+		elsif($q->param('m') && ($q->param('m') eq "settings" || $q->param('m') eq "stats" || $q->param('m') eq "show_report" || $q->param('m') eq "triggers" || $q->param('m') eq "customforms" || $q->param('m') eq "users" || $q->param('m') eq "log" || $q->param('m') eq "confirm_delete" || $q->param('m') eq "clear_log" || $q->param('m') eq "stats" || $q->param('m') eq "change_lvl" || $q->param('m') eq "confirm_email" || $q->param('m') eq "reset_pass" || $q->param('m') eq "logout" || $q->param('m') eq "summary") || $q->param('create_form') || $q->param('edit_form') || $q->param('save_form'))
 		{
 			print "	 <li><a href='.'>Home</a></li>\n";
 			print "	 <li><a href='./?m=products'>" . $items{"Product"} . "s</a></li>\n";
@@ -1094,11 +1094,11 @@ sub home
 # Connect to config
 eval
 {
-	$cfg = Config::Linux->new("NodePoint", "settings");
+	$cfg = Config::Win32->new("NodePoint", "settings");
 };
 if(!defined($cfg)) # Can't even use headers() if this fails.
 {
-	print "Content-type: text/html\n\nError: Could not access " . Config::Linux->type . ". Please ensure NodePoint has the proper permissions.";
+	print "Content-type: text/html\n\nError: Could not access " . Config::Win32->type . ". Please ensure NodePoint has the proper permissions.";
 	exit(0);
 };
 
@@ -2942,7 +2942,7 @@ elsif($q->param('m')) # Modules
 			print "\n], eventRender: function(event, element) {element.tooltip({html: true, container: 'body', title: event.description});} \n});});\n</script>\n";
 			print "<div id='calendar'></div><hr>";
 		}
-		print "<p><h4>Reports:</h4><form method='GET' action='.'><div class='row'><div class='col-sm-6'><input type='hidden' name='m' value='stat'><select class='form-control' name='report'>";
+		print "<p><h4>Reports:</h4><form method='GET' action='.'><div class='row'><div class='col-sm-6'><input type='hidden' name='m' value='show_report'><select class='form-control' name='report'>";
 		if($cfg->load('comp_time') eq "on") { print "<option value='1'>Time spent per user</option><option value='2'>All time spent per ticket</option><option value='11'>Your time spent per ticket</option>"; }
 		if($cfg->load('comp_articles') eq "on") { print "<option value='13'>Tickets linked per article</option>"; }
 		if($cfg->load('comp_tickets') eq "on") { print "<option value='3'>Tickets created per " . lc($items{"Product"}) . "</option><option value='10'>New and open tickets per " . lc($items{"Product"}) . "</option><option value='4'>Tickets created per user</option><option value='5'>Tickets created per day</option><option value='6'>Tickets created per month</option><option value='7'>Tickets per status</option><option value='9'>Tickets assigned per user</option><option value='12'>Comment file attachments</option>"; }
@@ -4812,7 +4812,7 @@ elsif($q->param('m')) # Modules
 			}
 		}
 	}
-	elsif($q->param('m') eq "stat" && $q->param('report') && $logged_lvl > 1)
+	elsif($q->param('m') eq "show_report" && $q->param('report') && $logged_lvl > 1)
 	{
 		my %results;
 		my $totalresults = 0;
@@ -5645,7 +5645,7 @@ elsif($q->param('m')) # Modules
 	else
 	{
 		headers("Error");
-		msg("Unknown module or access denied.", 0);
+		msg("Unknown module or access denied. Please login first.", 0);
 	}
 	footers();
 }
