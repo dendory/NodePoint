@@ -567,7 +567,12 @@ sub save_config
 	$cfg->save("favicon", sanitize_html($q->param('favicon')));
 	$cfg->save("default_vis", $q->param('default_vis'));
 	$cfg->save("default_lvl", to_int($q->param('default_lvl')));
+	$cfg->save("tasks_lvl", to_int($q->param('tasks_lvl')));
 	$cfg->save("upload_lvl", to_int($q->param('upload_lvl')));
+	$cfg->save("past_lvl", to_int($q->param('past_lvl')));
+	$cfg->save("customs_lvl", to_int($q->param('customs_lvl')));
+	$cfg->save("client_lvl", to_int($q->param('client_lvl')));
+	$cfg->save("report_lvl", to_int($q->param('report_lvl')));
 	$cfg->save("allow_registrations", $q->param('allow_registrations'));
 	$cfg->save("guest_tickets", $q->param('guest_tickets'));
 	$cfg->save("smtp_server", sanitize_html($q->param('smtp_server')));    
@@ -1171,7 +1176,16 @@ if($cfg->load("items_managed"))
 		$items{"Release"} = "Instance";
 	}
 }
-	
+
+# Sanity checks for levels config
+if(to_int($cfg->load("past_lvl")) < 1 || to_int($cfg->load("past_lvl")) > 6) { $cfg->save("past_lvl", 5); }
+if(to_int($cfg->load("upload_lvl")) < 1 || to_int($cfg->load("upload_lvl")) > 6) { $cfg->save("upload_lvl", 1); }
+if(to_int($cfg->load("report_lvl")) < 0 || to_int($cfg->load("default_lvl")) > 5) { $cfg->save("default_lvl", 1); }
+if(to_int($cfg->load("report_lvl")) < 1 || to_int($cfg->load("report_lvl")) > 6) { $cfg->save("report_lvl", 2); }
+if(to_int($cfg->load("client_lvl")) < 1 || to_int($cfg->load("client_lvl")) > 6) { $cfg->save("client_lvl", 2); }
+if(to_int($cfg->load("customs_lvl")) < 1 || to_int($cfg->load("customs_lvl")) > 6) { $cfg->save("customs_lvl", 4); }
+if(to_int($cfg->load("tasks_lvl")) < 1 || to_int($cfg->load("tasks_lvl")) > 6) { $cfg->save("tasks_lvl", 4); }
+
 # Main loop
 if($q->param('site_name') && $q->param('db_address') && $logged_user ne "" && $logged_user eq $cfg->load('admin_name')) # Save config by admin
 {
@@ -1189,7 +1203,7 @@ if($q->param('site_name') && $q->param('db_address') && $logged_user ne "" && $l
 	{
 		my $text = "Some values are missing: ";
 		if(!$q->param('admin_name')) { $text .= "<span class='label label-danger'>Admin name</span> "; }
-		if(!defined($q->param('default_lvl'))) { $text .= "<span class='label label-danger'>Default access level</span> "; }
+		if(!defined($q->param('default_lvl'))) { $text .= "<span class='label label-danger'>New users access level</span> "; }
 		if(!$q->param('default_vis')) { $text .= "<span class='label label-danger'>Ticket visibility</span> "; }
 		if(!$q->param('api_read')) { $text .= "<span class='label label-danger'>API read key</span> "; }
 		if(!$q->param('api_write')) { $text .= "<span class='label label-danger'>API write key</span> "; }
@@ -1227,7 +1241,7 @@ elsif(!$cfg->load("db_address") || !$cfg->load("site_name")) # first use
 			my $text = "Some values are missing: ";
 			if(!$q->param('admin_name')) { $text .= "<span class='label label-danger'>Admin name</span> "; }
 			if(!$q->param('admin_pass')) { $text .= "<span class='label label-danger'>Admin password</span> "; }
-			if(!$q->param('default_lvl')) { $text .= "<span class='label label-danger'>Default access level</span> "; }
+			if(!$q->param('default_lvl')) { $text .= "<span class='label label-danger'>New users access level</span> "; }
 			if(!$q->param('default_vis')) { $text .= "<span class='label label-danger'>Ticket visibility</span> "; }
 			if(!$q->param('api_read')) { $text .= "<span class='label label-danger'>API read key</span> "; }
 			if(!$q->param('api_write')) { $text .= "<span class='label label-danger'>API write key</span> "; }
@@ -1250,9 +1264,9 @@ elsif(!$cfg->load("db_address") || !$cfg->load("site_name")) # first use
 				print "<p>Tickets will have a default visibility when created. Public tickets can be seen by people not logged in, while private tickets require people to be logged in to view. Restricted ones can only be seen by authors and users with the <b>2 - Restricted view</b> level, ideal for helpdesk/support portals.</p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Allow user registrations:</div><div class='col-sm-4'><input type='checkbox' name='allow_registrations' checked=checked></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Allow guest tickets:</div><div class='col-sm-4'><input type='checkbox' name='guest_tickets'></div></div></p>\n";
-				print "<p><div class='row'><div class='col-sm-4'>Default access level:</div><div class='col-sm-4'><select name='default_lvl' style='width:300px'><option value=5>5 - Users management</option><option value=4>4 - Projects management</option><option value=3>3 - Tickets management</option><option value=2>2 - Restricted view</option><option value=1 selected=selected>1 - Authorized users</option><option value=0>0 - Unauthorized users</option></select></div></div></p>\n";
+				print "<p><div class='row'><div class='col-sm-4'>New users access level:</div><div class='col-sm-4'><select name='default_lvl' style='width:300px'><option value=5>5 - Users management</option><option value=4>4 - Projects management</option><option value=3>3 - Tickets management</option><option value=2>2 - Restricted view</option><option value=1 selected=selected>1 - Authorized users</option><option value=0>0 - Unauthorized users</option></select></div></div></p>\n";
 				print "<p>New registered users will be assigned a default access level, which can then be modified by users with the <b>5 - Users management</b> level. These are the access levels, with each rank having the lower permissions as well:</p>\n";
-				print "<table class='table table-striped'><tr><th>Level</th><th>Name</th><th>Description</th></tr><tr><td>6</td><td>NodePoint Admin</td><td>Can change basic NodePoint settings</td></tr><td>5</td><td>Users management</td><td>Can manage users, reset passwords, edit clients</td></tr><tr><td>4</td><td>Projects management</td><td>Can add, retire and edit projects, edit articles and items</td></tr><tr><td>3</td><td>Tickets management</td><td>Can create releases, update tickets, track time</td></tr><tr><td>2</td><td>Restricted view</td><td>Can view statistics, restricted tickets and products</td></tr><tr><td>1</td><td>Authorized users</td><td>Can create tickets and comments</td></tr><tr><td>0</td><td>Unauthorized users</td><td>Can view private tickets</td></tr></table>\n";
+				print "<table class='table table-striped'><tr><th>Level</th><th>Name</th><th>Description</th></tr><tr><td>6</td><td>NodePoint Admin</td><td>Can change basic NodePoint settings</td></tr><td>5</td><td>Users management</td><td>Can manage users, reset passwords, edit clients</td></tr><tr><td>4</td><td>Projects management</td><td>Can add, retire and edit projects, edit articles and items</td></tr><tr><td>3</td><td>Tickets management</td><td>Can create releases, update tickets, track time</td></tr><tr><td>2</td><td>Restricted view</td><td>Can view restricted tickets and projects</td></tr><tr><td>1</td><td>Authorized users</td><td>Can create tickets and comments</td></tr><tr><td>0</td><td>Unauthorized users</td><td>Can view private tickets</td></tr></table>\n";
 				my $key = join'', map +(0..9,'a'..'z','A'..'Z')[rand(10+26*2)], 1..32;
 				print "<p><div class='row'><div class='col-sm-4'>API read key:</div><div class='col-sm-4'><input type='text' style='width:300px' name='api_read' value='" . $key . "'></div></div></p>\n";
 				$key = join'', map +(0..9,'a'..'z','A'..'Z')[rand(10+26*2)], 1..32;
@@ -1269,7 +1283,6 @@ elsif(!$cfg->load("db_address") || !$cfg->load("site_name")) # first use
 				print "<p><div class='row'><div class='col-sm-4'>Admin password:</div><div class='col-sm-4'><input style='width:300px' type='password' name='admin_pass'></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Public notice:</div><div class='col-sm-4'><input type='text' style='width:300px' name='motd' value='Welcome to NodePoint. Remember to be courteous when writing tickets. Contact the help desk for any problem.'></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Upload folder:</div><div class='col-sm-4'><input type='text' style='width:300px' name='upload_folder' value='.." . $cfg->sep . "uploads'></div></div></p>\n";
-				print "<p><div class='row'><div class='col-sm-4'>Minimum upload level:</div><div class='col-sm-4'><select name='upload_lvl' style='width:300px'><option value=5>5 - Users management</option><option value=4>4 - Projects management</option><option value=3>3 - Tickets management</option><option value=2>2 - Restricted view</option><option value=1 selected=selected>1 - Authorized users</option><option value=0>0 - Unauthorized users</option></select></div></div></p>\n";
 				print "<p>The upload folder should be a local folder with write access and is used for product images and comment attachments. If left empty, uploads will be disabled.</p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Items managed:</div><div class='col-sm-4'><select style='width:300px' name='items_managed'><option selected>Products with models and releases</option><option selected>Projects with goals and milestones</option><option>Resources with locations and updates</option><option>Applications with platforms and versions</option><option>Assets with types and instances</option></select></div></div></p>\n";
 				print "<p>To validate logins against an Active Directory domain, enter your domain controller address and domain name (NT4 format) here:</p>\n";
@@ -2618,14 +2631,15 @@ elsif($q->param('m')) # Modules
 		if($logged_lvl > 5)
 		{
 			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Initial settings</h3></div><div class='panel-body'>\n";
-			print "<form method='POST' action='.'><table class='table table-striped'><tr><th>Setting</th><th>Value</th></tr>\n";
-			print "<tr><td>Database file</td><td><input class='form-control' type='text' name='db_address' value=\"" .  $cfg->load("db_address") . "\"></td></tr>\n";
-			print "<tr><td>Admin name</td><td><input class='form-control' type='text' name='admin_name' value=\"" .  $cfg->load("admin_name") . "\" readonly></td></tr>\n";
-			print "<tr><td>Admin password</td><td><input class='form-control' type='password' name='admin_pass' value=''></td></tr>\n";
-			print "<tr><td>Site name</td><td><input class='form-control' type='text' name='site_name' value=\"" . $cfg->load("site_name") . "\"></td></tr>\n";
-			print "<tr><td>Public notice</td><td><input class='form-control' type='text' name='motd' value=\"" . $cfg->load("motd") . "\"></td></tr>\n";
-			print "<tr><td>Bootstrap template</td><td><input class='form-control' type='text' name='css_template' value=\"" . $cfg->load("css_template") . "\"></td></tr>\n";
-			print "<tr><td>Interface theme color</td><td><select class='form-control' name='theme_color'><option value='0'";
+			print "<form method='POST' action='.'><h4>User interface</h4><table class='table table-striped'>\n";
+			print "<tr><td style='width:50%'>Database file</td><td><input class='form-control' type='text' name='db_address' value=\"" .  $cfg->load("db_address") . "\"></td></tr>\n";
+			print "<tr><td style='width:50%'>Upload folder</td><td><input class='form-control' type='text' name='upload_folder' value=\"" . $cfg->load("upload_folder") . "\"></td></tr>\n";
+			print "<tr><td style='width:50%'>Admin name</td><td><input class='form-control' type='text' name='admin_name' value=\"" .  $cfg->load("admin_name") . "\" readonly></td></tr>\n";
+			print "<tr><td style='width:50%'>Admin password</td><td><input class='form-control' type='password' name='admin_pass' value=''></td></tr>\n";
+			print "<tr><td style='width:50%'>Site name</td><td><input class='form-control' type='text' name='site_name' value=\"" . $cfg->load("site_name") . "\"></td></tr>\n";
+			print "<tr><td style='width:50%'>Public notice</td><td><input class='form-control' type='text' name='motd' value=\"" . $cfg->load("motd") . "\"></td></tr>\n";
+			print "<tr><td style='width:50%'>Bootstrap template</td><td><input class='form-control' type='text' name='css_template' value=\"" . $cfg->load("css_template") . "\"></td></tr>\n";
+			print "<tr><td style='width:50%'>Interface theme color</td><td><select class='form-control' name='theme_color'><option value='0'";
 			if($cfg->load("theme_color") eq "0") { print " selected"; }
 			print ">Blue</option><option value='1'";
 			if($cfg->load("theme_color") eq "1") { print " selected"; }	
@@ -2638,78 +2652,88 @@ elsif($q->param('m')) # Modules
 			print ">Orange</option><option value='5'";
 			if($cfg->load("theme_color") eq "5") { print " selected"; }	
 			print ">Red</option></select>";
-			print "<tr><td>Favicon</td><td><input class='form-control' type='text' name='favicon' value=\"" . $cfg->load("favicon") . "\"></td></tr>\n";
-			print "<tr><td>Ticket visibility</td><td><select class='form-control' name='default_vis'>";
+			print "<tr><td style='width:50%'>Favicon</td><td><input class='form-control' type='text' name='favicon' value=\"" . $cfg->load("favicon") . "\"></td></tr>\n";
+			print "<tr><td style='width:50%'>Allow registrations</td><td><select class='form-control' name='allow_registrations'>";
+			if($cfg->load("allow_registrations") eq "on") { print "<option selected>on</option><option>off</option>"; }
+			else { print "<option>on</option><option selected>off</option>"; }
+			print "</select></td></tr>\n";
+			print "<tr><td style='width:50%'>Ticket visibility</td><td><select class='form-control' name='default_vis'>";
 			if($cfg->load("default_vis") eq "Restricted") { print "<option>Public</option><option>Private</option><option selected>Restricted</option>"; }
 			elsif($cfg->load("default_vis") eq "Private") { print "<option>Public</option><option selected>Private</option><option>Restricted</option>"; }
 			else { print "<option selected>Public</option><option>Private</option><option>Restricted</option>"; }
 			print "</select></td></tr>\n";
-			print "<tr><td>Default access level</td><td><input class='form-control' type='text' name='default_lvl' value=\"" . to_int($cfg->load("default_lvl")) . "\"></td></tr>\n";
-			print "<tr><td>Allow registrations</td><td><select class='form-control' name='allow_registrations'>";
-			if($cfg->load("allow_registrations") eq "on") { print "<option selected>on</option><option>off</option>"; }
-			else { print "<option>on</option><option selected>off</option>"; }
-			print "</select></td></tr>\n";
-			print "<tr><td>Allow guest tickets</td><td><select class='form-control' name='guest_tickets'>";
+			print "<tr><td style='width:50%'>Allow guest tickets</td><td><select class='form-control' name='guest_tickets'>";
 			if($cfg->load("guest_tickets") eq "on") { print "<option selected>on</option><option>off</option>"; }
 			else { print "<option>on</option><option selected>off</option>"; }
 			print "</select></td></tr>\n";
-			print "<tr><td>API read key</td><td><input class='form-control' type='text' name='api_read' value=\"" . $cfg->load("api_read") . "\"></td></tr>\n";
-			print "<tr><td>API write key</td><td><input class='form-control' type='text' name='api_write' value=\"" . $cfg->load("api_write") . "\"></td></tr>\n";
-			print "<tr><td>Allow user impersonation</td><td><select class='form-control' name='api_imp'>";
-			if($cfg->load("api_imp") eq "on") { print "<option selected>on</option><option>off</option>"; }
-			else { print "<option>on</option><option selected>off</option>"; }
-			print "</select></td></tr>\n";
-			print "<tr><td>SMTP server</td><td><input class='form-control' type='text' name='smtp_server' value=\"" . $cfg->load("smtp_server") . "\"></td></tr>\n";
-			print "<tr><td>SMTP port</td><td><input class='form-control' type='text' name='smtp_port' value=\"" . $cfg->load("smtp_port") . "\"></td></tr>\n";
-			print "<tr><td>SMTP username</td><td><input class='form-control' type='text' name='smtp_user' value=\"" . $cfg->load("smtp_user") . "\"></td></tr>\n";
-			print "<tr><td>SMTP password</td><td><input class='form-control' type='password' name='smtp_pass' value=\"" . $cfg->load("smtp_pass") . "\"></td></tr>\n";
-			print "<tr><td>Support email</td><td><input class='form-control' type='text' name='smtp_from' value=\"" . $cfg->load("smtp_from") . "\"></td></tr>\n";
-			print "<tr><td>Upload folder</td><td><input class='form-control' type='text' name='upload_folder' value=\"" . $cfg->load("upload_folder") . "\"></td></tr>\n";
-			print "<tr><td>Minimum upload level</td><td><input class='form-control' type='text' name='upload_lvl' value=\"" . to_int($cfg->load("upload_lvl")) . "\"></td></tr>\n";
-			print "<tr><td>Items managed</td><td><select class='form-control' name='items_managed'>";
+			print "<tr><td style='width:50%'>Items managed</td><td><select class='form-control' name='items_managed'>";
 			if($cfg->load("items_managed") eq "Projects with goals and milestones") { print "<option>Products with models and releases</option><option selected>Projects with goals and milestones</option><option>Resources with locations and updates</option><option>Applications with platforms and versions</option><option>Assets with types and instances</option>"; }
 			elsif($cfg->load("items_managed") eq "Resources with locations and updates") { print "<option>Products with models and releases</option><option>Projects with goals and milestones</option><option selected>Resources with locations and updates</option><option>Applications with platforms and versions</option><option>Assets with types and instances</option>"; }
 			elsif($cfg->load("items_managed") eq "Applications with platforms and versions") { print "<option>Products with models and releases</option><option>Projects with goals and milestones</option><option>Resources with locations and updates</option><option selected>Applications with platforms and versions</option><option>Assets with types and instances</option>"; }
 			elsif($cfg->load("items_managed") eq "Assets with types and instances") { print "<option>Products with models and releases</option><option>Projects with goals and milestones</option><option>Resources with locations and updates</option><option>Applications with platforms and versions</option><option selected>Assets with types and instances</option>"; }
 			else { print "<option selected>Products with models and releases</option><option>Projects with goals and milestones</option><option>Resources with locations and updates</option><option>Applications with platforms and versions</option><option>Assets with types and instances</option>"; }
 			print "</select></td></tr>\n";
-			print "<tr><td>Active Directory server</td><td><input class='form-control' type='text' name='ad_server' value=\"" . $cfg->load("ad_server") . "\"></td></tr>\n";
-			print "<tr><td>Active Directory domain</td><td><input class='form-control' type='text' name='ad_domain' value=\"" . $cfg->load("ad_domain") . "\"></td></tr>\n";
-			print "<tr><td>Plugin: Authentication</td><td><input class='form-control' type='text' name='auth_plugin' value=\"" . $cfg->load("auth_plugin") . "\"></td></tr>\n";
-			print "<tr><td>Plugin: Notifications</td><td><input class='form-control' type='text' name='ext_plugin' value=\"" . $cfg->load("ext_plugin") . "\"></td></tr>\n";
-			print "<tr><td>Plugin: Checkout</td><td><input class='form-control' type='text' name='checkout_plugin' value=\"" . $cfg->load("checkout_plugin") . "\"></td></tr>\n";
-			print "<tr><td>Plugin: Task completion</td><td><input class='form-control' type='text' name='task_plugin' value=\"" . $cfg->load("task_plugin") . "\"></td></tr>\n";
-			print "<tr><td>Plugin: New tickets</td><td><input class='form-control' type='text' name='newticket_plugin' value=\"" . $cfg->load("newticket_plugin") . "\"></td></tr>\n";
-			print "<tr><td>Plugin: Ticket resolution</td><td><input class='form-control' type='text' name='ticket_plugin' value=\"" . $cfg->load("ticket_plugin") . "\"></td></tr>\n";
-			print "<tr><td>Component: Tickets Management</td><td><select class='form-control' name='comp_tickets'>";
+			print "</table><h4>API access</h4><table class='table table-striped'>";
+			print "<tr><td style='width:50%'>API read key</td><td><input class='form-control' type='text' name='api_read' value=\"" . $cfg->load("api_read") . "\"></td></tr>\n";
+			print "<tr><td style='width:50%'>API write key</td><td><input class='form-control' type='text' name='api_write' value=\"" . $cfg->load("api_write") . "\"></td></tr>\n";
+			print "<tr><td style='width:50%'>Allow user impersonation</td><td><select class='form-control' name='api_imp'>";
+			if($cfg->load("api_imp") eq "on") { print "<option selected>on</option><option>off</option>"; }
+			else { print "<option>on</option><option selected>off</option>"; }
+			print "</select></td></tr>\n";
+			print "</table><h4>Active Directory integration</h4><table class='table table-striped'>";
+			print "<tr><td style='width:50%'>Active Directory server</td><td><input class='form-control' type='text' name='ad_server' value=\"" . $cfg->load("ad_server") . "\"></td></tr>\n";
+			print "<tr><td style='width:50%'>Active Directory domain</td><td><input class='form-control' type='text' name='ad_domain' value=\"" . $cfg->load("ad_domain") . "\"></td></tr>\n";
+			print "</table><h4>Email configuration</h4><table class='table table-striped'>";
+			print "<tr><td style='width:50%'>SMTP server</td><td><input class='form-control' type='text' name='smtp_server' value=\"" . $cfg->load("smtp_server") . "\"></td></tr>\n";
+			print "<tr><td style='width:50%'>SMTP port</td><td><input class='form-control' type='text' name='smtp_port' value=\"" . $cfg->load("smtp_port") . "\"></td></tr>\n";
+			print "<tr><td style='width:50%'>SMTP username</td><td><input class='form-control' type='text' name='smtp_user' value=\"" . $cfg->load("smtp_user") . "\"></td></tr>\n";
+			print "<tr><td style='width:50%'>SMTP password</td><td><input class='form-control' type='password' name='smtp_pass' value=\"" . $cfg->load("smtp_pass") . "\"></td></tr>\n";
+			print "<tr><td style='width:50%'>Support email</td><td><input class='form-control' type='text' name='smtp_from' value=\"" . $cfg->load("smtp_from") . "\"></td></tr>\n";
+			print "</table><h4>Access levels</h4><table class='table table-striped'>";
+			print "<tr><td style='width:50%'>New users access level</td><td><input class='form-control' type='text' name='default_lvl' value=\"" . to_int($cfg->load("default_lvl")) . "\"></td></tr>\n";
+			print "<tr><td style='width:50%'>Can upload files</td><td><input class='form-control' type='text' name='upload_lvl' value=\"" . to_int($cfg->load("upload_lvl")) . "\"></td></tr>\n";
+			print "<tr><td style='width:50%'>Can modify past ticket changes</td><td><input class='form-control' type='text' name='past_lvl' value=\"" . to_int($cfg->load("past_lvl")) . "\"></td></tr>\n";
+			print "<tr><td style='width:50%'>Can make custom forms</td><td><input class='form-control' type='text' name='customs_lvl' value=\"" . to_int($cfg->load("customs_lvl")) . "\"></td></tr>\n";
+			print "<tr><td style='width:50%'>Can view reports and statistics</td><td><input class='form-control' type='text' name='report_lvl' value=\"" . to_int($cfg->load("report_lvl")) . "\"></td></tr>\n";
+			print "<tr><td style='width:50%'>Can assign tasks to users</td><td><input class='form-control' type='text' name='tasks_lvl' value=\"" . to_int($cfg->load("tasks_lvl")) . "\"></td></tr>\n";
+			print "<tr><td style='width:50%'>Can view client details</td><td><input class='form-control' type='text' name='client_lvl' value=\"" . to_int($cfg->load("client_lvl")) . "\"></td></tr>\n";
+			print "</table><h4>Plugins</h4><table class='table table-striped'>";
+			print "<tr><td style='width:50%'>Authentication</td><td><input class='form-control' type='text' name='auth_plugin' value=\"" . $cfg->load("auth_plugin") . "\"></td></tr>\n";
+			print "<tr><td style='width:50%'>Notifications</td><td><input class='form-control' type='text' name='ext_plugin' value=\"" . $cfg->load("ext_plugin") . "\"></td></tr>\n";
+			print "<tr><td style='width:50%'>Checkout</td><td><input class='form-control' type='text' name='checkout_plugin' value=\"" . $cfg->load("checkout_plugin") . "\"></td></tr>\n";
+			print "<tr><td style='width:50%'>Task completion</td><td><input class='form-control' type='text' name='task_plugin' value=\"" . $cfg->load("task_plugin") . "\"></td></tr>\n";
+			print "<tr><td style='width:50%'>New tickets</td><td><input class='form-control' type='text' name='newticket_plugin' value=\"" . $cfg->load("newticket_plugin") . "\"></td></tr>\n";
+			print "<tr><td style='width:50%'>Ticket resolution</td><td><input class='form-control' type='text' name='ticket_plugin' value=\"" . $cfg->load("ticket_plugin") . "\"></td></tr>\n";
+			print "</table><h4>Components</h4><table class='table table-striped'>";
+			print "<tr><td style='width:50%'>Tickets Management</td><td><select class='form-control' name='comp_tickets'>";
 			if($cfg->load("comp_tickets") eq "on") { print "<option selected>on</option><option>off</option>"; }
 			else { print "<option>on</option><option selected>off</option>"; }
 			print "</select></td></tr>\n";
-			print "<tr><td>Component: Support Articles</td><td><select class='form-control' name='comp_articles'>";
+			print "<tr><td style='width:50%'>Support Articles</td><td><select class='form-control' name='comp_articles'>";
 			if($cfg->load("comp_articles") eq "on") { print "<option selected>on</option><option>off</option>"; }
 			else { print "<option>on</option><option selected>off</option>"; }
 			print "</select></td></tr>\n";
-			print "<tr><td>Component: Time Tracking</td><td><select class='form-control' name='comp_time'>";
+			print "<tr><td style='width:50%'>Time Tracking</td><td><select class='form-control' name='comp_time'>";
 			if($cfg->load("comp_time") eq "on") { print "<option selected>on</option><option>off</option>"; }
 			else { print "<option>on</option><option selected>off</option>"; }
 			print "</select></td></tr>\n";
-			print "<tr><td>Component: Shoutbox</td><td><select class='form-control' name='comp_shoutbox'>";
+			print "<tr><td style='width:50%'>Shoutbox</td><td><select class='form-control' name='comp_shoutbox'>";
 			if($cfg->load("comp_shoutbox") eq "on") { print "<option selected>on</option><option>off</option>"; }
 			else { print "<option>on</option><option selected>off</option>"; }
 			print "</select></td></tr>\n";
-			print "<tr><td>Component: Clients Directory</td><td><select class='form-control' name='comp_clients'>";
+			print "<tr><td style='width:50%'>Clients Directory</td><td><select class='form-control' name='comp_clients'>";
 			if($cfg->load("comp_clients") eq "on") { print "<option selected>on</option><option>off</option>"; }
 			else { print "<option>on</option><option selected>off</option>"; }
 			print "</select></td></tr>\n";
-			print "<tr><td>Component: Tasks Management</td><td><select class='form-control' name='comp_steps'>";
+			print "<tr><td style='width:50%'>Tasks Management</td><td><select class='form-control' name='comp_steps'>";
 			if($cfg->load("comp_steps") eq "on") { print "<option selected>on</option><option>off</option>"; }
 			else { print "<option>on</option><option selected>off</option>"; }
 			print "</select></td></tr>\n";
-			print "<tr><td>Component: Inventory Control</td><td><select class='form-control' name='comp_items'>";
+			print "<tr><td style='width:50%'>Inventory Control</td><td><select class='form-control' name='comp_items'>";
 			if($cfg->load("comp_items") eq "on") { print "<option selected>on</option><option>off</option>"; }
 			else { print "<option>on</option><option selected>off</option>"; }
 			print "</select></td></tr>\n";
-			print "<tr><td>Component: Billing</td><td><select class='form-control' name='comp_billing'>";
+			print "<tr><td style='width:50%'>Billing</td><td><select class='form-control' name='comp_billing'>";
 			if($cfg->load("comp_billing") eq "on") { print "<option selected>on</option><option>off</option>"; }
 			else { print "<option>on</option><option selected>off</option>"; }
 			print "</select></td></tr>\n";
@@ -2744,7 +2768,7 @@ elsif($q->param('m')) # Modules
 		}
 		print "</div></div>\n";
 	}
-	elsif($q->param('m') eq "stats" && $logged_lvl > 1)
+	elsif($q->param('m') eq "stats" && $logged_lvl >= to_int($cfg->load("report_lvl")))
 	{
 		headers("Statistics");
 		print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Statistics</h3></div><div class='panel-body'>\n";
@@ -2951,7 +2975,7 @@ elsif($q->param('m')) # Modules
 		if($cfg->load('comp_items') eq "on") { print "<option value='15'>Items checked out per user</option><option value='18'>Item expiration dates</option>"; }
 		print "<option value='8'>Users per access level</option><option value='17'>Active user sessions</option></select></div><div class='col-sm-6'><span class='pull-right'><input class='btn btn-primary' type='submit' value='Show report'> &nbsp; <input class='btn btn-primary' type='submit' name='csv' value='Export as CSV'></span></div></div></form></p></div><div class='help-block with-errors'></div></div>\n";
 	}
-	elsif($q->param('m') eq "customforms" && $logged_lvl > 3 && $cfg->load('comp_tickets') eq "on")
+	elsif($q->param('m') eq "customforms" && $logged_lvl >= to_int($cfg->load("customs_lvl")) && $cfg->load('comp_tickets') eq "on")
 	{
 		headers("Custom forms");
 		print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Custom forms</h3></div><div class='panel-body'>\n";
@@ -3022,9 +3046,9 @@ elsif($q->param('m')) # Modules
 		while(my @res = $sql->fetchrow_array())
 		{
 			print "<tr><td>" . $res[0] . "</td><td>";
-			if($logged_lvl > 1) { print "<a href='./?m=view_client&c=" . $res[0] . "'>"; }
+			if($logged_lvl >= to_int($cfg->load('client_lvl'))) { print "<a href='./?m=view_client&c=" . $res[0] . "'>"; }
 			print $res[1];
-			if($logged_lvl > 1) { print "</a>"; }
+			if($logged_lvl >= to_int($cfg->load('client_lvl'))) { print "</a>"; }
 			print "</td><td>" . $res[3] . "</td><td>" . $res[2] . "</td></tr>";
 		}		
 		print "</table>";
@@ -3176,7 +3200,7 @@ elsif($q->param('m')) # Modules
 		else { print "<input type='submit' class='btn btn-success pull-right' name='enable_user' value='Enable login'>"; }
 		print "</form></div></div>";
 	}
-	elsif($q->param('m') eq "view_client" && $q->param('c') && $logged_lvl > 1)
+	elsif($q->param('m') eq "view_client" && $q->param('c') && $logged_lvl >= to_int($cfg->load('client_lvl')))
 	{
 		if($q->param('csv') && $cfg->load('comp_billing') eq "on")
 		{
@@ -3478,7 +3502,7 @@ elsif($q->param('m')) # Modules
 		headers("Users management");
 		print "<p><form method='POST' action='.'><input type='hidden' name='m' value='change_lvl'><input type='hidden' name='u' value='" . sanitize_alpha($q->param('u')) . "'>Select a new access level for user <b>" . sanitize_alpha($q->param('u')) . "</b>: <select name='newlvl'><option>0</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select><br><input class='btn btn-primary' type='submit' value='Change level'></form></p><br>\n";
 		print "<p>Here is a list of available NodePoint levels:</p>\n";
-		print "<table class='table table-striped'><tr><th>Level</th><th>Name</th><th>Description</th></tr><tr><td>6</td><td>NodePoint Admin</td><td>Can change basic NodePoint settings</td></tr><td>5</td><td>Users management</td><td>Can manage users, reset passwords, edit clients</td></tr><tr><td>4</td><td>" . $items{"Product"} . "s management</td><td>Can add, retire and edit " . lc($items{"Product"}) . "s, edit articles and items</td></tr><tr><td>3</td><td>Tickets management</td><td>Can create " . lc($items{"Release"}) . "s, update tickets, track time</td></tr><tr><td>2</td><td>Restricted view</td><td>Can view statistics, restricted tickets and " . lc($items{"Product"}) . "s</td></tr><tr><td>1</td><td>Authorized users</td><td>Can create tickets and comments</td></tr><tr><td>0</td><td>Unauthorized users</td><td>Can view private tickets</td></tr></table>\n";
+		print "<table class='table table-striped'><tr><th>Level</th><th>Name</th><th>Description</th></tr><tr><td>6</td><td>NodePoint Admin</td><td>Can change basic NodePoint settings</td></tr><td>5</td><td>Users management</td><td>Can manage users, reset passwords, edit clients</td></tr><tr><td>4</td><td>" . $items{"Product"} . "s management</td><td>Can add, retire and edit " . lc($items{"Product"}) . "s, edit articles and items</td></tr><tr><td>3</td><td>Tickets management</td><td>Can create " . lc($items{"Release"}) . "s, update tickets, track time</td></tr><tr><td>2</td><td>Restricted view</td><td>Can view restricted tickets and " . lc($items{"Product"}) . "s</td></tr><tr><td>1</td><td>Authorized users</td><td>Can create tickets and comments</td></tr><tr><td>0</td><td>Unauthorized users</td><td>Can view private tickets</td></tr></table>\n";
 	}
 	elsif($q->param('m') eq "reset_pass" && $logged_lvl > 4 && $q->param('u'))
 	{
@@ -3662,7 +3686,7 @@ elsif($q->param('m')) # Modules
 			if($cfg->load('comp_steps') eq "on" && ($vis eq "Public" || ($vis eq "Private" && $logged_user ne "") || ($vis eq "Restricted" && $logged_lvl > 1) || $logged_lvl > 3))
 			{
 				print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Tasks</h3></div><div class='panel-body'>";
-				if($logged_lvl > 3 && $vis ne "Archived")
+				if($logged_lvl >= to_int($cfg->load('tasks_lvl')) && $vis ne "Archived")
 				{
 					print "<form method='POST' action='.' data-toggle='validator' role='form'><input type='hidden' name='product_id' value='" . to_int($q->param('p')) . "'><input type='hidden' name='m' value='add_step'><h4>Add a new task</h4><p><div class='row'><div class='col-sm-12'><input placeholder='Description' class='form-control' name='name' maxlength='200' required></div></div></p><p><div class='row'><div class='col-sm-5'>Assign user:<br><select name='user' class='form-control'>";
 					my $sql = $db->prepare("SELECT name FROM users WHERE level > 0 ORDER BY name;");
@@ -3683,7 +3707,7 @@ elsif($q->param('m')) # Modules
 					if(to_int($res[4]) == 100) { print "<font color='green'>Completed</font>"; }
 					elsif($dueby[2] < $y || ($dueby[2] == $y && $dueby[0] < $m) || ($dueby[2] == $y && $dueby[0] == $m && $dueby[1] < $d)) { print "<font color='red'>Overdue</font>"; }
 					else { print $res[5]; }
-					if($logged_lvl > 3 && $vis ne "Archived") { print "<span class='pull-right'><form method='POST' action='.'><input type='hidden' name='product_id' value='" . to_int($q->param('p')) . "'><input type='hidden' name='m' value='delete_step'><input type='hidden' name='step_id' value='" . $res[0] . "'><input class='btn btn-danger pull-right' type='submit' value='Delete'></form></span>"; }
+					if($logged_lvl >= to_int($cfg->load('tasks_lvl')) && $vis ne "Archived") { print "<span class='pull-right'><form method='POST' action='.'><input type='hidden' name='product_id' value='" . to_int($q->param('p')) . "'><input type='hidden' name='m' value='delete_step'><input type='hidden' name='step_id' value='" . $res[0] . "'><input class='btn btn-danger pull-right' type='submit' value='Delete'></form></span>"; }
 					print "</td></tr>";
 				}				
 				print "</table></div></div>\n";    
@@ -3751,7 +3775,7 @@ elsif($q->param('m')) # Modules
 			msg($items{"Release"} . " deleted from " . lc($items{"Product"}) . " <b>" . to_int($q->param('product_id')) . "</b>. Press <a href='./?m=view_product&p=" . to_int($q->param('product_id')) . "'>here</a> to continue.", 3);
 		}	
 	}
-	elsif($logged_lvl > 3 && $q->param('m') eq "add_step")
+	elsif($logged_lvl >= to_int($cfg->load('tasks_lvl')) && $q->param('m') eq "add_step")
 	{
 		headers($items{"Product"} . "s");
 		if(!$q->param('product_id') || !$q->param('name') || !$q->param('due') || !$q->param('user'))
@@ -3780,7 +3804,7 @@ elsif($q->param('m')) # Modules
 			msg("Task added. Press <a href='./?m=view_product&p=" . to_int($q->param('product_id')) . "'>here</a> to continue.", 3);
 		}
 	}
-	elsif($logged_lvl > 3 && $q->param('m') eq "delete_step" && $q->param('step_id'))
+	elsif($logged_lvl >= to_int($cfg->load('tasks_lvl')) && $q->param('m') eq "delete_step" && $q->param('step_id'))
 	{
 		headers($items{"Product"} . "s");
 		$sql = $db->prepare("DELETE FROM steps WHERE ROWID = ?;");
@@ -4017,7 +4041,7 @@ elsif($q->param('m')) # Modules
 	elsif($q->param('m') eq "update_ticket" && $logged_lvl > 2 && $q->param('t'))
 	{
 		headers("Tickets");
-		if($q->param('ticket_status') && $q->param('ticket_title') && $q->param('ticket_desc') && ($q->param('ticket_resolution') || ($q->param('ticket_status') eq "Open" || $q->param('ticket_status') eq "New")))
+		if($q->param('ticket_status') && $q->param('work_done') && $q->param('ticket_title') && $q->param('ticket_desc') && ($q->param('ticket_resolution') || ($q->param('ticket_status') eq "Open" || $q->param('ticket_status') eq "New")))
 		{
 			my $resolution = "";
 			if($q->param('ticket_resolution')) { $resolution = sanitize_html($q->param('ticket_resolution')); }
@@ -4045,6 +4069,9 @@ elsif($q->param('m')) # Modules
 				@us = split(' ', $res[4]);
 				$creator = $res[3];
 			}
+			$changes .= "\n";
+			if($cfg->load('comp_time') eq "on") { $changes .= "[" . to_float($q->param("time_spent")) . "] "; }
+			$changes .= sanitize_html($q->param('work_done')) . "\n";				
 			$sql = $db->prepare("UPDATE tickets SET link = ?, resolution = ?, status = ?, title = ?, description = ?, assignedto = ?, releaseid = ?, modified = ? WHERE ROWID = ?;");
 			$sql->execute($lnk, $resolution, sanitize_alpha($q->param('ticket_status')), sanitize_html($q->param('ticket_title')), sanitize_html($q->param('ticket_desc')) . "\n\n--- " . now() . " ---\nTicket modified by: " . $logged_user . "\n" . $changes, $assigned, sanitize_html($q->param('ticket_releases')), now(), to_int($q->param('t')));
 			foreach my $u (@us)
@@ -4108,6 +4135,7 @@ elsif($q->param('m')) # Modules
 			if(!$q->param('ticket_releases')) { $text .= "<span class='label label-danger'>Ticket " . lc($items{"Release"}) . "s</span> "; }
 			if(!$q->param('ticket_desc')) { $text .= "<span class='label label-danger'>Ticket description</span> "; }
 			if(!$q->param('ticket_resolution')) { $text .= "<span class='label label-danger'>Ticket resolution</span> "; }
+			if(!$q->param('work_done')) { $text .= "<span class='label label-danger'>Summary of work done</span> "; }
 			$text .= " Please go back and try again.";
 			msg($text, 0);
 		}
@@ -4315,7 +4343,13 @@ elsif($q->param('m')) # Modules
 					}
 					else { print "<p>Title: <b>" . $res[5] . "</b></p>"; }
 				}
-				if($logged_lvl > 2 && $q->param('edit')) { print "<p>Description:<br><textarea class='form-control' name='ticket_desc' rows='20'>" . $res[6] . "</textarea></p>\n"; }
+				if($logged_lvl > 2 && $q->param('edit'))
+				{ 
+					print "<p>Previous description:<br><textarea class='form-control' name='ticket_desc' rows='10'";
+					if($logged_lvl < to_int($cfg->load('past_lvl'))) { print " readonly"; }
+					print ">" . $res[6] . "</textarea></p>\n";
+					print "<p><div class='row'><div class='col-sm-12'>Summary of work done:<input type='text' class='form-control' name='work_done'></div></div></p>\n"; 
+				}
 				else { print "<p>Description:<br><pre>" . $res[6] . "</pre></p>"; }
 				if($logged_lvl > 2 && $q->param('edit'))
 				{ 
@@ -4812,7 +4846,7 @@ elsif($q->param('m')) # Modules
 			}
 		}
 	}
-	elsif($q->param('m') eq "show_report" && $q->param('report') && $logged_lvl > 1)
+	elsif($q->param('m') eq "show_report" && $q->param('report') && $logged_lvl >= to_int($cfg->load("report_lvl")))
 	{
 		my %results;
 		my $totalresults = 0;
@@ -5649,7 +5683,7 @@ elsif($q->param('m')) # Modules
 	}
 	footers();
 }
-elsif(($q->param('create_form') || $q->param('edit_form') || $q->param('save_form')) && $logged_lvl > 3)
+elsif(($q->param('create_form') || $q->param('edit_form') || $q->param('save_form')) && $logged_lvl >= to_int($cfg->load("customs_lvl")))
 {
 	headers("Custom forms");
 	if($q->param('save_form'))

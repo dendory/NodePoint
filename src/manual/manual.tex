@@ -11,7 +11,7 @@
 % Conditional compilation for Windows and Linux
 \usepackage{ifthen}
 \newboolean{Windows}
-\setboolean{Windows}{false} % change to false for Linux
+\setboolean{Windows}{true} % change to false for Linux
 \ifthenelse{\boolean{Windows}}
 {\def\NodePointManual{NodePoint IT System - Windows version 1.5.2}}
 {\def\NodePointManual{NodePoint IT System - Linux version 1.5.2}}
@@ -303,6 +303,7 @@ These are the default configuration values for NodePoint. They have to be define
 
 \begin{itemize}
 \item \textbf{Database file:} This is the NodePoint database file.
+\item \textbf{Upload folder:} Where product images and comment files are stored. Leave empty to disable uploads.
 \item \textbf{Admin name:} The product administrator.
 \item \textbf{Admin password:} The password for the administrator.
 \item \textbf{Site name:} The name shown at the top left of the interface.
@@ -311,7 +312,6 @@ These are the default configuration values for NodePoint. They have to be define
 \item \textbf{Interface theme color:} The color of panels in the interface.
 \item \textbf{Favicon:} This is the icon shown by web browsers in the URL bar.
 \item \textbf{Ticket visibility:} When set to \textit{Public}, all tickets will be visible by logged in and guest users. When set to \textit{Private}, people need to log in to view tickets. \textit{Restricted} prevents people without at least the Restricted View access level from viewing others' tickets. This is a good choice for IT/Helpdesk systems.
-\item \textbf{Default access level:} The access level for new users. The default is 1.
 \item \textbf{Allow registrations:} Allow guest users to register a new account. If set to no, the only way to add new accounts is if a user with Users Management access adds one.
 \item \textbf{Allow guest tickets:} Allow guest users to file tickets.
 \item \textbf{API read key:} Used for some API operations.
@@ -322,11 +322,16 @@ These are the default configuration values for NodePoint. They have to be define
 \item \textbf{SMTP username:} User for SMTP connections, if your mail server requires authentication.
 \item \textbf{SMTP password:} Password for SMTP connections, if your mail server requires authentication.
 \item \textbf{Support email:} The email from which email notifications come from.
-\item \textbf{Upload folder:} Where product images and comment files are stored. Leave empty to disable uploads.
-\item \textbf{Minimum upload level:} The minimum access level a user must have to attach files to comments.
 \item \textbf{Items managed:} The type of items NodePoint should manage. This is purely a UI customization.
 \item \textbf{Active Directory server:} Enter your domain controller address to enable AD integration. Users will be created dynamically as they first log on, and passwords will be checked against AD using LDAP.
 \item \textbf{Active Directory domain:} The domain to use for AD integration (in NT4 format).
+\item \textbf{New users access level:} The access level for new users. The default is 1.
+\item \textbf{Can upload files:} The minimum access level a user must have to attach files to comments.
+\item \textbf{Can modify past ticket changes:} Below that level, users who edit tickets cannot change the previous description of the ticket.
+\item \textbf{Can make custom forms:} The minimum access level to create and edit custom ticket forms under the Tools menu.
+\item \textbf{Can view reports and statistics:} The minimum access level to access the statistics screen under the Tools menu.
+\item \textbf{Can assign tasks to users:} The minimum access level to assign tasks to users on the Projects page.
+\item \textbf{Can view client details:} The minimum access level to view details about clients, including billing information.
 \item \textbf{Authentication plugin:} Use an external script or application to authenticate users. This can be used instead of the built-in users management or Active Directory integration if you have some other process to authenticate users. It must return 0 for success, 1 for failure. The following variables can be used: \textit{\%user\%} and \textit{\%pass\%}. For example: \texttt{python auth.py -userid \%user\% -passwd \%pass\%}
 \item \textbf{Notifications plugin:} Call an application or script when a notification is sent. You can use the following variables here: \textit{\%user\%}, \textit{\%title\%} and \textit{\%message\%}. For example: \texttt{echo \%message\% >> ..\textbackslash \%user\%.log}
 \item \textbf{Checkout plugin:} Call an application or script when an inventory item is checked out or approved. You can use the following variables here: \textit{\%user\%} and \textit{\%serial\%}. For example: \texttt{python add\_license.py -item \%serial\% -user \%user\%}
