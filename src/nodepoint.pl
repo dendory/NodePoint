@@ -57,8 +57,10 @@ sub headers
 	print "  <link rel='stylesheet' href='bootstrap.css'>\n";
 	print "  <link rel='stylesheet' href='datepicker.css'>\n";
 	print "  <link rel='stylesheet' href='fullcalendar.css'>\n";
+	print "  <link rel='stylesheet' href='datatables.css'>\n";
 	print "  <script src='jquery.js'></script>\n";
 	print "  <script src='bootstrap.js'></script>\n";
+	print "  <script src='datatables.js'></script>\n";
 	if($cfg->load("css_template")) { print "  <link rel='stylesheet' href='" . $cfg->load("css_template") . "'>\n"; }
 	if($cfg->load("favicon")) { print "  <link rel='shortcut icon' href='" . $cfg->load("favicon") . "'>\n"; }
 	else { print "  <link rel='shortcut icon' href='favicon.gif'>\n"; }
@@ -922,62 +924,83 @@ sub home
 
 	if($logged_lvl > 0 && $cfg->load('comp_tickets') eq "on")
 	{
-		print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Tickets you created</h3></div><div class='panel-body'><table class='table table-striped'>\n";
-		print "<tr><th>ID</th><th>" . $items{"Product"} . "</th><th>Title</th><th>Status</th><th>Last modified</th></tr>\n";
-		$sql = $db->prepare("SELECT ROWID,* FROM tickets WHERE status != 'Closed' ORDER BY ROWID DESC");
-		$sql->execute();
-		while(my @res = $sql->fetchrow_array())
+		$sql = $db->prepare("SELECT COUNT(*) FROM tickets WHERE status != 'Closed' AND createdby = ?");
+		$sql->execute($logged_user);
+		my $count1 = 0;
+		while(my @res = $sql->fetchrow_array())	{ $count1 = to_int($res[0]); }
+		if($count1 > 0)
 		{
-			if($products[$res[1]] && $res[3] eq $logged_user) 
-			{ 
-				print "<tr><td><nobr>";
-				if($res[7] eq "High") { print "<img src='icons/high.png'> "; }
-				elsif($res[7] eq "Low") { print "<img src='icons/low.png'> "; }
-				else { print "<img src='icons/normal.png'> "; }
-				print $res[0] . "</nobr></td><td>" . $products[$res[1]] . "</td><td><a href='./?m=view_ticket&t=" . $res[0] . "'>" . $res[5] . "</a></td><td>" . $res[8] . "</td><td>" . $res[12] . "</td></tr>\n"; 
+			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Tickets you created</h3></div><div class='panel-body'><table class='table table-striped' id='home1_table'>\n";
+			print "<thead><tr><th>ID</th><th>" . $items{"Product"} . "</th><th>Title</th><th>Status</th><th>Last modified</th></tr></thead><tbody>\n";
+			$sql = $db->prepare("SELECT ROWID,* FROM tickets WHERE status != 'Closed' ORDER BY ROWID DESC");
+			$sql->execute();
+			while(my @res = $sql->fetchrow_array())
+			{
+				if($products[$res[1]] && $res[3] eq $logged_user) 
+				{ 
+					print "<tr><td><nobr>";
+					if($res[7] eq "High") { print "<img src='icons/high.png'> "; }
+					elsif($res[7] eq "Low") { print "<img src='icons/low.png'> "; }
+					else { print "<img src='icons/normal.png'> "; }
+					print $res[0] . "</nobr></td><td>" . $products[$res[1]] . "</td><td><a href='./?m=view_ticket&t=" . $res[0] . "'>" . $res[5] . "</a></td><td>" . $res[8] . "</td><td>" . $res[12] . "</td></tr>\n"; 
+				}
 			}
+			print "</tbody></table><script>\$(document).ready(function(){\$('#home1_table').DataTable({'order':[[0,'desc']],pageLength:" .  to_int($cfg->load('page_len')). ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script></div></div>";
 		}
-		print "</table></div></div>";
 	}
 	
 	if($cfg->load('comp_tickets') eq "on")
 	{
-		print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Tickets you follow</h3></div><div class='panel-body'><table class='table table-striped'>\n";
-		print "<tr><th>ID</th><th>" . $items{"Product"} . "</th><th>Title</th><th>Status</th><th>Last modified</th></tr>\n";
-		$sql = $db->prepare("SELECT ROWID,* FROM tickets WHERE status != 'Closed' ORDER BY ROWID DESC;");
-		$sql->execute();
-		while(my @res = $sql->fetchrow_array())
+		$sql = $db->prepare("SELECT COUNT(*) FROM tickets WHERE status != 'Closed' AND subscribers LIKE ?");
+		$sql->execute("%" . $logged_user . "%");
+		my $count2 = 0;
+		while(my @res = $sql->fetchrow_array())	{ $count2 = to_int($res[0]); }
+		if($count2 > 0)
 		{
-			if($products[$res[1]] && $res[10] =~ /\b$logged_user\b/) 
-			{ 
-				print "<tr><td><nobr>";
-				if($res[7] eq "High") { print "<img src='icons/high.png'> "; }
-				elsif($res[7] eq "Low") { print "<img src='icons/low.png'> "; }
-				else { print "<img src='icons/normal.png'> "; }
-				print $res[0] . "</nobr></td><td>" . $products[$res[1]] . "</td><td><a href='./?m=view_ticket&t=" . $res[0] . "'>" . $res[5] . "</a></td><td>" . $res[8] . "</td><td>" . $res[12] . "</td></tr>\n"; 
+			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Tickets you follow</h3></div><div class='panel-body'><table class='table table-striped' id='home2_table'>\n";
+			print "<thead><tr><th>ID</th><th>" . $items{"Product"} . "</th><th>Title</th><th>Status</th><th>Last modified</th></tr></thead><tbody>\n";
+			$sql = $db->prepare("SELECT ROWID,* FROM tickets WHERE status != 'Closed' ORDER BY ROWID DESC;");
+			$sql->execute();
+			while(my @res = $sql->fetchrow_array())
+			{
+				if($products[$res[1]] && $res[10] =~ /\b$logged_user\b/) 
+				{ 
+					print "<tr><td><nobr>";
+					if($res[7] eq "High") { print "<img src='icons/high.png'> "; }
+					elsif($res[7] eq "Low") { print "<img src='icons/low.png'> "; }
+					else { print "<img src='icons/normal.png'> "; }
+					print $res[0] . "</nobr></td><td>" . $products[$res[1]] . "</td><td><a href='./?m=view_ticket&t=" . $res[0] . "'>" . $res[5] . "</a></td><td>" . $res[8] . "</td><td>" . $res[12] . "</td></tr>\n"; 
+				}
 			}
+			print "</tbody></table><script>\$(document).ready(function(){\$('#home2_table').DataTable({'order':[[0,'desc']],pageLength:" .  to_int($cfg->load('page_len')). ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script></div></div>";
 		}
-		print "</table></div></div>";
 	}
 	
 	if($logged_lvl > 2 && $cfg->load('comp_tickets') eq "on")
 	{
-		print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Tickets assigned to you</h3></div><div class='panel-body'><table class='table table-striped'>\n";
-		print "<tr><th>ID</th><th>" . $items{"Product"} . "</th><th>Title</th><th>Status</th><th>Last modified</th></tr>\n";
-		$sql = $db->prepare("SELECT ROWID,* FROM tickets WHERE status != 'Closed' ORDER BY ROWID DESC;");
-		$sql->execute();
-		while(my @res = $sql->fetchrow_array())
+		$sql = $db->prepare("SELECT COUNT(*) FROM tickets WHERE status != 'Closed' AND assignedto LIKE ?");
+		$sql->execute("%" . $logged_user . "%");
+		my $count3 = 0;
+		while(my @res = $sql->fetchrow_array())	{ $count3 = to_int($res[0]); }
+		if($count3 > 0)
 		{
-			if($products[$res[1]] && $res[4] =~ /\b$logged_user\b/) 
-			{ 
-				print "<tr><td><nobr>";
-				if($res[7] eq "High") { print "<img src='icons/high.png'> "; }
-				elsif($res[7] eq "Low") { print "<img src='icons/low.png'> "; }
-				else { print "<img src='icons/normal.png'> "; }
-				print $res[0] . "</nobr></td><td>" . $products[$res[1]] . "</td><td><a href='./?m=view_ticket&t=" . $res[0] . "'>" . $res[5] . "</a></td><td>" . $res[8] . "</td><td>" . $res[12] . "</td></tr>\n"; 
+			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Tickets assigned to you</h3></div><div class='panel-body'><table class='table table-striped' id='home3_table'>\n";
+			print "<thead><tr><th>ID</th><th>" . $items{"Product"} . "</th><th>Title</th><th>Status</th><th>Last modified</th></tr></thead><tbody>\n";
+			$sql = $db->prepare("SELECT ROWID,* FROM tickets WHERE status != 'Closed' ORDER BY ROWID DESC;");
+			$sql->execute();
+			while(my @res = $sql->fetchrow_array())
+			{
+				if($products[$res[1]] && $res[4] =~ /\b$logged_user\b/) 
+				{ 
+					print "<tr><td><nobr>";
+					if($res[7] eq "High") { print "<img src='icons/high.png'> "; }
+					elsif($res[7] eq "Low") { print "<img src='icons/low.png'> "; }
+					else { print "<img src='icons/normal.png'> "; }
+					print $res[0] . "</nobr></td><td>" . $products[$res[1]] . "</td><td><a href='./?m=view_ticket&t=" . $res[0] . "'>" . $res[5] . "</a></td><td>" . $res[8] . "</td><td>" . $res[12] . "</td></tr>\n"; 
+				}
 			}
+			print "</tbody></table><script>\$(document).ready(function(){\$('#home3_table').DataTable({'order':[[0,'desc']],pageLength:" .  to_int($cfg->load('page_len')). ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script></div></div>";
 		}
-		print "</table></div></div>";
 	}
 
 	if($cfg->load('comp_steps') eq "on")
@@ -1006,89 +1029,110 @@ sub home
 				}
 			}
 		}
-		my @products;
-		$sql = $db->prepare("SELECT ROWID,* FROM products;");
-		$sql->execute();
-		while(my @res = $sql->fetchrow_array()) { $products[$res[0]] = $res[1]; }
-		print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Tasks assigned to you</h3></div><div class='panel-body'><table class='table table-striped'>\n";
-		print "<tr><th>" . $items{"Product"} . "</th><th>Task</th><th>Due by</th><th>Completion</th><th></th></tr>\n";
-		$sql = $db->prepare("SELECT ROWID,* FROM steps WHERE user = ? AND completion < 100");
+		$sql = $db->prepare("SELECT COUNT(*) FROM steps WHERE user = ? AND completion < 100");
 		$sql->execute($logged_user);
-		my $m = localtime->strftime('%m');
-		my $y = localtime->strftime('%Y');
-		my $d = localtime->strftime('%d');
-		while(my @res = $sql->fetchrow_array())
+		my $count4 = 0;
+		while(my @res = $sql->fetchrow_array())	{ $count4 = to_int($res[0]); }
+		if($count4 > 0)
 		{
-			if($products[$res[1]])
+			my @products;
+			$sql = $db->prepare("SELECT ROWID,* FROM products;");
+			$sql->execute();
+			while(my @res = $sql->fetchrow_array()) { $products[$res[0]] = $res[1]; }
+			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Tasks assigned to you</h3></div><div class='panel-body'><table class='table table-striped' id='home4_table'>\n";
+			print "<thead><tr><th>" . $items{"Product"} . "</th><th>Task</th><th>Due by</th><th>Completion</th><th></th></tr></thead><tbody>\n";
+			$sql = $db->prepare("SELECT ROWID,* FROM steps WHERE user = ? AND completion < 100");
+			$sql->execute($logged_user);
+			my $m = localtime->strftime('%m');
+			my $y = localtime->strftime('%Y');
+			my $d = localtime->strftime('%d');
+			while(my @res = $sql->fetchrow_array())
 			{
-				print "<tr><td>" . $products[$res[1]] . "</td><td>" . $res[2] . "</td><td>";
-				my @dueby = split(/\//, $res[5]);
-				if(to_int($res[4]) == 100) { print "<font color='green'>Completed</font>"; }
-				elsif($dueby[2] < $y || ($dueby[2] == $y && $dueby[0] < $m) || ($dueby[2] == $y && $dueby[0] == $m && $dueby[1] < $d)) { print "<font color='red'>Overdue</font>"; }
-				else { print $res[5]; }
-				print "</td><td><form method='POST' action='.'><input type='hidden' name='set_step' value='" . $res[0] . "'><select name='completion' class='form-control'>";
-				if(to_int($res[4]) == 0) { print "<option value='0' selected>0%</option>"; }
-				else { print "<option value='0'>0%</option>"; }
-				if(to_int($res[4]) == 10) { print "<option value='10' selected>10%</option>"; }
-				else { print "<option value='10'>10%</option>"; }
-				if(to_int($res[4]) == 20) { print "<option value='20' selected>20%</option>"; }
-				else { print "<option value='20'>20%</option>"; }
-				if(to_int($res[4]) == 30) { print "<option value='30' selected>30%</option>"; }
-				else { print "<option value='30'>30%</option>"; }
-				if(to_int($res[4]) == 40) { print "<option value='40' selected>40%</option>"; }
-				else { print "<option value='40'>40%</option>"; }
-				if(to_int($res[4]) == 50) { print "<option value='50' selected>50%</option>"; }
-				else { print "<option value='50'>50%</option>"; }
-				if(to_int($res[4]) == 60) { print "<option value='60' selected>60%</option>"; }
-				else { print "<option value='60'>60%</option>"; }
-				if(to_int($res[4]) == 70) { print "<option value='70' selected>70%</option>"; }
-				else { print "<option value='70'>70%</option>"; }
-				if(to_int($res[4]) == 80) { print "<option value='80' selected>80%</option>"; }
-				else { print "<option value='80'>80%</option>"; }
-				if(to_int($res[4]) == 90) { print "<option value='90' selected>90%</option>"; }
-				else { print "<option value='90'>90%</option>"; }
-				if(to_int($res[4]) == 100) { print "<option value='100' selected>100%</option>"; }
-				else { print "<option value='100'>100%</option>"; }
-				print "</select></td><td><input type='submit' class='btn btn-primary pull-right' value='Save'></form></td></tr>";
+				if($products[$res[1]])
+				{
+					print "<tr><td>" . $products[$res[1]] . "</td><td>" . $res[2] . "</td><td>";
+					my @dueby = split(/\//, $res[5]);
+					if(to_int($res[4]) == 100) { print "<font color='green'>Completed</font>"; }
+					elsif($dueby[2] < $y || ($dueby[2] == $y && $dueby[0] < $m) || ($dueby[2] == $y && $dueby[0] == $m && $dueby[1] < $d)) { print "<font color='red'>Overdue</font>"; }
+					else { print $res[5]; }
+					print "</td><td><form method='POST' action='.'><input type='hidden' name='set_step' value='" . $res[0] . "'><select name='completion' class='form-control'>";
+					if(to_int($res[4]) == 0) { print "<option value='0' selected>0%</option>"; }
+					else { print "<option value='0'>0%</option>"; }
+					if(to_int($res[4]) == 10) { print "<option value='10' selected>10%</option>"; }
+					else { print "<option value='10'>10%</option>"; }
+					if(to_int($res[4]) == 20) { print "<option value='20' selected>20%</option>"; }
+					else { print "<option value='20'>20%</option>"; }
+					if(to_int($res[4]) == 30) { print "<option value='30' selected>30%</option>"; }
+					else { print "<option value='30'>30%</option>"; }
+					if(to_int($res[4]) == 40) { print "<option value='40' selected>40%</option>"; }
+					else { print "<option value='40'>40%</option>"; }
+					if(to_int($res[4]) == 50) { print "<option value='50' selected>50%</option>"; }
+					else { print "<option value='50'>50%</option>"; }
+					if(to_int($res[4]) == 60) { print "<option value='60' selected>60%</option>"; }
+					else { print "<option value='60'>60%</option>"; }
+					if(to_int($res[4]) == 70) { print "<option value='70' selected>70%</option>"; }
+					else { print "<option value='70'>70%</option>"; }
+					if(to_int($res[4]) == 80) { print "<option value='80' selected>80%</option>"; }
+					else { print "<option value='80'>80%</option>"; }
+					if(to_int($res[4]) == 90) { print "<option value='90' selected>90%</option>"; }
+					else { print "<option value='90'>90%</option>"; }
+					if(to_int($res[4]) == 100) { print "<option value='100' selected>100%</option>"; }
+					else { print "<option value='100'>100%</option>"; }
+					print "</select></td><td><input type='submit' class='btn btn-primary pull-right' value='Save'></form></td></tr>";
+				}
 			}
+			print "</tbody></table><script>\$(document).ready(function(){\$('#home4_table').DataTable({'order':[[2,'desc']],pageLength:" .  to_int($cfg->load('page_len')). ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script></div></div>";
 		}
-		print "</table></div></div>";
 	}
 
 	if($cfg->load('comp_articles') eq "on")
 	{
-		print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Subscribed articles</h3></div><div class='panel-body'><table class='table table-striped'>\n";
-		print "<tr><th>ID</th><th>Title</th><th>Last modified</th></tr>\n";
-		$sql = $db->prepare("SELECT articleid FROM subscribe WHERE user = ?");
+		$sql = $db->prepare("SELECT COUNT(*) FROM subscribe WHERE user = ?");
 		$sql->execute($logged_user);
-		while(my @res = $sql->fetchrow_array())
+		my $count5 = 0;
+		while(my @res = $sql->fetchrow_array())	{ $count5 = to_int($res[0]); }
+		if($count5 > 0)
 		{
-			my $sql2;
-			if($logged_lvl > 3) { $sql2 = $db->prepare("SELECT title,modified FROM kb WHERE ROWID = ?"); }
-			else { $sql2 = $db->prepare("SELECT title,modified FROM kb WHERE published = 1 AND ROWID = ?"); }
-			$sql2->execute($res[0]);
-			while(my @res2 = $sql2->fetchrow_array())
+			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Subscribed articles</h3></div><div class='panel-body'><table class='table table-striped' id='home5_table'>\n";
+			print "<thead><tr><th>ID</th><th>Title</th><th>Last modified</th></tr></thead><tbody>\n";
+			$sql = $db->prepare("SELECT articleid FROM subscribe WHERE user = ?");
+			$sql->execute($logged_user);
+			while(my @res = $sql->fetchrow_array())
 			{
-				print "<tr><td>" . $res[0] . "</td><td><a href='./?kb=" . $res[0] . "'>" . $res2[0] . "</a></td><td>" . $res2[1] . "</td></tr>\n";
+				my $sql2;
+				if($logged_lvl > 3) { $sql2 = $db->prepare("SELECT title,modified FROM kb WHERE ROWID = ?"); }
+				else { $sql2 = $db->prepare("SELECT title,modified FROM kb WHERE published = 1 AND ROWID = ?"); }
+				$sql2->execute($res[0]);
+				while(my @res2 = $sql2->fetchrow_array())
+				{
+					print "<tr><td>" . $res[0] . "</td><td><a href='./?kb=" . $res[0] . "'>" . $res2[0] . "</a></td><td>" . $res2[1] . "</td></tr>\n";
+				}
 			}
+			print "</tbody></table><script>\$(document).ready(function(){\$('#home5_table').DataTable({'order':[[1,'asc']],pageLength:" .  to_int($cfg->load('page_len')). ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script></div></div>";
 		}
-		print "</table></div></div>";
 	}
 
 	if($cfg->load('comp_items') eq "on")
 	{
-		print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Checked out items</h3></div><div class='panel-body'><table class='table table-striped'>\n";
-		print "<tr><th>Type</th><th>Name</th><th>Serial</th></tr>\n";
-		$sql = $db->prepare("SELECT ROWID,* FROM items WHERE user = ?");
+		$sql = $db->prepare("SELECT COUNT(*) FROM items WHERE user = ?");
 		$sql->execute($logged_user);
-		while(my @res = $sql->fetchrow_array())
-		{
-			print "<tr><td>" . $res[2] . "</td><td><a href='./?m=items&i=" . $res[0] . "'>" . $res[1] . "</a></td><td>";
-			if($res[7] == 2) { print "<input type='submit' name='checkin' class='btn btn-default pull-right' value='Waiting approval' disabled>" . $res[3]; }
-			else { print "<form method='POST' action='.'><input type='hidden' name='m' value='items'><input type='hidden' name='i' value='" . $res[0] . "'><input type='submit' name='checkin' value='Return' class='btn btn-primary pull-right'>" . $res[3] . "</form>"; }
-			print "</td></tr>\n";
+		my $count6 = 0;
+		while(my @res = $sql->fetchrow_array())	{ $count6 = to_int($res[0]); }
+		if($count6 > 0)
+		{	
+			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Checked out items</h3></div><div class='panel-body'><table class='table table-striped' id='home6_table'>\n";
+			print "<thead><tr><th>Type</th><th>Name</th><th>Serial</th></tr></thead><tbody>\n";
+			$sql = $db->prepare("SELECT ROWID,* FROM items WHERE user = ?");
+			$sql->execute($logged_user);
+			while(my @res = $sql->fetchrow_array())
+			{
+				print "<tr><td>" . $res[2] . "</td><td><a href='./?m=items&i=" . $res[0] . "'>" . $res[1] . "</a></td><td>";
+				if($res[7] == 2) { print "<input type='submit' name='checkin' class='btn btn-default pull-right' value='Waiting approval' disabled>" . $res[3]; }
+				else { print "<form method='POST' action='.'><input type='hidden' name='m' value='items'><input type='hidden' name='i' value='" . $res[0] . "'><input type='submit' name='checkin' value='Return' class='btn btn-primary pull-right'>" . $res[3] . "</form>"; }
+				print "</td></tr>\n";
+			}
+			print "</tbody></table><script>\$(document).ready(function(){\$('#home6_table').DataTable({'order':[[0,'asc']],pageLength:" .  to_int($cfg->load('page_len')). ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script></div></div>";
 		}
-		print "</table></div></div>";
 	}
 }
 
@@ -1185,6 +1229,7 @@ if(to_int($cfg->load("report_lvl")) < 1 || to_int($cfg->load("report_lvl")) > 6)
 if(to_int($cfg->load("client_lvl")) < 1 || to_int($cfg->load("client_lvl")) > 6) { $cfg->save("client_lvl", 2); }
 if(to_int($cfg->load("customs_lvl")) < 1 || to_int($cfg->load("customs_lvl")) > 6) { $cfg->save("customs_lvl", 4); }
 if(to_int($cfg->load("tasks_lvl")) < 1 || to_int($cfg->load("tasks_lvl")) > 6) { $cfg->save("tasks_lvl", 4); }
+if(to_int($cfg->load("page_len")) < 1) { $cfg->save("page_len", 50); }
 
 # Main loop
 if($q->param('site_name') && $q->param('db_address') && $logged_user ne "" && $logged_user eq $cfg->load('admin_name')) # Save config by admin
@@ -2744,23 +2789,14 @@ elsif($q->param('m')) # Modules
 	{
 		headers("Users management");
 		print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Users management</h3></div><div class='panel-body'>\n";
-		print "<p>Filter users by access level: <a href='./?m=users'>All</a> | <a href='./?m=users&filter_users=0'>0</a> | <a href='./?m=users&filter_users=1'>1</a> | <a href='./?m=users&filter_users=2'>2</a> | <a href='./?m=users&filter_users=3'>3</a> | <a href='./?m=users&filter_users=4'>4</a> | <a href='./?m=users&filter_users=5'>5</a></p>";
-		print "<table class='table table-striped'><tr><th>User name</th><th>Email</th><th>Level</th><th>Last login</th></tr>\n";
-		if(defined($q->param("filter_users")))
-		{
-			$sql = $db->prepare("SELECT * FROM users WHERE level = ? ORDER BY name;");
-			$sql->execute(to_int($q->param("filter_users")));
-		}
-		else
-		{
-			$sql = $db->prepare("SELECT * FROM users ORDER BY name;");
-			$sql->execute();
-		}
+		print "<table class='table table-stripped' id='users_table'><thead><tr><th>User name</th><th>Email</th><th>Level</th><th>Last login</th></tr></thead><tbody>\n";
+		$sql = $db->prepare("SELECT * FROM users ORDER BY name;");
+		$sql->execute();
 		while(my @res = $sql->fetchrow_array())
 		{
 			print "<tr><td><a href='./?m=summary&u=" . $res[0] . "'>" . $res[0] . "</a></td><td>" . $res[2] . "</td><td>" . $res[3] . "</td><td>" . $res[4] . "</td></tr>\n";
 		}
-		print "</table>\n";
+		print "</tbody></table><script>\$(document).ready(function(){\$('#users_table').DataTable({'order':[[0,'asc']],pageLength:" . to_int($cfg->load('page_len')) . ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script>\n";
 		if(!$cfg->load('ad_server'))
 		{
 			print "<div class='form-group'><h4>Add a new user:</h4><form method='POST' action='.' data-toggle='validator' role='form'>\n";
@@ -2973,13 +3009,14 @@ elsif($q->param('m')) # Modules
 		if($cfg->load('comp_shoutbox') eq "on") { print "<option value='14'>Full shoutbox history</option>"; }
 		if($cfg->load('comp_clients') eq "on") { print "<option value='16'>Clients per status</option>"; }
 		if($cfg->load('comp_items') eq "on") { print "<option value='15'>Items checked out per user</option><option value='18'>Item expiration dates</option>"; }
-		print "<option value='8'>Users per access level</option><option value='17'>Active user sessions</option></select></div><div class='col-sm-6'><span class='pull-right'><input class='btn btn-primary' type='submit' value='Show report'> &nbsp; <input class='btn btn-primary' type='submit' name='csv' value='Export as CSV'></span></div></div></form></p></div><div class='help-block with-errors'></div></div>\n";
+		print "<option value='8'>Users per access level</option><option value='17'>Active user sessions</option></select></div><div class='col-sm-6'><span class='pull-right'><input class='btn btn-primary' type='submit' value='Show report'></span></div></div></form></p></div><div class='help-block with-errors'></div></div>\n";
 	}
 	elsif($q->param('m') eq "customforms" && $logged_lvl >= to_int($cfg->load("customs_lvl")) && $cfg->load('comp_tickets') eq "on")
 	{
 		headers("Custom forms");
 		print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Custom forms</h3></div><div class='panel-body'>\n";
-		print "<p><table class='table table-striped'><tr><th>Assigned " . lc($items{"Product"}) . "</th><th>Form name</th><th>Last update</th></tr>";
+		print "<form method='GET' action='./'><input type='hidden' name='create_form' value='1'><input type='submit' value='Create new custom form' class='btn btn-primary'></form><br>\n";
+		print "<p><table class='table table-stripped' id='customs_table'><thead><tr><th>Assigned " . lc($items{"Product"}) . "</th><th>Form name</th><th>Last update</th></tr></thead><tbody>";
 		my @products;
 		$sql = $db->prepare("SELECT ROWID,* FROM products;");
 		$sql->execute();
@@ -2998,29 +3035,29 @@ elsif($q->param('m')) # Modules
 			if($res[0] == $defaultform) { print " <b>(default form)</b>"; }
 			print "</td><td><a href='./?edit_form=" . $res[0] . "'>" . $res[2] . "</a></td><td>" . $res[23] . "</td></tr>\n";
 		}
-		print "</table><form method='GET' action='./'><input type='hidden' name='create_form' value='1'><input type='submit' value='Create new custom form' class='pull-right btn btn-primary'></form></p></div></div>\n";
+		print "</tbody></table><script>\$(document).ready(function(){\$('#customs_table').DataTable({'order':[[1,'asc']],pageLength:" . to_int($cfg->load('page_len')) . ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script></p></div></div>";
 	}
 	elsif($q->param('m') eq "log" && $logged_lvl > 5)
 	{
 		headers("System log");
-		print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Log (last 200 events)</h3></div><div class='panel-body'>\n";
+		print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>System log</h3></div><div class='panel-body'>\n";
 		print "<form style='display:inline' method='POST' action='.'><input type='hidden' name='m' value='clear_log'><input class='btn btn-danger pull-right' type='submit' value='Clear log'><br></form><a name='log'></a><p>Filter log by events:<br><a href='./?m=log'>All</a> | <a href='./?m=log&filter_log=Failed'>Failed logins</a> | <a href='./?m=log&filter_log=Success'>Successful logins</a> | <a href='./?m=log&filter_log=level'>Level changes</a> | <a href='./?m=log&filter_log=password'>Password changes</a> | <a href='./?m=log&filter_log=new'>New users</a> | <a href='./?m=log&filter_log=setting'>Settings updated</a> | <a href='./?m=log&filter_log=notification'>Email notifications</a> | <a href='./?m=log&filter_log=LDAP:'>Active Directory</a> | <a href='./?m=log&filter_log=deleted:'>Deletes</a></p>\n";
-		print "<table class='table table-striped'><tr><th>IP address</th><th>User</th><th>Event</th><th>Time</th></tr>\n";
+		print "<table class='table table-stripped' id='log_table'><thead><tr><th>IP address</th><th>User</th><th>Event</th><th>Time</th></tr></thead><tbody>\n";
 		if($q->param("filter_log"))
 		{
-			$sql = $db->prepare("SELECT * FROM log DESC WHERE op LIKE ? ORDER BY key DESC LIMIT 200;");
+			$sql = $db->prepare("SELECT * FROM log DESC WHERE op LIKE ? ORDER BY key DESC;");
 			$sql->execute("%" . sanitize_alpha($q->param("filter_log")) . "%");
 		}
 		else
 		{
-			$sql = $db->prepare("SELECT * FROM log ORDER BY key DESC LIMIT 200;");
+			$sql = $db->prepare("SELECT * FROM log ORDER BY key DESC;");
 			$sql->execute();
 		}
 		while(my @res = $sql->fetchrow_array())
 		{
 			print "<tr><td>" . $res[0] . "</td><td>" . $res[1] . "</td><td>" . $res[2] . "</td><td>" . $res[3] . "</td></tr>\n";
 		}
-		print "</table></div></div>\n";
+		print "</tbody></table><script>\$(document).ready(function(){\$('#log_table').DataTable({'order':[[4,'asc']],pageLength:" . to_int($cfg->load('page_len')) . ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script></div></div>\n";
 	}
 	elsif($q->param('m') eq "clients" && $logged_user ne "" && $cfg->load('comp_clients') eq "on")
 	{
@@ -3032,16 +3069,8 @@ elsif($q->param('m')) # Modules
 			print "</div></div>\n";
 		}
 		print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Clients directory</h3></div><div class='panel-body'>";
-		print "<p><form method='GET' action='.'><div class='row'><div class='col-sm-2'><input type='hidden' name='m' value='clients'><select name='sort' class='form-control'><option value=''>Sort by:</option><option>Name</option><option>Contact</option><option>Status</option></select></div><div class='col-sm-10'><input type='submit' class='btn btn-primary' value='Sort'></div></div></form></p>";
-		print "<table class='table table-striped'><tr><th>ID</th><th>Name</th><th>Contact</th><th>Status</th></tr>\n";
-		if($q->param('sort') && (lc($q->param('sort')) eq 'name' || lc($q->param('sort')) eq 'contact' || lc($q->param('sort')) eq 'status'))
-		{
-			$sql = $db->prepare("SELECT ROWID,* FROM clients ORDER BY " . sanitize_alpha(lc($q->param('sort'))) . ";"); 
-		}
-		else 
-		{ 
-			$sql = $db->prepare("SELECT ROWID,* FROM clients;");
-		}
+		print "<table class='table table-stripped' id='clients_table'><thead><tr><th>ID</th><th>Name</th><th>Contact</th><th>Status</th></tr></thead><tbody>\n";
+		$sql = $db->prepare("SELECT ROWID,* FROM clients;");
 		$sql->execute();
 		while(my @res = $sql->fetchrow_array())
 		{
@@ -3051,7 +3080,7 @@ elsif($q->param('m')) # Modules
 			if($logged_lvl >= to_int($cfg->load('client_lvl'))) { print "</a>"; }
 			print "</td><td>" . $res[3] . "</td><td>" . $res[2] . "</td></tr>";
 		}		
-		print "</table>";
+		print "</tbody></table><script>\$(document).ready(function(){\$('#clients_table').DataTable({'order':[[0,'asc']],pageLength:" . to_int($cfg->load('page_len')) . ",dom:'Bfrtip',buttons:['copy','csv','excel','pdf','print']});});</script>";
 		print "</div></div>\n";
 	}
 	elsif($q->param('m') eq "save_client" && $q->param('c') && $logged_lvl > 4)
@@ -3311,7 +3340,7 @@ elsif($q->param('m')) # Modules
 					if($type == 0) { print " selected"; }
 					print ">Fixed</option><option value='1'";
 					if($type == 1) { print " selected"; }
-					print ">Hourly</option></select></div><div class='col-sm-3'>Cost: <input type='number' class='form-control' name='cost' value='" . to_float($cost) . "'></div><div class='col-sm-3'>Currency: <input type='text' maxlength='4' class='form-control' name='currency' value='" . $currency . "'></div><div class='col-sm-3'><span class='pull-right'><input type='submit' value='Set' class='btn btn-primary'> &nbsp; <input class='btn btn-primary' type='submit' name='csv' value='Export as CSV'></span></div></div></form>";
+					print ">Hourly</option></select></div><div class='col-sm-3'>Cost: <input type='number' class='form-control' name='cost' value='" . to_float($cost) . "'></div><div class='col-sm-3'>Currency: <input type='text' maxlength='4' class='form-control' name='currency' value='" . $currency . "'></div><div class='col-sm-3'><span class='pull-right'><input type='submit' value='Set' class='btn btn-primary'></span></div></div></form>";
 				}
 				else
 				{
@@ -3320,7 +3349,7 @@ elsif($q->param('m')) # Modules
 					else { print "Hourly"; }
 					print "</b></div><div class='col-sm-4'>Cost: <b>" . $cost . "</b></div><div class='col-sm-4'>Currency: <b>" . $currency . "</b></div></div>";
 				}
-				print "<p><table class='table table-striped'><tr><th>Ticket ID</th><th>Hours</th><th>Cost</th></tr>";
+				print "<p><table class='table table-striped' id='billing_table'><thead><tr><th>Ticket ID</th><th>Hours</th><th>Cost</th></tr></thead><tbody>";
 				$sql2 = $db->prepare("SELECT ticketid FROM billing WHERE client = ?;");
 				$sql2->execute($res[0]);
 				my $total = 0;
@@ -3347,13 +3376,13 @@ elsif($q->param('m')) # Modules
 					}
 					print "</td></tr>\n";
 				}
-				print "<tr><th>Total:</th><th></th><th>\$" . $total . "</th></tr>\n";
-				print "</table></p></div></div>\n";
+				print "</tbody><tfoot><tr><th>Total:</th><th></th><th>\$" . $total . "</th></tr>\n";
+				print "</tfoot></table><script>\$(document).ready(function(){\$('#billing_table').DataTable({'order':[[0,'desc']],pageLength:" .  to_int($cfg->load('page_len')). ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script></p></div></div>\n";
 			}
 		}
 		if($cfg->load('comp_items') eq "on")
 		{
-			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Related items</h3></div><div class='panel-body'><table class='table table-striped'><tr><th>Type</th><th>Name</th><th>Serial</th><th>Status</th></tr>";
+			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Related items</h3></div><div class='panel-body'><table class='table table-striped' id='clientitems_table'><thead><tr><th>Type</th><th>Name</th><th>Serial</th><th>Status</th></tr></thead><tbody>";
 			$sql = $db->prepare("SELECT ROWID,* FROM items WHERE clientid = ?;");
 			$sql->execute(to_int($q->param('c')));
 			while(my @res = $sql->fetchrow_array())
@@ -3365,7 +3394,7 @@ elsif($q->param('m')) # Modules
 				else { print "<font color='red'>Checked out by: " . $res[8] . "</font>"; }
 				print "</td></tr>\n";
 			}
-			print "</table></div></div>\n";
+			print "</tbody></table><script>\$(document).ready(function(){\$('#clientitems_table').DataTable({'order':[[0,'asc']],pageLength:" .  to_int($cfg->load('page_len')). ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script></div></div>\n";
 		}
 	}
 	elsif($q->param('m') eq "add_client" && $logged_lvl > 4)
@@ -3577,9 +3606,9 @@ elsif($q->param('m')) # Modules
 			}
 			print "</select></div></div></p><p><input type='submit' class='btn btn-primary pull-right' value='Add article'></p></form></div></div>\n";
 		}
-		print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Support articles</h3></div><div class='panel-body'><table class='table table-striped'>\n";
-		if($logged_lvl > 3) { print "<tr><th>ID</th><th>" . $items{"Product"} . "</th><th>Title</th><th>Status</th><th>Last update</th></tr>"; }
-		else { print "<tr><th>ID</th><th>" . $items{"Product"} . "</th><th>Title</th><th>Last update</th></tr>"; }
+		print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Support articles</h3></div><div class='panel-body'><table class='table table-striped' id='articles_table'><thead>\n";
+		if($logged_lvl > 3) { print "<tr><th>ID</th><th>" . $items{"Product"} . "</th><th>Title</th><th>Status</th><th>Last update</th></tr></thead><tbody>"; }
+		else { print "<tr><th>ID</th><th>" . $items{"Product"} . "</th><th>Title</th><th>Last update</th></tr></thead><tbody>"; }
 		if($logged_lvl > 3) { $sql = $db->prepare("SELECT ROWID,* FROM kb;"); }
 		else { $sql = $db->prepare("SELECT ROWID,* FROM kb WHERE published = 1;"); }
 		$sql->execute();
@@ -3602,7 +3631,7 @@ elsif($q->param('m')) # Modules
 				else { print "<tr><td>" . $res[0] . "</td><td>" . $product . "</td><td><a href='./?kb=" . $res[0] . "'>" . $res[2] . "</a></td><td>" . $res[7] . "</td></tr>\n"; }
 			}			
 		}
-		print "</table></div></div>\n";
+		print "</tbody></table><script>\$(document).ready(function(){\$('#articles_table').DataTable({'order':[[2,'asc']],pageLength:" .  to_int($cfg->load('page_len')). ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script></div></div>\n";
 	}
 	elsif($q->param('m') eq "view_product" && $q->param('p'))
 	{
@@ -3668,8 +3697,8 @@ elsif($q->param('m')) # Modules
 					print "<h4>Add a new " . lc($items{"Release"}) . "</h4><form method='POST' action='.' data-toggle='validator' role='form'>\n";
 					print "<input type='hidden' name='m' value='add_release'><input type='hidden' name='product_id' value='" . to_int($q->param('p')) . "'><div class='row'><div class='col-sm-4'>" . $items{"Release"} . ": <input type='text' class='form-control' name='release_version' required></div><div class='col-sm-6'>Notes or link: <input type='text' name='release_notes' class='form-control' required></div><div class='col-sm-2'><input class='btn btn-primary pull-right' type='submit' value='Add " . lc($items{"Release"}) . "'></div></div></form><hr><h4>Current " . lc($items{"Release"}) . "s</h4>\n";    
 				}
-				print "<table class='table table-striped'>\n";
-				print "<tr><th>" . $items{"Release"} . "</th><th>User</th><th>Notes</th><th>Date</th></tr>\n";
+				print "<table class='table table-striped' id='releases_table'>\n";
+				print "<thead><tr><th>" . $items{"Release"} . "</th><th>User</th><th>Notes</th><th>Date</th></tr></thead><tbody>\n";
 				$sql = $db->prepare("SELECT ROWID,* FROM releases WHERE productid = ?;");
 				$sql->execute(to_int($q->param('p')));
 				while(my @res = $sql->fetchrow_array())
@@ -3681,7 +3710,7 @@ elsif($q->param('m')) # Modules
 					if($logged_lvl > 2) { print "<span class='pull-right'><form method='GET' action='.'><input type='hidden' name='product_id' value='" . to_int($q->param('p')) . "'><input type='hidden' name='m' value='delete_release'><input type='hidden' name='release_id' value='" . $res[0] . "'><input class='btn btn-danger' type='submit' value='Delete'></form></span>"; } 
 					print "</td></tr>\n";
 				}
-				print "</table></div></div>\n";
+				print "</tbody></table><script>\$(document).ready(function(){\$('#releases_table').DataTable({'order':[[3,'desc']],pageLength:" .  to_int($cfg->load('page_len')). ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script></div></div>\n";
 			}
 			if($cfg->load('comp_steps') eq "on" && ($vis eq "Public" || ($vis eq "Private" && $logged_user ne "") || ($vis eq "Restricted" && $logged_lvl > 1) || $logged_lvl > 3))
 			{
@@ -3694,7 +3723,7 @@ elsif($q->param('m')) # Modules
 					while(my @res = $sql->fetchrow_array()) { print "<option>" . $res[0] . "</option>"; }
 					print "</select></div><div class='col-sm-5'>Due by:<br><input type='text' class='form-control datepicker' name='due' placeholder='mm/dd/yyyy' required></div><div class='col-sm-2'><input class='btn btn-primary pull-right' type='submit' value='Add task'></div></div></p></form><hr><h4>Current tasks</h4>\n";
 				}
-				print "<table class='table table-stripped'><tr><th>Task</th><th>Assigned to</th><th>Completion</th><th>Due by</th></tr>";
+				print "<table class='table table-stripped' id='tasks_table'><thead><tr><th>Task</th><th>Assigned to</th><th>Completion</th><th>Due by</th></tr></thead><tbody>";
 				my $sql = $db->prepare("SELECT ROWID,* FROM steps WHERE productid = ?;");
 				$sql->execute(to_int($q->param('p')));
 				my $m = localtime->strftime('%m');
@@ -3710,13 +3739,13 @@ elsif($q->param('m')) # Modules
 					if($logged_lvl >= to_int($cfg->load('tasks_lvl')) && $vis ne "Archived") { print "<span class='pull-right'><form method='POST' action='.'><input type='hidden' name='product_id' value='" . to_int($q->param('p')) . "'><input type='hidden' name='m' value='delete_step'><input type='hidden' name='step_id' value='" . $res[0] . "'><input class='btn btn-danger pull-right' type='submit' value='Delete'></form></span>"; }
 					print "</td></tr>";
 				}				
-				print "</table></div></div>\n";    
+				print "</tbody></table><script>\$(document).ready(function(){\$('#tasks_table').DataTable({'order':[[3,'desc']],pageLength:" .  to_int($cfg->load('page_len')). ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script></div></div>\n";    
 			}
 			if($cfg->load('comp_articles') eq "on" && ($vis eq "Public" || ($vis eq "Private" && $logged_user ne "") || ($vis eq "Restricted" && $logged_lvl > 1) || $logged_lvl > 3))
 			{
-				print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Related articles</h3></div><div class='panel-body'><table class='table table-striped'>\n";
-				if($logged_lvl > 3) { print "<tr><th>ID</th><th>Title</th><th>Status</th><th>Last update</th></tr>"; }
-				else { print "<tr><th>ID</th><th>Title</th><th>Last update</th></tr>"; }
+				print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Related articles</h3></div><div class='panel-body'><table class='table table-striped' id='relatedarticles_table'><thead>\n";
+				if($logged_lvl > 3) { print "<tr><th>ID</th><th>Title</th><th>Status</th><th>Last update</th></tr></thead><tbody>"; }
+				else { print "<tr><th>ID</th><th>Title</th><th>Last update</th></tr></thead><tbody>"; }
 				if($logged_lvl > 3) { $sql = $db->prepare("SELECT ROWID,* FROM kb WHERE (productid = ? OR productid = 0);"); }
 				else { $sql = $db->prepare("SELECT ROWID,* FROM kb WHERE published = 1 AND (productid = ? OR productid = 0);"); }
 				$sql->execute(to_int($q->param('p')));
@@ -3737,12 +3766,12 @@ elsif($q->param('m')) # Modules
 						else { print "<tr><td>" . $res[0] . "</td><td><a href='./?kb=" . $res[0] . "'>" . $res[2] . "</a></td><td>" . $res[7] . "</td></tr>\n"; }
 					}			
 				}
-				print "</table></div></div>\n";
+				print "</tbody></table><script>\$(document).ready(function(){\$('#relatedarticles_table').DataTable({'order':[[0,'asc']],pageLength:" .  to_int($cfg->load('page_len')). ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script></div></div>\n";
 			}
 		}
 		if($cfg->load('comp_items') eq "on")
 		{
-			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Related items</h3></div><div class='panel-body'><table class='table table-striped'><tr><th>Type</th><th>Name</th><th>Serial</th><th>Status</th></tr>";
+			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Related items</h3></div><div class='panel-body'><table class='table table-striped' id='relateditems_table'><thead><tr><th>Type</th><th>Name</th><th>Serial</th><th>Status</th></tr></thead><tbody>";
 			$sql = $db->prepare("SELECT ROWID,* FROM items WHERE productid = ?;");
 			$sql->execute(to_int($q->param('p')));
 			while(my @res = $sql->fetchrow_array())
@@ -3754,7 +3783,7 @@ elsif($q->param('m')) # Modules
 				else { print "<font color='red'>Checked out by: " . $res[8] . "</font>"; }
 				print "</td></tr>\n";
 			}
-			print "</table></div></div>\n";
+			print "</tbody></table><script>\$(document).ready(function(){\$('#relateditems_table').DataTable({'order':[[0,'asc']],pageLength:" .  to_int($cfg->load('page_len')). ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script></div></div>\n";
 		}
 	}
 	elsif($logged_lvl > 2 && $q->param('m') eq "delete_release")
@@ -4030,13 +4059,13 @@ elsif($q->param('m')) # Modules
 		$sql = $db->prepare("SELECT ROWID,* FROM products;");
 		$sql->execute();
 		my $found;
-		print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>List of " . lc($items{"Product"}) . "s</h3></div><div class='panel-body'><table class='table table-striped'>\n";
-		print "<tr><th>ID</th><th>Name</th><th>" . $items{"Model"} . "</th></tr>\n";
+		print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>List of " . lc($items{"Product"}) . "s</h3></div><div class='panel-body'><table class='table table-striped' id='projects_table'>\n";
+		print "<thead><tr><th>ID</th><th>Name</th><th>" . $items{"Model"} . "</th></tr></thead><tbody>\n";
 		while(my @res = $sql->fetchrow_array())
 		{
 			if($res[5] eq "Public" || ($res[5] eq "Private" && $logged_user ne "") || ($res[5] eq "Restricted" && $logged_lvl > 1) || $logged_lvl > 3) { print "<tr><td>" . $res[0] . "</td><td><a href='./?m=view_product&p=" . $res[0] . "'>" . $res[1] . "</a></td><td>" . $res[2] . "</td></tr>\n"; }
 		}
-		print "</table></div></div>\n";
+		print "</tbody></table><script>\$(document).ready(function(){\$('#projects_table').DataTable({'order':[[1,'asc']],pageLength:" .  to_int($cfg->load('page_len')). ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script></div></div>\n";
 	}
 	elsif($q->param('m') eq "update_ticket" && $logged_lvl > 2 && $q->param('t'))
 	{
@@ -4408,7 +4437,7 @@ elsif($q->param('m')) # Modules
 				{
 					$sql = $db->prepare("SELECT * FROM timetracking WHERE ticketid = ? ORDER BY ROWID DESC;");
 					$sql->execute(to_int($q->param('t')));
-					print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Time breakdown</h3></div><div class='panel-body'><table class='table table-striped'><tr><th>User</th><th>Hours spent</th><th>Date</th></tr>\n";
+					print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Time breakdown</h3></div><div class='panel-body'><table class='table table-striped' id='time_table'><thead><tr><th>User</th><th>Hours spent</th><th>Date</th></tr></thead><tbody>\n";
 					my $totaltime = 0;
 					while(my @res = $sql->fetchrow_array())
 					{
@@ -4416,7 +4445,7 @@ elsif($q->param('m')) # Modules
 						$totaltime += to_float($res[2]);
 					}
 					print "<tr><td><b>Total</b></td><td><b>" . $totaltime . "</b></td><td></td></tr>\n";
-					print "</table></div></div>\n";
+					print "</tbody></table><script>\$(document).ready(function(){\$('#time_table').DataTable({'order':[[0,'asc']],pageLength:" . to_int($cfg->load('page_len')) . ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script></div></div>\n";
 				}
 				print "<h3>Comments</h3>";
 				if($logged_lvl > 0 && $res[8] ne "Closed")
@@ -4859,115 +4888,115 @@ elsif($q->param('m')) # Modules
 		if(to_int($q->param('report')) == 1)
 		{
 			if($q->param('csv')) { print "User,\"Hours spent\"\n"; }
-			else { print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Time spent per user</h3></div><div class='panel-body'><table class='table table-striped'><tr><th>User</th><th>Hours spent</th></tr>"; }
+			else { print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Time spent per user</h3></div><div class='panel-body'><table class='table table-striped' id='report_table'><thead><tr><th>User</th><th>Hours spent</th></tr></thead><tbody>"; }
 			$sql = $db->prepare("SELECT * FROM timetracking ORDER BY name;");
 		}
 		elsif(to_int($q->param('report')) == 2)
 		{
 			if($q->param('csv')) { print "\"Ticket ID\",\"Hours spent\"\n"; }
-			else { print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>All time spent per ticket</h3></div><div class='panel-body'><table class='table table-striped'><tr><th>Ticket ID</th><th>Hours spent</th></tr>"; }
+			else { print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>All time spent per ticket</h3></div><div class='panel-body'><table class='table table-striped' id='report_table'><thead><tr><th>Ticket ID</th><th>Hours spent</th></tr></thead><tbody>"; }
 			$sql = $db->prepare("SELECT * FROM timetracking ORDER BY ticketid;");
 		}
 		elsif(to_int($q->param('report')) == 16)
 		{
 			if($q->param('csv')) { print "\"Status\",\"Clients\"\n"; }
-			else { print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Clients per status</h3></div><div class='panel-body'><table class='table table-striped'><tr><th>Status</th><th>Clients</th></tr>"; }
+			else { print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Clients per status</h3></div><div class='panel-body'><table class='table table-striped' id='report_table'><thead><tr><th>Status</th><th>Clients</th></tr></thead><tbody>"; }
 			$sql = $db->prepare("SELECT status FROM clients;");
 		}
 		elsif(to_int($q->param('report')) == 17)
 		{
 			if($q->param('csv')) { print "\"Timestamp\",\"User\"\n"; }
-			else { print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Active user sessions</h3></div><div class='panel-body'><table class='table table-striped'><tr><th>Timestamp</th><th>User</th></tr>"; }
+			else { print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Active user sessions</h3></div><div class='panel-body'><table class='table table-striped' id='report_table'><thead><tr><th>Timestamp</th><th>User</th></tr></thead><tbody>"; }
 			$sql = $db->prepare("SELECT user,expire FROM sessions;");
 		}
 		elsif(to_int($q->param('report')) == 18)
 		{
 			if($q->param('csv')) { print "\"Item\",\"Date\"\n"; }
-			else { print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Item expiration dates</h3></div><div class='panel-body'><table class='table table-striped'><tr><th>Item</th><th>Date</th></tr>"; }
+			else { print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Item expiration dates</h3></div><div class='panel-body'><table class='table table-striped' id='report_table'><thead><tr><th>Item</th><th>Date</th></tr></thead><tbody>"; }
 			$sql = $db->prepare("SELECT date,itemid FROM item_expiration;");
 		}
 		elsif(to_int($q->param('report')) == 11)
 		{
 			if($q->param('csv')) { print "\"Ticket ID\",\"Hours spent\"\n"; }
-			else { print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Your time spent per ticket</h3></div><div class='panel-body'><table class='table table-striped'><tr><th>Ticket ID</th><th>Hours spent</th></tr>"; }
+			else { print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Your time spent per ticket</h3></div><div class='panel-body'><table class='table table-striped' id='report_table'><thead><tr><th>Ticket ID</th><th>Hours spent</th></tr></thead><tbody>"; }
 			$sql = $db->prepare("SELECT * FROM timetracking WHERE name == \"$logged_user\" ORDER BY ticketid;");		
 		}
 		elsif(to_int($q->param('report')) == 3)
 		{
 			if($q->param('csv')) { print $items{"Product"} . ",Tickets\n"; }
-			else { print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Tickets created per " . lc($items{"Product"}) . "</h3></div><div class='panel-body'><table class='table table-striped'><tr><th>" . $items{"Product"} . "</th><th>Tickets</th></tr>"; }
+			else { print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Tickets created per " . lc($items{"Product"}) . "</h3></div><div class='panel-body'><table class='table table-striped' id='report_table'><thead><tr><th>" . $items{"Product"} . "</th><th>Tickets</th></tr></thead><tbody>"; }
 			$sql = $db->prepare("SELECT productid FROM tickets ORDER BY productid;");
 		}
 		elsif(to_int($q->param('report')) == 13)
 		{
 			if($q->param('csv')) { print "Article,Tickets\n"; }
-			else { print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Tickets linked per article</h3></div><div class='panel-body'><table class='table table-striped'><tr><th>Article</th><th>Tickets</th></tr>"; }
+			else { print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Tickets linked per article</h3></div><div class='panel-body'><table class='table table-striped' id='report_table'><thead><tr><th>Article</th><th>Tickets</th></tr></thead><tbody>"; }
 			$sql = $db->prepare("SELECT DISTINCT kb,ticketid FROM kblink ORDER BY kb;");
 		}
 		elsif(to_int($q->param('report')) == 14)
 		{
 			if($q->param('csv')) { print "Time,Message\n"; }
-			else { print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Full shoutbox history</h3></div><div class='panel-body'><table class='table table-striped'><tr><th>Time</th><th>Message</th></tr>"; }
+			else { print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Full shoutbox history</h3></div><div class='panel-body'><table class='table table-striped' id='report_table'><thead><tr><th>Time</th><th>Message</th></tr></thead><tbody>"; }
 			$sql = $db->prepare("SELECT created,user,msg FROM shoutbox;");
 		}
 		elsif(to_int($q->param('report')) == 15)
 		{
 			if($q->param('csv')) { print "Serial,User\n"; }
-			else { print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Items checked out per user</h3></div><div class='panel-body'><table class='table table-striped'><tr><th>Serial number</th><th>User</th></tr>"; }
+			else { print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Items checked out per user</h3></div><div class='panel-body'><table class='table table-striped' id='report_table'><thead><tr><th>Serial number</th><th>User</th></tr></thead><tbody>"; }
 			$sql = $db->prepare("SELECT user,serial FROM items WHERE status = 3;");
 		}
 		elsif(to_int($q->param('report')) == 10)
 		{
 			if($q->param('csv')) { print $items{"Product"} . ",Tickets\n"; }
-			else { print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>New and open tickets per " . lc($items{"Product"}) . "</h3></div><div class='panel-body'><table class='table table-striped'><tr><th>" . $items{"Product"} . "</th><th>Tickets</th></tr>"; }
+			else { print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>New and open tickets per " . lc($items{"Product"}) . "</h3></div><div class='panel-body'><table class='table table-striped' id='report_table'><thead><tr><th>" . $items{"Product"} . "</th><th>Tickets</th></tr></thead><tbody>"; }
 			$sql = $db->prepare("SELECT productid FROM tickets WHERE status == 'Open' OR status == 'New' ORDER BY productid;");
 		}
 		elsif(to_int($q->param('report')) == 4)
 		{
 			if($q->param('csv')) { print "User,Tickets\n"; }
-			else { print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Tickets created per user</h3></div><div class='panel-body'><table class='table table-striped'><tr><th>User</th><th>Tickets</th></tr>"; }
+			else { print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Tickets created per user</h3></div><div class='panel-body'><table class='table table-striped' id='report_table'><thead><tr><th>User</th><th>Tickets</th></tr></thead><tbody>"; }
 			$sql = $db->prepare("SELECT createdby FROM tickets ORDER BY createdby;");
 		}
 		elsif(to_int($q->param('report')) == 5)
 		{
 			if($q->param('csv')) { print "Day,Tickets\n"; }
-			else { print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Tickets created per day</h3></div><div class='panel-body'><table class='table table-striped'><tr><th>Day</th><th>Tickets</th></tr>"; }
+			else { print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Tickets created per day</h3></div><div class='panel-body'><table class='table table-striped' id='report_table'><thead><tr><th>Day</th><th>Tickets</th></tr></thead><tbody>"; }
 			$sql = $db->prepare("SELECT created,ROWID FROM tickets ORDER BY ROWID;");
 		}
 		elsif(to_int($q->param('report')) == 6)
 		{
 			if($q->param('csv')) { print "Month,Tickets\n"; }
-			else { print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Tickets created per month</h3></div><div class='panel-body'><table class='table table-striped'><tr><th>Month</th><th>Tickets</th></tr>"; }
+			else { print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Tickets created per month</h3></div><div class='panel-body'><table class='table table-striped' id='report_table'><thead><tr><th>Month</th><th>Tickets</th></tr></thead><tbody>"; }
 			$sql = $db->prepare("SELECT created,ROWID FROM tickets ORDER BY ROWID;");
 		}
 		elsif(to_int($q->param('report')) == 7)
 		{
 			if($q->param('csv')) { print "Status,Tickets\n"; }
-			else { print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Tickets per status</h3></div><div class='panel-body'><table class='table table-striped'><tr><th>Status</th><th>Tickets</th></tr>"; }
+			else { print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Tickets per status</h3></div><div class='panel-body'><table class='table table-striped' id='report_table'><thead><tr><th>Status</th><th>Tickets</th></tr></thead><tbody>"; }
 			$sql = $db->prepare("SELECT status FROM tickets ORDER BY status;");
 		}
 		elsif(to_int($q->param('report')) == 8)
 		{
 			if($q->param('csv')) { print "\"Access level\",Users\n"; }
-			else { print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Users per access level</h3></div><div class='panel-body'><table class='table table-striped'><tr><th>Access level</th><th>Users</th></tr>"; }
+			else { print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Users per access level</h3></div><div class='panel-body'><table class='table table-striped' id='report_table'><thead><tr><th>Access level</th><th>Users</th></tr></thead><tbody>"; }
 			$sql = $db->prepare("SELECT level FROM users ORDER BY level;");
 		}
 		elsif(to_int($q->param('report')) == 9)
 		{
 			if($q->param('csv')) { print "User,Tickets\n"; }
-			else { print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Tickets assigned per user</h3></div><div class='panel-body'><table class='table table-striped'><tr><th>User</th><th>Tickets</th></tr>"; }
+			else { print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Tickets assigned per user</h3></div><div class='panel-body'><table class='table table-striped' id='report_table'><thead><tr><th>User</th><th>Tickets</th></tr></thead><tbody>"; }
 			$sql = $db->prepare("SELECT name FROM users;");
 		}
 		elsif(to_int($q->param('report')) == 12)
 		{
 			if($q->param('csv')) { print "Filename,GUID\n"; }
-			else { print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Comment file attachments</h3></div><div class='panel-body'><table class='table table-striped'><tr><th>Filename</th><th>GUID</th></tr>"; }
+			else { print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Comment file attachments</h3></div><div class='panel-body'><table class='table table-striped' id='report_table'><thead><tr><th>Filename</th><th>GUID</th></tr></thead><tbody>"; }
 			$sql = $db->prepare("SELECT file,filename FROM comments WHERE file != '';");
 		}
 		else
 		{
 			if($q->param('csv')) { print "Unknown,Unknown\n"; }
-			else { print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Unknown report</h3></div><div class='panel-body'><table class='table table-striped'><tr><th>Unknown</th><th>Unknown</th></tr>"; }
+			else { print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Unknown report</h3></div><div class='panel-body'><table class='table table-striped' id='report_table'><thead><tr><th>Unknown</th><th>Unknown</th></tr></thead><tbody>"; }
 			$sql = $db->prepare("SELECT ROWID FROM users;");
 		}
 		$sql->execute();
@@ -5069,8 +5098,8 @@ elsif($q->param('m')) # Modules
 		}
 		else 
 		{
-			print "<tr><td><b>Total</b></td><td><b>" . $totalresults . "</b></td></tr>";
-			print "</table></div></div>"; 
+			print "</tbody><tfoot><tr><td><b>Total</b></td><td><b>" . $totalresults . "</b></td></tr>";
+			print "</tfoot></table><script>\$(document).ready(function(){\$('#report_table').DataTable({'order':[[0,'asc']],pageLength:" .  to_int($cfg->load('page_len')). ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script></div></div>"; 
 		}
 	}
 	elsif($q->param('m') eq "unlink_article" && $q->param('articleid') && $q->param('ticketid') && $logged_lvl > 3)
@@ -5082,48 +5111,10 @@ elsif($q->param('m')) # Modules
 	}
 	elsif($q->param('m') eq "tickets" && $cfg->load('comp_tickets') eq "on")
 	{
-		my $limit = 1000;
-		if($q->param('filter_limit')) { $limit = to_int($q->param('filter_limit')); }
 		my @products;
 		$sql = $db->prepare("SELECT ROWID,* FROM products;");
 		$sql->execute();
 		while(my @res = $sql->fetchrow_array()) { $products[$res[0]] = $res[1]; }
-		if($q->param('csv'))
-		{
-			print $q->header(-type => "text/csv", -attachment => "tickets.csv");
-			print "ID," . $items{"Product"} . ",User,Title,Description,Priority,Status,Resolution,Created,Modified\n";
-			if($q->param('filter_status') && $q->param('filter_status') ne "All" && $q->param('filter_product') && $q->param('filter_product') ne "All")
-			{
-				$sql = $db->prepare("SELECT ROWID,* FROM tickets WHERE status = ? AND productid = ? ORDER BY ROWID DESC LIMIT " . $limit . ";");
-				$sql->execute(sanitize_alpha($q->param('filter_status')), to_int($q->param('filter_product')));
-			}
-			elsif($q->param('filter_status') && $q->param('filter_status') ne "All")
-			{
-				$sql = $db->prepare("SELECT ROWID,* FROM tickets WHERE status = ? ORDER BY ROWID DESC LIMIT " . $limit . ";");
-				$sql->execute(sanitize_alpha($q->param('filter_status')));
-			}
-			elsif($q->param('filter_product') && $q->param('filter_product') ne "All")
-			{
-				$sql = $db->prepare("SELECT ROWID,* FROM tickets WHERE productid = ? ORDER BY ROWID DESC LIMIT " . $limit . ";");
-				$sql->execute(to_int($q->param('filter_product')));
-			}
-			else
-			{
-				$sql = $db->prepare("SELECT ROWID,* FROM tickets ORDER BY ROWID DESC LIMIT " . $limit . ";");
-				$sql->execute();
-			}
-			while(my @res = $sql->fetchrow_array())
-			{
-				if($products[$res[1]] && (($cfg->load("default_vis") eq "Public" || ($cfg->load("default_vis") eq "Private" && $logged_lvl > -1) || ($res[3] eq $logged_user) || $logged_lvl > 1)))
-				{
-					my $desc = $res[6];
-					$desc =~ s/&lt;/</g;
-					$desc =~ s/&quot;/""/g;
-					print "\"" . $res[0] . "\",\"" . $products[$res[1]] . "\",\"" . $res[3] . "\",\"" . $res[5] . "\",\"" . $desc . "\",\"" . $res[7] . "\",\"" . $res[8] . "\",\"" . $res[9] . "\",\"" . $res[11] . "\",\"" . $res[12] . "\"\n"; 
-				}
-			}
-			exit(0);
-		}
 		headers("Tickets");
 		if($logged_lvl > 0  || $cfg->load("guest_tickets") eq "on")  # add new ticket pane
 		{
@@ -5137,45 +5128,10 @@ elsif($q->param('m')) # Modules
 			}
 			print "</select></div><div class='col-sm-4'><input type='hidden' name='m' value='new_ticket'><input class='btn btn-primary pull-right' type='submit' value='Next'></div></div></p></form></div></div>\n";
 		}
-		print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Tickets ";
-		if($q->param('filter_product')) { print "(" . $items{"Product"} . ": " . sanitize_alpha($q->param('filter_product')) . ") "; }
-		if($q->param('filter_status')) { print "(Status: " . sanitize_alpha($q->param('filter_status')) . ") "; }
-		print "(Limit: " . $limit . ") ";
-		print "</h3></div><div class='panel-body'>\n";
-		print "<p><form method='GET' action='.'><input type='hidden' name='m' value='tickets'>Filter tickets:<div class='row'><div class='col-sm-2'>By status: <select name='filter_status' class='form-control'><option>All</option><option>New</option><option>Open</option><option>Invalid</option><option>Duplicate</option><option>Hold</option><option>Resolved</option><option>Closed</option></select></div><div class='col-sm-4'>By " . lc($items{"Product"}) . ": <select name='filter_product' class='form-control'><option>All</option>";
-		$sql = $db->prepare("SELECT ROWID,* FROM products;");
+		print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Tickets</h3></div><div class='panel-body'>\n";
+		print "<table class='table table-stripped' id='tickets_table'><thead><tr><th>ID</th><th>" . $items{"Product"} . "</th><th>Title</th><th>Status</th><th>Date</th></tr></thead><tbody>\n";
+		$sql = $db->prepare("SELECT ROWID,* FROM tickets ORDER BY ROWID DESC;");
 		$sql->execute();
-		while(my @res = $sql->fetchrow_array()) { print "<option value=" . $res[0] . ">" . $res[1] . "</option>"; }
-		print "</select></div><div class='col-sm-2'>Limit: <select name='filter_limit' class='form-control'><option value='50000'>50,000</option><option value='10000'>10,000</option><option value='5000'>5,000</option><option value='1000' selected>1,000</option><option value='500'>500</option><option value='100'>100</option></select></div><div class='col-sm-4'><span class='pull-right'><input class='btn btn-primary' type='submit' value='Filter'> &nbsp; <input class='btn btn-primary' name='csv' type='submit' value='Export as CSV'></span></div></div></form></p><hr>";
-		my $search = "";
-		if($q->param('search')) { $search = sanitize_html($q->param('search')); }
-		print "<p><form method='GET' action='.'><div class='row'><div class='col-sm-8'>Custom search:<input type='hidden' name='m' value='tickets'><input placeholder='Search terms' class='form-control' type='text' name='search' value='" . $search . "'></div><div class='col-sm-4'> <input class='btn btn-primary pull-right' type='submit' value='Search'></div></div></p>";
-		print "<table class='table table-striped'><tr><th>ID</th><th>" . $items{"Product"} . "</th><th>Title</th><th>Status</th><th>Date</th></tr>\n";
-		if($q->param('filter_status') && $q->param('filter_status') ne "All" && $q->param('filter_product') && $q->param('filter_product') ne "All")
-		{
-			$sql = $db->prepare("SELECT ROWID,* FROM tickets WHERE status = ? AND productid = ? ORDER BY ROWID DESC LIMIT 1000;");
-			$sql->execute(sanitize_alpha($q->param('filter_status')), to_int($q->param('filter_product')));
-		}
-		elsif($q->param('filter_status') && $q->param('filter_status') ne "All")
-		{
-			$sql = $db->prepare("SELECT ROWID,* FROM tickets WHERE status = ? ORDER BY ROWID DESC LIMIT " . $limit . ";");
-			$sql->execute(sanitize_alpha($q->param('filter_status')));
-		}
-		elsif($q->param('filter_product') && $q->param('filter_product') ne "All")
-		{
-			$sql = $db->prepare("SELECT ROWID,* FROM tickets WHERE productid = ? ORDER BY ROWID DESC LIMIT " . $limit . ";");
-			$sql->execute(to_int($q->param('filter_product')));
-		}
-		elsif($q->param('search'))
-		{
-			$sql = $db->prepare("SELECT ROWID,* FROM tickets WHERE title LIKE ? OR description LIKE ? ORDER BY ROWID DESC LIMIT " . $limit . ";");
-			$sql->execute("%" . sanitize_html($q->param('search')) . "%", "%" . sanitize_html($q->param('search')) . "%");
-		}
-		else
-		{
-			$sql = $db->prepare("SELECT ROWID,* FROM tickets ORDER BY ROWID DESC LIMIT " . $limit . ";");
-			$sql->execute();
-		}
 		while(my @res = $sql->fetchrow_array())
 		{
 			if($products[$res[1]] && (($cfg->load("default_vis") eq "Public" || ($cfg->load("default_vis") eq "Private" && $logged_lvl > -1) || ($res[3] eq $logged_user) || $logged_lvl > 1)))
@@ -5187,7 +5143,7 @@ elsif($q->param('m')) # Modules
 				print $res[0] . "</nobr></td><td>" . $products[$res[1]] . "</td><td><a href='./?m=view_ticket&t=" . $res[0] . "'>" . $res[5] . "</a></td><td>" . $res[8] . "</td><td>" . $res[11] . "</td></tr>\n"; 
 			}
 		}
-		print "</table></div></div>\n";
+		print "</tbody></table><script>\$(document).ready(function(){\$('#tickets_table').DataTable({'order':[[0,'desc']],pageLength:" . to_int($cfg->load('page_len')) . ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script></div></div>\n";
 	}
 	elsif($q->param('m') eq "items" && $cfg->load('comp_items') eq "on" && $logged_user ne "")
 	{
@@ -5204,38 +5160,7 @@ elsif($q->param('m')) # Modules
 		$sql = $db->prepare("SELECT ROWID,name FROM clients ORDER BY name;");
 		$sql->execute();
 		while(my @res = $sql->fetchrow_array()) { $clients[$res[0]] = $res[1]; }
-		if($q->param('csv'))
-		{
-			print $q->header(-type => "text/csv", -attachment => "items.csv");
-			print "ID,Type,Name,Serial,Status,Expire\n";
-			$sql = $db->prepare("SELECT ROWID,* FROM items;"); 
-			$sql->execute();
-			while(my @res = $sql->fetchrow_array())
-			{
-				$expdate = "";
-				$expired = 0;
-				my $sql3 = $db->prepare("SELECT date FROM item_expiration WHERE itemid = ?;");
-				$sql3->execute(to_int($res[0]));
-				while(my @res3 = $sql3->fetchrow_array())
-				{
-					$expdate = $res3[0];
-					my @expby = split(/\//, $expdate);
-					if($expby[2] < $y || ($expby[2] == $y && $expby[0] < $m) || ($expby[2] == $y && $expby[0] == $m && $expby[1] < $d)) { $expired = 1; }
-				}
-				print $res[0] . ",\"" . $res[2] . "\",\"" . $res[1] . "\",\"" . $res[3] . "\",\"";
-				if(to_int($res[7]) == 0) { print "Unavailable"; }
-				elsif(to_int($res[7]) == 1) 
-				{
-					if($expired == 1) { print "Expired"; }
-					else { print "Available"; } 
-				}
-				elsif(to_int($res[7]) == 2) { print "Waiting approval for: " . $res[8]; }
-				else { print "Checked out by: " . $res[8]; }
-				print "\",\"" . $expdate . "\"\n";
-			}
-			quit(0);
-		}
-		else { headers("Items"); }
+		headers("Items");
 		if($q->param('new_item'))
 		{
 			if(!$q->param('name') || !$q->param('type') || !$q->param('product_id') || !$q->param('client_id') || !$q->param('serial')) 
@@ -5584,14 +5509,14 @@ elsif($q->param('m')) # Modules
 			}
 			if($logged_lvl > 0)
 			{
-				print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Checkout history</h3></div><div class='panel-body'><table class='table table-striped'><tr><th>User</th><th>Event</th><th>Time</th></tr>";		
+				print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Checkout history</h3></div><div class='panel-body'><table class='table table-striped' id='checkouts_table'><thead><tr><th>User</th><th>Event</th><th>Time</th></tr></thead><tbody>";		
 				$sql = $db->prepare("SELECT user,event,time FROM checkouts WHERE itemid = ?;");
 				$sql->execute(to_int($q->param('i')));
 				while(my @res = $sql->fetchrow_array())
 				{
 					print "<tr><td>" . $res[0] . "</td><td>" . $res[1] . "</td><td>" . $res[2] . "</td></tr>";
 				}
-				print "</table></div></div>";
+				print "</tbody></table><script>\$(document).ready(function(){\$('#checkouts_table').DataTable({'order':[[2,'desc']],pageLength:" .  to_int($cfg->load('page_len')). ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script></div></div>";
 			}
 		}
 		else
@@ -5630,28 +5555,19 @@ elsif($q->param('m')) # Modules
 				if($apprcount > 0)
 				{
 					print "<h4>Items awaiting approval</h4>";
-					print "<table class='table table-striped'><tr><th>Type</th><th>Name</th><th>Serial</th><th>User</th><th>Action</th></tr>\n";
+					print "<table class='table table-striped' id='approval_table'><thead><tr><th>Type</th><th>Name</th><th>Serial</th><th>User</th><th>Action</th></tr></thead><tbody>\n";
 					$sql = $db->prepare("SELECT ROWID,* FROM items WHERE status = 2;");
 					$sql->execute();
 					while(my @res = $sql->fetchrow_array())
 					{
 						print "<tr><td>" . $res[2] . "</td><td>" . $res[1] . "</td><td>" . $res[3] . "</td><td>" . $res[8] . "</td><td><form method='POST' action='.'><input type='hidden' name='m' value='items'><input type='hidden' name='i' value='" . $res[0] . "'><input class='btn btn-success' type='submit' name='approve' value='Approve'> <input type='submit' class='btn btn-danger' name='deny' value='Deny'></form></td></tr>\n";
 					}
-					print "</table><hr><h4>Items list</h4>\n";
+					print "</tbody></table><script>\$(document).ready(function(){\$('#approval_table').DataTable({'order':[[0,'asc']],pageLength:" .  to_int($cfg->load('page_len')). ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script><hr><h4>Items list</h4>\n";
 				}
 			}
-			print "<p><form method='GET' action='.'><div class='row'><div class='col-sm-2'><input type='hidden' name='m' value='items'><select name='sort' class='form-control'><option value=''>Sort by:</option><option>Type</option><option>Name</option><option>Serial</option><option>Status</option></select></div><div class='col-sm-10'><input type='submit' class='btn btn-primary' value='Sort'> &nbsp; <input class='btn btn-primary pull-right' type='submit' name='csv' value='Export as CSV'></div></div></form></p>";
-			print "<table class='table table-striped'><tr><th>Type</th><th>Name</th><th>Serial</th><th>Status</th></tr>\n";
-			if($q->param('sort') && (lc($q->param('sort')) eq 'type' || lc($q->param('sort')) eq 'name' || lc($q->param('sort')) eq 'serial' || lc($q->param('sort')) eq 'status'))
-			{
-				$sql = $db->prepare("SELECT ROWID,* FROM items ORDER BY " . sanitize_alpha(lc($q->param('sort'))) . ";"); 
-				$sql->execute();
-			}
-			else 
-			{ 
-				$sql = $db->prepare("SELECT ROWID,* FROM items;"); 
-				$sql->execute();
-			}
+			print "<table class='table table-striped' id='items_table'><thead><tr><th>Type</th><th>Name</th><th>Serial</th><th>Status</th></tr></thead><tbody>\n";
+			$sql = $db->prepare("SELECT ROWID,* FROM items;"); 
+			$sql->execute();
 			while(my @res = $sql->fetchrow_array())
 			{
 				my $sql3 = $db->prepare("SELECT date FROM item_expiration WHERE itemid = ?;");
@@ -5673,7 +5589,7 @@ elsif($q->param('m')) # Modules
 				print "</td></tr>\n";
 				$expired = 0;
 			}
-			print "</table></div></div>\n";
+			print "</tbody></table><script>\$(document).ready(function(){\$('#items_table').DataTable({'order':[[0,'asc']],pageLength:" . to_int($cfg->load('page_len')) . ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script></div></div>\n";
 		}
 	}
 	else
@@ -5906,9 +5822,9 @@ elsif($q->param('kb') && $cfg->load('comp_articles') eq "on")
 			if($cfg->load('comp_tickets') eq "on" && $logged_user ne "")
 			{
 				print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Active tickets linked to this article</h3></div><div class='panel-body'>\n";
-				print "<table class='table table-striped'><tr><th>ID</th><th>Title</th><th>Status</th>";
+				print "<table class='table table-striped' id='linkedtickets_table'><thead><tr><th>ID</th><th>Title</th><th>Status</th>";
 				if($logged_lvl > 3) { print "<th>Unlink</th>"; }
-				print "</tr>\n";
+				print "</tr></thead><tbody>\n";
 				$sql = $db->prepare("SELECT DISTINCT ticketid FROM kblink WHERE kb = ? ORDER BY ticketid DESC;");
 				$sql->execute(to_int($q->param('kb')));
 				while(my @res2 = $sql->fetchrow_array())
@@ -5926,7 +5842,7 @@ elsif($q->param('kb') && $cfg->load('comp_articles') eq "on")
 						print "</tr>\n";
 					} 
 				}
-				print "</table></div></div>\n";
+				print "</tbody></table><script>\$(document).ready(function(){\$('#linkedtickets_table').DataTable({'order':[[0,'desc']],pageLength:" .  to_int($cfg->load('page_len')). ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script></div></div>\n";
 			}
 		}
 		else
