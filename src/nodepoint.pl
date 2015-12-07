@@ -8,7 +8,7 @@
 #
 
 use strict;
-use Config::Linux;
+use Config::Win32;
 use Digest::SHA qw(sha1_hex);
 use DBI;
 use CGI;
@@ -27,7 +27,7 @@ my ($cfg, $db, $sql, $cn, $cp, $cgs, $last_login, $perf);
 my $logged_user = "";
 my $logged_lvl = -1;
 my $q = new CGI;
-my $VERSION = "1.5.3";
+my $VERSION = "1.5.4";
 my %items = ("Product", "Product", "Release", "Release", "Model", "SKU/Model");
 my @itemtypes = ("None");
 my @themes = ("primary", "default", "success", "info", "warning", "danger");
@@ -1143,11 +1143,11 @@ sub home
 # Connect to config
 eval
 {
-	$cfg = Config::Linux->new("NodePoint", "settings");
+	$cfg = Config::Win32->new("NodePoint", "settings");
 };
 if(!defined($cfg)) # Can't even use headers() if this fails.
 {
-	print "Content-type: text/html\n\nError: Could not access " . Config::Linux->type . ". Please ensure NodePoint has the proper permissions.";
+	print "Content-type: text/html\n\nError: Could not access " . Config::Win32->type . ". Please ensure NodePoint has the proper permissions.";
 	exit(0);
 };
 
@@ -3009,7 +3009,7 @@ elsif($q->param('m')) # Modules
 		if($cfg->load('comp_shoutbox') eq "on") { print "<option value='14'>Full shoutbox history</option>"; }
 		if($cfg->load('comp_clients') eq "on") { print "<option value='16'>Clients per status</option>"; }
 		if($cfg->load('comp_items') eq "on") { print "<option value='15'>Items checked out per user</option><option value='18'>Item expiration dates</option>"; }
-		print "<option value='8'>Users per access level</option><option value='17'>Active user sessions</option></select></div><div class='col-sm-6'><span class='pull-right'><input class='btn btn-primary' type='submit' value='Show report'></span></div></div></form></p></div><div class='help-block with-errors'></div></div>\n";
+		print "<option value='8'>Users per access level</option><option value='17'>Active user sessions</option><option value='19'>Disabled users</option></select></div><div class='col-sm-6'><span class='pull-right'><input class='btn btn-primary' type='submit' value='Show report'></span></div></div></form></p></div><div class='help-block with-errors'></div></div>\n";
 	}
 	elsif($q->param('m') eq "customforms" && $logged_lvl >= to_int($cfg->load("customs_lvl")) && $cfg->load('comp_tickets') eq "on")
 	{
@@ -3057,7 +3057,7 @@ elsif($q->param('m')) # Modules
 		{
 			print "<tr><td>" . $res[0] . "</td><td>" . $res[1] . "</td><td>" . $res[2] . "</td><td>" . $res[3] . "</td></tr>\n";
 		}
-		print "</tbody></table><script>\$(document).ready(function(){\$('#log_table').DataTable({'order':[[4,'asc']],pageLength:" . to_int($cfg->load('page_len')) . ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script></div></div>\n";
+		print "</tbody></table><script>\$(document).ready(function(){\$('#log_table').DataTable({'order':[[3,'desc']],pageLength:" . to_int($cfg->load('page_len')) . ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script></div></div>\n";
 	}
 	elsif($q->param('m') eq "clients" && $logged_user ne "" && $cfg->load('comp_clients') eq "on")
 	{
@@ -4915,6 +4915,12 @@ elsif($q->param('m')) # Modules
 			else { print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Item expiration dates</h3></div><div class='panel-body'><table class='table table-striped' id='report_table'><thead><tr><th>Item</th><th>Date</th></tr></thead><tbody>"; }
 			$sql = $db->prepare("SELECT date,itemid FROM item_expiration;");
 		}
+		elsif(to_int($q->param('report')) == 19)
+		{
+			if($q->param('csv')) { print "\"User\",\"State\"\n"; }
+			else { print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Disabled users</h3></div><div class='panel-body'><table class='table table-striped' id='report_table'><thead><tr><th>User</th><th>State</th></tr></thead><tbody>"; }
+			$sql = $db->prepare("SELECT 'Disabled',user FROM disabled;");
+		}
 		elsif(to_int($q->param('report')) == 11)
 		{
 			if($q->param('csv')) { print "\"Ticket ID\",\"Hours spent\"\n"; }
@@ -5007,7 +5013,7 @@ elsif($q->param('m')) # Modules
 				if(!$results{$res[1]}) { $results{$res[1]} = 0; }
 				$results{$res[1]} += to_float($res[2]);
 			}
-			elsif(to_int($q->param('report')) == 12 || to_int($q->param('report')) == 15 || to_int($q->param('report')) == 17 || to_int($q->param('report')) == 18)
+			elsif(to_int($q->param('report')) == 12 || to_int($q->param('report')) == 15 || to_int($q->param('report')) == 17 || to_int($q->param('report')) == 18 || to_int($q->param('report')) == 19)
 			{
 				$results{$res[1]} = $res[0];
 			}
