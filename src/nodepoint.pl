@@ -571,6 +571,8 @@ sub save_config
 	$cfg->save("default_lvl", to_int($q->param('default_lvl')));
 	$cfg->save("tasks_lvl", to_int($q->param('tasks_lvl')));
 	$cfg->save("upload_lvl", to_int($q->param('upload_lvl')));
+	$cfg->save("page_len", to_int($q->param('page_len')));
+	$cfg->save("session_expiry", to_int($q->param('session_expiry')));
 	$cfg->save("past_lvl", to_int($q->param('past_lvl')));
 	$cfg->save("customs_lvl", to_int($q->param('customs_lvl')));
 	$cfg->save("client_lvl", to_int($q->param('client_lvl')));
@@ -581,7 +583,7 @@ sub save_config
 	$cfg->save("smtp_port", to_int($q->param('smtp_port')));    
 	$cfg->save("smtp_from", sanitize_html($q->param('smtp_from')));
 	$cfg->save("smtp_user", sanitize_html($q->param('smtp_user')));    
-	$cfg->save("smtp_pass", $q->param('smtp_pass'));    
+	$cfg->save("smtp_pass", $q->param('smtp_pass'));
 	$cfg->save("api_read", sanitize_html($q->param('api_read')));
 	$cfg->save("api_write", sanitize_html($q->param('api_write')));
 	$cfg->save("api_imp", $q->param('api_imp'));
@@ -620,7 +622,7 @@ sub check_user
 		$sql = $db->prepare("DELETE FROM sessions WHERE user = ?;");
 		$sql->execute($logged_user);
 		$sql = $db->prepare("INSERT INTO sessions VALUES (?, ?, ?, ?);");
-		$sql->execute($logged_user, $session, $q->remote_addr, to_int(time+36000));
+		$sql->execute($logged_user, $session, $q->remote_addr, to_int(time+to_int($cfg->load('session_expiry'))*3600));
 	}
 	else
 	{
@@ -652,7 +654,7 @@ sub check_user
 				$sql = $db->prepare("DELETE FROM sessions WHERE user = ?;");
 				$sql->execute($logged_user);
 				$sql = $db->prepare("INSERT INTO sessions VALUES (?, ?, ?, ?);");
-				$sql->execute($logged_user, $session, $q->remote_addr, to_int(time+36000));
+				$sql->execute($logged_user, $session, $q->remote_addr, to_int(time+to_int($cfg->load('session_expiry'))*3600));
 				$sql = $db->prepare("SELECT * FROM users WHERE name = ? COLLATE NOCASE;");
 				$sql->execute($n);
 				my $found = 0;
@@ -696,7 +698,7 @@ sub check_user
 				$sql = $db->prepare("DELETE FROM sessions WHERE user = ?;");
 				$sql->execute($logged_user);
 				$sql = $db->prepare("INSERT INTO sessions VALUES (?, ?, ?, ?);");
-				$sql->execute($logged_user, $session, $q->remote_addr, to_int(time+36000));
+				$sql->execute($logged_user, $session, $q->remote_addr, to_int(time+to_int($cfg->load('session_expiry'))*3600));
 				$sql = $db->prepare("SELECT * FROM users WHERE name = ? COLLATE NOCASE;");
 				$sql->execute($n);
 				my $found = 0;
@@ -738,7 +740,7 @@ sub check_user
 						$sql = $db->prepare("DELETE FROM sessions WHERE user = ?;");
 						$sql->execute($logged_user);
 						$sql = $db->prepare("INSERT INTO sessions VALUES (?, ?, ?, ?);");
-						$sql->execute($logged_user, $session, $q->remote_addr, to_int(time+36000));
+						$sql->execute($logged_user, $session, $q->remote_addr, to_int(time+to_int($cfg->load('session_expiry'))*3600));
 						last;
 					}
 				}
@@ -1230,6 +1232,7 @@ if(to_int($cfg->load("client_lvl")) < 1 || to_int($cfg->load("client_lvl")) > 6)
 if(to_int($cfg->load("customs_lvl")) < 1 || to_int($cfg->load("customs_lvl")) > 6) { $cfg->save("customs_lvl", 4); }
 if(to_int($cfg->load("tasks_lvl")) < 1 || to_int($cfg->load("tasks_lvl")) > 6) { $cfg->save("tasks_lvl", 4); }
 if(to_int($cfg->load("page_len")) < 1) { $cfg->save("page_len", 50); }
+if(to_int($cfg->load("session_expiry")) < 1) { $cfg->save("session_expiry", 12); }
 
 # Main loop
 if($q->param('site_name') && $q->param('db_address') && $logged_user ne "" && $logged_user eq $cfg->load('admin_name')) # Save config by admin
@@ -2679,8 +2682,6 @@ elsif($q->param('m')) # Modules
 			print "<form method='POST' action='.'><h4>User interface</h4><table class='table table-striped'>\n";
 			print "<tr><td style='width:50%'>Database file</td><td><input class='form-control' type='text' name='db_address' value=\"" .  $cfg->load("db_address") . "\"></td></tr>\n";
 			print "<tr><td style='width:50%'>Upload folder</td><td><input class='form-control' type='text' name='upload_folder' value=\"" . $cfg->load("upload_folder") . "\"></td></tr>\n";
-			print "<tr><td style='width:50%'>Admin name</td><td><input class='form-control' type='text' name='admin_name' value=\"" .  $cfg->load("admin_name") . "\" readonly></td></tr>\n";
-			print "<tr><td style='width:50%'>Admin password</td><td><input class='form-control' type='password' name='admin_pass' value=''></td></tr>\n";
 			print "<tr><td style='width:50%'>Site name</td><td><input class='form-control' type='text' name='site_name' value=\"" . $cfg->load("site_name") . "\"></td></tr>\n";
 			print "<tr><td style='width:50%'>Public notice</td><td><input class='form-control' type='text' name='motd' value=\"" . $cfg->load("motd") . "\"></td></tr>\n";
 			print "<tr><td style='width:50%'>Bootstrap template</td><td><input class='form-control' type='text' name='css_template' value=\"" . $cfg->load("css_template") . "\"></td></tr>\n";
@@ -2698,6 +2699,21 @@ elsif($q->param('m')) # Modules
 			if($cfg->load("theme_color") eq "5") { print " selected"; }	
 			print ">Red</option></select>";
 			print "<tr><td style='width:50%'>Favicon</td><td><input class='form-control' type='text' name='favicon' value=\"" . $cfg->load("favicon") . "\"></td></tr>\n";
+			print "<tr><td style='width:50%'>Items managed</td><td><select class='form-control' name='items_managed'>";
+			if($cfg->load("items_managed") eq "Projects with goals and milestones") { print "<option>Products with models and releases</option><option selected>Projects with goals and milestones</option><option>Resources with locations and updates</option><option>Applications with platforms and versions</option><option>Assets with types and instances</option>"; }
+			elsif($cfg->load("items_managed") eq "Resources with locations and updates") { print "<option>Products with models and releases</option><option>Projects with goals and milestones</option><option selected>Resources with locations and updates</option><option>Applications with platforms and versions</option><option>Assets with types and instances</option>"; }
+			elsif($cfg->load("items_managed") eq "Applications with platforms and versions") { print "<option>Products with models and releases</option><option>Projects with goals and milestones</option><option>Resources with locations and updates</option><option selected>Applications with platforms and versions</option><option>Assets with types and instances</option>"; }
+			elsif($cfg->load("items_managed") eq "Assets with types and instances") { print "<option>Products with models and releases</option><option>Projects with goals and milestones</option><option>Resources with locations and updates</option><option>Applications with platforms and versions</option><option selected>Assets with types and instances</option>"; }
+			else { print "<option selected>Products with models and releases</option><option>Projects with goals and milestones</option><option>Resources with locations and updates</option><option>Applications with platforms and versions</option><option>Assets with types and instances</option>"; }
+			print "</select></td></tr>\n";
+			print "<tr><td style='width:50%'>Number of rows per page</td><td><input class='form-control' type='text' name='page_len' value=\"" . $cfg->load("page_len") . "\"></td></tr>\n";
+			print "</table><h4>Security</h4><table class='table table-striped'>";
+			print "<tr><td style='width:50%'>Admin name</td><td><input class='form-control' type='text' name='admin_name' value=\"" .  $cfg->load("admin_name") . "\" readonly></td></tr>\n";
+			print "<tr><td style='width:50%'>Admin password</td><td><input class='form-control' type='password' name='admin_pass' value=''></td></tr>\n";
+			print "<tr><td style='width:50%'>Allow guest tickets</td><td><select class='form-control' name='guest_tickets'>";
+			if($cfg->load("guest_tickets") eq "on") { print "<option selected>on</option><option>off</option>"; }
+			else { print "<option>on</option><option selected>off</option>"; }
+			print "</select></td></tr>\n";
 			print "<tr><td style='width:50%'>Allow registrations</td><td><select class='form-control' name='allow_registrations'>";
 			if($cfg->load("allow_registrations") eq "on") { print "<option selected>on</option><option>off</option>"; }
 			else { print "<option>on</option><option selected>off</option>"; }
@@ -2707,17 +2723,7 @@ elsif($q->param('m')) # Modules
 			elsif($cfg->load("default_vis") eq "Private") { print "<option>Public</option><option selected>Private</option><option>Restricted</option>"; }
 			else { print "<option selected>Public</option><option>Private</option><option>Restricted</option>"; }
 			print "</select></td></tr>\n";
-			print "<tr><td style='width:50%'>Allow guest tickets</td><td><select class='form-control' name='guest_tickets'>";
-			if($cfg->load("guest_tickets") eq "on") { print "<option selected>on</option><option>off</option>"; }
-			else { print "<option>on</option><option selected>off</option>"; }
-			print "</select></td></tr>\n";
-			print "<tr><td style='width:50%'>Items managed</td><td><select class='form-control' name='items_managed'>";
-			if($cfg->load("items_managed") eq "Projects with goals and milestones") { print "<option>Products with models and releases</option><option selected>Projects with goals and milestones</option><option>Resources with locations and updates</option><option>Applications with platforms and versions</option><option>Assets with types and instances</option>"; }
-			elsif($cfg->load("items_managed") eq "Resources with locations and updates") { print "<option>Products with models and releases</option><option>Projects with goals and milestones</option><option selected>Resources with locations and updates</option><option>Applications with platforms and versions</option><option>Assets with types and instances</option>"; }
-			elsif($cfg->load("items_managed") eq "Applications with platforms and versions") { print "<option>Products with models and releases</option><option>Projects with goals and milestones</option><option>Resources with locations and updates</option><option selected>Applications with platforms and versions</option><option>Assets with types and instances</option>"; }
-			elsif($cfg->load("items_managed") eq "Assets with types and instances") { print "<option>Products with models and releases</option><option>Projects with goals and milestones</option><option>Resources with locations and updates</option><option>Applications with platforms and versions</option><option selected>Assets with types and instances</option>"; }
-			else { print "<option selected>Products with models and releases</option><option>Projects with goals and milestones</option><option>Resources with locations and updates</option><option>Applications with platforms and versions</option><option>Assets with types and instances</option>"; }
-			print "</select></td></tr>\n";
+			print "<tr><td style='width:50%'>Session expiry time (in hours)</td><td><input class='form-control' type='text' name='session_expiry' value=\"" . $cfg->load("session_expiry") . "\"></td></tr>\n";
 			print "</table><h4>API access</h4><table class='table table-striped'>";
 			print "<tr><td style='width:50%'>API read key</td><td><input class='form-control' type='text' name='api_read' value=\"" . $cfg->load("api_read") . "\"></td></tr>\n";
 			print "<tr><td style='width:50%'>API write key</td><td><input class='form-control' type='text' name='api_write' value=\"" . $cfg->load("api_write") . "\"></td></tr>\n";
