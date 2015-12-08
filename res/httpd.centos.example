@@ -1,0 +1,25 @@
+ServerRoot "/etc/httpd"
+Listen 80
+User apache
+Group apache
+Include conf.modules.d/*.conf
+DocumentRoot "/var/www/nodepoint"
+DirectoryIndex index.html
+ErrorLog "logs/error_log"
+AddDefaultCharset UTF-8
+IncludeOptional conf.d/*.conf
+TypesConfig /etc/mime.types
+MIMEMagicFile conf/magic
+
+#ErrorDocument 404 /missing.html
+#ServerName my.server.com:80
+
+<Directory />
+	AllowOverride All
+	Require all granted
+</Directory>
+
+<Files ".ht*">
+	Require all denied
+</Files>
+
