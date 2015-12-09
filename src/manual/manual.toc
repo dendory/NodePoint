@@ -35,27 +35,28 @@
 \contentsline {subsection}{\numberline {4.5}Tasks Management}{16}{subsection.4.5}
 \contentsline {subsection}{\numberline {4.6}Clients Directory}{16}{subsection.4.6}
 \contentsline {subsection}{\numberline {4.7}Inventory Control}{17}{subsection.4.7}
-\contentsline {subsection}{\numberline {4.8}Billing}{17}{subsection.4.8}
-\contentsline {section}{\numberline {5}JSON API}{18}{section.5}
-\contentsline {subsection}{\numberline {5.1}List users}{18}{subsection.5.1}
-\contentsline {subsection}{\numberline {5.2}Add new user}{18}{subsection.5.2}
-\contentsline {subsection}{\numberline {5.3}Verify user password}{18}{subsection.5.3}
-\contentsline {subsection}{\numberline {5.4}Change user password}{18}{subsection.5.4}
-\contentsline {subsection}{\numberline {5.5}List tickets by product}{19}{subsection.5.5}
-\contentsline {subsection}{\numberline {5.6}Show ticket}{19}{subsection.5.6}
-\contentsline {subsection}{\numberline {5.7}Add release}{19}{subsection.5.7}
-\contentsline {subsection}{\numberline {5.8}Add ticket}{19}{subsection.5.8}
-\contentsline {subsection}{\numberline {5.9}Add comment}{19}{subsection.5.9}
-\contentsline {subsection}{\numberline {5.10}Show time tracking}{20}{subsection.5.10}
-\contentsline {subsection}{\numberline {5.11}Show billing information}{20}{subsection.5.11}
-\contentsline {subsection}{\numberline {5.12}Add task}{20}{subsection.5.12}
-\contentsline {subsection}{\numberline {5.13}List tasks}{20}{subsection.5.13}
-\contentsline {subsection}{\numberline {5.14}Add client}{20}{subsection.5.14}
-\contentsline {subsection}{\numberline {5.15}List clients}{21}{subsection.5.15}
-\contentsline {subsection}{\numberline {5.16}Add item}{21}{subsection.5.16}
-\contentsline {subsection}{\numberline {5.17}List items}{21}{subsection.5.17}
-\contentsline {subsection}{\numberline {5.18}Assign item}{21}{subsection.5.18}
-\contentsline {subsection}{\numberline {5.19}Return item}{21}{subsection.5.19}
-\contentsline {subsection}{\numberline {5.20}Update item}{22}{subsection.5.20}
-\contentsline {subsection}{\numberline {5.21}Code example}{22}{subsection.5.21}
-\contentsline {section}{\numberline {6}License}{23}{section.6}
+\contentsline {subsection}{\numberline {4.8}Files Management}{18}{subsection.4.8}
+\contentsline {subsection}{\numberline {4.9}Billing}{18}{subsection.4.9}
+\contentsline {section}{\numberline {5}JSON API}{19}{section.5}
+\contentsline {subsection}{\numberline {5.1}List users}{19}{subsection.5.1}
+\contentsline {subsection}{\numberline {5.2}Add new user}{19}{subsection.5.2}
+\contentsline {subsection}{\numberline {5.3}Verify user password}{19}{subsection.5.3}
+\contentsline {subsection}{\numberline {5.4}Change user password}{19}{subsection.5.4}
+\contentsline {subsection}{\numberline {5.5}List tickets by product}{20}{subsection.5.5}
+\contentsline {subsection}{\numberline {5.6}Show ticket}{20}{subsection.5.6}
+\contentsline {subsection}{\numberline {5.7}Add release}{20}{subsection.5.7}
+\contentsline {subsection}{\numberline {5.8}Add ticket}{20}{subsection.5.8}
+\contentsline {subsection}{\numberline {5.9}Add comment}{20}{subsection.5.9}
+\contentsline {subsection}{\numberline {5.10}Show time tracking}{21}{subsection.5.10}
+\contentsline {subsection}{\numberline {5.11}Show billing information}{21}{subsection.5.11}
+\contentsline {subsection}{\numberline {5.12}Add task}{21}{subsection.5.12}
+\contentsline {subsection}{\numberline {5.13}List tasks}{21}{subsection.5.13}
+\contentsline {subsection}{\numberline {5.14}Add client}{21}{subsection.5.14}
+\contentsline {subsection}{\numberline {5.15}List clients}{22}{subsection.5.15}
+\contentsline {subsection}{\numberline {5.16}Add item}{22}{subsection.5.16}
+\contentsline {subsection}{\numberline {5.17}List items}{22}{subsection.5.17}
+\contentsline {subsection}{\numberline {5.18}Assign item}{22}{subsection.5.18}
+\contentsline {subsection}{\numberline {5.19}Return item}{22}{subsection.5.19}
+\contentsline {subsection}{\numberline {5.20}Update item}{23}{subsection.5.20}
+\contentsline {subsection}{\numberline {5.21}Code example}{23}{subsection.5.21}
+\contentsline {section}{\numberline {6}License}{24}{section.6}

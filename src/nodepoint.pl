@@ -8,7 +8,7 @@
 #
 
 use strict;
-use Config::Win32;
+use Config::Linux;
 use Digest::SHA qw(sha1_hex);
 use DBI;
 use CGI;
@@ -152,8 +152,9 @@ sub navbar
 			if($cfg->load('comp_clients') eq "on") { print "	 <li><a href='./?m=clients'>Clients</a></li>\n"; }
 			print "  <li class='dropdown'><a href='#' class='dropdown-toggle' data-toggle='dropdown' role='button' aria-haspopup='true' aria-expanded='false'>Tools <span class='caret'></span></a><ul class='dropdown-menu'>\n";
 			print "   <li><a href='./?m=settings'>Settings</a></li>\n";
-			if($logged_lvl > 1) { print "   <li><a href='./?m=stats'>Statistics</a></li>\n"; }
-			if($logged_lvl > 3 && $cfg->load('comp_tickets') eq "on")	{ print "   <li><a href='./?m=customforms'>Custom forms</a></li>\n"; }
+			if($logged_lvl >= to_int($cfg->load("report_lvl"))) { print "   <li><a href='./?m=stats'>Statistics</a></li>\n"; }
+			if($logged_lvl >= to_int($cfg->load("upload_lvl")) && $cfg->load('comp_files') eq "on") { print "   <li><a href='./?m=files'>Files</a></li>\n"; }
+			if($logged_lvl >= to_int($cfg->load("customs_lvl")) && $cfg->load('comp_tickets') eq "on")	{ print "   <li><a href='./?m=customforms'>Custom forms</a></li>\n"; }
 			if($logged_lvl > 4) { print "   <li><a href='./?m=users'>Users management</a></li>\n"; }
 			if($logged_lvl > 5) { print "   <li><a href='./?m=log'>System log</a></li>\n"; }
 			print "  <li role='separator' class='divider'></li><li><a href='./?m=logout'>Logout</a></li></ul></li>\n";
@@ -168,13 +169,14 @@ sub navbar
 			if($cfg->load('comp_clients') eq "on") { print "	 <li><a href='./?m=clients'>Clients</a></li>\n"; }
 			print "  <li class='dropdown'><a href='#' class='dropdown-toggle' data-toggle='dropdown' role='button' aria-haspopup='true' aria-expanded='false'>Tools <span class='caret'></span></a><ul class='dropdown-menu'>\n";
 			print "   <li><a href='./?m=settings'>Settings</a></li>\n";
-			if($logged_lvl > 1) { print "   <li><a href='./?m=stats'>Statistics</a></li>\n"; }
-			if($logged_lvl > 3 && $cfg->load('comp_tickets') eq "on")	{ print "   <li><a href='./?m=customforms'>Custom forms</a></li>\n"; }
+			if($logged_lvl >= to_int($cfg->load("report_lvl"))) { print "   <li><a href='./?m=stats'>Statistics</a></li>\n"; }
+			if($logged_lvl >= to_int($cfg->load("upload_lvl")) && $cfg->load('comp_files') eq "on") { print "   <li><a href='./?m=files'>Files</a></li>\n"; }
+			if($logged_lvl >= to_int($cfg->load("customs_lvl")) && $cfg->load('comp_tickets') eq "on")	{ print "   <li><a href='./?m=customforms'>Custom forms</a></li>\n"; }
 			if($logged_lvl > 4) { print "   <li><a href='./?m=users'>Users management</a></li>\n"; }
 			if($logged_lvl > 5) { print "   <li><a href='./?m=log'>System log</a></li>\n"; }
 			print "  <li role='separator' class='divider'></li><li><a href='./?m=logout'>Logout</a></li></ul></li>\n";
 		}
-		elsif($q->param('m') && ($q->param('m') eq "settings" || $q->param('m') eq "stats" || $q->param('m') eq "show_report" || $q->param('m') eq "triggers" || $q->param('m') eq "customforms" || $q->param('m') eq "users" || $q->param('m') eq "log" || $q->param('m') eq "confirm_delete" || $q->param('m') eq "clear_log" || $q->param('m') eq "stats" || $q->param('m') eq "change_lvl" || $q->param('m') eq "confirm_email" || $q->param('m') eq "reset_pass" || $q->param('m') eq "logout" || $q->param('m') eq "summary") || $q->param('create_form') || $q->param('edit_form') || $q->param('save_form'))
+		elsif($q->param('m') && ($q->param('m') eq "settings" || $q->param('m') eq "stats" || $q->param('m') eq "show_report" || $q->param('m') eq "triggers" || $q->param('m') eq "customforms" || $q->param('m') eq "users" || $q->param('m') eq "log" || $q->param('m') eq "confirm_delete" || $q->param('m') eq "clear_log" || $q->param('m') eq "stats" || $q->param('m') eq "change_lvl" || $q->param('m') eq "files" || $q->param('m') eq "confirm_email" || $q->param('m') eq "reset_pass" || $q->param('m') eq "logout" || $q->param('m') eq "summary") || $q->param('create_form') || $q->param('edit_form') || $q->param('save_form'))
 		{
 			print "	 <li><a href='.'>Home</a></li>\n";
 			print "	 <li><a href='./?m=products'>" . $items{"Product"} . "s</a></li>\n";
@@ -184,8 +186,9 @@ sub navbar
 			if($cfg->load('comp_clients') eq "on") { print "	 <li><a href='./?m=clients'>Clients</a></li>\n"; }
 			print "  <li class='dropdown active'><a href='#' class='dropdown-toggle' data-toggle='dropdown' role='button' aria-haspopup='true' aria-expanded='false'>Tools <span class='caret'></span></a><ul class='dropdown-menu'>\n";
 			print "   <li><a href='./?m=settings'>Settings</a></li>\n";
-			if($logged_lvl > 1) { print "   <li><a href='./?m=stats'>Statistics</a></li>\n"; }
-			if($logged_lvl > 3 && $cfg->load('comp_tickets') eq "on")	{ print "   <li><a href='./?m=customforms'>Custom forms</a></li>\n"; }
+			if($logged_lvl >= to_int($cfg->load("report_lvl"))) { print "   <li><a href='./?m=stats'>Statistics</a></li>\n"; }
+			if($logged_lvl >= to_int($cfg->load("upload_lvl")) && $cfg->load('comp_files') eq "on") { print "   <li><a href='./?m=files'>Files</a></li>\n"; }
+			if($logged_lvl >= to_int($cfg->load("customs_lvl")) && $cfg->load('comp_tickets') eq "on")	{ print "   <li><a href='./?m=customforms'>Custom forms</a></li>\n"; }
 			if($logged_lvl > 4) { print "   <li><a href='./?m=users'>Users management</a></li>\n"; }
 			if($logged_lvl > 5) { print "   <li><a href='./?m=log'>System log</a></li>\n"; }
 			print "  <li role='separator' class='divider'></li><li><a href='./?m=logout'>Logout</a></li></ul></li>\n";
@@ -200,8 +203,9 @@ sub navbar
 			if($cfg->load('comp_clients') eq "on") { print "	 <li class='active'><a href='./?m=clients'>Clients</a></li>\n"; }
 			print "  <li class='dropdown'><a href='#' class='dropdown-toggle' data-toggle='dropdown' role='button' aria-haspopup='true' aria-expanded='false'>Tools <span class='caret'></span></a><ul class='dropdown-menu'>\n";
 			print "   <li><a href='./?m=settings'>Settings</a></li>\n";
-			if($logged_lvl > 1) { print "   <li><a href='./?m=stats'>Statistics</a></li>\n"; }
-			if($logged_lvl > 3 && $cfg->load('comp_tickets') eq "on")	{ print "   <li><a href='./?m=customforms'>Custom forms</a></li>\n"; }
+			if($logged_lvl >= to_int($cfg->load("report_lvl"))) { print "   <li><a href='./?m=stats'>Statistics</a></li>\n"; }
+			if($logged_lvl >= to_int($cfg->load("upload_lvl")) && $cfg->load('comp_files') eq "on") { print "   <li><a href='./?m=files'>Files</a></li>\n"; }
+			if($logged_lvl >= to_int($cfg->load("customs_lvl")) && $cfg->load('comp_tickets') eq "on")	{ print "   <li><a href='./?m=customforms'>Custom forms</a></li>\n"; }
 			if($logged_lvl > 4) { print "   <li><a href='./?m=users'>Users management</a></li>\n"; }
 			if($logged_lvl > 5) { print "   <li><a href='./?m=log'>System log</a></li>\n"; }
 			print "  <li role='separator' class='divider'></li><li><a href='./?m=logout'>Logout</a></li></ul></li>\n";
@@ -216,8 +220,9 @@ sub navbar
 			if($cfg->load('comp_clients') eq "on") { print "	 <li><a href='./?m=clients'>Clients</a></li>\n"; }
 			print "  <li class='dropdown'><a href='#' class='dropdown-toggle' data-toggle='dropdown' role='button' aria-haspopup='true' aria-expanded='false'>Tools <span class='caret'></span></a><ul class='dropdown-menu'>\n";
 			print "   <li><a href='./?m=settings'>Settings</a></li>\n";
-			if($logged_lvl > 1) { print "   <li><a href='./?m=stats'>Statistics</a></li>\n"; }
-			if($logged_lvl > 3 && $cfg->load('comp_tickets') eq "on")	{ print "   <li><a href='./?m=customforms'>Custom forms</a></li>\n"; }
+			if($logged_lvl >= to_int($cfg->load("report_lvl"))) { print "   <li><a href='./?m=stats'>Statistics</a></li>\n"; }
+			if($logged_lvl >= to_int($cfg->load("upload_lvl")) && $cfg->load('comp_files') eq "on") { print "   <li><a href='./?m=files'>Files</a></li>\n"; }
+			if($logged_lvl >= to_int($cfg->load("customs_lvl")) && $cfg->load('comp_tickets') eq "on")	{ print "   <li><a href='./?m=customforms'>Custom forms</a></li>\n"; }
 			if($logged_lvl > 4) { print "   <li><a href='./?m=users'>Users management</a></li>\n"; }
 			if($logged_lvl > 5) { print "   <li><a href='./?m=log'>System log</a></li>\n"; }
 			print "  <li role='separator' class='divider'></li><li><a href='./?m=logout'>Logout</a></li></ul></li>\n";
@@ -232,8 +237,9 @@ sub navbar
 			if($cfg->load('comp_clients') eq "on") { print "	 <li><a href='./?m=clients'>Clients</a></li>\n"; }
 			print "  <li class='dropdown'><a href='#' class='dropdown-toggle' data-toggle='dropdown' role='button' aria-haspopup='true' aria-expanded='false'>Tools <span class='caret'></span></a><ul class='dropdown-menu'>\n";
 			print "   <li><a href='./?m=settings'>Settings</a></li>\n";
-			if($logged_lvl > 1) { print "   <li><a href='./?m=stats'>Statistics</a></li>\n"; }
-			if($logged_lvl > 3 && $cfg->load('comp_tickets') eq "on")	{ print "   <li><a href='./?m=customforms'>Custom forms</a></li>\n"; }
+			if($logged_lvl >= to_int($cfg->load("report_lvl"))) { print "   <li><a href='./?m=stats'>Statistics</a></li>\n"; }
+			if($logged_lvl >= to_int($cfg->load("upload_lvl")) && $cfg->load('comp_files') eq "on") { print "   <li><a href='./?m=files'>Files</a></li>\n"; }
+			if($logged_lvl >= to_int($cfg->load("customs_lvl")) && $cfg->load('comp_tickets') eq "on")	{ print "   <li><a href='./?m=customforms'>Custom forms</a></li>\n"; }
 			if($logged_lvl > 4) { print "   <li><a href='./?m=users'>Users management</a></li>\n"; }
 			if($logged_lvl > 5) { print "   <li><a href='./?m=log'>System log</a></li>\n"; }
 			print "  <li role='separator' class='divider'></li><li><a href='./?m=logout'>Logout</a></li></ul></li>\n";
@@ -248,8 +254,9 @@ sub navbar
 			if($cfg->load('comp_clients') eq "on") { print "	 <li><a href='./?m=clients'>Clients</a></li>\n"; }
 			print "  <li class='dropdown'><a href='#' class='dropdown-toggle' data-toggle='dropdown' role='button' aria-haspopup='true' aria-expanded='false'>Tools <span class='caret'></span></a><ul class='dropdown-menu'>\n";
 			print "   <li><a href='./?m=settings'>Settings</a></li>\n";
-			if($logged_lvl > 1) { print "   <li><a href='./?m=stats'>Statistics</a></li>\n"; }
-			if($logged_lvl > 3 && $cfg->load('comp_tickets') eq "on")	{ print "   <li><a href='./?m=customforms'>Custom forms</a></li>\n"; }
+			if($logged_lvl >= to_int($cfg->load("report_lvl"))) { print "   <li><a href='./?m=stats'>Statistics</a></li>\n"; }
+			if($logged_lvl >= to_int($cfg->load("upload_lvl")) && $cfg->load('comp_files') eq "on") { print "   <li><a href='./?m=files'>Files</a></li>\n"; }
+			if($logged_lvl >= to_int($cfg->load("customs_lvl")) && $cfg->load('comp_tickets') eq "on")	{ print "   <li><a href='./?m=customforms'>Custom forms</a></li>\n"; }
 			if($logged_lvl > 4) { print "   <li><a href='./?m=users'>Users management</a></li>\n"; }
 			if($logged_lvl > 5) { print "   <li><a href='./?m=log'>System log</a></li>\n"; }
 			print "  <li role='separator' class='divider'></li><li><a href='./?m=logout'>Logout</a></li></ul></li>\n";
@@ -544,6 +551,12 @@ sub db_check
 		$sql->execute();
 	};
 	$sql->finish();
+	$sql = $db->prepare("SELECT * FROM files WHERE 0 = 1;") or do
+	{
+		$sql = $db->prepare("CREATE TABLE files (user TEXT, file TEXT, filename TEXT, time TEXT, size INT);");
+		$sql->execute();
+	};
+	$sql->finish();
 }
 
 # Log an event
@@ -572,6 +585,7 @@ sub save_config
 	$cfg->save("tasks_lvl", to_int($q->param('tasks_lvl')));
 	$cfg->save("upload_lvl", to_int($q->param('upload_lvl')));
 	$cfg->save("page_len", to_int($q->param('page_len')));
+	$cfg->save("max_size", to_int($q->param('max_size')));
 	$cfg->save("session_expiry", to_int($q->param('session_expiry')));
 	$cfg->save("past_lvl", to_int($q->param('past_lvl')));
 	$cfg->save("customs_lvl", to_int($q->param('customs_lvl')));
@@ -606,6 +620,7 @@ sub save_config
 	$cfg->save("comp_steps", $q->param('comp_steps'));
 	$cfg->save("comp_clients", $q->param('comp_clients'));
 	$cfg->save("comp_items", $q->param('comp_items'));
+	$cfg->save("comp_files", $q->param('comp_files'));
 }
 
 # Check login credentials
@@ -1145,11 +1160,11 @@ sub home
 # Connect to config
 eval
 {
-	$cfg = Config::Win32->new("NodePoint", "settings");
+	$cfg = Config::Linux->new("NodePoint", "settings");
 };
 if(!defined($cfg)) # Can't even use headers() if this fails.
 {
-	print "Content-type: text/html\n\nError: Could not access " . Config::Win32->type . ". Please ensure NodePoint has the proper permissions.";
+	print "Content-type: text/html\n\nError: Could not access " . Config::Linux->type . ". Please ensure NodePoint has the proper permissions.";
 	exit(0);
 };
 
@@ -1233,12 +1248,13 @@ if(to_int($cfg->load("customs_lvl")) < 1 || to_int($cfg->load("customs_lvl")) > 
 if(to_int($cfg->load("tasks_lvl")) < 1 || to_int($cfg->load("tasks_lvl")) > 6) { $cfg->save("tasks_lvl", 4); }
 if(to_int($cfg->load("page_len")) < 1) { $cfg->save("page_len", 50); }
 if(to_int($cfg->load("session_expiry")) < 1) { $cfg->save("session_expiry", 12); }
+if(to_int($cfg->load("max_size")) < 1) { $cfg->save("max_size", 999000); }
 
 # Main loop
 if($q->param('site_name') && $q->param('db_address') && $logged_user ne "" && $logged_user eq $cfg->load('admin_name')) # Save config by admin
 {
 	headers("Settings");
-	if($q->param('site_name') && $q->param('db_address') && $q->param('admin_name') && defined($q->param('default_lvl')) && $q->param('default_vis') && $q->param('api_write') && defined($q->param('theme_color')) &&  $q->param('api_imp') && $q->param('api_read') && $q->param('comp_tickets') && $q->param('comp_articles') && $q->param('comp_time') && $q->param('comp_shoutbox') && $q->param('comp_billing') && $q->param('comp_clients') && $q->param('comp_items') && $q->param('comp_steps')) # All required values have been filled out
+	if($q->param('site_name') && $q->param('db_address') && $q->param('admin_name') && defined($q->param('default_lvl')) && $q->param('default_vis') && $q->param('api_write') && defined($q->param('theme_color')) &&  $q->param('api_imp') && $q->param('api_read') && $q->param('comp_tickets') && $q->param('comp_articles') && $q->param('comp_time') && $q->param('comp_shoutbox') && $q->param('comp_billing') && $q->param('comp_clients') && $q->param('comp_items') && $q->param('comp_files') && $q->param('comp_steps')) # All required values have been filled out
 	{
 		# Test database settings
 		$db = DBI->connect("dbi:SQLite:dbname=" . $q->param('db_address'), '', '', { RaiseError => 0, PrintError => 0 }) or do { msg("Could not verify database settings. Please hit back and try again.<br><br>" . $DBI::errstr, 0); exit(0); };
@@ -1263,6 +1279,7 @@ if($q->param('site_name') && $q->param('db_address') && $logged_user ne "" && $l
 		if(!$q->param('comp_shoutbox')) { $text .= "<span class='label label-danger'>Component: Shoutbox</span> "; }
 		if(!$q->param('comp_billing')) { $text .= "<span class='label label-danger'>Component: Billing</span> "; }
 		if(!$q->param('comp_items')) { $text .= "<span class='label label-danger'>Component: Inventory Control</span> "; }
+		if(!$q->param('comp_files')) { $text .= "<span class='label label-danger'>Component: Files Management</span> "; }
 		if(!$q->param('comp_clients')) { $text .= "<span class='label label-danger'>Component: Clients Directory</span> "; }
 		if(!$q->param('comp_steps')) { $text .= "<span class='label label-danger'>Component: Tasks Management</span> "; }
 		$text .= " Please go back and try again.";
@@ -1351,6 +1368,7 @@ elsif(!$cfg->load("db_address") || !$cfg->load("site_name")) # first use
 				print "<p><div class='row'><div class='col-sm-4'>Component: Clients Directory</div><div class='col-sm-4'><input type='checkbox' name='comp_clients' checked></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Component: Tasks Management</div><div class='col-sm-4'><input type='checkbox' name='comp_steps' checked></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Component: Inventory Control</div><div class='col-sm-4'><input type='checkbox' name='comp_items' checked></div></div></p>\n";
+				print "<p><div class='row'><div class='col-sm-4'>Component: Files Management</div><div class='col-sm-4'><input type='checkbox' name='comp_files' checked></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Component: Billing</div><div class='col-sm-4'><input type='checkbox' name='comp_billing' checked></div></div></p>\n";
 				print "<p>See the <a href='./manual.pdf'>manual</a> file for detailed information.<input class='btn btn-primary pull-right' type='submit' value='Save'></p></form>\n"; 
 #			}
@@ -2614,6 +2632,9 @@ elsif($q->param('file') && $cfg->load('upload_folder')) # Show an image
 	$sql = $db->prepare("SELECT filename FROM comments WHERE file = ?;");
 	$sql->execute(sanitize_alpha($q->param('file')));
 	while(my @res = $sql->fetchrow_array()) { $actualfile = $res[0]; }
+	$sql = $db->prepare("SELECT filename FROM files WHERE file = ?;");
+	$sql->execute(sanitize_alpha($q->param('file')));
+	while(my @res = $sql->fetchrow_array()) { $actualfile = $res[0]; }
 	open(my $fp, "<", $filename);
 	print "Content-Disposition: inline; filename=" . $actualfile . "\n";
 	if($type eq "application/octet-stream") { print "Content-type: text/plain\n\n"; }
@@ -2724,6 +2745,7 @@ elsif($q->param('m')) # Modules
 			else { print "<option selected>Public</option><option>Private</option><option>Restricted</option>"; }
 			print "</select></td></tr>\n";
 			print "<tr><td style='width:50%'>Session expiry time (in hours)</td><td><input class='form-control' type='text' name='session_expiry' value=\"" . $cfg->load("session_expiry") . "\"></td></tr>\n";
+			print "<tr><td style='width:50%'>Maximum file upload size (in bytes)</td><td><input class='form-control' type='text' name='max_size' value=\"" . $cfg->load("max_size") . "\"></td></tr>\n";
 			print "</table><h4>API access</h4><table class='table table-striped'>";
 			print "<tr><td style='width:50%'>API read key</td><td><input class='form-control' type='text' name='api_read' value=\"" . $cfg->load("api_read") . "\"></td></tr>\n";
 			print "<tr><td style='width:50%'>API write key</td><td><input class='form-control' type='text' name='api_write' value=\"" . $cfg->load("api_write") . "\"></td></tr>\n";
@@ -2782,6 +2804,10 @@ elsif($q->param('m')) # Modules
 			print "</select></td></tr>\n";
 			print "<tr><td style='width:50%'>Inventory Control</td><td><select class='form-control' name='comp_items'>";
 			if($cfg->load("comp_items") eq "on") { print "<option selected>on</option><option>off</option>"; }
+			else { print "<option>on</option><option selected>off</option>"; }
+			print "</select></td></tr>\n";
+			print "<tr><td style='width:50%'>Files Management</td><td><select class='form-control' name='comp_files'>";
+			if($cfg->load("comp_files") eq "on") { print "<option selected>on</option><option>off</option>"; }
 			else { print "<option>on</option><option selected>off</option>"; }
 			print "</select></td></tr>\n";
 			print "<tr><td style='width:50%'>Billing</td><td><select class='form-control' name='comp_billing'>";
@@ -3713,7 +3739,7 @@ elsif($q->param('m')) # Modules
 					if(lc(substr($res[4], 0, 4)) eq "http") { print "<a href='" . $res[4] . "'>" . $res[4] . "</a>"; }
 					else { print $res[4]; }
 					print "</td><td>" .  $res[5];
-					if($logged_lvl > 2) { print "<span class='pull-right'><form method='GET' action='.'><input type='hidden' name='product_id' value='" . to_int($q->param('p')) . "'><input type='hidden' name='m' value='delete_release'><input type='hidden' name='release_id' value='" . $res[0] . "'><input class='btn btn-danger' type='submit' value='Delete'></form></span>"; } 
+					if($logged_lvl > 2) { print "<span class='pull-right'><form method='GET' action='.'><input type='hidden' name='product_id' value='" . to_int($q->param('p')) . "'><input type='hidden' name='m' value='delete_release'><input type='hidden' name='release_id' value='" . $res[0] . "'><input class='btn btn-danger' type='submit' value='X'></form></span>"; } 
 					print "</td></tr>\n";
 				}
 				print "</tbody></table><script>\$(document).ready(function(){\$('#releases_table').DataTable({'order':[[3,'desc']],pageLength:" .  to_int($cfg->load('page_len')). ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script></div></div>\n";
@@ -3742,7 +3768,7 @@ elsif($q->param('m')) # Modules
 					if(to_int($res[4]) == 100) { print "<font color='green'>Completed</font>"; }
 					elsif($dueby[2] < $y || ($dueby[2] == $y && $dueby[0] < $m) || ($dueby[2] == $y && $dueby[0] == $m && $dueby[1] < $d)) { print "<font color='red'>Overdue</font>"; }
 					else { print $res[5]; }
-					if($logged_lvl >= to_int($cfg->load('tasks_lvl')) && $vis ne "Archived") { print "<span class='pull-right'><form method='POST' action='.'><input type='hidden' name='product_id' value='" . to_int($q->param('p')) . "'><input type='hidden' name='m' value='delete_step'><input type='hidden' name='step_id' value='" . $res[0] . "'><input class='btn btn-danger pull-right' type='submit' value='Delete'></form></span>"; }
+					if($logged_lvl >= to_int($cfg->load('tasks_lvl')) && $vis ne "Archived") { print "<span class='pull-right'><form method='POST' action='.'><input type='hidden' name='product_id' value='" . to_int($q->param('p')) . "'><input type='hidden' name='m' value='delete_step'><input type='hidden' name='step_id' value='" . $res[0] . "'><input class='btn btn-danger pull-right' type='submit' value='X'></form></span>"; }
 					print "</td></tr>";
 				}				
 				print "</tbody></table><script>\$(document).ready(function(){\$('#tasks_table').DataTable({'order':[[3,'desc']],pageLength:" .  to_int($cfg->load('page_len')). ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script></div></div>\n";    
@@ -3907,7 +3933,7 @@ elsif($q->param('m')) # Modules
 						{
 							my $tmpfilename = $q->tmpFileName($lightweight_fh);
 							my $file_size = (-s $tmpfilename);
-							if($file_size > 999000)
+							if($file_size > to_int($cfg->load('max_size')))
 							{
 								msg("Image size is too large.", 1);
 							}
@@ -3999,7 +4025,7 @@ elsif($q->param('m')) # Modules
 						{
 							my $tmpfilename = $q->tmpFileName($lightweight_fh);
 							my $file_size = (-s $tmpfilename);
-							if($file_size > 999000)
+							if($file_size > to_int($cfg->load('max_size')))
 							{
 								msg("Image size is too large.", 1);
 							}
@@ -4195,6 +4221,75 @@ elsif($q->param('m')) # Modules
 			msg("Comment missing or too long. Please go back and try again.", 0);		
 		}
 	}
+	elsif($q->param('m') eq "files" && $cfg->load('comp_files') eq "on" && $logged_lvl >= to_int($cfg->load('upload_lvl')))
+	{
+		my $filedata = "";
+		my $filename = "";
+		headers("Files");
+		if($q->param('delete_file'))
+		{
+			$filedata = sanitize_alpha($q->param('delete_file'));
+			if(length($filedata) == 36)
+			{
+				open(my $OUTFILE, ">", $cfg->load('upload_folder') . $cfg->sep . $filedata) or die $@;
+				print $OUTFILE "";
+				close($OUTFILE);
+				$sql = $db->prepare("DELETE FROM files WHERE file = ?;");
+				$sql->execute($filedata);
+				msg("File <b>" . $filedata . "</b> removed.", 3);				
+			}
+		}
+		if($q->param('attach_file'))
+		{
+			eval
+			{
+				my $lightweight_fh = $q->upload('attach_file');
+				if(defined $lightweight_fh)
+				{
+					my $tmpfilename = $q->tmpFileName($lightweight_fh);
+					my $file_size = (-s $tmpfilename);
+					if($file_size > to_int($cfg->load('max_size')))
+					{
+						msg("File size is larger than accepted value.", 0);
+					}
+					else
+					{
+						my $io_handle = $lightweight_fh->handle;
+						binmode($io_handle);
+						my ($buffer, $bytesread);
+						$filedata = Data::GUID->new;
+						$filename = substr(sanitize_html($q->param('attach_file')), 0, 40);
+						open(my $OUTFILE, ">", $cfg->load('upload_folder') . $cfg->sep . $filedata) or die $@;
+						while($bytesread = $io_handle->read($buffer,1024))
+						{
+							print $OUTFILE $buffer;
+						}
+						close($OUTFILE);
+						$sql = $db->prepare("INSERT INTO files VALUES (?, ?, ?, ?, ?);");
+						$sql->execute($logged_user, $filedata, $filename, now(), to_int($file_size));
+						msg("File <b>" . $filedata . "</b> uploaded.", 3);				
+					}
+				}
+			};
+			if($@)
+			{
+				msg("File uploading to <b>" . $cfg->load('upload_folder') . $cfg->sep . $filedata . "</b> failed.", 0); 
+			}
+		}
+		print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Add a new file</h3></div><div class='panel-body'>\n";
+		print "<form method='POST' action='.' enctype='multipart/form-data'><input type='hidden' name='m' value='files'><p>Add new file: <input type='file' name='attach_file'><input class='btn btn-primary pull-right' type='submit' value='Upload'></p></form>\n";
+		print "</div></div>\n";
+		print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Available files</h3></div><div class='panel-body'>\n";
+		$sql = $db->prepare("SELECT * FROM files;");
+		$sql->execute();
+		print "<table class='table table-striped' id='files_table'><thead><tr><th>File name</th><th>File size</th><th>Uploaded by</th><th>Date</th><th>Download link</th></tr></thead><tbody>\n";
+		while(my @res = $sql->fetchrow_array())
+		{
+			print "<tr><td>" . $res[2] . "</td><td>" . to_int($res[4]) . "</td><td>" . $res[0] . "</td><td>" . $res[3] . "</td><td><a href='./?file=" . $res[1] . "'>" . $res[1] . "</a><span class='pull-right'><form method='POST' action='.'><input type='hidden' name='m' value='files'><input type='hidden' name='delete_file' value='" . $res[1] . "'><input class='btn btn-danger pull-right' type='submit' value='X'></form></span></td></tr>\n";
+		}
+		print "</tbody></table><script>\$(document).ready(function(){\$('#files_table').DataTable({'order':[[0,'asc']],pageLength:" . to_int($cfg->load('page_len')) . ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script>\n";
+		print "</div></div>\n";
+	}
 	elsif($q->param('m') eq "add_comment" && $logged_lvl > 0 && $q->param('t'))
 	{
 		headers("Tickets");	
@@ -4211,9 +4306,9 @@ elsif($q->param('m')) # Modules
 					{
 						my $tmpfilename = $q->tmpFileName($lightweight_fh);
 						my $file_size = (-s $tmpfilename);
-						if($file_size > 999000)
+						if($file_size > to_int($cfg->load('max_size')))
 						{
-							msg("File size is too large. Please go back and try again.", 0);
+							msg("File size is larger than accepted value. Please go back and try again.", 0);
 							footers();
 							exit(0);
 						}
@@ -4593,7 +4688,7 @@ elsif($q->param('m')) # Modules
 								{
 									my $tmpfilename = $q->tmpFileName($lightweight_fh);
 									my $file_size = (-s $tmpfilename);
-									if($file_size > 999000)
+									if($file_size > to_int($cfg->load('max_size')))
 									{
 										msg("File size is too large, upload aborted for: " . sanitize_html($q->param('upload'.$i)), 4);
 									}

@@ -1,1 +1,0 @@
-<script>\$(document).ready(function(){\$('#home1_table').DataTable({'order':[[0,'asc']],pageLength:" .  to_int($cfg->load('page_len')). ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script>
