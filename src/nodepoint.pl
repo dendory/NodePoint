@@ -8,7 +8,7 @@
 #
 
 use strict;
-use Config::Linux;
+use Config::Win32;
 use Digest::SHA qw(sha1_hex);
 use DBI;
 use CGI;
@@ -27,7 +27,7 @@ my ($cfg, $db, $sql, $cn, $cp, $cgs, $last_login, $perf);
 my $logged_user = "";
 my $logged_lvl = -1;
 my $q = new CGI;
-my $VERSION = "1.5.4";
+my $VERSION = "1.5.5";
 my %items = ("Product", "Product", "Release", "Release", "Model", "SKU/Model");
 my @itemtypes = ("None");
 my @themes = ("primary", "default", "success", "info", "warning", "danger");
@@ -327,6 +327,7 @@ sub msg
 sub login
 {
 	print "<center><div class='row'>";
+	if($cfg->load("logo") ne "") { print "<p><img style='max-width:99%' src='" . $cfg->load("logo") . "'></p>"; }
 	if(!$cfg->load('allow_registrations') || $cfg->load('allow_registrations') eq 'off' || $cfg->load('ad_server'))
 	{
 		print "<div class='col-sm-3'>&nbsp;</div>\n";
@@ -580,6 +581,7 @@ sub save_config
 	$cfg->save("motd", sanitize_html($q->param('motd')));
 	$cfg->save("css_template", sanitize_html($q->param('css_template')));
 	$cfg->save("favicon", sanitize_html($q->param('favicon')));
+	$cfg->save("logo", sanitize_html($q->param('logo')));
 	$cfg->save("default_vis", $q->param('default_vis'));
 	$cfg->save("default_lvl", to_int($q->param('default_lvl')));
 	$cfg->save("tasks_lvl", to_int($q->param('tasks_lvl')));
@@ -1160,11 +1162,11 @@ sub home
 # Connect to config
 eval
 {
-	$cfg = Config::Linux->new("NodePoint", "settings");
+	$cfg = Config::Win32->new("NodePoint", "settings");
 };
 if(!defined($cfg)) # Can't even use headers() if this fails.
 {
-	print "Content-type: text/html\n\nError: Could not access " . Config::Linux->type . ". Please ensure NodePoint has the proper permissions.";
+	print "Content-type: text/html\n\nError: Could not access " . Config::Win32->type . ". Please ensure NodePoint has the proper permissions.";
 	exit(0);
 };
 
@@ -1323,6 +1325,7 @@ elsif(!$cfg->load("db_address") || !$cfg->load("site_name")) # first use
 				print "<p><div class='row'><div class='col-sm-4'>Database file name:</div><div class='col-sm-4'><input type='text' style='width:300px' name='db_address' value='.." . $cfg->sep . "db" . $cfg->sep . "nodepoint.db'></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Site name:</div><div class='col-sm-4'><input style='width:300px' type='text' name='site_name' value='NodePoint'></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Favicon:</div><div class='col-sm-4'><input style='width:300px' type='text' name='favicon' value='favicon.gif'></div></div></p>\n";
+				print "<p><div class='row'><div class='col-sm-4'>Main page logo:</div><div class='col-sm-4'><input style='width:300px' type='text' name='logo' value=''></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Bootstrap template:</div><div class='col-sm-4'><input style='width:300px' type='text' name='css_template' value='default.css'></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Interface theme color:</div><div class='col-sm-4'><select style='width:300px' name='theme_color'><option value='0'>Blue</option><option value='1'>Grey</option><option value='2'>Green</option><option value='3'>Cyan</option><option value='4'>Orange</option><option value='5'>Red</option></select></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Ticket visibility:</div><div class='col-sm-4'><select name='default_vis' style='width:300px'><option>Public</option><option>Private</option><option>Restricted</option></select></div></div></p>\n";
@@ -2709,17 +2712,18 @@ elsif($q->param('m')) # Modules
 			print "<tr><td style='width:50%'>Interface theme color</td><td><select class='form-control' name='theme_color'><option value='0'";
 			if($cfg->load("theme_color") eq "0") { print " selected"; }
 			print ">Blue</option><option value='1'";
-			if($cfg->load("theme_color") eq "1") { print " selected"; }	
+			if($cfg->load("theme_color") eq "1") { print " selected"; }
 			print ">Grey</option><option value='2'";
-			if($cfg->load("theme_color") eq "2") { print " selected"; }			
+			if($cfg->load("theme_color") eq "2") { print " selected"; }	
 			print ">Green</option><option value='3'";
-			if($cfg->load("theme_color") eq "3") { print " selected"; }	
+			if($cfg->load("theme_color") eq "3") { print " selected"; }
 			print ">Cyan</option><option value='4'";
-			if($cfg->load("theme_color") eq "4") { print " selected"; }	
+			if($cfg->load("theme_color") eq "4") { print " selected"; }
 			print ">Orange</option><option value='5'";
-			if($cfg->load("theme_color") eq "5") { print " selected"; }	
+			if($cfg->load("theme_color") eq "5") { print " selected"; }
 			print ">Red</option></select>";
 			print "<tr><td style='width:50%'>Favicon</td><td><input class='form-control' type='text' name='favicon' value=\"" . $cfg->load("favicon") . "\"></td></tr>\n";
+			print "<tr><td style='width:50%'>Main page logo</td><td><input class='form-control' type='text' name='logo' value=\"" . $cfg->load("logo") . "\"></td></tr>\n";
 			print "<tr><td style='width:50%'>Items managed</td><td><select class='form-control' name='items_managed'>";
 			if($cfg->load("items_managed") eq "Projects with goals and milestones") { print "<option>Products with models and releases</option><option selected>Projects with goals and milestones</option><option>Resources with locations and updates</option><option>Applications with platforms and versions</option><option>Assets with types and instances</option>"; }
 			elsif($cfg->load("items_managed") eq "Resources with locations and updates") { print "<option>Products with models and releases</option><option>Projects with goals and milestones</option><option selected>Resources with locations and updates</option><option>Applications with platforms and versions</option><option>Assets with types and instances</option>"; }

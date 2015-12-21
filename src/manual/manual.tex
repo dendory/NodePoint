@@ -13,8 +13,8 @@
 \newboolean{Windows}
 \setboolean{Windows}{false} % change to false for Linux
 \ifthenelse{\boolean{Windows}}
-{\def\NodePointManual{NodePoint IT System - Windows version 1.5.4}}
-{\def\NodePointManual{NodePoint IT System - Linux version 1.5.4}}
+{\def\NodePointManual{NodePoint IT System - Windows version 1.5.5}}
+{\def\NodePointManual{NodePoint IT System - Linux version 1.5.5}}
 
 % Margins and paper type
 \geometry{a4paper, right=1.5cm, left=1.5cm, top=2cm, bottom=1.5cm}
@@ -311,6 +311,7 @@ These are the default configuration values for NodePoint. They have to be define
 \item \textbf{Bootstrap template:} This is a CSS file used by NodePoint. It should be a valid Bootstrap template, or could contain extra CSS elements you wish to use. The default file is \texttt{default.css} and contains a few such elements.
 \item \textbf{Interface theme color:} The color of panels in the interface.
 \item \textbf{Favicon:} This is the icon shown by web browsers in the URL bar.
+\item \textbf{Main page logo:} Image file shown on the login page.
 \item \textbf{Ticket visibility:} When set to \textit{Public}, all tickets will be visible by logged in and guest users. When set to \textit{Private}, people need to log in to view tickets. \textit{Restricted} prevents people without at least the Restricted View access level from viewing others' tickets. This is a good choice for IT/Helpdesk systems.
 \item \textbf{Allow registrations:} Allow guest users to register a new account. If set to no, the only way to add new accounts is if a user with Users Management access adds one.
 \item \textbf{Allow guest tickets:} Allow guest users to file tickets.
