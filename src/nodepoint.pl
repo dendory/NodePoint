@@ -327,7 +327,7 @@ sub msg
 sub login
 {
 	print "<center><div class='row'>";
-	if($cfg->load("logo") ne "") { print "<p><img style='max-width:99%' src='" . $cfg->load("logo") . "'></p>"; }
+	if($cfg->load("logo") ne "") { print "<p><img style='max-width:99%' src=\"" . $cfg->load("logo") . "\"></p>"; }
 	if(!$cfg->load('allow_registrations') || $cfg->load('allow_registrations') eq 'off' || $cfg->load('ad_server'))
 	{
 		print "<div class='col-sm-3'>&nbsp;</div>\n";
@@ -4800,6 +4800,14 @@ elsif($q->param('m')) # Modules
 						{
 							print "<select class='form-control' name='priority" . $i . "'><option>High</option><option selected>Normal</option><option>Low</option></select>";
 						}
+						elsif(to_int($customform[($i*2)+3]) == 18)
+						{
+							print "<select class='form-control' name='field" . $i . "'>";
+							my $sql2 = $db->prepare("SELECT name FROM users ORDER BY name;");
+							$sql2->execute();
+							while(my @res2 = $sql2->fetchrow_array()) { print "<option>" . $res2[0] . "</option>"; }
+							print "</select>\n";
+						}
 						elsif(to_int($customform[($i*2)+3]) == 15)
 						{
 							print "<select class='form-control' name='field" . $i . "'>";
@@ -5834,7 +5842,9 @@ elsif(($q->param('create_form') || $q->param('edit_form') || $q->param('save_for
 			if(to_int($q->param('edit_form')) > 0) { if(to_int($res[($i*2)+3]) == 10) { print " selected"; } }
 			print ">Date</option><option value=17";
 			if(to_int($q->param('edit_form')) > 0) { if(to_int($res[($i*2)+3]) == 17) { print " selected"; } }
-			print ">Ticket priority</option>";
+			print ">Ticket priority</option><option value=18";
+			if(to_int($q->param('edit_form')) > 0) { if(to_int($res[($i*2)+3]) == 18) { print " selected"; } }
+			print ">Users list</option>";
 			if($cfg->load('comp_clients') eq "on")
 			{
 				print "<option value=11";
