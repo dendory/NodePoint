@@ -2355,11 +2355,24 @@ elsif($q->param('api')) # API calls
 		}
 		else
 		{
-			$sql = $db->prepare("INSERT INTO items VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);");
-			$sql->execute(sanitize_html($q->param('name')), ucfirst(lc(sanitize_alpha($q->param('type')))), sanitize_html($q->param('serial')), to_int($q->param('product_id')), to_int($q->param('client_id')), to_int($q->param('approval')), 1, "", sanitize_html($q->param('info')));
-			print "{\n";
-			print " \"message\": \"Item added.\",\n";
-			print " \"status\": \"OK\"\n";
+    		print "{\n";
+			my $found = 0;
+			$sql = $db->prepare("SELECT * FROM items WHERE serial = ?;");
+			$sql->execute(sanitize_html($q->param('serial')));
+			while(my @res = $sql->fetchrow_array()) { $found = 1; }
+			if($found)
+			{
+				print " \"message\": \"Serial number already exist.\",\n";
+				print " \"status\": \"ERR_INVALID_ARGUMENT\"\n";
+			}
+			else
+			{
+                $sql = $db->prepare("INSERT INTO items VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);");
+                $sql->execute(sanitize_html($q->param('name')), ucfirst(lc(sanitize_alpha($q->param('type')))), sanitize_html($q->param('serial')), to_int($q->param('product_id')), to_int($q->param('client_id')), to_int($q->param('approval')), 1, "", sanitize_html($q->param('info')));
+                print "{\n";
+                print " \"message\": \"Item added.\",\n";
+                print " \"status\": \"OK\"\n";
+            }
 			print "}\n";
 		}
 	}
@@ -5266,9 +5279,20 @@ elsif($q->param('m')) # Modules
 				if($q->param('info')) { $info = sanitize_html($q->param('info')); }
 				my $approval = 0;
 				if($q->param('approval')) { $approval = 1; }
-				$sql = $db->prepare("INSERT INTO items VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);");
-				$sql->execute(sanitize_html($q->param('name')), sanitize_html($q->param('type')), sanitize_html($q->param('serial')), to_int($q->param('product_id')), to_int($q->param('client_id')), $approval, 1, "", $info);
-				msg("Item added. Press <a href='./?m=items'>here</a> to continue.", 3);
+                my $found = 0;
+                $sql = $db->prepare("SELECT * FROM items WHERE serial = ?;");
+                $sql->execute(sanitize_html($q->param('serial')));
+                while(my @res = $sql->fetchrow_array()) { $found = 1; }
+                if($found)
+                {
+                    msg("Serial number already exists. Please go back and try again.", 0)
+                }
+                else
+                {
+                    $sql = $db->prepare("INSERT INTO items VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);");
+                    $sql->execute(sanitize_html($q->param('name')), sanitize_html($q->param('type')), sanitize_html($q->param('serial')), to_int($q->param('product_id')), to_int($q->param('client_id')), $approval, 1, "", $info);
+                    msg("Item added. Press <a href='./?m=items'>here</a> to continue.", 3);
+                }
 			}
 		}
 		elsif($q->param('i'))
@@ -5291,9 +5315,20 @@ elsif($q->param('m')) # Modules
 					if($q->param('info')) { $info = sanitize_html($q->param('info')); }
 					my $approval = 0;
 					if($q->param('approval')) { $approval = 1; }
-					$sql = $db->prepare("UPDATE items SET type = ?, productid = ?, clientid = ?, serial = ?, approval = ?, info = ? WHERE ROWID = ?;");
-					$sql->execute(sanitize_html($q->param('type')), to_int($q->param('product_id')), to_int($q->param('client_id')), sanitize_html($q->param('serial')), $approval, $info, to_int($q->param('i')));
-					msg("Item updated.", 3);
+                    my $found = 0;
+                    $sql = $db->prepare("SELECT * FROM items WHERE serial = ? AND ROWID != ?;");
+                    $sql->execute(sanitize_html($q->param('serial')), to_int($q->param('i')));
+                    while(my @res = $sql->fetchrow_array()) { $found = 1; }
+                    if($found)
+                    {
+                        msg("Serial number already exists. Please go back and try again.", 0)
+                    }
+                    else
+                    {
+                        $sql = $db->prepare("UPDATE items SET type = ?, productid = ?, clientid = ?, serial = ?, approval = ?, info = ? WHERE ROWID = ?;");
+                        $sql->execute(sanitize_html($q->param('type')), to_int($q->param('product_id')), to_int($q->param('client_id')), sanitize_html($q->param('serial')), $approval, $info, to_int($q->param('i')));
+                        msg("Item updated.", 3);
+                    }
 				}
 			}
 			if($q->param('deny') && $logged_lvl > 3)
