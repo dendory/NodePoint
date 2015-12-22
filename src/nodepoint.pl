@@ -107,7 +107,7 @@ sub navbar
 	print "	 <ul class='nav navbar-nav'>\n";
 	if(!$cfg->load('db_address'))
 	{
-		print "	 <li class='active'><a href='.'>Initial configuration</a></li>\n";    
+		print "	 <li class='active'><a href='.'>Initial configuration</a></li>\n";
 	}
 	elsif($logged_user eq "")
 	{
@@ -138,7 +138,7 @@ sub navbar
 			print "	 <li><a href='./?m=products'>" . $items{"Product"} . "s</a></li>\n";
 			if($cfg->load('comp_tickets') eq "on") { print "	 <li><a href='./?m=tickets'>Tickets</a></li>\n"; }
 			if($cfg->load('comp_articles') eq "on") { print "	 <li><a href='./?m=articles'>Articles</a></li>\n"; }
-		}	    
+		}
 	}
 	else
 	{
@@ -302,15 +302,15 @@ sub to_float
 # Compares 'month day, year' strings 
 sub by_date
 {
-    my ($ta, $tb) = map Time::Piece->strptime($_, '%b %d, %Y'), $a, $b;
-    $ta <=> $tb;
+	my ($ta, $tb) = map Time::Piece->strptime($_, '%b %d, %Y'), $a, $b;
+	$ta <=> $tb;
 }
 
 # Compares 'month year' strings 
 sub by_month
 {
-    my ($ta, $tb) = map Time::Piece->strptime($_, '%b %Y'), $a, $b;
-    $ta <=> $tb;
+	my ($ta, $tb) = map Time::Piece->strptime($_, '%b %Y'), $a, $b;
+	$ta <=> $tb;
 }
 
 # Print error messages
@@ -320,7 +320,7 @@ sub msg
 	if($code == 0) { print "<div class='alert alert-danger' role='alert'><b>Error:</b> " . $text . "</div>\n"; }
 	elsif($code == 2) { print "<div class='alert alert-info' role='alert'><b>Info:</b> " . $text . "</div>\n"; }
 	elsif($code == 3) { print "<div class='alert alert-success' role='alert'><b>Success:</b> " . $text . "</div>\n"; }
-	else { print "<div class='alert alert-warning' role='alert'><b>Warning:</b> " . $text . "</div>\n"; }    
+	else { print "<div class='alert alert-warning' role='alert'><b>Warning:</b> " . $text . "</div>\n"; }
 }
 
 # Login form
@@ -585,6 +585,7 @@ sub save_config
 	$cfg->save("default_vis", $q->param('default_vis'));
 	$cfg->save("default_lvl", to_int($q->param('default_lvl')));
 	$cfg->save("tasks_lvl", to_int($q->param('tasks_lvl')));
+	$cfg->save("summary_lvl", to_int($q->param('summary_lvl')));
 	$cfg->save("upload_lvl", to_int($q->param('upload_lvl')));
 	$cfg->save("page_len", to_int($q->param('page_len')));
 	$cfg->save("max_size", to_int($q->param('max_size')));
@@ -595,10 +596,10 @@ sub save_config
 	$cfg->save("report_lvl", to_int($q->param('report_lvl')));
 	$cfg->save("allow_registrations", $q->param('allow_registrations'));
 	$cfg->save("guest_tickets", $q->param('guest_tickets'));
-	$cfg->save("smtp_server", sanitize_html($q->param('smtp_server')));    
-	$cfg->save("smtp_port", to_int($q->param('smtp_port')));    
+	$cfg->save("smtp_server", sanitize_html($q->param('smtp_server')));
+	$cfg->save("smtp_port", to_int($q->param('smtp_port')));
 	$cfg->save("smtp_from", sanitize_html($q->param('smtp_from')));
-	$cfg->save("smtp_user", sanitize_html($q->param('smtp_user')));    
+	$cfg->save("smtp_user", sanitize_html($q->param('smtp_user')));
 	$cfg->save("smtp_pass", $q->param('smtp_pass'));
 	$cfg->save("api_read", sanitize_html($q->param('api_read')));
 	$cfg->save("api_write", sanitize_html($q->param('api_write')));
@@ -784,7 +785,7 @@ sub trim
 	my $s = shift; 
 	if($s)
 	{
-		$s =~ s/\s+//g;       
+		$s =~ s/\s+//g;
 		return $s;
 	}
 	else { return ""; }
@@ -796,7 +797,7 @@ sub ltrim
 	my $s = shift; 
 	if($s)
 	{
-		$s =~ s/^\s+//g;       
+		$s =~ s/^\s+//g;
 		return $s;
 	}
 	else { return ""; }
@@ -1243,11 +1244,12 @@ if($cfg->load("items_managed"))
 # Sanity checks for levels config
 if(to_int($cfg->load("past_lvl")) < 1 || to_int($cfg->load("past_lvl")) > 6) { $cfg->save("past_lvl", 5); }
 if(to_int($cfg->load("upload_lvl")) < 1 || to_int($cfg->load("upload_lvl")) > 6) { $cfg->save("upload_lvl", 1); }
-if(to_int($cfg->load("report_lvl")) < 0 || to_int($cfg->load("default_lvl")) > 5) { $cfg->save("default_lvl", 1); }
+if(to_int($cfg->load("default_lvl")) < 0 || to_int($cfg->load("default_lvl")) > 5) { $cfg->save("default_lvl", 1); }
 if(to_int($cfg->load("report_lvl")) < 1 || to_int($cfg->load("report_lvl")) > 6) { $cfg->save("report_lvl", 2); }
 if(to_int($cfg->load("client_lvl")) < 1 || to_int($cfg->load("client_lvl")) > 6) { $cfg->save("client_lvl", 2); }
 if(to_int($cfg->load("customs_lvl")) < 1 || to_int($cfg->load("customs_lvl")) > 6) { $cfg->save("customs_lvl", 4); }
 if(to_int($cfg->load("tasks_lvl")) < 1 || to_int($cfg->load("tasks_lvl")) > 6) { $cfg->save("tasks_lvl", 4); }
+if(to_int($cfg->load("summary_lvl")) < 1 || to_int($cfg->load("summary_lvl")) > 6) { $cfg->save("summary_lvl", 5); }
 if(to_int($cfg->load("page_len")) < 1) { $cfg->save("page_len", 50); }
 if(to_int($cfg->load("session_expiry")) < 1) { $cfg->save("session_expiry", 12); }
 if(to_int($cfg->load("max_size")) < 1) { $cfg->save("max_size", 999000); }
@@ -2355,7 +2357,7 @@ elsif($q->param('api')) # API calls
 		}
 		else
 		{
-    		print "{\n";
+			print "{\n";
 			my $found = 0;
 			$sql = $db->prepare("SELECT * FROM items WHERE serial = ?;");
 			$sql->execute(sanitize_html($q->param('serial')));
@@ -2367,12 +2369,12 @@ elsif($q->param('api')) # API calls
 			}
 			else
 			{
-                $sql = $db->prepare("INSERT INTO items VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);");
-                $sql->execute(sanitize_html($q->param('name')), ucfirst(lc(sanitize_alpha($q->param('type')))), sanitize_html($q->param('serial')), to_int($q->param('product_id')), to_int($q->param('client_id')), to_int($q->param('approval')), 1, "", sanitize_html($q->param('info')));
-                print "{\n";
-                print " \"message\": \"Item added.\",\n";
-                print " \"status\": \"OK\"\n";
-            }
+				$sql = $db->prepare("INSERT INTO items VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);");
+				$sql->execute(sanitize_html($q->param('name')), ucfirst(lc(sanitize_alpha($q->param('type')))), sanitize_html($q->param('serial')), to_int($q->param('product_id')), to_int($q->param('client_id')), to_int($q->param('approval')), 1, "", sanitize_html($q->param('info')));
+				print "{\n";
+				print " \"message\": \"Item added.\",\n";
+				print " \"status\": \"OK\"\n";
+			}
 			print "}\n";
 		}
 	}
@@ -2701,7 +2703,7 @@ elsif($q->param('m')) # Modules
 				{
 					$email = $res[2];
 				}
-			}		    
+			}
 			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Change your email</h3></div><div class='panel-body'>\n";
 			print "<div class='form-group'><p><form method='POST' action='.' data-toggle='validator' role='form'><input type='hidden' name='m' value='change_email'><div class='row'><div class='col-sm-6'>To change your notification email address, enter a new address here. Leave empty to disable notifications:</div><div class='col-sm-6'><input type='email' name='new_email' class='form-control' data-error='Must be a valid email.' placeholder='Email address' maxlength='99' value='" . $email . "'></div></div></p><div class='help-block with-errors'></div></div><input class='btn btn-primary pull-right' type='submit' value='Change email'></form></div></div>";
 			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Change your password</h3></div><div class='panel-body'>\n";
@@ -2786,6 +2788,7 @@ elsif($q->param('m')) # Modules
 			print "<tr><td style='width:50%'>Can make custom forms</td><td><input class='form-control' type='text' name='customs_lvl' value=\"" . to_int($cfg->load("customs_lvl")) . "\"></td></tr>\n";
 			print "<tr><td style='width:50%'>Can view reports and statistics</td><td><input class='form-control' type='text' name='report_lvl' value=\"" . to_int($cfg->load("report_lvl")) . "\"></td></tr>\n";
 			print "<tr><td style='width:50%'>Can assign tasks to users</td><td><input class='form-control' type='text' name='tasks_lvl' value=\"" . to_int($cfg->load("tasks_lvl")) . "\"></td></tr>\n";
+			print "<tr><td style='width:50%'>Can view users summary page</td><td><input class='form-control' type='text' name='summary_lvl' value=\"" . to_int($cfg->load("summary_lvl")) . "\"></td></tr>\n";
 			print "<tr><td style='width:50%'>Can view client details</td><td><input class='form-control' type='text' name='client_lvl' value=\"" . to_int($cfg->load("client_lvl")) . "\"></td></tr>\n";
 			print "</table><h4>Plugins</h4><table class='table table-striped'>";
 			print "<tr><td style='width:50%'>Authentication</td><td><input class='form-control' type='text' name='auth_plugin' value=\"" . $cfg->load("auth_plugin") . "\"></td></tr>\n";
@@ -3147,7 +3150,7 @@ elsif($q->param('m')) # Modules
 			if(!$q->param('contact')) { $text .= "<span class='label label-danger'>Contact</span> "; }
 			if(!$q->param('status')) { $text .= "<span class='label label-danger'>Status</span> "; }
 			$text .= " Please go back and try again.";
-			msg($text, 0);	    
+			msg($text, 0);
 		}
 		else
 		{
@@ -3158,7 +3161,7 @@ elsif($q->param('m')) # Modules
 			msg("Client updated. Press <a href='./?m=view_client&c=" . to_int($q->param('c')) . "'>here</a> to continue.", 3);
 		}
 	}
-	elsif($q->param('m') eq "summary" && $q->param('u') && $logged_lvl > 4)
+	elsif($q->param('m') eq "summary" && $q->param('u') && $logged_lvl >= to_int($cfg->load('summary_lvl')))
 	{
 		headers("Summary");
 		my $u = sanitize_alpha($q->param('u'));
@@ -3187,46 +3190,6 @@ elsif($q->param('m')) # Modules
 			if($res[3] eq "") { print "<tr><td>Confirmed email</td><td>True</td></tr>"; }
 			else { print "<tr><td>Confirmed email</td><td>False</td></tr>"; }
 		}
-	
-		if($cfg->load('comp_tickets') eq "on")
-		{
-			$sql = $db->prepare("SELECT COUNT(*) FROM tickets WHERE createdby = ?");
-			$sql->execute($u);
-			while(my @res = $sql->fetchrow_array())
-			{
-				print "<tr><td>Tickets created</td><td>" . $res[0] . "</td></tr>";
-			}
-			$sql = $db->prepare("SELECT COUNT(*) FROM tickets WHERE status != 'Closed' AND assignedto LIKE ?;");
-			$sql->execute("%" . $u . "%");
-			while(my @res = $sql->fetchrow_array())
-			{
-				print "<tr><td>Active tickets assigned</td><td>" . $res[0] . "</td></tr>";
-			}
-			$sql = $db->prepare("SELECT COUNT(*) FROM comments WHERE name = ?;");
-			$sql->execute($u);
-			while(my @res = $sql->fetchrow_array())
-			{
-				print "<tr><td>Comments created</td><td>" . $res[0] . "</td></tr>";
-			}
-			$sql = $db->prepare("SELECT COUNT(*) FROM escalate WHERE user = ?;");
-			$sql->execute($u);
-			while(my @res = $sql->fetchrow_array())
-			{
-				print "<tr><td>Pending ticket notifications</td><td>" . $res[0] . "</td></tr>";
-			}
-		}
-
-		if($cfg->load('comp_time') eq "on")
-		{
-			$sql = $db->prepare("SELECT spent FROM timetracking WHERE name = ?");
-			$sql->execute($u);
-			my $timespent = 0.0;
-			while(my @res = $sql->fetchrow_array())
-			{
-				$timespent += to_float($res[0]);
-			}		
-			print "<tr><td>Hours spent on tickets</td><td>" . $timespent . "</td></tr>";
-		}
 
 		if($cfg->load('comp_steps') eq "on")
 		{
@@ -3246,37 +3209,89 @@ elsif($q->param('m')) # Modules
 			print "<tr><td>Active tasks</td><td>" . $totaltasks . "</td></tr>";
 			print "<tr><td>Overdue tasks</td><td>" . $overduetasks . "</td></tr>";
 		}
-	
-		if($cfg->load('comp_items') eq "on")
+
+		if($cfg->load('comp_time') eq "on")
 		{
-			$sql = $db->prepare("SELECT COUNT(*) FROM items WHERE user = ?");
+			$sql = $db->prepare("SELECT spent FROM timetracking WHERE name = ?");
+			$sql->execute($u);
+			my $timespent = 0.0;
+			while(my @res = $sql->fetchrow_array())
+			{
+				$timespent += to_float($res[0]);
+			}		
+			print "<tr><td>Hours spent on tickets</td><td>" . $timespent . "</td></tr>";
+		}
+	
+		if($cfg->load('comp_tickets') eq "on")
+		{
+			$sql = $db->prepare("SELECT COUNT(*) FROM comments WHERE name = ?;");
 			$sql->execute($u);
 			while(my @res = $sql->fetchrow_array())
 			{
-				print "<tr><td>Checked out items</td><td>" . $res[0] . "</td></tr>";
+				print "<tr><td>Comments created</td><td>" . $res[0] . "</td></tr>";
 			}
+			$sql = $db->prepare("SELECT COUNT(*) FROM escalate WHERE user = ?;");
+			$sql->execute($u);
+			while(my @res = $sql->fetchrow_array())
+			{
+				print "<tr><td>Pending notifications</td><td>" . $res[0] . "</td></tr>";
+			}
+			$sql = $db->prepare("SELECT ROWID,title FROM tickets WHERE createdby = ?");
+			$sql->execute($u);
+			print "<tr><td>Tickets created</td><td>";
+			while(my @res = $sql->fetchrow_array())
+			{
+				print "<a href='./?m=view_ticket&t=" . $res[0] . "'>" . $res[1] . "</a><br>";
+			}
+			print "</td></tr>";
+			$sql = $db->prepare("SELECT ROWID,title FROM tickets WHERE status != 'Closed' AND assignedto LIKE ?;");
+			$sql->execute("%" . $u . "%");
+			print "<tr><td>Active tickets assigned</td><td>";
+			while(my @res = $sql->fetchrow_array())
+			{
+				 print "<a href='./?m=view_ticket&t=" . $res[0] . "'>" . $res[1] . "</a><br>";
+			}
+			print "</td></tr>";
 		}
+
+		if($cfg->load('comp_items') eq "on")
+		{
+			$sql = $db->prepare("SELECT ROWID,name,serial FROM items WHERE user = ?");
+			$sql->execute($u);
+			print "<tr><td>Checked out items</td><td>";
+			while(my @res = $sql->fetchrow_array())
+			{
+				print "<a href='./?m=items&i=" . $res[0] . "'>" . $res[1] . " (" . $res[2] . ")</a><br>";
+			}
+			print "</td></tr>";
+		}
+
 		print "</table>";
-		$sql = $db->prepare("SELECT * FROM disabled WHERE user = ?;");
-		$sql->execute($u);
-		my $userisbanned = 0;
-		while(my @res = $sql->fetchrow_array())
+		
+		if($logged_lvl > 4)
 		{
-			$userisbanned = 1;
+			$sql = $db->prepare("SELECT * FROM disabled WHERE user = ?;");
+			$sql->execute($u);
+			my $userisbanned = 0;
+			while(my @res = $sql->fetchrow_array())
+			{
+				$userisbanned = 1;
+			}
+			print "<form style='display:inline-block' method='GET' action='.'><input type='hidden' name='m' value='change_lvl'><input type='hidden' name='u' value='" . $u . "'><input type='submit' class='btn btn-primary pull-right' value='Change access level'></form>&nbsp;<form style='display:inline-block' method='GET' action='.'><input type='hidden' name='m' value='reset_pass'><input type='hidden' name='u' value='" . $u . "'>";
+			if($cfg->load("ad_domain") && $cfg->load("ad_server"))
+			{
+				print "<input type='submit' class='btn btn-default pull-right' value='Password managed by AD' disabled>";
+			}
+			else
+			{
+				print "<input type='submit' class='btn btn-primary pull-right' value='Reset password'>";
+			}
+			print "</form><form style='display:inline-block' class='pull-right' method='GET' action='.'><input type='hidden' name='m' value='summary'><input type='hidden' name='u' value='" . $u . "'>";
+			if($userisbanned == 0) { print "<input type='submit' class='btn btn-danger pull-right' name='disable_user' value='Disable login'>"; }
+			else { print "<input type='submit' class='btn btn-success pull-right' name='enable_user' value='Enable login'>"; }
+			print "</form>";
 		}
-		print "<form style='display:inline-block' method='GET' action='.'><input type='hidden' name='m' value='change_lvl'><input type='hidden' name='u' value='" . $u . "'><input type='submit' class='btn btn-primary pull-right' value='Change access level'></form>&nbsp;<form style='display:inline-block' method='GET' action='.'><input type='hidden' name='m' value='reset_pass'><input type='hidden' name='u' value='" . $u . "'>";
-		if($cfg->load("ad_domain") && $cfg->load("ad_server"))
-		{
-			print "<input type='submit' class='btn btn-default pull-right' value='Password managed by AD' disabled>";
-		}
-		else
-		{
-			print "<input type='submit' class='btn btn-primary pull-right' value='Reset password'>";
-		}
-		print "</form><form style='display:inline-block' class='pull-right' method='GET' action='.'><input type='hidden' name='m' value='summary'><input type='hidden' name='u' value='" . $u . "'>";
-		if($userisbanned == 0) { print "<input type='submit' class='btn btn-danger pull-right' name='disable_user' value='Disable login'>"; }
-		else { print "<input type='submit' class='btn btn-success pull-right' name='enable_user' value='Enable login'>"; }
-		print "</form></div></div>";
+		print "</div></div>";
 	}
 	elsif($q->param('m') eq "view_client" && $q->param('c') && $logged_lvl >= to_int($cfg->load('client_lvl')))
 	{
@@ -3456,7 +3471,7 @@ elsif($q->param('m')) # Modules
 			if(!$q->param('contact')) { $text .= "<span class='label label-danger'>Contact</span> "; }
 			if(!$q->param('status')) { $text .= "<span class='label label-danger'>Status</span> "; }
 			$text .= " Please go back and try again.";
-			msg($text, 0);	    
+			msg($text, 0);
 		}
 		else
 		{
@@ -3503,7 +3518,7 @@ elsif($q->param('m')) # Modules
 		}
 		elsif(length($q->param('new_pass1')) < 6)
 		{
-			msg("Your password should be at least 6 characters. Please go back and try again.", 0);    
+			msg("Your password should be at least 6 characters. Please go back and try again.", 0);
 		}
 		else
 		{
@@ -3520,7 +3535,7 @@ elsif($q->param('m')) # Modules
 					$found = 1;
 					last;
 				}
-			}	    
+			}
 			if(!$found) { msg("Could not confirm your password. Please go back and try again.", 0); }
 		}
 	}
@@ -3549,7 +3564,7 @@ elsif($q->param('m')) # Modules
 					last;
 				}
 			}
-		}	    
+		}
 	}
 	elsif($q->param('m') eq "logout" && $logged_user ne "")
 	{
@@ -3744,7 +3759,7 @@ elsif($q->param('m')) # Modules
 				if($logged_lvl > 2 && $vis ne "Archived")
 				{
 					print "<h4>Add a new " . lc($items{"Release"}) . "</h4><form method='POST' action='.' data-toggle='validator' role='form'>\n";
-					print "<input type='hidden' name='m' value='add_release'><input type='hidden' name='product_id' value='" . to_int($q->param('p')) . "'><div class='row'><div class='col-sm-4'>" . $items{"Release"} . ": <input type='text' class='form-control' name='release_version' required></div><div class='col-sm-6'>Notes or link: <input type='text' name='release_notes' class='form-control' required></div><div class='col-sm-2'><input class='btn btn-primary pull-right' type='submit' value='Add " . lc($items{"Release"}) . "'></div></div></form><hr><h4>Current " . lc($items{"Release"}) . "s</h4>\n";    
+					print "<input type='hidden' name='m' value='add_release'><input type='hidden' name='product_id' value='" . to_int($q->param('p')) . "'><div class='row'><div class='col-sm-4'>" . $items{"Release"} . ": <input type='text' class='form-control' name='release_version' required></div><div class='col-sm-6'>Notes or link: <input type='text' name='release_notes' class='form-control' required></div><div class='col-sm-2'><input class='btn btn-primary pull-right' type='submit' value='Add " . lc($items{"Release"}) . "'></div></div></form><hr><h4>Current " . lc($items{"Release"}) . "s</h4>\n";
 				}
 				print "<table class='table table-striped' id='releases_table'>\n";
 				print "<thead><tr><th>" . $items{"Release"} . "</th><th>User</th><th>Notes</th><th>Date</th></tr></thead><tbody>\n";
@@ -3761,7 +3776,7 @@ elsif($q->param('m')) # Modules
 				}
 				print "</tbody></table><script>\$(document).ready(function(){\$('#releases_table').DataTable({'order':[[3,'desc']],pageLength:" .  to_int($cfg->load('page_len')). ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script></div></div>\n";
 			}
-			if($cfg->load('comp_steps') eq "on" && ($vis eq "Public" || ($vis eq "Private" && $logged_user ne "") || ($vis eq "Restricted" && $logged_lvl > 1) || $logged_lvl > 3))
+			if($cfg->load('comp_steps') eq "on" && (($vis eq "Restricted" && $logged_lvl > 1) || $logged_lvl > 0))
 			{
 				print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Tasks</h3></div><div class='panel-body'>";
 				if($logged_lvl >= to_int($cfg->load('tasks_lvl')) && $vis ne "Archived")
@@ -3818,7 +3833,7 @@ elsif($q->param('m')) # Modules
 				print "</tbody></table><script>\$(document).ready(function(){\$('#relatedarticles_table').DataTable({'order':[[0,'asc']],pageLength:" .  to_int($cfg->load('page_len')). ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script></div></div>\n";
 			}
 		}
-		if($cfg->load('comp_items') eq "on")
+		if($cfg->load('comp_items') eq "on" && ($vis eq "Public" || ($vis eq "Private" && $logged_user ne "") || ($vis eq "Restricted" && $logged_lvl > 1) || $logged_lvl > 3))
 		{
 			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Related items</h3></div><div class='panel-body'><table class='table table-striped' id='relateditems_table'><thead><tr><th>Type</th><th>Name</th><th>Serial</th><th>Status</th></tr></thead><tbody>";
 			$sql = $db->prepare("SELECT ROWID,* FROM items WHERE productid = ?;");
@@ -4429,7 +4444,14 @@ elsif($q->param('m')) # Modules
 					print "</div>";
 				}
 					print "</div></p>";
-				print "<p><div class='row'><div class='col-sm-6'>Created by: <b>" . $res[3] . "</b></div><div class='col-sm-6'>Created on: <b>" . $res[11] . "</b></div></div></p>\n";
+				if($logged_lvl >= to_int($cfg->load('summary_lvl')))
+				{
+                    print "<p><div class='row'><div class='col-sm-6'>Created by: <b><a href='./?m=summary&u=" . $res[3] . "'>" . $res[3] . "</a></b></div><div class='col-sm-6'>Created on: <b>" . $res[11] . "</b></div></div></p>\n";
+				}
+				else
+				{
+					print "<p><div class='row'><div class='col-sm-6'>Created by: <b>" . $res[3] . "</b></div><div class='col-sm-6'>Created on: <b>" . $res[11] . "</b></div></div></p>\n";
+				}
 				print "<p><div class='row'><input type='hidden' name='ticket_assigned' value='" . $res[4] . "'><div class='col-sm-6'>Assigned to: <b>" . $res[4] . "</b>";
 				if($logged_lvl > 2 && $q->param('edit'))
 				{ 
@@ -5228,7 +5250,7 @@ elsif($q->param('m')) # Modules
 			print "</select></div><div class='col-sm-4'><input type='hidden' name='m' value='new_ticket'><input class='btn btn-primary pull-right' type='submit' value='Next'></div></div></p></form></div></div>\n";
 		}
 		print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Tickets</h3></div><div class='panel-body'>\n";
-		print "<table class='table table-stripped' id='tickets_table'><thead><tr><th>ID</th><th>" . $items{"Product"} . "</th><th>Title</th><th>Status</th><th>Date</th></tr></thead><tbody>\n";
+		print "<table class='table table-stripped' id='tickets_table'><thead><tr><th>ID</th><th>User</th><th>" . $items{"Product"} . "</th><th>Title</th><th>Status</th><th>Date</th></tr></thead><tbody>\n";
 		$sql = $db->prepare("SELECT ROWID,* FROM tickets ORDER BY ROWID DESC;");
 		$sql->execute();
 		while(my @res = $sql->fetchrow_array())
@@ -5239,7 +5261,7 @@ elsif($q->param('m')) # Modules
 				if($res[7] eq "High") { print "<img src='icons/high.png'> "; }
 				elsif($res[7] eq "Low") { print "<img src='icons/low.png'> "; }
 				else { print "<img src='icons/normal.png'> "; }
-				print $res[0] . "</nobr></td><td>" . $products[$res[1]] . "</td><td><a href='./?m=view_ticket&t=" . $res[0] . "'>" . $res[5] . "</a></td><td>" . $res[8] . "</td><td>" . $res[11] . "</td></tr>\n"; 
+				print $res[0] . "</nobr></td><td>" . $res[3] . "</td><td>" . $products[$res[1]] . "</td><td><a href='./?m=view_ticket&t=" . $res[0] . "'>" . $res[5] . "</a></td><td>" . $res[8] . "</td><td>" . $res[11] . "</td></tr>\n"; 
 			}
 		}
 		print "</tbody></table><script>\$(document).ready(function(){\$('#tickets_table').DataTable({'order':[[0,'desc']],pageLength:" . to_int($cfg->load('page_len')) . ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script></div></div>\n";
@@ -5279,20 +5301,20 @@ elsif($q->param('m')) # Modules
 				if($q->param('info')) { $info = sanitize_html($q->param('info')); }
 				my $approval = 0;
 				if($q->param('approval')) { $approval = 1; }
-                my $found = 0;
-                $sql = $db->prepare("SELECT * FROM items WHERE serial = ?;");
-                $sql->execute(sanitize_html($q->param('serial')));
-                while(my @res = $sql->fetchrow_array()) { $found = 1; }
-                if($found)
-                {
-                    msg("Serial number already exists. Please go back and try again.", 0)
-                }
-                else
-                {
-                    $sql = $db->prepare("INSERT INTO items VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);");
-                    $sql->execute(sanitize_html($q->param('name')), sanitize_html($q->param('type')), sanitize_html($q->param('serial')), to_int($q->param('product_id')), to_int($q->param('client_id')), $approval, 1, "", $info);
-                    msg("Item added. Press <a href='./?m=items'>here</a> to continue.", 3);
-                }
+				my $found = 0;
+				$sql = $db->prepare("SELECT * FROM items WHERE serial = ?;");
+				$sql->execute(sanitize_html($q->param('serial')));
+				while(my @res = $sql->fetchrow_array()) { $found = 1; }
+				if($found)
+				{
+					msg("Serial number already exists. Please go back and try again.", 0)
+				}
+				else
+				{
+					$sql = $db->prepare("INSERT INTO items VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);");
+					$sql->execute(sanitize_html($q->param('name')), sanitize_html($q->param('type')), sanitize_html($q->param('serial')), to_int($q->param('product_id')), to_int($q->param('client_id')), $approval, 1, "", $info);
+					msg("Item added. Press <a href='./?m=items'>here</a> to continue.", 3);
+				}
 			}
 		}
 		elsif($q->param('i'))
@@ -5315,20 +5337,20 @@ elsif($q->param('m')) # Modules
 					if($q->param('info')) { $info = sanitize_html($q->param('info')); }
 					my $approval = 0;
 					if($q->param('approval')) { $approval = 1; }
-                    my $found = 0;
-                    $sql = $db->prepare("SELECT * FROM items WHERE serial = ? AND ROWID != ?;");
-                    $sql->execute(sanitize_html($q->param('serial')), to_int($q->param('i')));
-                    while(my @res = $sql->fetchrow_array()) { $found = 1; }
-                    if($found)
-                    {
-                        msg("Serial number already exists. Please go back and try again.", 0)
-                    }
-                    else
-                    {
-                        $sql = $db->prepare("UPDATE items SET type = ?, productid = ?, clientid = ?, serial = ?, approval = ?, info = ? WHERE ROWID = ?;");
-                        $sql->execute(sanitize_html($q->param('type')), to_int($q->param('product_id')), to_int($q->param('client_id')), sanitize_html($q->param('serial')), $approval, $info, to_int($q->param('i')));
-                        msg("Item updated.", 3);
-                    }
+					my $found = 0;
+					$sql = $db->prepare("SELECT * FROM items WHERE serial = ? AND ROWID != ?;");
+					$sql->execute(sanitize_html($q->param('serial')), to_int($q->param('i')));
+					while(my @res = $sql->fetchrow_array()) { $found = 1; }
+					if($found)
+					{
+						msg("Serial number already exists. Please go back and try again.", 0)
+					}
+					else
+					{
+						$sql = $db->prepare("UPDATE items SET type = ?, productid = ?, clientid = ?, serial = ?, approval = ?, info = ? WHERE ROWID = ?;");
+						$sql->execute(sanitize_html($q->param('type')), to_int($q->param('product_id')), to_int($q->param('client_id')), sanitize_html($q->param('serial')), $approval, $info, to_int($q->param('i')));
+						msg("Item updated.", 3);
+					}
 				}
 			}
 			if($q->param('deny') && $logged_lvl > 3)
@@ -5534,8 +5556,16 @@ elsif($q->param('m')) # Modules
 						if($expired == 1) { print "Expired"; } 
 						else { print "Available"; } 
 					}
-					elsif(to_int($res[7]) == 2) { print "Waiting approval for: " . $res[8]; }
-					else { print "Checked out by: " . $res[8]; }
+					elsif(to_int($res[7]) == 2) 
+					{
+						if($logged_lvl >= to_int($cfg->load('summary_lvl'))) { print "Waiting approval for: <a href='./?m=summary&u=" . $res[8] . "'>" . $res[8] . "</a>"; }
+						else { print "Waiting approval for: " . $res[8]; } 
+					}
+					else
+					{
+						if($logged_lvl >= to_int($cfg->load('summary_lvl'))) { print "Checked out by: <a href='./?m=summary&u=" . $res[8] . "'>" . $res[8] . "</a>"; }
+						else { print "Checked out by: " . $res[8]; } 
+					}
 					print "</b></p>";
 					if($logged_lvl > 3) 
 					{
@@ -5988,7 +6018,7 @@ elsif(!$cfg->load("ad_server") && $q->param('new_name') && $q->param('new_pass1'
 	}
 	elsif(length(sanitize_alpha($q->param('new_name'))) < 3 || length(sanitize_alpha($q->param('new_name'))) > 20 || ($q->param('new_email') && length(sanitize_alpha($q->param('new_email'))) > 99) || length($q->param('new_pass1')) < 6)
 	{
-		msg("User names should be between 3 and 20 characters, passwords should be at least 6 characters, emails less than 99 characters. Please go back and try again.", 0);    
+		msg("User names should be between 3 and 20 characters, passwords should be at least 6 characters, emails less than 99 characters. Please go back and try again.", 0);
 	}
 	else
 	{
@@ -6012,7 +6042,7 @@ elsif(!$cfg->load("ad_server") && $q->param('new_name') && $q->param('new_pass1'
 		}
 		else
 		{
-			msg("User already exists. Please go back and try again.", 0);	    
+			msg("User already exists. Please go back and try again.", 0);
 		}
 	}
 	footers();
