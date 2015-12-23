@@ -8,7 +8,7 @@
 #
 
 use strict;
-use Config::Win32;
+use Config::Linux;
 use Digest::SHA qw(sha1_hex);
 use DBI;
 use CGI;
@@ -69,7 +69,7 @@ sub headers
 	navbar();
 	print "  <div class='container'>\n";
 	if($cfg->load("motd")) { print "<div class='well'>" . $cfg->load("motd") . "</div>\n"; }
-	if($logged_lvl > 5 && $cfg->load('comp_tickets') ne "on" && $cfg->load('comp_articles') ne "on" && $cfg->load('comp_time') ne "on" && $cfg->load('comp_shoutbox') ne "on" && $cfg->load('comp_clients') ne "on" && $cfg->load('comp_items') ne "on" && $cfg->load('comp_steps') ne "on") { msg("All components are turned off. Enable the ones you need in Settings.", 1); }
+	if($logged_lvl > 5 && $cfg->load('comp_tickets') ne "on" && $cfg->load('comp_articles') ne "on" && $cfg->load('comp_time') ne "on" && $cfg->load('comp_shoutbox') ne "on" && $cfg->load('comp_clients') ne "on" && $cfg->load('comp_items') ne "on" && $cfg->load('comp_steps') ne "on" && $cfg->load('comp_files') ne "on") { msg("All components are turned off. Enable the ones you need in Settings.", 1); }
 }
 
 # Footers
@@ -1169,11 +1169,11 @@ sub home
 # Connect to config
 eval
 {
-	$cfg = Config::Win32->new("NodePoint", "settings");
+	$cfg = Config::Linux->new("NodePoint", "settings");
 };
 if(!defined($cfg)) # Can't even use headers() if this fails.
 {
-	print "Content-type: text/html\n\nError: Could not access " . Config::Win32->type . ". Please ensure NodePoint has the proper permissions.";
+	print "Content-type: text/html\n\nError: Could not access " . Config::Linux->type . ". Please ensure NodePoint has the proper permissions.";
 	exit(0);
 };
 
@@ -4145,6 +4145,13 @@ elsif($q->param('m')) # Modules
 		if($q->param('ticket_status') && $q->param('work_done') && $q->param('ticket_title') && $q->param('ticket_desc') && ($q->param('ticket_resolution') || ($q->param('ticket_status') eq "Open" || $q->param('ticket_status') eq "New")))
 		{
 			my $resolution = "";
+			my $timespent = 0.00;
+			if($q->param("time_spent"))
+			{
+				$timespent = to_float($q->param("time_spent"));
+				if($timespent > 99.99) { $timespent = 99.99; }
+				if($timespent < -99.99) { $timespent = -99.99; }
+			}
 			if($q->param('ticket_resolution')) { $resolution = sanitize_html($q->param('ticket_resolution')); }
 			my $lnk = "Normal";
 			if($q->param('ticket_priority')) { $lnk = sanitize_html($q->param('ticket_priority')); }
@@ -4171,7 +4178,7 @@ elsif($q->param('m')) # Modules
 				$creator = $res[3];
 			}
 			$changes .= "\n";
-			if($cfg->load('comp_time') eq "on") { $changes .= "[" . to_float($q->param("time_spent")) . "] "; }
+			if($cfg->load('comp_time') eq "on") { $changes .= "[" . $timespent . "] "; }
 			$changes .= sanitize_html($q->param('work_done')) . "\n";				
 			$sql = $db->prepare("UPDATE tickets SET link = ?, resolution = ?, status = ?, title = ?, description = ?, assignedto = ?, releaseid = ?, modified = ? WHERE ROWID = ?;");
 			$sql->execute($lnk, $resolution, sanitize_alpha($q->param('ticket_status')), sanitize_html($q->param('ticket_title')), sanitize_html($q->param('ticket_desc')) . "\n\n--- " . now() . " ---\nTicket modified by: " . $logged_user . "\n" . $changes, $assigned, sanitize_html($q->param('ticket_releases')), now(), to_int($q->param('t')));
@@ -4181,10 +4188,10 @@ elsif($q->param('m')) # Modules
 			}
 			if($creator) { notify($creator, "Your ticket (" . to_int($q->param('t')) . ") has been modified", "The ticket \"" . $q->param('ticket_title') . "\" has been modified:\n\nModified by: " . $logged_user . "\nPriority: " . $lnk . "\nStatus: " . sanitize_alpha($q->param('ticket_status')) . "\nResolution: " . $resolution . "\nAssigned to: " . $assigned . "\nDescription: " . $q->param('ticket_desc') . "\n\n" . $changes); }
 			msg("Ticket updated. Press <a href='./?m=view_ticket&t=" . to_int($q->param('t')) . "'>here</a> to continue.", 3);
-			if($q->param("time_spent") && to_float($q->param("time_spent")) != 0)
+			if($timespent != 0)
 			{
 				$sql = $db->prepare("INSERT INTO timetracking VALUES (?, ?, ?, ?);");
-				$sql->execute(to_int($q->param('t')), $logged_user, to_float($q->param("time_spent")), now());
+				$sql->execute(to_int($q->param('t')), $logged_user, $timespent, now());
 			}
 			if($q->param("notify_user") && sanitize_alpha($q->param('notify_user')) ne "")
 			{
