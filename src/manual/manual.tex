@@ -335,6 +335,7 @@ These are the configuration options for NodePoint. They have to be defined durin
 \item \textbf{Can make custom forms:} The minimum access level to create and edit custom ticket forms under the Tools menu.
 \item \textbf{Can view reports and statistics:} The minimum access level to access the statistics screen under the Tools menu.
 \item \textbf{Can assign tasks to users:} The minimum access level to assign tasks to users on the Projects page.
+\item \textbf{Can view user details:} Users of this access level or higher can view a list of users along with summary pages listing email addresses, access levels, tickets entered and checked out items.
 \item \textbf{Can view client details:} The minimum access level to view details about clients, including billing information.
 \item \textbf{Authentication plugin:} Use an external script or application to authenticate users. This can be used instead of the built-in users management or Active Directory integration if you have some other process to authenticate users. It must return 0 for success, 1 for failure. The following variables can be used: \textit{\%user\%} and \textit{\%pass\%}. For example: \texttt{python auth.py -userid \%user\% -passwd \%pass\%}
 \item \textbf{Notifications plugin:} Call an application or script when a notification is sent. You can use the following variables here: \textit{\%user\%}, \textit{\%title\%} and \textit{\%message\%}. For example: \texttt{echo \%message\% >> ..\textbackslash \%user\%.log}

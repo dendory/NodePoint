@@ -155,7 +155,7 @@ sub navbar
 			if($logged_lvl >= to_int($cfg->load("report_lvl"))) { print "   <li><a href='./?m=stats'>Statistics</a></li>\n"; }
 			if($logged_lvl >= to_int($cfg->load("upload_lvl")) && $cfg->load('comp_files') eq "on") { print "   <li><a href='./?m=files'>Files</a></li>\n"; }
 			if($logged_lvl >= to_int($cfg->load("customs_lvl")) && $cfg->load('comp_tickets') eq "on")	{ print "   <li><a href='./?m=customforms'>Custom forms</a></li>\n"; }
-			if($logged_lvl > 4) { print "   <li><a href='./?m=users'>Users management</a></li>\n"; }
+			if($logged_lvl >= to_int($cfg->load("summary_lvl"))) { print "   <li><a href='./?m=users'>Users management</a></li>\n"; }
 			if($logged_lvl > 5) { print "   <li><a href='./?m=log'>System log</a></li>\n"; }
 			print "  <li role='separator' class='divider'></li><li><a href='./?m=logout'>Logout</a></li></ul></li>\n";
 		}
@@ -172,7 +172,7 @@ sub navbar
 			if($logged_lvl >= to_int($cfg->load("report_lvl"))) { print "   <li><a href='./?m=stats'>Statistics</a></li>\n"; }
 			if($logged_lvl >= to_int($cfg->load("upload_lvl")) && $cfg->load('comp_files') eq "on") { print "   <li><a href='./?m=files'>Files</a></li>\n"; }
 			if($logged_lvl >= to_int($cfg->load("customs_lvl")) && $cfg->load('comp_tickets') eq "on")	{ print "   <li><a href='./?m=customforms'>Custom forms</a></li>\n"; }
-			if($logged_lvl > 4) { print "   <li><a href='./?m=users'>Users management</a></li>\n"; }
+			if($logged_lvl >= to_int($cfg->load("summary_lvl"))) { print "   <li><a href='./?m=users'>Users management</a></li>\n"; }
 			if($logged_lvl > 5) { print "   <li><a href='./?m=log'>System log</a></li>\n"; }
 			print "  <li role='separator' class='divider'></li><li><a href='./?m=logout'>Logout</a></li></ul></li>\n";
 		}
@@ -189,7 +189,7 @@ sub navbar
 			if($logged_lvl >= to_int($cfg->load("report_lvl"))) { print "   <li><a href='./?m=stats'>Statistics</a></li>\n"; }
 			if($logged_lvl >= to_int($cfg->load("upload_lvl")) && $cfg->load('comp_files') eq "on") { print "   <li><a href='./?m=files'>Files</a></li>\n"; }
 			if($logged_lvl >= to_int($cfg->load("customs_lvl")) && $cfg->load('comp_tickets') eq "on")	{ print "   <li><a href='./?m=customforms'>Custom forms</a></li>\n"; }
-			if($logged_lvl > 4) { print "   <li><a href='./?m=users'>Users management</a></li>\n"; }
+			if($logged_lvl >= to_int($cfg->load("summary_lvl"))) { print "   <li><a href='./?m=users'>Users management</a></li>\n"; }
 			if($logged_lvl > 5) { print "   <li><a href='./?m=log'>System log</a></li>\n"; }
 			print "  <li role='separator' class='divider'></li><li><a href='./?m=logout'>Logout</a></li></ul></li>\n";
 		}
@@ -206,7 +206,7 @@ sub navbar
 			if($logged_lvl >= to_int($cfg->load("report_lvl"))) { print "   <li><a href='./?m=stats'>Statistics</a></li>\n"; }
 			if($logged_lvl >= to_int($cfg->load("upload_lvl")) && $cfg->load('comp_files') eq "on") { print "   <li><a href='./?m=files'>Files</a></li>\n"; }
 			if($logged_lvl >= to_int($cfg->load("customs_lvl")) && $cfg->load('comp_tickets') eq "on")	{ print "   <li><a href='./?m=customforms'>Custom forms</a></li>\n"; }
-			if($logged_lvl > 4) { print "   <li><a href='./?m=users'>Users management</a></li>\n"; }
+			if($logged_lvl >= to_int($cfg->load("summary_lvl"))) { print "   <li><a href='./?m=users'>Users management</a></li>\n"; }
 			if($logged_lvl > 5) { print "   <li><a href='./?m=log'>System log</a></li>\n"; }
 			print "  <li role='separator' class='divider'></li><li><a href='./?m=logout'>Logout</a></li></ul></li>\n";
 		}
@@ -223,7 +223,7 @@ sub navbar
 			if($logged_lvl >= to_int($cfg->load("report_lvl"))) { print "   <li><a href='./?m=stats'>Statistics</a></li>\n"; }
 			if($logged_lvl >= to_int($cfg->load("upload_lvl")) && $cfg->load('comp_files') eq "on") { print "   <li><a href='./?m=files'>Files</a></li>\n"; }
 			if($logged_lvl >= to_int($cfg->load("customs_lvl")) && $cfg->load('comp_tickets') eq "on")	{ print "   <li><a href='./?m=customforms'>Custom forms</a></li>\n"; }
-			if($logged_lvl > 4) { print "   <li><a href='./?m=users'>Users management</a></li>\n"; }
+			if($logged_lvl >= to_int($cfg->load("summary_lvl"))) { print "   <li><a href='./?m=users'>Users management</a></li>\n"; }
 			if($logged_lvl > 5) { print "   <li><a href='./?m=log'>System log</a></li>\n"; }
 			print "  <li role='separator' class='divider'></li><li><a href='./?m=logout'>Logout</a></li></ul></li>\n";
 		}
@@ -240,7 +240,7 @@ sub navbar
 			if($logged_lvl >= to_int($cfg->load("report_lvl"))) { print "   <li><a href='./?m=stats'>Statistics</a></li>\n"; }
 			if($logged_lvl >= to_int($cfg->load("upload_lvl")) && $cfg->load('comp_files') eq "on") { print "   <li><a href='./?m=files'>Files</a></li>\n"; }
 			if($logged_lvl >= to_int($cfg->load("customs_lvl")) && $cfg->load('comp_tickets') eq "on")	{ print "   <li><a href='./?m=customforms'>Custom forms</a></li>\n"; }
-			if($logged_lvl > 4) { print "   <li><a href='./?m=users'>Users management</a></li>\n"; }
+			if($logged_lvl >= to_int($cfg->load("summary_lvl"))) { print "   <li><a href='./?m=users'>Users management</a></li>\n"; }
 			if($logged_lvl > 5) { print "   <li><a href='./?m=log'>System log</a></li>\n"; }
 			print "  <li role='separator' class='divider'></li><li><a href='./?m=logout'>Logout</a></li></ul></li>\n";
 		}
@@ -257,7 +257,7 @@ sub navbar
 			if($logged_lvl >= to_int($cfg->load("report_lvl"))) { print "   <li><a href='./?m=stats'>Statistics</a></li>\n"; }
 			if($logged_lvl >= to_int($cfg->load("upload_lvl")) && $cfg->load('comp_files') eq "on") { print "   <li><a href='./?m=files'>Files</a></li>\n"; }
 			if($logged_lvl >= to_int($cfg->load("customs_lvl")) && $cfg->load('comp_tickets') eq "on")	{ print "   <li><a href='./?m=customforms'>Custom forms</a></li>\n"; }
-			if($logged_lvl > 4) { print "   <li><a href='./?m=users'>Users management</a></li>\n"; }
+			if($logged_lvl >= to_int($cfg->load("summary_lvl"))) { print "   <li><a href='./?m=users'>Users management</a></li>\n"; }
 			if($logged_lvl > 5) { print "   <li><a href='./?m=log'>System log</a></li>\n"; }
 			print "  <li role='separator' class='divider'></li><li><a href='./?m=logout'>Logout</a></li></ul></li>\n";
 		}
@@ -555,6 +555,12 @@ sub db_check
 	$sql = $db->prepare("SELECT * FROM files WHERE 0 = 1;") or do
 	{
 		$sql = $db->prepare("CREATE TABLE files (user TEXT, file TEXT, filename TEXT, time TEXT, size INT);");
+		$sql->execute();
+	};
+	$sql->finish();
+	$sql = $db->prepare("SELECT * FROM file_access WHERE 0 = 1;") or do
+	{
+		$sql = $db->prepare("CREATE TABLE file_access (ip TEXT, file TEXT, time TEXT);");
 		$sql->execute();
 	};
 	$sql->finish();
@@ -959,9 +965,9 @@ sub home
 				if($products[$res[1]] && $res[3] eq $logged_user) 
 				{ 
 					print "<tr><td><nobr>";
-					if($res[7] eq "High") { print "<img src='icons/high.png'> "; }
-					elsif($res[7] eq "Low") { print "<img src='icons/low.png'> "; }
-					else { print "<img src='icons/normal.png'> "; }
+					if($res[7] eq "High") { print "<img src='icons/high.png' title='High'> "; }
+					elsif($res[7] eq "Low") { print "<img src='icons/low.png' title='Low'> "; }
+					else { print "<img src='icons/normal.png' title='Normal'> "; }
 					print $res[0] . "</nobr></td><td>" . $products[$res[1]] . "</td><td><a href='./?m=view_ticket&t=" . $res[0] . "'>" . $res[5] . "</a></td><td>" . $res[8] . "</td><td>" . $res[12] . "</td></tr>\n"; 
 				}
 			}
@@ -986,9 +992,9 @@ sub home
 				if($products[$res[1]] && $res[10] =~ /\b$logged_user\b/) 
 				{ 
 					print "<tr><td><nobr>";
-					if($res[7] eq "High") { print "<img src='icons/high.png'> "; }
-					elsif($res[7] eq "Low") { print "<img src='icons/low.png'> "; }
-					else { print "<img src='icons/normal.png'> "; }
+					if($res[7] eq "High") { print "<img src='icons/high.png' title='High'> "; }
+					elsif($res[7] eq "Low") { print "<img src='icons/low.png' title='Low'> "; }
+					else { print "<img src='icons/normal.png' title='Normal'> "; }
 					print $res[0] . "</nobr></td><td>" . $products[$res[1]] . "</td><td><a href='./?m=view_ticket&t=" . $res[0] . "'>" . $res[5] . "</a></td><td>" . $res[8] . "</td><td>" . $res[12] . "</td></tr>\n"; 
 				}
 			}
@@ -1013,9 +1019,9 @@ sub home
 				if($products[$res[1]] && $res[4] =~ /\b$logged_user\b/) 
 				{ 
 					print "<tr><td><nobr>";
-					if($res[7] eq "High") { print "<img src='icons/high.png'> "; }
-					elsif($res[7] eq "Low") { print "<img src='icons/low.png'> "; }
-					else { print "<img src='icons/normal.png'> "; }
+					if($res[7] eq "High") { print "<img src='icons/high.png' title='High'> "; }
+					elsif($res[7] eq "Low") { print "<img src='icons/low.png' title='Low'> "; }
+					else { print "<img src='icons/normal.png' title='Normal'> "; }
 					print $res[0] . "</nobr></td><td>" . $products[$res[1]] . "</td><td><a href='./?m=view_ticket&t=" . $res[0] . "'>" . $res[5] . "</a></td><td>" . $res[8] . "</td><td>" . $res[12] . "</td></tr>\n"; 
 				}
 			}
@@ -2661,6 +2667,8 @@ elsif($q->param('file') && $cfg->load('upload_folder')) # Show an image
 	{
 		print $line;
 	}
+	$sql = $db->prepare("INSERT INTO file_access VALUES (?, ?, ?)");
+	$sql->execute($q->remote_addr, sanitize_alpha($q->param('file')), now());
 	exit(0);
 }
 elsif($q->param('m')) # Modules
@@ -2788,7 +2796,7 @@ elsif($q->param('m')) # Modules
 			print "<tr><td style='width:50%'>Can make custom forms</td><td><input class='form-control' type='text' name='customs_lvl' value=\"" . to_int($cfg->load("customs_lvl")) . "\"></td></tr>\n";
 			print "<tr><td style='width:50%'>Can view reports and statistics</td><td><input class='form-control' type='text' name='report_lvl' value=\"" . to_int($cfg->load("report_lvl")) . "\"></td></tr>\n";
 			print "<tr><td style='width:50%'>Can assign tasks to users</td><td><input class='form-control' type='text' name='tasks_lvl' value=\"" . to_int($cfg->load("tasks_lvl")) . "\"></td></tr>\n";
-			print "<tr><td style='width:50%'>Can view users summary page</td><td><input class='form-control' type='text' name='summary_lvl' value=\"" . to_int($cfg->load("summary_lvl")) . "\"></td></tr>\n";
+			print "<tr><td style='width:50%'>Can view user details</td><td><input class='form-control' type='text' name='summary_lvl' value=\"" . to_int($cfg->load("summary_lvl")) . "\"></td></tr>\n";
 			print "<tr><td style='width:50%'>Can view client details</td><td><input class='form-control' type='text' name='client_lvl' value=\"" . to_int($cfg->load("client_lvl")) . "\"></td></tr>\n";
 			print "</table><h4>Plugins</h4><table class='table table-striped'>";
 			print "<tr><td style='width:50%'>Authentication</td><td><input class='form-control' type='text' name='auth_plugin' value=\"" . $cfg->load("auth_plugin") . "\"></td></tr>\n";
@@ -2837,7 +2845,7 @@ elsif($q->param('m')) # Modules
 			print "</table>The admin password will be left unchanged if empty.<br>See the <a href='./manual.pdf'>manual</a> file for detailed information.<input class='btn btn-primary pull-right' type='submit' value='Save settings'></form></div></div>\n";
 		}
 	}
-	elsif($q->param('m') eq "users" && $logged_lvl > 4)
+	elsif($q->param('m') eq "users" && $logged_lvl >= to_int($cfg->load("summary_lvl")))
 	{
 		headers("Users management");
 		print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Users management</h3></div><div class='panel-body'>\n";
@@ -4227,7 +4235,7 @@ elsif($q->param('m')) # Modules
 			if(!$q->param('ticket_title')) { $text .= "<span class='label label-danger'>Ticket title</span> "; }
 			if(!$q->param('ticket_releases')) { $text .= "<span class='label label-danger'>Ticket " . lc($items{"Release"}) . "s</span> "; }
 			if(!$q->param('ticket_desc')) { $text .= "<span class='label label-danger'>Ticket description</span> "; }
-			if(!$q->param('ticket_resolution')) { $text .= "<span class='label label-danger'>Ticket resolution</span> "; }
+			if(!$q->param('ticket_resolution') && ($q->param('ticket_status') ne "Open" && $q->param('ticket_status') ne "New")) { $text .= "<span class='label label-danger'>Ticket resolution</span> "; }
 			if(!$q->param('work_done')) { $text .= "<span class='label label-danger'>Summary of work done</span> "; }
 			$text .= " Please go back and try again.";
 			msg($text, 0);
@@ -4314,13 +4322,30 @@ elsif($q->param('m')) # Modules
 		print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Available files</h3></div><div class='panel-body'>\n";
 		$sql = $db->prepare("SELECT * FROM files;");
 		$sql->execute();
-		print "<table class='table table-striped' id='files_table'><thead><tr><th>File name</th><th>File size</th><th>Uploaded by</th><th>Date</th><th>Download link</th></tr></thead><tbody>\n";
+		print "<table class='table table-striped' id='files_table'><thead><tr><th>File name</th><th>File size</th><th>Uploaded by</th><th>Date</th><th>Hits</th><th>Download link</th></tr></thead><tbody>\n";
 		while(my @res = $sql->fetchrow_array())
 		{
-			print "<tr><td>" . $res[2] . "</td><td>" . to_int($res[4]) . "</td><td>" . $res[0] . "</td><td>" . $res[3] . "</td><td><a href='./?file=" . $res[1] . "'>" . $res[1] . "</a><span class='pull-right'><form method='POST' action='.'><input type='hidden' name='m' value='files'><input type='hidden' name='delete_file' value='" . $res[1] . "'><input class='btn btn-danger pull-right' type='submit' value='X'></form></span></td></tr>\n";
+			my $accesscount = 0;
+			my $sql2 = $db->prepare("SELECT COUNT(*) FROM file_access WHERE file = ?;");
+			$sql2->execute($res[1]);
+			while(my @res2 = $sql2->fetchrow_array()) { $accesscount = to_int($res2[0]); }
+			print "<tr><td>" . $res[2] . "</td><td>" . to_int($res[4]) . "</td><td>" . $res[0] . "</td><td>" . $res[3] . "</td><td>" . $accesscount . "</td><td><a href='./?file=" . $res[1] . "'>" . $res[1] . "</a><span class='pull-right'><form method='POST' action='.'><input type='hidden' name='m' value='files'><input type='hidden' name='delete_file' value='" . $res[1] . "'><input class='btn btn-danger pull-right' type='submit' value='X'></form></span></td></tr>\n";
 		}
 		print "</tbody></table><script>\$(document).ready(function(){\$('#files_table').DataTable({'order':[[0,'asc']],pageLength:" . to_int($cfg->load('page_len')) . ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script>\n";
 		print "</div></div>\n";
+		if($logged_lvl > 5)
+		{
+			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Access log</h3></div><div class='panel-body'>\n";
+			$sql = $db->prepare("SELECT * FROM file_access;");
+			$sql->execute();
+			print "<table class='table table-striped' id='files_log'><thead><tr><th>IP address</th><th>File ID</th><th>Date</th></tr></thead><tbody>\n";
+			while(my @res = $sql->fetchrow_array())
+			{
+				print "<tr><td>" . $res[0] . "</td><td>" . $res[1] . "</td><td>" . $res[2] . "</td></tr>\n";
+			}
+			print "</tbody></table><script>\$(document).ready(function(){\$('#files_log').DataTable({'order':[[2,'desc']],pageLength:" . to_int($cfg->load('page_len')) . ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script>\n";
+			print "</div></div>\n";
+		}
 	}
 	elsif($q->param('m') eq "add_comment" && $logged_lvl > 0 && $q->param('t'))
 	{
@@ -5258,9 +5283,9 @@ elsif($q->param('m')) # Modules
 			if($products[$res[1]] && (($cfg->load("default_vis") eq "Public" || ($cfg->load("default_vis") eq "Private" && $logged_lvl > -1) || ($res[3] eq $logged_user) || $logged_lvl > 1)))
 			{ 
 				print "<tr><td><nobr>";
-				if($res[7] eq "High") { print "<img src='icons/high.png'> "; }
-				elsif($res[7] eq "Low") { print "<img src='icons/low.png'> "; }
-				else { print "<img src='icons/normal.png'> "; }
+				if($res[7] eq "High") { print "<img src='icons/high.png' title='High'> "; }
+				elsif($res[7] eq "Low") { print "<img src='icons/low.png' title='Low'> "; }
+				else { print "<img src='icons/normal.png' title='Normal'> "; }
 				print $res[0] . "</nobr></td><td>" . $res[3] . "</td><td>" . $products[$res[1]] . "</td><td><a href='./?m=view_ticket&t=" . $res[0] . "'>" . $res[5] . "</a></td><td>" . $res[8] . "</td><td>" . $res[11] . "</td></tr>\n"; 
 			}
 		}
@@ -5987,9 +6012,9 @@ elsif($q->param('kb') && $cfg->load('comp_articles') eq "on")
 					while(my @res3 = $sql2->fetchrow_array())
 					{
 						print "<tr><td><nobr>";
-						if($res3[2] eq "High") { print "<img src='icons/high.png'> "; }
-						elsif($res3[2] eq "Low") { print "<img src='icons/low.png'> "; }
-						else { print "<img src='icons/normal.png'> "; }
+						if($res3[2] eq "High") { print "<img src='icons/high.png' title='High'> "; }
+						elsif($res3[2] eq "Low") { print "<img src='icons/low.png' title='Low'> "; }
+						else { print "<img src='icons/normal.png' title='Normal'> "; }
 						print $res2[0] . "</nobr></td><td><a href='./?m=view_ticket&t=" . $res2[0] . "'>" . $res3[0] . "</a></td><td>" . $res3[1] . "</td>";
 						if($logged_lvl > 3) { print "<td><a href='./?m=unlink_article&articleid=" . to_int($q->param('kb')) . "&ticketid=" . $res2[0] . "'>Unlink</a></td>"; }
 						print "</tr>\n";
