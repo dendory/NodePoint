@@ -8,7 +8,7 @@
 #
 
 use strict;
-use Config::Linux;
+use Config::Win32;
 use Digest::SHA qw(sha1_hex);
 use DBI;
 use CGI;
@@ -27,7 +27,7 @@ my ($cfg, $db, $sql, $cn, $cp, $cgs, $last_login, $perf);
 my $logged_user = "";
 my $logged_lvl = -1;
 my $q = new CGI;
-my $VERSION = "1.5.5";
+my $VERSION = "1.5.6";
 my %items = ("Product", "Product", "Release", "Release", "Model", "SKU/Model");
 my @itemtypes = ("None");
 my @themes = ("primary", "default", "success", "info", "warning", "danger");
@@ -193,7 +193,7 @@ sub navbar
 			if($logged_lvl > 5) { print "   <li><a href='./?m=log'>System log</a></li>\n"; }
 			print "  <li role='separator' class='divider'></li><li><a href='./?m=logout'>Logout</a></li></ul></li>\n";
 		}
-		elsif($q->param('m') && ($q->param('m') eq "clients" || $q->param('m') eq "add_client" || $q->param('m') eq  "view_client" || $q->param('m') eq "save_client" || $q->param('m') eq "set_defaults"))
+		elsif($q->param('m') && ($q->param('m') eq "clients" || $q->param('m') eq "add_client" || $q->param('m') eq  "view_client" || $q->param('m') eq  "view_event" || $q->param('m') eq "save_client" || $q->param('m') eq "set_defaults"))
 		{
 			print "	 <li><a href='.'>Home</a></li>\n";
 			print "	 <li><a href='./?m=products'>" . $items{"Product"} . "s</a></li>\n";
@@ -564,6 +564,12 @@ sub db_check
 		$sql->execute();
 	};
 	$sql->finish();
+	$sql = $db->prepare("SELECT * FROM events WHERE 0 = 1;") or do
+	{
+		$sql = $db->prepare("CREATE TABLE events (clientid INT, user TEXT, type TEXT, summary TEXT, notes TEXT, time TEXT);");
+		$sql->execute();
+	};
+	$sql->finish();
 }
 
 # Log an event
@@ -599,6 +605,7 @@ sub save_config
 	$cfg->save("past_lvl", to_int($q->param('past_lvl')));
 	$cfg->save("customs_lvl", to_int($q->param('customs_lvl')));
 	$cfg->save("client_lvl", to_int($q->param('client_lvl')));
+	$cfg->save("events_lvl", to_int($q->param('events_lvl')));
 	$cfg->save("report_lvl", to_int($q->param('report_lvl')));
 	$cfg->save("allow_registrations", $q->param('allow_registrations'));
 	$cfg->save("guest_tickets", $q->param('guest_tickets'));
@@ -1169,11 +1176,11 @@ sub home
 # Connect to config
 eval
 {
-	$cfg = Config::Linux->new("NodePoint", "settings");
+	$cfg = Config::Win32->new("NodePoint", "settings");
 };
 if(!defined($cfg)) # Can't even use headers() if this fails.
 {
-	print "Content-type: text/html\n\nError: Could not access " . Config::Linux->type . ". Please ensure NodePoint has the proper permissions.";
+	print "Content-type: text/html\n\nError: Could not access " . Config::Win32->type . ". Please ensure NodePoint has the proper permissions.";
 	exit(0);
 };
 
@@ -1253,6 +1260,7 @@ if(to_int($cfg->load("upload_lvl")) < 1 || to_int($cfg->load("upload_lvl")) > 6)
 if(to_int($cfg->load("default_lvl")) < 0 || to_int($cfg->load("default_lvl")) > 5) { $cfg->save("default_lvl", 1); }
 if(to_int($cfg->load("report_lvl")) < 1 || to_int($cfg->load("report_lvl")) > 6) { $cfg->save("report_lvl", 2); }
 if(to_int($cfg->load("client_lvl")) < 1 || to_int($cfg->load("client_lvl")) > 6) { $cfg->save("client_lvl", 2); }
+if(to_int($cfg->load("events_lvl")) < 1 || to_int($cfg->load("events_lvl")) > 6) { $cfg->save("events_lvl", 2); }
 if(to_int($cfg->load("customs_lvl")) < 1 || to_int($cfg->load("customs_lvl")) > 6) { $cfg->save("customs_lvl", 4); }
 if(to_int($cfg->load("tasks_lvl")) < 1 || to_int($cfg->load("tasks_lvl")) > 6) { $cfg->save("tasks_lvl", 4); }
 if(to_int($cfg->load("summary_lvl")) < 1 || to_int($cfg->load("summary_lvl")) > 6) { $cfg->save("summary_lvl", 5); }
@@ -2798,6 +2806,7 @@ elsif($q->param('m')) # Modules
 			print "<tr><td style='width:50%'>Can assign tasks to users</td><td><input class='form-control' type='text' name='tasks_lvl' value=\"" . to_int($cfg->load("tasks_lvl")) . "\"></td></tr>\n";
 			print "<tr><td style='width:50%'>Can view user details</td><td><input class='form-control' type='text' name='summary_lvl' value=\"" . to_int($cfg->load("summary_lvl")) . "\"></td></tr>\n";
 			print "<tr><td style='width:50%'>Can view client details</td><td><input class='form-control' type='text' name='client_lvl' value=\"" . to_int($cfg->load("client_lvl")) . "\"></td></tr>\n";
+			print "<tr><td style='width:50%'>Can add client events</td><td><input class='form-control' type='text' name='events_lvl' value=\"" . to_int($cfg->load("events_lvl")) . "\"></td></tr>\n";
 			print "</table><h4>Plugins</h4><table class='table table-striped'>";
 			print "<tr><td style='width:50%'>Authentication</td><td><input class='form-control' type='text' name='auth_plugin' value=\"" . $cfg->load("auth_plugin") . "\"></td></tr>\n";
 			print "<tr><td style='width:50%'>Notifications</td><td><input class='form-control' type='text' name='ext_plugin' value=\"" . $cfg->load("ext_plugin") . "\"></td></tr>\n";
@@ -3067,7 +3076,7 @@ elsif($q->param('m')) # Modules
 		if($cfg->load('comp_articles') eq "on") { print "<option value='13'>Tickets linked per article</option>"; }
 		if($cfg->load('comp_tickets') eq "on") { print "<option value='3'>Tickets created per " . lc($items{"Product"}) . "</option><option value='10'>New and open tickets per " . lc($items{"Product"}) . "</option><option value='4'>Tickets created per user</option><option value='5'>Tickets created per day</option><option value='6'>Tickets created per month</option><option value='7'>Tickets per status</option><option value='9'>Tickets assigned per user</option><option value='12'>Comment file attachments</option>"; }
 		if($cfg->load('comp_shoutbox') eq "on") { print "<option value='14'>Full shoutbox history</option>"; }
-		if($cfg->load('comp_clients') eq "on") { print "<option value='16'>Clients per status</option>"; }
+		if($cfg->load('comp_clients') eq "on") { print "<option value='16'>Clients per status</option><option value='20'>Client events per user</option>"; }
 		if($cfg->load('comp_items') eq "on") { print "<option value='15'>Items checked out per user</option><option value='18'>Item expiration dates</option>"; }
 		print "<option value='8'>Users per access level</option><option value='17'>Active user sessions</option><option value='19'>Disabled users</option></select></div><div class='col-sm-6'><span class='pull-right'><input class='btn btn-primary' type='submit' value='Show report'></span></div></div></form></p></div><div class='help-block with-errors'></div></div>\n";
 	}
@@ -3301,61 +3310,74 @@ elsif($q->param('m')) # Modules
 		}
 		print "</div></div>";
 	}
+	elsif($q->param('m') eq "view_event" && $q->param('e') && $q->param('c') && $logged_lvl >= to_int($cfg->load('client_lvl')))
+	{
+		headers("Clients");
+		my $clientname = "Unknown";
+		$sql = $db->prepare("SELECT name FROM clients WHERE ROWID = ?;");
+		$sql->execute(to_int($q->param('c')));
+		while(my @res = $sql->fetchrow_array())
+		{ $clientname = $res[0]; }
+		print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>" . $clientname . "</h3></div><div class='panel-body'>";
+		$sql = $db->prepare("SELECT * FROM events WHERE ROWID = ?;");
+		$sql->execute(to_int($q->param('e')));
+		while(my @res = $sql->fetchrow_array())
+		{
+			if($logged_lvl >= to_int($cfg->load('events_lvl')))
+			{ 
+				print "<form method='POST' action='.'><input type='hidden' name='m' value='view_client'><input type='hidden' name='c' value='" . to_int($q->param('c')) . "'><input type='hidden' name='update_event' value='" . to_int($q->param('e')) . "'>";
+				print "<p><div class='row'><div class='col-sm-12'>Event type: <b>" . $res[2] . "</b></div></div><div class='row'><div class='col-sm-12'>Event summary: <input type='text' class='form-control' name='event_summary' value='" . $res[3] . "'>";
+			}
+			else
+			{
+				print "<p><div class='row'><div class='col-sm-6'>Event type: <b>" . $res[2] . "</b></div><div class='col-sm-6'>Event summary: <b>" . $res[3] . "</b>";
+			}
+			print "</div></div></p><p><div class='row'><div class='col-sm-12'>Notes:<br>";
+			if($logged_lvl >= to_int($cfg->load('events_lvl')))
+			{ 
+				print "<textarea class='form-control' name='event_notes' rows=10>" . $res[4] . "</textarea>";
+			}
+			else
+			{
+				print "<pre>" . $res[4] . "</pre>";
+			}
+			print "</div></div></p>";
+			if($logged_lvl >= to_int($cfg->load('events_lvl')))
+			{ 
+				print "<input type='submit' class='btn btn-primary pull-right' value='Update event'></form>";
+			}
+			if($logged_lvl > 5)
+			{ 
+				print "<form method='GET' action='.'><input type='hidden' name='m' value='view_client'><input type='hidden' name='c' value='" . to_int($q->param('c')) . "'><input type='hidden' name='delete_event' value='" . to_int($q->param('e')) . "'><input type='submit' class='btn btn-danger' value='Delete'></form>";
+			}
+		}
+		print "</div></div>\n";
+	}
 	elsif($q->param('m') eq "view_client" && $q->param('c') && $logged_lvl >= to_int($cfg->load('client_lvl')))
 	{
-		if($q->param('csv') && $cfg->load('comp_billing') eq "on")
-		{
-			my $client_name = "";
-			$sql = $db->prepare("SELECT * FROM clients WHERE ROWID = ?;");
-			$sql->execute(to_int($q->param('c')));
-			while(my @res = $sql->fetchrow_array())
-			{
-				$client_name = $res[0];
-			}
-			my $cost = 10.0;
-			my $currency = "USD";
-			my $type = 0;
-			if($cfg->load('comp_time') eq "on") { $type = 1; }
-			my $sql2 = $db->prepare("SELECT type,currency,cost FROM billing_defaults WHERE client = ?;");
-			$sql2->execute($client_name);
-			while(my @res2 = $sql2->fetchrow_array())
-			{
-				$type = $res2[0];
-				$currency = $res2[1];
-				$cost = $res2[2];
-			}
-			print $q->header(-type => "text/csv", -attachment => "billing.csv");
-			print "Ticket,Hours,Cost\n";
-			$sql2 = $db->prepare("SELECT ticketid FROM billing WHERE client = ?;");
-			$sql2->execute($client_name);
-			my $total = 0;
-			while(my @res2 = $sql2->fetchrow_array())
-			{
-				print $res2[0] . ",";
-				my $curhours = 0;
-				my $sql3 = $db->prepare("SELECT spent FROM timetracking WHERE ticketid = ?;");
-				$sql3->execute($res2[0]);
-				while(my @res3 = $sql3->fetchrow_array())
-				{
-					$curhours += to_float($res3[0]);
-				}
-				print $curhours . ",\$";
-				if($cfg->load('comp_time') eq "on" && $type == 1)
-				{
-					print $curhours * to_float($cost);
-					$total += $curhours * to_float($cost);
-				}
-				else
-				{
-					print $cost;
-					$total += $cost;
-				}
-				print "\n";
-				}
-			print "Total,,\$" . $total . "\n";
-			quit(0);
-		}
 		headers("Clients");
+		if($logged_lvl >= to_int($cfg->load('events_lvl')) && $q->param('new_event') && $q->param('event_type'))
+		{
+			my $notes = "";
+			if($q->param('event_notes')) { $notes = sanitize_html($q->param('event_notes')); }
+			$sql = $db->prepare("INSERT INTO events VALUES (?, ?, ?, ?, ?, ?);");
+			$sql->execute(to_int($q->param('c')), $logged_user, sanitize_html($q->param('event_type')), sanitize_html($q->param('new_event')), $notes, now());
+			msg("New event added.", 3);
+		}
+		if($logged_lvl >= to_int($cfg->load('events_lvl')) && $q->param('event_summary') && $q->param('update_event'))
+		{
+			my $notes = "";
+			if($q->param('event_notes')) { $notes = sanitize_html($q->param('event_notes')); }
+			$sql = $db->prepare("UPDATE events SET summary = ?, notes = ? WHERE ROWID = ?;");
+			$sql->execute(sanitize_html($q->param('event_summary')), $notes . "\n\nUpdated by " . $logged_user . " on " . now() . "\n", to_int($q->param('update_event')));
+			msg("Event updated.", 3);
+		}
+		if($logged_lvl >= to_int($cfg->load('events_lvl')) && $q->param('delete_event'))
+		{
+			$sql = $db->prepare("DELETE FROM events WHERE ROWID = ?;");
+			$sql->execute(to_int($q->param('delete_event')));
+			msg("Event deleted.", 3);
+		}
 		if($q->param('set_defaults') && $q->param('c') && $logged_lvl > 4)
 		{
 			$sql = $db->prepare("DELETE FROM billing_defaults WHERE client = ?;");
@@ -3388,8 +3410,22 @@ elsif($q->param('m')) # Modules
 			else
 			{
 				print "<p><div class='row'><div class='col-sm-6'>Contact: <b>" . $res[2] . "</b></div><div class='col-sm-6'>Status: <b>" . $res[1] . "</b></div></div></p><p>Notes:<br><pre>" . $res[3] . "</pre></p>";
-				if($logged_lvl > 4) { print "<form method='POST' action='.'><input type='hidden' name='m' value='view_client'><input type='hidden' name='c' value='" . to_int($q->param('c')) . "'><input type='submit' class='btn btn-primary pull-right' name='edit' value='Edit client'></form>"; }
+				if($logged_lvl > 4) { print "<form method='POST' action='.' class='form-group'><input type='hidden' name='m' value='view_client'><input type='hidden' name='c' value='" . to_int($q->param('c')) . "'><input type='submit' class='btn btn-primary pull-right' name='edit' value='Edit client'></form>"; }
 			}
+			print "</div></div>\n";
+			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Events</h3></div><div class='panel-body'>";
+			if($logged_lvl >= to_int($cfg->load('events_lvl')))
+			{
+				print "<h4>Add new event</h4><form method='POST' action='.' data-toggle='validator' role='form'><input type='hidden' name='m' value='view_client'><input type='hidden' name='c' value='" . to_int($q->param('c')) . "'><p><div class='row'><div class='col-sm-2'><select class='form-control' name='event_type'><option>Email dialog</option><option>Phone call</option><option>Online meeting</option><option>In-person meeting</option><option>Other contact</option></select></div><div class='col-sm-8'><input type='text' class='form-control' name='new_event' value='' placeholder='Event summary'></div><div class='col-sm-2'><input type='submit' value='Add event' class='btn btn-primary pull-right'></div></div></p><p><div class='row'><div class='col-sm-12'><textarea name='event_notes' class='form-control' placeholder='Event notes'></textarea></div></div></p></form><h4>Events log</h4>\n";
+			}
+			print "<table class='table table-striped' id='events_table'><thead><tr><th>User</th><th>Type</th><th>Summary</th><th>Date</th></tr></thead><tbody>\n";
+			$sql = $db->prepare("SELECT ROWID,* FROM events WHERE clientid = ?;");
+			$sql->execute(to_int($q->param('c')));
+			while(my @res = $sql->fetchrow_array())
+			{
+				print "<tr><td>" . $res[2] . "</td><td>" . $res[3] . "</td><td><a href='./?m=view_event&e=" . $res[0] . "&c=" . to_int($q->param('c')) . "'>" . $res[4] . "</a></td><td>" . $res[6] . "</td></tr>\n";
+			}
+			print "</tbody></table><script>\$(document).ready(function(){\$('#events_table').DataTable({'order':[[3,'desc']],pageLength:" .  to_int($cfg->load('page_len')). ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script>\n";
 			print "</div></div>\n";
 			if($cfg->load('comp_billing') eq "on" && $cfg->load('comp_tickets') eq "on")
 			{
@@ -5094,6 +5130,11 @@ elsif($q->param('m')) # Modules
 			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Disabled users</h3></div><div class='panel-body'><table class='table table-striped' id='report_table'><thead><tr><th>User</th><th>State</th></tr></thead><tbody>";
 			$sql = $db->prepare("SELECT 'Disabled',user FROM disabled;");
 		}
+		elsif(to_int($q->param('report')) == 20)
+		{
+			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Client events per user</h3></div><div class='panel-body'><table class='table table-striped' id='report_table'><thead><tr><th>Event</th><th>User</th></tr></thead><tbody>";
+			$sql = $db->prepare("SELECT user,summary FROM events;");
+		}
 		elsif(to_int($q->param('report')) == 11)
 		{
 			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Your time spent per ticket</h3></div><div class='panel-body'><table class='table table-striped' id='report_table'><thead><tr><th>Ticket ID</th><th>Hours spent</th></tr></thead><tbody>";
@@ -5172,7 +5213,7 @@ elsif($q->param('m')) # Modules
 				if(!$results{$res[1]}) { $results{$res[1]} = 0; }
 				$results{$res[1]} += to_float($res[2]);
 			}
-			elsif(to_int($q->param('report')) == 12 || to_int($q->param('report')) == 15 || to_int($q->param('report')) == 17 || to_int($q->param('report')) == 18 || to_int($q->param('report')) == 19)
+			elsif(to_int($q->param('report')) == 12 || to_int($q->param('report')) == 15 || to_int($q->param('report')) == 17 || to_int($q->param('report')) == 18 || to_int($q->param('report')) == 19 || to_int($q->param('report')) == 20)
 			{
 				$results{$res[1]} = $res[0];
 			}
