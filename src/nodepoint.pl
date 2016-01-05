@@ -1444,7 +1444,7 @@ elsif($q->param('api')) # API calls
 				print " \"assigned_to\": \"" . $res[4] . "\",\n";
 				print " \"title\": \"" . $res[5] . "\",\n";
 				print " \"description\": \"" . $res[6] . "\",\n";
-				print " \"custom\": \"" . $res[7] . "\",\n";
+				print " \"priority\": \"" . $res[7] . "\",\n";
 				print " \"status\": \"" . $res[8] . "\",\n";
 				print " \"resolution\": \"" . $res[9] . "\",\n";
 				print " \"followers\": \"" . $res[10] . "\",\n";
@@ -1739,6 +1739,55 @@ elsif($q->param('api')) # API calls
 			print "}\n";
 		}
 	}
+	elsif($q->param('api') eq "list_events")
+	{
+		if(!$q->param('key'))
+		{
+			print "{\n";
+			print " \"message\": \"Missing 'key' argument.\",\n";
+			print " \"status\": \"ERR_MISSING_ARGUMENT\"\n";
+			print "}\n";
+		}
+		elsif(!$q->param('client_id'))
+		{
+			print "{\n";
+			print " \"message\": \"Missing 'client_id' argument.\",\n";
+			print " \"status\": \"ERR_MISSING_ARGUMENT\"\n";
+			print "}\n";
+		}
+		elsif($q->param('key') ne $cfg->load('api_read'))
+		{
+			print "{\n";
+			print " \"message\": \"Invalid 'key' value.\",\n";
+			print " \"status\": \"ERR_INVALID_KEY\"\n";
+			print "}\n";
+		}
+		else
+		{
+			print "{\n";
+			print " \"message\": \"Events list.\",\n";
+			print " \"status\": \"OK\",\n";
+			print " \"events\": [\n";
+			my $found = 0;
+			$sql = $db->prepare("SELECT ROWID,* FROM events WHERE clientid = ?;");
+			$sql->execute(to_int($q->param('client_id')));
+			while(my @res = $sql->fetchrow_array())
+			{
+				if($found) { print ",\n"; }
+				$found = 1;
+				print "  {\n";
+				print "   \"id\": \"" . $res[0] . "\",\n";
+				print "   \"user\": \"" . $res[2] . "\",\n";
+				print "   \"type\": \"" . $res[3] . "\",\n";
+				print "   \"summary\": \"" . $res[4] . "\",\n";
+				print "   \"notes\": \"" . $res[5] . "\",\n";
+				print "   \"date\": \"" . $res[6] . "\"\n";
+				print "  }";
+			}
+			print "\n ]\n";
+			print "}\n";
+		}
+	}
 	elsif($q->param('api') eq "list_items")
 	{
 		if(!$q->param('key'))
@@ -2024,6 +2073,124 @@ elsif($q->param('api')) # API calls
 			print "}\n";
 		}
 	}
+	elsif($q->param('api') eq "update_ticket")
+	{
+		if(!$q->param('id'))
+		{
+			print "{\n";
+			print " \"message\": \"Missing 'id' argument.\",\n";
+			print " \"status\": \"ERR_MISSING_ARGUMENT\"\n";
+			print "}\n";
+		}
+		elsif(!$q->param('key'))
+		{
+			print "{\n";
+			print " \"message\": \"Missing 'key' argument.\",\n";
+			print " \"status\": \"ERR_MISSING_ARGUMENT\"\n";
+			print "}\n";
+		}
+		elsif($q->param('key') ne $cfg->load('api_write'))
+		{
+			print "{\n";
+			print " \"message\": \"Invalid 'key' value.\",\n";
+			print " \"status\": \"ERR_INVALID_KEY\"\n";
+			print "}\n";
+		}
+		elsif(lc($cfg->load('api_imp')) ne "on" && $q->param('from_user'))
+		{
+			print "{\n";
+			print " \"message\": \"User impersonation is not on.\",\n";
+			print " \"status\": \"ERR_INVALID_ARGUMENT\"\n";
+			print "}\n";		
+		}
+		elsif($q->param('status') && !($q->param('status') eq "New" || $q->param('status') eq "Open" || $q->param('status') eq "Invalid" || $q->param('status') eq "Duplicate" || $q->param('status') eq "Resolved" || $q->param('status') eq "Closed" || $q->param('status') eq "Hold"))
+		{
+			print "{\n";
+			print " \"message\": \"Invalid 'status' value.\",\n";
+			print " \"status\": \"ERR_INVALID_ARGUMENT\"\n";
+			print "}\n";		
+		}
+		elsif($q->param('priority') && !($q->param('priority') eq "Low" || $q->param('priority') eq "Normal" || $q->param('priority') eq "High"))
+		{
+			print "{\n";
+			print " \"message\": \"Invalid 'priority' value.\",\n";
+			print " \"status\": \"ERR_INVALID_ARGUMENT\"\n";
+			print "}\n";		
+		}
+		else
+		{
+			my $from_user = "api";
+			if(lc($cfg->load('api_imp')) eq "on" && $q->param('from_user')) { $from_user = sanitize_alpha($q->param('from_user')); }
+			my $desc = "";
+			my $resolution = "";
+			my $priority = "";
+			my @us = ();
+			my $status = "";
+			my $creator = "";
+			my $title = "";
+			my $timespent = 0;
+			$sql = $db->prepare("SELECT * FROM tickets WHERE ROWID = ?;");
+			$sql->execute(to_int($q->param('id')));
+			while(my @res = $sql->fetchrow_array())
+			{
+				$desc = $res[5] . "\n\n--- " . now() . " ---\nTicket modified by: " . $from_user . "\n";
+				$resolution = $res[8];
+				$priority = $res[6];
+				$status = $res[7];
+				$creator = $res[2];
+				$title = $res[4];
+				@us = split(' ', $res[3]);
+			}
+			if($q->param('time_spent'))
+			{ 
+				$timespent = to_int($q->param('time_spent'));
+				if($timespent > 99.99) { $timespent = 99.99; }
+				if($timespent < -99.99) { $timespent = -99.99; }
+			}
+			if($q->param('resolution') && $q->param('resolution') ne $resolution)
+			{
+				$sql = $db->prepare("UPDATE tickets SET resolution = ? WHERE ROWID = ?;");
+				$sql->execute(sanitize_html($q->param('resolution')), to_int($q->param('id')));
+				$desc .= "Resolution: \"" . $resolution . "\" => \"" . sanitize_html($q->param('resolution')) . "\"\n";
+				$resolution = sanitize_html($q->param('resolution'));
+			}
+			if($q->param('status') && $q->param('status') ne $status)
+			{
+				$sql = $db->prepare("UPDATE tickets SET status = ? WHERE ROWID = ?;");
+				$sql->execute(sanitize_alpha($q->param('status')), to_int($q->param('id')));
+				$desc .= "Status: " . $status . " => " . sanitize_alpha($q->param('status')) . "\n";
+				$status = sanitize_alpha($q->param('status'));
+			}
+			if($q->param('priority') && $q->param('priority') ne $priority)
+			{
+				$sql = $db->prepare("UPDATE tickets SET link = ? WHERE ROWID = ?;");
+				$sql->execute(sanitize_alpha($q->param('priority')), to_int($q->param('id')));
+				$desc .= "Priority: " . $priority . " => " . sanitize_alpha($q->param('priority')) . "\n";
+				$priority = sanitize_alpha($q->param('priority'));
+			}
+			if($q->param('summary'))
+			{
+				if($cfg->load('comp_time') eq "on") {$desc .= "\n[" . $timespent . "] " . sanitize_html($q->param('summary')) . "\n";}
+				else {$desc .= "\n" . sanitize_html($q->param('summary')) . "\n";}
+			}
+			if($cfg->load('comp_time') eq "on" && $timespent != 0)
+			{
+				$sql = $db->prepare("INSERT INTO timetracking VALUES (?, ?, ?, ?);");
+				$sql->execute(to_int($q->param('id')), $from_user, $timespent, now());
+			}
+			$sql = $db->prepare("UPDATE tickets SET description = ? WHERE ROWID = ?;");
+			$sql->execute($desc, to_int($q->param('id')));
+			foreach my $u (@us)
+			{
+				notify($u, "Ticket (" . to_int($q->param('id')) . ") assigned to you has been modified", "The ticket \"" . $title . "\" has been modified:\n\nModified by: " . $from_user . "\nPriority: " . $priority . "\nStatus: " . $status . "\nResolution: " . $resolution . "\nDescription: " . $desc);
+			}
+			notify($creator, "Your ticket (" . to_int($q->param('id')) . ") has been modified", "The ticket \"" . $title . "\" has been modified:\n\nModified by: " . $from_user . "\nPriority: " . $priority . "\nStatus: " . $status . "\nResolution: " . $resolution . "\nDescription: " . $desc);
+			print "{\n";
+			print " \"message\": \"Ticket updated.\",\n";
+			print " \"status\": \"OK\"\n";
+			print "}\n";
+		}
+	}
 	elsif($q->param('api') eq "return_item")
 	{
 		if(!$q->param('id'))
@@ -2138,6 +2305,68 @@ elsif($q->param('api')) # API calls
 				print " \"user\": \"" . sanitize_alpha($q->param('user')) . "\"\n";
 				logevent("Add new user: " . sanitize_alpha($q->param('user')));
 			}
+			print "}\n";
+		}
+	}
+	elsif($q->param('api') eq "add_event")
+	{
+		if(!$q->param('summary'))
+		{
+			print "{\n";
+			print " \"message\": \"Missing 'summary' argument.\",\n";
+			print " \"status\": \"ERR_MISSING_ARGUMENT\"\n";
+			print "}\n";
+		}
+		elsif(!$q->param('key'))
+		{
+			print "{\n";
+			print " \"message\": \"Missing 'key' argument.\",\n";
+			print " \"status\": \"ERR_MISSING_ARGUMENT\"\n";
+			print "}\n";
+		}
+		elsif(!$q->param('client_id'))
+		{
+			print "{\n";
+			print " \"message\": \"Missing 'client_id' argument.\",\n";
+			print " \"status\": \"ERR_MISSING_ARGUMENT\"\n";
+			print "}\n";
+		}
+		elsif(!$q->param('type'))
+		{
+			print "{\n";
+			print " \"message\": \"Missing 'type' argument.\",\n";
+			print " \"status\": \"ERR_MISSING_ARGUMENT\"\n";
+			print "}\n";
+		}
+		elsif($q->param('key') ne $cfg->load('api_write'))
+		{
+			print "{\n";
+			print " \"message\": \"Invalid 'key' value.\",\n";
+			print " \"status\": \"ERR_INVALID_KEY\"\n";
+			print "}\n";
+		}
+		elsif(lc($cfg->load('api_imp')) ne "on" && $q->param('from_user'))
+		{
+			print "{\n";
+			print " \"message\": \"User impersonation is not on.\",\n";
+			print " \"status\": \"ERR_INVALID_ARGUMENT\"\n";
+			print "}\n";		
+		}
+		else
+		{
+			my $notes = "";
+			if($q->param('notes')) { $notes = sanitize_html($q->param('notes')); }
+			my $from_user = "api";
+			if(lc($cfg->load('api_imp')) eq "on" && $q->param('from_user')) { $from_user = sanitize_alpha($q->param('from_user')); }
+			$sql = $db->prepare("INSERT INTO events VALUES (?, ?, ?, ?, ?, ?);");
+			$sql->execute(to_int($q->param('client_id')), $from_user, sanitize_html($q->param('type')), sanitize_html($q->param('summary')), $notes, now());
+			$sql = $db->prepare("SELECT last_insert_rowid();");
+			$sql->execute();
+			my $rowid = -1;
+			while(my @res = $sql->fetchrow_array()) { $rowid = to_int($res[0]); }
+			print "{\n";
+			print " \"message\": \"Event " . $rowid . " added.\",\n";
+			print " \"status\": \"OK\"\n";
 			print "}\n";
 		}
 	}
@@ -3191,10 +3420,17 @@ elsif($q->param('m')) # Modules
 		}
 		if($q->param('disable_user'))
 		{
-			$sql = $db->prepare("INSERT INTO disabled VALUES (?)");
-			$sql->execute($u);
-			msg("User login disabled.", 3);
-			logevent("Disabled: " . $u);
+			if(lc($u) eq lc($cfg->load('admin_name')) || lc($u) eq lc("api") || lc($u) eq lc("guest") || lc($u) eq lc("demo"))
+			{
+				msg("Cannot disable this user.", 1);
+			}
+			else
+			{
+				$sql = $db->prepare("INSERT INTO disabled VALUES (?)");
+				$sql->execute($u);
+				msg("User login disabled.", 3);
+				logevent("Disabled: " . $u);
+			}
 		}
 		print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Summary for: " . $u . "</h3></div><div class='panel-body'><table class='table table-striped'><tr><th>Key</th><th>Value</th></tr>\n";
 		$sql = $db->prepare("SELECT loggedin,level,email,confirm FROM users WHERE name = ?");
@@ -3484,7 +3720,7 @@ elsif($q->param('m')) # Modules
 					}
 					print "</td></tr>\n";
 				}
-				print "</tbody><tfoot><tr><th>Total:</th><th></th><th>\$" . $total . "</th></tr>\n";
+				print "</tbody><tfoot><tr><th>Total</th><th></th><th>\$" . $total . "</th></tr>\n";
 				print "</tfoot></table><script>\$(document).ready(function(){\$('#billing_table').DataTable({'order':[[0,'desc']],pageLength:" .  to_int($cfg->load('page_len')). ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script></p></div></div>\n";
 			}
 		}
@@ -4652,8 +4888,8 @@ elsif($q->param('m')) # Modules
 						print "<tr><td>" . $res[1] . "</td><td>" . $res[2] . "</td><td>" . $res[3] . "</td></tr>\n";
 						$totaltime += to_float($res[2]);
 					}
-					print "<tr><td><b>Total</b></td><td><b>" . $totaltime . "</b></td><td></td></tr>\n";
-					print "</tbody></table><script>\$(document).ready(function(){\$('#time_table').DataTable({'order':[[0,'asc']],pageLength:" . to_int($cfg->load('page_len')) . ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script></div></div>\n";
+					print "</tbody><tfoot><tr><th>Total</th><th>" . $totaltime . "</th><th></th></tr></tfoot>\n";
+					print "</table><script>\$(document).ready(function(){\$('#time_table').DataTable({'order':[[2,'desc']],pageLength:" . to_int($cfg->load('page_len')) . ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script></div></div>\n";
 				}
 				print "<h3>Comments</h3>";
 				if($logged_lvl > 0 && $res[8] ne "Closed")

@@ -582,6 +582,20 @@ Here is a list of commands. Arguments in \textit{italics} are optional:
 \item \textit{from\_user=<valid user>}
 \end{itemize}
 
+\subsection{Update ticket}
+
+\begin{itemize}
+\item api=update\_ticket
+\item key=<write key>
+\item id=<ticket id>
+\item \textit{summary=<summary of changes>}
+\item \textit{status=<New|Open|Invalid|Hold|Duplicate|Resolved|Closed>}
+\item \textit{resolution=<new resolution>}
+\item \textit{priority=<Low|Normal|High>}
+\item \textit{time\_spent=<number of hours>}
+\item \textit{from\_user=<valid user>}
+\end{itemize}
+
 \subsection{Add comment}
 
 \begin{itemize}
@@ -642,6 +656,26 @@ Here is a list of commands. Arguments in \textit{italics} are optional:
 \begin{itemize}
 \item api=list\_clients
 \item key=<read key>
+\end{itemize}
+
+\subsection{List client events}
+
+\begin{itemize}
+\item api=list\_events
+\item key=<read key>
+\item client\_id=<client id>
+\end{itemize}
+
+\subsection{Add client event}
+
+\begin{itemize}
+\item api=add\_event
+\item key=<write key>
+\item client\_id=<client id>
+\item summary=<event summary>
+\item type=<event type>
+\item \textit{notes=<notes>}
+\item \textit{from\_user=<valid user>}
 \end{itemize}
 
 \subsection{Add item}
