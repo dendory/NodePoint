@@ -595,7 +595,7 @@ sub db_check
 		$sql->execute();
 		$sql = $db->prepare("INSERT INTO auto_modules VALUES ('Bulk import', 0, 'Never', 0, '', 'This module will connect to an external source and import items automatically.', 0);");
 		$sql->execute();
-		$sql = $db->prepare("INSERT INTO auto_modules VALUES ('Bulk export', 0, 'Never', 0, '', 'This module will export a specific table to a file location automatically.', 0);");
+		$sql = $db->prepare("INSERT INTO auto_modules VALUES ('Bulk export', 0, 'Never', 0, '', 'This module will export a specific table to a file location automatically in CSV format. Specify the full path of a local file and the table to export.', 0);");
 		$sql->execute();
 		$sql = $db->prepare("INSERT INTO auto_modules VALUES ('Users sync', 0, 'Never', 0, '', 'This module can keep the internal users list in sync with an external source.', 0);");
 		$sql->execute();
@@ -4634,6 +4634,28 @@ elsif($q->param('m')) # Modules
 					if($type eq "Overwrite") { print " selected"; }
 					print ">Overwrite</option></select></div></div></p>";
 				}
+				elsif($res[0] eq "Bulk export")
+				{
+					my $filename = "export.csv";
+					my $table = "Tickets";
+					my $sql2 = $db->prepare("SELECT * FROM auto_config WHERE module = 'Bulk export';");
+					$sql2->execute();
+					while(my @res2 = $sql2->fetchrow_array())
+					{
+						if($res2[1] eq 'filename') { $filename = $res2[2]; }
+						if($res2[1] eq 'table') { $table = $res2[2]; }
+					}
+					print "<p><div class='row'><div class='col-sm-4'>Export file:</div><div class='col-sm-8'><input class='form-control' type='text' name='filename' value='" . $filename . "'></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>Table to export:</div><div class='col-sm-8'><select class='form-control' name='table'><option>Tickets</option><option";
+					if($table eq "Items") { print " selected"; }
+					print ">Items</option><option";
+					if($table eq "Clients") { print " selected"; }
+					print ">Clients</option><option";
+					if($table eq "Users") { print " selected"; }
+					print ">Users</option><option";
+					if($table eq "Tasks") { print " selected"; }
+					print ">Tasks</option></select></div></div></p>";
+				}
 				# TODO: Go module by module and show config options
 				print "<p><input type='hidden' name='m' value='auto'><input type='hidden' name='save' value='" . $q->param('config') . "'><input class='btn btn-primary pull-right' type='submit' value='Save'></p>";
 				print "</form></div></div>\n";
@@ -4664,6 +4686,15 @@ elsif($q->param('m')) # Modules
 					$sql->execute(sanitize_html($q->param('folder')));
 					$sql = $db->prepare("INSERT INTO auto_config VALUES ('Backup', 'type', ?);");
 					$sql->execute(sanitize_html($q->param('type')));
+				}
+				elsif(to_int($q->param('save')) == 4)
+				{
+					$sql = $db->prepare("DELETE FROM auto_config WHERE module = 'Bulk export';");
+					$sql->execute();
+					$sql = $db->prepare("INSERT INTO auto_config VALUES ('Bulk export', 'filename', ?);");
+					$sql->execute(sanitize_html($q->param('filename')));
+					$sql = $db->prepare("INSERT INTO auto_config VALUES ('Bulk export', 'table', ?);");
+					$sql->execute(sanitize_html($q->param('table')));
 				}
 				# TODO: Go module by module and save config
 				msg("Changes saved.", 3)

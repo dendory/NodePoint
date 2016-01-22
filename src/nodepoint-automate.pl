@@ -172,6 +172,85 @@ while(my @res = $sql->fetchrow_array())
 				}
 			}
 		}
+		elsif($res[0] eq 'Bulk export')
+		{
+			my $filename = "";
+			my $table = "Tickets";
+			my $sql2 = $db->prepare("SELECT * FROM auto_config WHERE module = 'Bulk export';");
+			$sql2->execute();
+			while(my @res2 = $sql2->fetchrow_array())
+			{
+				if($res2[1] eq 'filename') { $filename = $res2[2]; }
+				if($res2[1] eq 'table') { $table = $res2[2]; }
+			}
+			if($filename eq "")
+			{
+				logevent($res[0], "Missing filename configuration value.");
+			}
+			else
+			{
+				my $rowcount = 0;
+				open(my $OUTFILE, ">", $filename) or logevent($res[0], "Error writing content to export file.");
+				if($table eq "Tickets")
+				{
+					print $OUTFILE "\"title\",\"product_id\",\"release_id\",\"created_by\",\"assigned_to\",\"priority\",\"status\",\"resolution\",\"created\",\"modified\"\n";
+					$sql2 = $db->prepare("SELECT * FROM tickets;");
+					$sql2->execute();
+					while(my @res2 = $sql2->fetchrow_array())
+					{
+						$rowcount += 1;
+						print $OUTFILE "\"" . $res2[4] . "\",\"" . $res2[0] . "\",\"" .  $res2[1] . "\",\"" .  $res2[2] . "\",\"" .  $res2[3] . "\",\"" .  $res2[6] . "\",\"" .  $res2[7] . "\",\"" .  $res2[8] . "\",\"" .  $res2[10] . "\",\"" .  $res2[11] . "\"\n";  
+					}
+				}
+				elsif($table eq "Items")
+				{
+					print $OUTFILE "\"name\",\"type\",\"serial\",\"product_id\",\"client_id\",\"approval\",\"status\",\"user\"\n";
+					$sql2 = $db->prepare("SELECT * FROM items;");
+					$sql2->execute();
+					while(my @res2 = $sql2->fetchrow_array())
+					{
+						$rowcount += 1;
+						print $OUTFILE "\"" . $res2[0] . "\",\"" . $res2[1] . "\",\"" .  $res2[2] . "\",\"" .  $res2[3] . "\",\"" .  $res2[4] . "\",\"" .  $res2[5] . "\",\"" .  $res2[6] . "\",\"" .  $res2[7] . "\"\n";  
+					}
+				}
+				elsif($table eq "Tasks")
+				{
+					print $OUTFILE "\"product_id\",\"name\",\"user\",\"completion\",\"due\"\n";
+					$sql2 = $db->prepare("SELECT * FROM steps;");
+					$sql2->execute();
+					while(my @res2 = $sql2->fetchrow_array())
+					{
+						$rowcount += 1;
+						print $OUTFILE "\"" . $res2[0] . "\",\"" . $res2[1] . "\",\"" .  $res2[2] . "\",\"" .  $res2[3] . "\",\"" .  $res2[4] . "\"\n";  
+					}
+				}
+				elsif($table eq "Clients")
+				{
+					print $OUTFILE "\"name\",\"status\",\"contact\"\n";
+					$sql2 = $db->prepare("SELECT * FROM clients;");
+					$sql2->execute();
+					while(my @res2 = $sql2->fetchrow_array())
+					{
+						$rowcount += 1;
+						print $OUTFILE "\"" . $res2[0] . "\",\"" . $res2[1] . "\",\"" .  $res2[2] . "\"\n";  
+					}
+				}
+				elsif($table eq "Users")
+				{
+					print $OUTFILE "\"name\",\"email\",\"level\",\"last_login\"\n";
+					$sql2 = $db->prepare("SELECT * FROM users;");
+					$sql2->execute();
+					while(my @res2 = $sql2->fetchrow_array())
+					{
+						$rowcount += 1;
+						print $OUTFILE "\"" . $res2[0] . "\",\"" . $res2[2] . "\",\"" .  $res2[3] . "\",\"" .  $res2[4] . "\"\n";  
+					}
+				}
+				close($OUTFILE);
+				$result = "Success";
+				logevent($res[0], "Exported " . $rowcount . " rows.");
+			}
+		}
 		# TODO: Go module by module and read config, do stuff
 		else { logevent($res[0], "Not implemented."); }
 		$sql2 = $db->prepare("UPDATE auto_modules SET lastrun = ?, timestamp = ?, result = ? WHERE name = ?;");
