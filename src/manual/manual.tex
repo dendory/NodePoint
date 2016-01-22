@@ -11,10 +11,10 @@
 % Conditional compilation for Windows and Linux
 \usepackage{ifthen}
 \newboolean{Windows}
-\setboolean{Windows}{false} % change to false for Linux
+\setboolean{Windows}{true} % change to false for Linux
 \ifthenelse{\boolean{Windows}}
-{\def\NodePointManual{NodePoint IT System - Windows version 1.5.6}}
-{\def\NodePointManual{NodePoint IT System - Linux version 1.5.6}}
+{\def\NodePointManual{NodePoint IT System - Windows version 1.6.0}}
+{\def\NodePointManual{NodePoint IT System - Linux version 1.6.0}}
 
 % Margins and paper type
 \geometry{a4paper, right=1.5cm, left=1.5cm, top=2cm, bottom=1.5cm}
@@ -144,6 +144,7 @@ Follow these steps to complete a new installation:
 \item Download NodePoint from \url{http://nodepoint.ca} and unzip the folder where you want files to live, for example \texttt{\textasciitilde/nodepoint}.
 \item Make sure \texttt{www/nodepoint.cgi} can be executed by the web server, and it has write access to\\ \texttt{../nodepoint.cfg}, \texttt{../db} and \texttt{../uploads}. This is done by default using the included \texttt{.htaccess} file but may require some modifications to your server's default configuration file.
 \item Map a virtual host in your \texttt{httpd.conf}, or link the \texttt{www} folder, for example: \texttt{ln -s /var/www/nodepoint \textasciitilde/nodepoint/www} (paths may differ based on your Linux distribution).
+\item Add the Automation task to your crontab: \texttt{*/5 * * * * /path/to/nodepoint/www/nodepoint-automate}
 \item Access the site from \textit{localhost} (e.g. \texttt{http://localhost/nodepoint}) and complete the first time configuration (see below).
 \end{enumerate}
 }
@@ -195,6 +196,10 @@ Make sure you have the \textit{CGI} and \textit{ISAPI Extensions} IIS features i
 \subsubsection{If you forgot your admin password}
 
 You will need to remove the initial configuration settings and recreate them in order to recover access. This configuration is stored locally on the server inside the Windows Registry. Use \texttt{regedit.exe} and navigate to \texttt{HKLM/SOFTWARE/NodePoint}.
+
+\subsubsection{Automation tasks do not run}
+
+Make sure the \textbf{nodepoint-automate} process is running every 5 minutes. Open the \textit{Task Scheduler} and look for the \textit{NodePoint Automation} task, which is added during installation.
 }
 {
 \subsubsection{If you get a 500 server error}
@@ -216,6 +221,10 @@ Make sure NodePoint has write access to the database, by default \texttt{../db/n
 \subsubsection{If you forgot your admin password}
 
 Simply delete the \texttt{nodepoint.cfg} configuration file on the server and recreate it through the web interface from \textit{localhost}.
+
+\subsubsection{Automation tasks do not run}
+
+Make sure the \textbf{nodepoint-automate} process is running every 5 minutes. You should have a listing under \texttt{crontab -L} that shows the proper path, under a user that has access to the NodePoint database file.
 }
 
 \subsubsection{If email notifications don't work}
@@ -275,7 +284,7 @@ Here are some examples of scripts available:
 \begin{itemize}
 \item Batch import of tickets from a CSV file.
 \item Desktop ticket support client.
-\item Create tickets from an email IMAP inbox.
+\item Create a ticket from a PowerShell prompt.
 \end{itemize}
 
 \subsection{Additional customization}
@@ -338,6 +347,7 @@ These are the configuration options for NodePoint. They have to be defined durin
 \item \textbf{Can view user details:} Users of this access level or higher can view a list of users along with summary pages listing email addresses, access levels, tickets entered and checked out items.
 \item \textbf{Can view client details:} The minimum access level to view details about clients, including billing information.
 \item \textbf{Can add client events:} Users of this level can add and edit events.
+\item \textbf{Can configure automation:} Users of this level can configure automation modules.
 \item \textbf{Authentication plugin:} Use an external script or application to authenticate users. This can be used instead of the built-in users management or Active Directory integration if you have some other process to authenticate users. It must return 0 for success, 1 for failure. The following variables can be used: \textit{\%user\%} and \textit{\%pass\%}. For example: \texttt{python auth.py -userid \%user\% -passwd \%pass\%}
 \item \textbf{Notifications plugin:} Call an application or script when a notification is sent. You can use the following variables here: \textit{\%user\%}, \textit{\%title\%} and \textit{\%message\%}. For example: \texttt{echo \%message\% >> ..\textbackslash \%user\%.log}
 \item \textbf{Checkout plugin:} Call an application or script when an inventory item is checked out or approved. You can use the following variables here: \textit{\%user\%} and \textit{\%serial\%}. For example: \texttt{python add\_license.py -item \%serial\% -user \%user\%}
@@ -502,6 +512,21 @@ Note that the files uploaded here, along with those attached to projects or tick
 The Billing component allows you to assign tickets to clients with either a fixed rate or an hourly rate. As such, this component requires the Tickets Management and Clients Directory components to be enabled. For hourly rates, the Time Tracking component must also be enabled.
 
 When editing a ticket, a user of level 3 of higher can select a client from the drop down list, among clients that have been entered in the directory. Once tickets have been assigned to a client, the list of tickets with hours spent are listed on that client's page. The cost and currency can also be adjusted on that page.
+
+\subsection{Automation}
+NodePoint ships with an automation engine called \textbf{nodepoint-automate}. This engine is set as a scheduled task during the installation process, and controls the background automation modules, processes that can run without user intervention. Each module can be enabled or disabled individually, and scheduled on its own schedule of 5 minutes, 15 minutes, hourly, daily or weekly. Configuration is done under the \textbf{Tools} menu by users with the right access level.
+
+These are the available automation modules:
+
+\subsubsection{Backup}
+
+\subsubsection{Email to Ticket}
+
+\subsubsection{Bulk import}
+
+\subsubsection{Bulk export}
+
+\subsubsection{Users sync}
 
 \clearpage
 \section{JSON API}
@@ -734,7 +759,7 @@ Here is a list of commands. Arguments in \textit{italics} are optional:
 \end{itemize}
 
 \subsection{Code example}
-The following code snippet is a Python example of how to access the API. This script connects to a local NodePoint instance and lists all the users:
+The following code snippet is a Python 3.x example of how to access the API. This script connects to a local NodePoint instance and lists all the users:
 
 \begin{lstlisting}
 import json

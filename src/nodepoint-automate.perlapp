@@ -1,0 +1,34 @@
+#!C:\Program Files\ActiveState Perl Dev Kit 9.4\bin\perlapp-gui.exe
+PAP-Version: 1.0
+Packer: C:\Program Files\ActiveState Perl Dev Kit 9.4\bin\perlapp.exe
+Script: nodepoint-automate.pl
+Cwd: C:\scripts\git\nodepoint\src
+Clean: 0
+Date: 2015-04-27 09:11:29
+Debug: 
+Dependent: 0
+Dyndll: 0
+Exe: ..\Windows\nodepoint\www\nodepoint-automate.exe
+Force: 1
+Gui: 0
+Hostname: dendory
+Manifest: 
+No-Compress: 0
+No-Logo: 0
+Runlib: 
+Shared: none
+Tmpdir: 
+Trim: IPv6
+Verbose: 0
+Version-Comments: 
+Version-CompanyName: 
+Version-FileDescription: NodePoint Ticket System
+Version-FileVersion: 1.6.0
+Version-InternalName: nodepoint-automate
+Version-LegalCopyright: (C) 2014-2016 Patrick Lambert
+Version-LegalTrademarks: 
+Version-OriginalFilename: nodepoint-automate
+Version-ProductName: NodePoint
+Version-ProductVersion: 1.6.0
+Warnings: 0
+Xclude: 0

@@ -1,0 +1,129 @@
+#!/usr/bin/perl -w
+#
+# NodePoint - (C) 2015 Patrick Lambert - http://nodepoint.ca
+# Provided under the MIT License
+#
+# To use on Windows: Change all 'Linux' for 'Win32' in this file.
+# To compile into a binary: Use PerlApp with the .perlapp file.
+#
+
+use strict;
+use Config::Win32;
+use Digest::SHA qw(sha1_hex);
+use DBI;
+use Scalar::Util qw(looks_like_number);
+use Time::HiRes qw(time);
+use File::Basename qw(dirname);
+
+my ($cfg, $db, $sql);
+
+# Convert to int so it doesnt throw up on invalid numbers
+sub to_int
+{
+	my ($num) = @_;
+	if(!$num) { return 0; }
+	elsif(!looks_like_number($num)) { return 0; }
+	else { return int($num); }
+}
+
+# Return current time
+sub now
+{
+	return "" . localtime;
+}
+
+# Sanitize functions
+sub sanitize_html
+{
+	my ($text) = @_;
+	if($text)
+	{
+		$text =~ s/</&lt;/g;
+		$text =~ s/"/&quot;/g;
+		return $text;
+	}
+	else { return ""; }
+}
+
+sub sanitize_alpha
+{
+	my ($text) = @_;
+	if($text)
+	{
+		$text =~ s/[^A-Za-z0-9\.\-\_]//g;
+		return $text;
+	}
+	else { return ""; }
+}
+
+sub sanitize_email
+{
+	my ($text) = @_;
+	if($text)
+	{
+		if(valid($text)) { return $text; }
+		else { return ""; }
+	}
+	else { return ""; }
+}
+
+# Log an event
+sub logevent
+{
+	my ($module, $text) = @_;
+	my $sql2 = $db->prepare("INSERT INTO auto_log VALUES (?, ?, ?);");
+	$sql2->execute($module, $text, now());
+}
+
+# Initial config
+chdir dirname($0);
+$cfg = Config::Win32->new("NodePoint", "settings");
+
+if($cfg->load("db_address"))
+{
+	$db = DBI->connect("dbi:SQLite:dbname=" . $cfg->load("db_address"), '', '', { RaiseError => 0, PrintError => 0 })
+}
+
+if(!defined($db))
+{
+	print "Error: Could not access database file. Please ensure NodePoint has the proper permissions.";
+	exit(1);
+};
+
+$sql = $db->prepare("SELECT * FROM auto_log WHERE 0 = 1;") or do
+{
+	$sql = $db->prepare("CREATE TABLE auto_log (module TEXT, event TEXT, time TEXT);");
+	$sql->execute();
+};
+$sql->finish();
+$sql = $db->prepare("SELECT * FROM auto_modules WHERE 0 = 1;") or do
+{
+	$sql = $db->prepare("CREATE TABLE auto_modules (name TEXT, enabled INT, lastrun TEXT, timestamp INT, result TEXT, description TEXT, schedule INT);");
+};
+$sql->finish();
+$sql = $db->prepare("SELECT * FROM auto WHERE 0 = 1;") or do
+{
+	$sql = $db->prepare("CREATE TABLE auto (timestamp INT, result TEXT);");
+	$sql->execute();
+};
+$sql->finish();
+
+# Main loop
+$sql = $db->prepare("SELECT *,ROWID FROM auto_modules WHERE enabled = 1;");
+$sql->execute();
+while(my @res = $sql->fetchrow_array())
+{
+	if((to_int($res[6]) == 0 && to_int($res[3]) + 400 < time()) || (to_int($res[6]) == 1 && to_int($res[3]) + 1000 < time()) || (to_int($res[6]) == 2 && to_int($res[3]) + 3700 < time()) || (to_int($res[6]) == 3 && to_int($res[3]) + 86500 < time()) || (to_int($res[6]) == 4 && to_int($res[3]) + 604900 < time()))
+  	{
+		# TODO: Go module by module and read config, do stuff
+		logevent($res[0], "Executing action.");
+		my $sql2 = $db->prepare("UPDATE auto_modules SET lastrun = ?, timestamp = ?, result = ? WHERE ROWID = ?;");
+		$sql2->execute(now(), time(), "Success", $res[7]);
+
+	}
+}
+# Finish
+$sql = $db->prepare("DELETE FROM auto;");
+$sql->execute();
+$sql = $db->prepare("INSERT INTO auto VALUES (?, 'Success');");
+$sql->execute(time());

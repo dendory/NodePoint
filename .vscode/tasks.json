@@ -1,7 +1,4 @@
 {
-	"command": "perlapp",
-	"windows": {
-		"command": "perlapp"
-	},
-	"args": ["src\\nodepoint.perlapp"]
+	"version": "0.1.0",
+	"command": "src\\make.bat"
 }

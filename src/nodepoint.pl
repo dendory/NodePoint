@@ -8,7 +8,7 @@
 #
 
 use strict;
-use Config::Linux;
+use Config::Win32;
 use Digest::SHA qw(sha1_hex);
 use DBI;
 use CGI;
@@ -27,7 +27,7 @@ my ($cfg, $db, $sql, $cn, $cp, $cgs, $last_login, $perf);
 my $logged_user = "";
 my $logged_lvl = -1;
 my $q = new CGI;
-my $VERSION = "1.5.6";
+my $VERSION = "1.6.0";
 my %items = ("Product", "Product", "Release", "Release", "Model", "SKU/Model");
 my @itemtypes = ("None");
 my @themes = ("primary", "default", "success", "info", "warning", "danger");
@@ -154,6 +154,7 @@ sub navbar
 			print "   <li><a href='./?m=settings'>Settings</a></li>\n";
 			if($logged_lvl >= to_int($cfg->load("report_lvl"))) { print "   <li><a href='./?m=stats'>Statistics</a></li>\n"; }
 			if($logged_lvl >= to_int($cfg->load("upload_lvl")) && $cfg->load('comp_files') eq "on") { print "   <li><a href='./?m=files'>Files</a></li>\n"; }
+			if($logged_lvl >= to_int($cfg->load("auto_lvl")) && $cfg->load('comp_auto') eq "on") { print "   <li><a href='./?m=auto'>Automation</a></li>\n"; }
 			if($logged_lvl >= to_int($cfg->load("customs_lvl")) && $cfg->load('comp_tickets') eq "on")	{ print "   <li><a href='./?m=customforms'>Custom forms</a></li>\n"; }
 			if($logged_lvl >= to_int($cfg->load("summary_lvl"))) { print "   <li><a href='./?m=users'>Users management</a></li>\n"; }
 			if($logged_lvl > 5) { print "   <li><a href='./?m=log'>System log</a></li>\n"; }
@@ -171,12 +172,13 @@ sub navbar
 			print "   <li><a href='./?m=settings'>Settings</a></li>\n";
 			if($logged_lvl >= to_int($cfg->load("report_lvl"))) { print "   <li><a href='./?m=stats'>Statistics</a></li>\n"; }
 			if($logged_lvl >= to_int($cfg->load("upload_lvl")) && $cfg->load('comp_files') eq "on") { print "   <li><a href='./?m=files'>Files</a></li>\n"; }
+			if($logged_lvl >= to_int($cfg->load("auto_lvl")) && $cfg->load('comp_auto') eq "on") { print "   <li><a href='./?m=auto'>Automation</a></li>\n"; }
 			if($logged_lvl >= to_int($cfg->load("customs_lvl")) && $cfg->load('comp_tickets') eq "on")	{ print "   <li><a href='./?m=customforms'>Custom forms</a></li>\n"; }
 			if($logged_lvl >= to_int($cfg->load("summary_lvl"))) { print "   <li><a href='./?m=users'>Users management</a></li>\n"; }
 			if($logged_lvl > 5) { print "   <li><a href='./?m=log'>System log</a></li>\n"; }
 			print "  <li role='separator' class='divider'></li><li><a href='./?m=logout'>Logout</a></li></ul></li>\n";
 		}
-		elsif($q->param('m') && ($q->param('m') eq "settings" || $q->param('m') eq "stats" || $q->param('m') eq "show_report" || $q->param('m') eq "triggers" || $q->param('m') eq "customforms" || $q->param('m') eq "users" || $q->param('m') eq "log" || $q->param('m') eq "confirm_delete" || $q->param('m') eq "clear_log" || $q->param('m') eq "stats" || $q->param('m') eq "change_lvl" || $q->param('m') eq "files" || $q->param('m') eq "confirm_email" || $q->param('m') eq "reset_pass" || $q->param('m') eq "logout" || $q->param('m') eq "summary") || $q->param('create_form') || $q->param('edit_form') || $q->param('save_form'))
+		elsif($q->param('m') && ($q->param('m') eq "settings" || $q->param('m') eq "stats" || $q->param('m') eq "auto" || $q->param('m') eq "show_report" || $q->param('m') eq "triggers" || $q->param('m') eq "customforms" || $q->param('m') eq "users" || $q->param('m') eq "log" || $q->param('m') eq "confirm_delete" || $q->param('m') eq "clear_log" || $q->param('m') eq "stats" || $q->param('m') eq "change_lvl" || $q->param('m') eq "files" || $q->param('m') eq "confirm_email" || $q->param('m') eq "reset_pass" || $q->param('m') eq "logout" || $q->param('m') eq "summary") || $q->param('create_form') || $q->param('edit_form') || $q->param('save_form'))
 		{
 			print "	 <li><a href='.'>Home</a></li>\n";
 			print "	 <li><a href='./?m=products'>" . $items{"Product"} . "s</a></li>\n";
@@ -188,6 +190,7 @@ sub navbar
 			print "   <li><a href='./?m=settings'>Settings</a></li>\n";
 			if($logged_lvl >= to_int($cfg->load("report_lvl"))) { print "   <li><a href='./?m=stats'>Statistics</a></li>\n"; }
 			if($logged_lvl >= to_int($cfg->load("upload_lvl")) && $cfg->load('comp_files') eq "on") { print "   <li><a href='./?m=files'>Files</a></li>\n"; }
+			if($logged_lvl >= to_int($cfg->load("auto_lvl")) && $cfg->load('comp_auto') eq "on") { print "   <li><a href='./?m=auto'>Automation</a></li>\n"; }
 			if($logged_lvl >= to_int($cfg->load("customs_lvl")) && $cfg->load('comp_tickets') eq "on")	{ print "   <li><a href='./?m=customforms'>Custom forms</a></li>\n"; }
 			if($logged_lvl >= to_int($cfg->load("summary_lvl"))) { print "   <li><a href='./?m=users'>Users management</a></li>\n"; }
 			if($logged_lvl > 5) { print "   <li><a href='./?m=log'>System log</a></li>\n"; }
@@ -205,6 +208,7 @@ sub navbar
 			print "   <li><a href='./?m=settings'>Settings</a></li>\n";
 			if($logged_lvl >= to_int($cfg->load("report_lvl"))) { print "   <li><a href='./?m=stats'>Statistics</a></li>\n"; }
 			if($logged_lvl >= to_int($cfg->load("upload_lvl")) && $cfg->load('comp_files') eq "on") { print "   <li><a href='./?m=files'>Files</a></li>\n"; }
+			if($logged_lvl >= to_int($cfg->load("auto_lvl")) && $cfg->load('comp_auto') eq "on") { print "   <li><a href='./?m=auto'>Automation</a></li>\n"; }
 			if($logged_lvl >= to_int($cfg->load("customs_lvl")) && $cfg->load('comp_tickets') eq "on")	{ print "   <li><a href='./?m=customforms'>Custom forms</a></li>\n"; }
 			if($logged_lvl >= to_int($cfg->load("summary_lvl"))) { print "   <li><a href='./?m=users'>Users management</a></li>\n"; }
 			if($logged_lvl > 5) { print "   <li><a href='./?m=log'>System log</a></li>\n"; }
@@ -222,6 +226,7 @@ sub navbar
 			print "   <li><a href='./?m=settings'>Settings</a></li>\n";
 			if($logged_lvl >= to_int($cfg->load("report_lvl"))) { print "   <li><a href='./?m=stats'>Statistics</a></li>\n"; }
 			if($logged_lvl >= to_int($cfg->load("upload_lvl")) && $cfg->load('comp_files') eq "on") { print "   <li><a href='./?m=files'>Files</a></li>\n"; }
+			if($logged_lvl >= to_int($cfg->load("auto_lvl")) && $cfg->load('comp_auto') eq "on") { print "   <li><a href='./?m=auto'>Automation</a></li>\n"; }
 			if($logged_lvl >= to_int($cfg->load("customs_lvl")) && $cfg->load('comp_tickets') eq "on")	{ print "   <li><a href='./?m=customforms'>Custom forms</a></li>\n"; }
 			if($logged_lvl >= to_int($cfg->load("summary_lvl"))) { print "   <li><a href='./?m=users'>Users management</a></li>\n"; }
 			if($logged_lvl > 5) { print "   <li><a href='./?m=log'>System log</a></li>\n"; }
@@ -239,6 +244,7 @@ sub navbar
 			print "   <li><a href='./?m=settings'>Settings</a></li>\n";
 			if($logged_lvl >= to_int($cfg->load("report_lvl"))) { print "   <li><a href='./?m=stats'>Statistics</a></li>\n"; }
 			if($logged_lvl >= to_int($cfg->load("upload_lvl")) && $cfg->load('comp_files') eq "on") { print "   <li><a href='./?m=files'>Files</a></li>\n"; }
+			if($logged_lvl >= to_int($cfg->load("auto_lvl")) && $cfg->load('comp_auto') eq "on") { print "   <li><a href='./?m=auto'>Automation</a></li>\n"; }
 			if($logged_lvl >= to_int($cfg->load("customs_lvl")) && $cfg->load('comp_tickets') eq "on")	{ print "   <li><a href='./?m=customforms'>Custom forms</a></li>\n"; }
 			if($logged_lvl >= to_int($cfg->load("summary_lvl"))) { print "   <li><a href='./?m=users'>Users management</a></li>\n"; }
 			if($logged_lvl > 5) { print "   <li><a href='./?m=log'>System log</a></li>\n"; }
@@ -256,6 +262,7 @@ sub navbar
 			print "   <li><a href='./?m=settings'>Settings</a></li>\n";
 			if($logged_lvl >= to_int($cfg->load("report_lvl"))) { print "   <li><a href='./?m=stats'>Statistics</a></li>\n"; }
 			if($logged_lvl >= to_int($cfg->load("upload_lvl")) && $cfg->load('comp_files') eq "on") { print "   <li><a href='./?m=files'>Files</a></li>\n"; }
+			if($logged_lvl >= to_int($cfg->load("auto_lvl")) && $cfg->load('comp_auto') eq "on") { print "   <li><a href='./?m=auto'>Automation</a></li>\n"; }
 			if($logged_lvl >= to_int($cfg->load("customs_lvl")) && $cfg->load('comp_tickets') eq "on")	{ print "   <li><a href='./?m=customforms'>Custom forms</a></li>\n"; }
 			if($logged_lvl >= to_int($cfg->load("summary_lvl"))) { print "   <li><a href='./?m=users'>Users management</a></li>\n"; }
 			if($logged_lvl > 5) { print "   <li><a href='./?m=log'>System log</a></li>\n"; }
@@ -570,6 +577,36 @@ sub db_check
 		$sql->execute();
 	};
 	$sql->finish();
+	$sql = $db->prepare("SELECT * FROM auto WHERE 0 = 1;") or do
+	{
+		$sql = $db->prepare("CREATE TABLE auto (timestamp INT, result TEXT);");
+		$sql->execute();
+		$sql = $db->prepare("INSERT INTO auto VALUES (0, '');");
+		$sql->execute();
+	};
+	$sql->finish();
+	$sql = $db->prepare("SELECT * FROM auto_modules WHERE 0 = 1;") or do
+	{
+		$sql = $db->prepare("CREATE TABLE auto_modules (name TEXT, enabled INT, lastrun TEXT, timestamp INT, result TEXT, description TEXT, schedule INT);");
+		$sql->execute();
+		$sql = $db->prepare("INSERT INTO auto_modules VALUES ('Backup', 0, 'Never', 0, '', 'This module allows you to backup the database along with the uploads folder to another location for safe keeping.', 0);");
+		$sql->execute();
+		$sql = $db->prepare("INSERT INTO auto_modules VALUES ('Email to Ticket', 0, 'Never', 0, '', 'This module can fetch emails from an IMAP account and turn them into tickets automatically.', 0);");
+		$sql->execute();
+		$sql = $db->prepare("INSERT INTO auto_modules VALUES ('Bulk import', 0, 'Never', 0, '', 'This module will connect to an external source and import items automatically.', 0);");
+		$sql->execute();
+		$sql = $db->prepare("INSERT INTO auto_modules VALUES ('Bulk export', 0, 'Never', 0, '', 'This module will export a specific table to a file location automatically.', 0);");
+		$sql->execute();
+		$sql = $db->prepare("INSERT INTO auto_modules VALUES ('Users sync', 0, 'Never', 0, '', 'This module can keep the internal users list in sync with an external source.', 0);");
+		$sql->execute();
+	};
+	$sql->finish();
+	$sql = $db->prepare("SELECT * FROM auto_log WHERE 0 = 1;") or do
+	{
+		$sql = $db->prepare("CREATE TABLE auto_log (module TEXT, event TEXT, time TEXT);");
+		$sql->execute();
+	};
+	$sql->finish();
 }
 
 # Log an event
@@ -598,6 +635,7 @@ sub save_config
 	$cfg->save("default_lvl", to_int($q->param('default_lvl')));
 	$cfg->save("tasks_lvl", to_int($q->param('tasks_lvl')));
 	$cfg->save("summary_lvl", to_int($q->param('summary_lvl')));
+	$cfg->save("auto_lvl", to_int($q->param('auto_lvl')));
 	$cfg->save("upload_lvl", to_int($q->param('upload_lvl')));
 	$cfg->save("page_len", to_int($q->param('page_len')));
 	$cfg->save("max_size", to_int($q->param('max_size')));
@@ -637,6 +675,7 @@ sub save_config
 	$cfg->save("comp_clients", $q->param('comp_clients'));
 	$cfg->save("comp_items", $q->param('comp_items'));
 	$cfg->save("comp_files", $q->param('comp_files'));
+	$cfg->save("comp_auto", $q->param('comp_auto'));
 }
 
 # Check login credentials
@@ -1176,11 +1215,11 @@ sub home
 # Connect to config
 eval
 {
-	$cfg = Config::Linux->new("NodePoint", "settings");
+	$cfg = Config::Win32->new("NodePoint", "settings");
 };
 if(!defined($cfg)) # Can't even use headers() if this fails.
 {
-	print "Content-type: text/html\n\nError: Could not access " . Config::Linux->type . ". Please ensure NodePoint has the proper permissions.";
+	print "Content-type: text/html\n\nError: Could not access " . Config::Win32->type . ". Please ensure NodePoint has the proper permissions.";
 	exit(0);
 };
 
@@ -1264,6 +1303,7 @@ if(to_int($cfg->load("events_lvl")) < 1 || to_int($cfg->load("events_lvl")) > 6)
 if(to_int($cfg->load("customs_lvl")) < 1 || to_int($cfg->load("customs_lvl")) > 6) { $cfg->save("customs_lvl", 4); }
 if(to_int($cfg->load("tasks_lvl")) < 1 || to_int($cfg->load("tasks_lvl")) > 6) { $cfg->save("tasks_lvl", 4); }
 if(to_int($cfg->load("summary_lvl")) < 1 || to_int($cfg->load("summary_lvl")) > 6) { $cfg->save("summary_lvl", 5); }
+if(to_int($cfg->load("auto_lvl")) < 1 || to_int($cfg->load("auto_lvl")) > 6) { $cfg->save("auto_lvl", 5); }
 if(to_int($cfg->load("page_len")) < 1) { $cfg->save("page_len", 50); }
 if(to_int($cfg->load("session_expiry")) < 1) { $cfg->save("session_expiry", 12); }
 if(to_int($cfg->load("max_size")) < 1) { $cfg->save("max_size", 999000); }
@@ -1272,7 +1312,7 @@ if(to_int($cfg->load("max_size")) < 1) { $cfg->save("max_size", 999000); }
 if($q->param('site_name') && $q->param('db_address') && $logged_user ne "" && $logged_user eq $cfg->load('admin_name')) # Save config by admin
 {
 	headers("Settings");
-	if($q->param('site_name') && $q->param('db_address') && $q->param('admin_name') && defined($q->param('default_lvl')) && $q->param('default_vis') && $q->param('api_write') && defined($q->param('theme_color')) &&  $q->param('api_imp') && $q->param('api_read') && $q->param('comp_tickets') && $q->param('comp_articles') && $q->param('comp_time') && $q->param('comp_shoutbox') && $q->param('comp_billing') && $q->param('comp_clients') && $q->param('comp_items') && $q->param('comp_files') && $q->param('comp_steps')) # All required values have been filled out
+	if($q->param('site_name') && $q->param('db_address') && $q->param('admin_name') && defined($q->param('default_lvl')) && $q->param('default_vis') && $q->param('api_write') && defined($q->param('theme_color')) &&  $q->param('api_imp') && $q->param('api_read') && $q->param('comp_tickets') && $q->param('comp_articles') && $q->param('comp_time') && $q->param('comp_shoutbox') && $q->param('comp_billing') && $q->param('comp_clients') && $q->param('comp_items') && $q->param('comp_files') && $q->param('comp_auto') && $q->param('comp_steps')) # All required values have been filled out
 	{
 		# Test database settings
 		$db = DBI->connect("dbi:SQLite:dbname=" . $q->param('db_address'), '', '', { RaiseError => 0, PrintError => 0 }) or do { msg("Could not verify database settings. Please hit back and try again.<br><br>" . $DBI::errstr, 0); exit(0); };
@@ -1300,6 +1340,7 @@ if($q->param('site_name') && $q->param('db_address') && $logged_user ne "" && $l
 		if(!$q->param('comp_files')) { $text .= "<span class='label label-danger'>Component: Files Management</span> "; }
 		if(!$q->param('comp_clients')) { $text .= "<span class='label label-danger'>Component: Clients Directory</span> "; }
 		if(!$q->param('comp_steps')) { $text .= "<span class='label label-danger'>Component: Tasks Management</span> "; }
+		if(!$q->param('comp_auto')) { $text .= "<span class='label label-danger'>Component: Automation</span> "; }
 		$text .= " Please go back and try again.";
 		msg($text, 0);
 	}
@@ -1389,6 +1430,7 @@ elsif(!$cfg->load("db_address") || !$cfg->load("site_name")) # first use
 				print "<p><div class='row'><div class='col-sm-4'>Component: Inventory Control</div><div class='col-sm-4'><input type='checkbox' name='comp_items' checked></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Component: Files Management</div><div class='col-sm-4'><input type='checkbox' name='comp_files' checked></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Component: Billing</div><div class='col-sm-4'><input type='checkbox' name='comp_billing' checked></div></div></p>\n";
+				print "<p><div class='row'><div class='col-sm-4'>Component: Automation</div><div class='col-sm-4'><input type='checkbox' name='comp_auto' checked></div></div></p>\n";
 				print "<p>See the <a href='./manual.pdf'>manual</a> file for detailed information.<input class='btn btn-primary pull-right' type='submit' value='Save'></p></form>\n"; 
 #			}
 #			else
@@ -3036,6 +3078,7 @@ elsif($q->param('m')) # Modules
 			print "<tr><td style='width:50%'>Can view user details</td><td><input class='form-control' type='text' name='summary_lvl' value=\"" . to_int($cfg->load("summary_lvl")) . "\"></td></tr>\n";
 			print "<tr><td style='width:50%'>Can view client details</td><td><input class='form-control' type='text' name='client_lvl' value=\"" . to_int($cfg->load("client_lvl")) . "\"></td></tr>\n";
 			print "<tr><td style='width:50%'>Can add client events</td><td><input class='form-control' type='text' name='events_lvl' value=\"" . to_int($cfg->load("events_lvl")) . "\"></td></tr>\n";
+			print "<tr><td style='width:50%'>Can configure automation</td><td><input class='form-control' type='text' name='auto_lvl' value=\"" . to_int($cfg->load("auto_lvl")) . "\"></td></tr>\n";
 			print "</table><h4>Plugins</h4><table class='table table-striped'>";
 			print "<tr><td style='width:50%'>Authentication</td><td><input class='form-control' type='text' name='auth_plugin' value=\"" . $cfg->load("auth_plugin") . "\"></td></tr>\n";
 			print "<tr><td style='width:50%'>Notifications</td><td><input class='form-control' type='text' name='ext_plugin' value=\"" . $cfg->load("ext_plugin") . "\"></td></tr>\n";
@@ -3078,6 +3121,10 @@ elsif($q->param('m')) # Modules
 			print "</select></td></tr>\n";
 			print "<tr><td style='width:50%'>Billing</td><td><select class='form-control' name='comp_billing'>";
 			if($cfg->load("comp_billing") eq "on") { print "<option selected>on</option><option>off</option>"; }
+			else { print "<option>on</option><option selected>off</option>"; }
+			print "</select></td></tr>\n";
+			print "<tr><td style='width:50%'>Automation</td><td><select class='form-control' name='comp_auto'>";
+			if($cfg->load("comp_auto") eq "on") { print "<option selected>on</option><option>off</option>"; }
 			else { print "<option>on</option><option selected>off</option>"; }
 			print "</select></td></tr>\n";
 			print "</table>The admin password will be left unchanged if empty.<br>See the <a href='./manual.pdf'>manual</a> file for detailed information.<input class='btn btn-primary pull-right' type='submit' value='Save settings'></form></div></div>\n";
@@ -3420,7 +3467,7 @@ elsif($q->param('m')) # Modules
 		}
 		if($q->param('disable_user'))
 		{
-			if(lc($u) eq lc($cfg->load('admin_name')) || lc($u) eq lc("api") || lc($u) eq lc("guest") || lc($u) eq lc("demo"))
+			if(lc($u) eq lc($cfg->load('admin_name')) || lc($u) eq lc("api") || lc($u) eq lc("guest") || lc($u) eq lc("system") || lc($u) eq lc("demo"))
 			{
 				msg("Cannot disable this user.", 1);
 			}
@@ -4540,6 +4587,92 @@ elsif($q->param('m')) # Modules
 			msg("Comment missing or too long. Please go back and try again.", 0);		
 		}
 	}
+	elsif($q->param('m') eq "auto" && $cfg->load('comp_auto') eq "on" && $logged_lvl >= to_int($cfg->load('auto_lvl')))
+	{
+		headers("Automation");
+		if($q->param('config'))
+		{
+			$sql = $db->prepare("SELECT * FROM auto_modules WHERE ROWID = ?;");
+			$sql->execute(to_int($q->param('config')));
+			while(my @res = $sql->fetchrow_array())
+			{
+				print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>" . $res[0] . "</h3></div><div class='panel-body'><form method='POST' action='./?m=auto'>\n";
+				print "<p><div class='row'><div class='col-sm-12'>" . $res[5] . "</div></div></p>";
+				print "<p><div class='row'><div class='col-sm-6'>Last run: <b>" . $res[2] . "</b></div><div class='col-sm-6'>Last result: <b>" . $res[4] . "</b></div></div></p><hr>";
+				print "<p><div class='row'><div class='col-sm-6'>Status: <select class='form-control' name='enabled'><option value='0'>Disabled</option><option value='1'";
+				if(to_int($res[1]) == 1) { print " selected"; }
+				print ">Enabled</option></select></div><div class='col-sm-6'>Schedule: <select class='form-control' name='schedule'><option value='0'";
+				if($res[6] == 0) { print "selected"; }
+				print ">5 minutes</option><option value='1'";
+				if($res[6] == 1) { print "selected"; }
+				print ">15 minutes</option><option value='2'";
+				if($res[6] == 2) { print "selected"; }
+				print ">Hourly</option><option value='3'";
+				if($res[6] == 3) { print "selected"; }
+				print ">Daily</option><option value='4'";
+				if($res[6] == 4) { print "selected"; }
+				print ">Weekly</option></select></div></div></p>";
+				# TODO: Go module by module and show config options
+				print "<p><input type='hidden' name='m' value='auto'><input type='hidden' name='save' value='" . $q->param('config') . "'><input class='btn btn-primary pull-right' type='submit' value='Save'></p>";
+				print "</form></div></div>\n";
+			}
+		}
+		else
+		{
+			if($q->param('clear_log'))
+			{
+				$sql = $db->prepare("DELETE FROM auto_log;");
+				$sql->execute();
+			}
+			if($q->param('save') && defined($q->param('schedule')) && defined($q->param('enabled')))
+			{
+				$sql = $db->prepare("UPDATE auto_modules SET enabled = ?, schedule = ? WHERE ROWID = ?;");
+				$sql->execute(to_int($q->param('enabled')), to_int($q->param('schedule')), to_int($q->param('save')));
+				# TODO: Go module by module and save config
+				msg("Changes saved.", 3)
+			}
+			$sql = $db->prepare("SELECT * FROM auto;");
+			$sql->execute();
+			while(my @res = $sql->fetchrow_array())
+			{
+				if(to_int($res[0]) + 700 < time()) { msg("The scheduled task <b>nodepoint-automate</b> does not seem to be running. Please check your installation.", 1); }
+			}
+			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Automation modules</h3></div><div class='panel-body'>\n";
+			$sql = $db->prepare("SELECT ROWID,* FROM auto_modules;");
+			$sql->execute();
+			print "<table class='table table-striped' id='auto_table'><thead><tr><th>Name</th><th>Status</th><th>Schedule</th><th>Last run time</th><th>Last result</th></tr></thead><tbody>\n";
+			while(my @res = $sql->fetchrow_array())
+			{
+				print "<tr><td><a href='./?m=auto&config=" . $res[0] . "'>" . $res[1] . "</a></td><td>";
+				if(to_int($res[2]) == 1) { print "<font color='green'>Enabled</font>"; }
+				else { print "<font color='red'>Disabled</font>"; }
+				print "</td><td>";
+				if(to_int($res[7]) == 0) { print "5 minutes"; }
+				elsif(to_int($res[7]) == 1) { print "15 minutes"; }
+				elsif(to_int($res[7]) == 2) { print "Hourly"; }
+				elsif(to_int($res[7]) == 3) { print "Daily"; }
+				elsif(to_int($res[7]) == 4) { print "Weekly"; }
+				print "</td><td>" . $res[3] . "</td><td>" . $res[5] . "</td></tr>";
+			}
+			print "</tbody></table></div></div>\n";
+			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Automation log</h3></div><div class='panel-body'>\n";
+			if($logged_lvl > 5) { print "<form style='display:inline' method='POST' action='./?m=auto'><input type='hidden' name='m' value='auto'><input type='hidden' name='clear_log' value='1'><input class='btn btn-danger pull-right' type='submit' value='Clear log'><br></form>"; }
+			$sql = $db->prepare("SELECT * FROM auto;");
+			$sql->execute();
+			while(my @res = $sql->fetchrow_array())
+			{
+				print "<p>Last automation result: <b>" . $res[1] . " (" . to_int($res[0]) . ")</b></p>";
+			}
+			$sql = $db->prepare("SELECT * FROM auto_log;");
+			$sql->execute();
+			print "<table class='table table-striped' id='autolog_table'><thead><tr><th>Module</th><th>Event</th><th>Date</th></tr></thead><tbody>\n";
+			while(my @res = $sql->fetchrow_array())
+			{
+				print "<tr><td>" . $res[0] . "</td><td>" . $res[1] . "</td><td>" . $res[2] . "</td></tr>";
+			}
+			print "</tbody></table><script>\$(document).ready(function(){\$('#autolog_table').DataTable({'order':[[2,'desc']],pageLength:" . to_int($cfg->load('page_len')) . ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script></div></div>\n";
+		}
+	}
 	elsif($q->param('m') eq "files" && $cfg->load('comp_files') eq "on" && $logged_lvl >= to_int($cfg->load('upload_lvl')))
 	{
 		my $filedata = "";
@@ -4614,9 +4747,15 @@ elsif($q->param('m')) # Modules
 		print "</div></div>\n";
 		if($logged_lvl > 5)
 		{
+			if($q->param('clear_log'))
+			{
+				$sql = $db->prepare("DELETE FROM file_access;");
+				$sql->execute();
+			}			
 			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Access log</h3></div><div class='panel-body'>\n";
 			$sql = $db->prepare("SELECT * FROM file_access;");
 			$sql->execute();
+			print "<form style='display:inline' method='POST' action='./?m=files'><input type='hidden' name='m' value='files'><input type='hidden' name='clear_log' value='1'><input class='btn btn-danger pull-right' type='submit' value='Clear log'><br></form>";
 			print "<table class='table table-striped' id='files_log'><thead><tr><th>IP address</th><th>File ID</th><th>Date</th></tr></thead><tbody>\n";
 			while(my @res = $sql->fetchrow_array())
 			{
@@ -6321,7 +6460,7 @@ elsif(!$cfg->load("ad_server") && $q->param('new_name') && $q->param('new_pass1'
 	{
 		msg("Passwords do not match. Please go back and try again.", 0);
 	}
-	elsif(lc(sanitize_alpha($q->param('new_name'))) eq lc($cfg->load('admin_name')) || lc(sanitize_alpha($q->param('new_name'))) eq "guest" || lc(sanitize_alpha($q->param('new_name'))) eq "api")
+	elsif(lc(sanitize_alpha($q->param('new_name'))) eq lc($cfg->load('admin_name')) || lc(sanitize_alpha($q->param('new_name'))) eq "system" || lc(sanitize_alpha($q->param('new_name'))) eq "guest" || lc(sanitize_alpha($q->param('new_name'))) eq "api")
 	{
 		msg("This user name is reserved. Please go back and try again.", 0);
 	}
