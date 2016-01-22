@@ -589,7 +589,7 @@ sub db_check
 	{
 		$sql = $db->prepare("CREATE TABLE auto_modules (name TEXT, enabled INT, lastrun TEXT, timestamp INT, result TEXT, description TEXT, schedule INT);");
 		$sql->execute();
-		$sql = $db->prepare("INSERT INTO auto_modules VALUES ('Backup', 0, 'Never', 0, '', 'This module allows you to backup the database along with the uploads folder to another location for safe keeping.', 0);");
+		$sql = $db->prepare("INSERT INTO auto_modules VALUES ('Backup', 0, 'Never', 0, '', 'This module allows you to backup the database along with the uploads folder to another location for safe keeping. The folder must be a local path, and the type of backup can be a single archive file or a series of time stamped files.', 0);");
 		$sql->execute();
 		$sql = $db->prepare("INSERT INTO auto_modules VALUES ('Email to Ticket', 0, 'Never', 0, '', 'This module can fetch emails from an IMAP account and turn them into tickets automatically.', 0);");
 		$sql->execute();
@@ -604,6 +604,12 @@ sub db_check
 	$sql = $db->prepare("SELECT * FROM auto_log WHERE 0 = 1;") or do
 	{
 		$sql = $db->prepare("CREATE TABLE auto_log (module TEXT, event TEXT, time TEXT);");
+		$sql->execute();
+	};
+	$sql->finish();
+	$sql = $db->prepare("SELECT * FROM auto_config WHERE 0 = 1;") or do
+	{
+		$sql = $db->prepare("CREATE TABLE auto_config (module TEXT, key TEXT, value TEXT);");
 		$sql->execute();
 	};
 	$sql->finish();
@@ -4612,6 +4618,22 @@ elsif($q->param('m')) # Modules
 				print ">Daily</option><option value='4'";
 				if($res[6] == 4) { print "selected"; }
 				print ">Weekly</option></select></div></div></p>";
+				if($res[0] eq "Backup")
+				{
+					my $folder = $0 . "_backups";
+					my $type = "Time stamped";
+					my $sql2 = $db->prepare("SELECT * FROM auto_config WHERE module = 'Backup';");
+					$sql2->execute();
+					while(my @res2 = $sql2->fetchrow_array())
+					{
+						if($res2[1] eq 'folder') { $folder = $res2[2]; }
+						if($res2[1] eq 'type') { $type = $res2[2]; }
+					}
+					print "<p><div class='row'><div class='col-sm-4'>Backup folder:</div><div class='col-sm-8'><input class='form-control' type='text' name='folder' value='" . $folder . "'></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>Archive type:</div><div class='col-sm-8'><select class='form-control' name='type'><option>Time stamped</option><option";
+					if($type eq "Overwrite") { print " selected"; }
+					print ">Overwrite</option></select></div></div></p>";
+				}
 				# TODO: Go module by module and show config options
 				print "<p><input type='hidden' name='m' value='auto'><input type='hidden' name='save' value='" . $q->param('config') . "'><input class='btn btn-primary pull-right' type='submit' value='Save'></p>";
 				print "</form></div></div>\n";
@@ -4619,7 +4641,13 @@ elsif($q->param('m')) # Modules
 		}
 		else
 		{
-			if($q->param('clear_log'))
+			if($q->param('run_all'))
+			{
+				$sql = $db->prepare("UPDATE auto_modules SET timestamp = 0");
+				$sql->execute();
+				msg("All enabled modules will be executed on next run regardless of scheduling.", 3)
+			}
+			if($q->param('clear_log') && $logged_lvl > 5)
 			{
 				$sql = $db->prepare("DELETE FROM auto_log;");
 				$sql->execute();
@@ -4628,6 +4656,15 @@ elsif($q->param('m')) # Modules
 			{
 				$sql = $db->prepare("UPDATE auto_modules SET enabled = ?, schedule = ? WHERE ROWID = ?;");
 				$sql->execute(to_int($q->param('enabled')), to_int($q->param('schedule')), to_int($q->param('save')));
+				if(to_int($q->param('save')) == 1)
+				{
+					$sql = $db->prepare("DELETE FROM auto_config WHERE module = 'Backup';");
+					$sql->execute();
+					$sql = $db->prepare("INSERT INTO auto_config VALUES ('Backup', 'folder', ?);");
+					$sql->execute(sanitize_html($q->param('folder')));
+					$sql = $db->prepare("INSERT INTO auto_config VALUES ('Backup', 'type', ?);");
+					$sql->execute(sanitize_html($q->param('type')));
+				}
 				# TODO: Go module by module and save config
 				msg("Changes saved.", 3)
 			}
@@ -4654,14 +4691,14 @@ elsif($q->param('m')) # Modules
 				elsif(to_int($res[7]) == 4) { print "Weekly"; }
 				print "</td><td>" . $res[3] . "</td><td>" . $res[5] . "</td></tr>";
 			}
-			print "</tbody></table></div></div>\n";
+			print "</tbody></table><p><form method='POST' action='./?m=auto'><input type='hidden' name='m' value='auto'><input type='hidden' name='run_all' value='1'><input class='btn btn-primary' type='submit' value='Process all modules on next run'></form></p></div></div>\n";
 			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Automation log</h3></div><div class='panel-body'>\n";
 			if($logged_lvl > 5) { print "<form style='display:inline' method='POST' action='./?m=auto'><input type='hidden' name='m' value='auto'><input type='hidden' name='clear_log' value='1'><input class='btn btn-danger pull-right' type='submit' value='Clear log'><br></form>"; }
 			$sql = $db->prepare("SELECT * FROM auto;");
 			$sql->execute();
 			while(my @res = $sql->fetchrow_array())
 			{
-				print "<p>Last automation result: <b>" . $res[1] . " (" . to_int($res[0]) . ")</b></p>";
+				print "<p>Last automation result: <b>" . $res[1] . "</b></p>";
 			}
 			$sql = $db->prepare("SELECT * FROM auto_log;");
 			$sql->execute();

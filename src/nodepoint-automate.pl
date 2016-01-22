@@ -14,8 +14,10 @@ use DBI;
 use Scalar::Util qw(looks_like_number);
 use Time::HiRes qw(time);
 use File::Basename qw(dirname);
+use File::Copy;
+use Archive::Zip;
 
-my ($cfg, $db, $sql);
+my ($cfg, $db, $sql, $sql2);
 
 # Convert to int so it doesnt throw up on invalid numbers
 sub to_int
@@ -71,7 +73,7 @@ sub sanitize_email
 sub logevent
 {
 	my ($module, $text) = @_;
-	my $sql2 = $db->prepare("INSERT INTO auto_log VALUES (?, ?, ?);");
+	$sql2 = $db->prepare("INSERT INTO auto_log VALUES (?, ?, ?);");
 	$sql2->execute($module, $text, now());
 }
 
@@ -107,23 +109,78 @@ $sql = $db->prepare("SELECT * FROM auto WHERE 0 = 1;") or do
 	$sql->execute();
 };
 $sql->finish();
+$sql = $db->prepare("SELECT * FROM auto_config WHERE 0 = 1;") or do
+{
+	$sql = $db->prepare("CREATE TABLE auto_config (module TEXT, key TEXT, value TEXT);");
+	$sql->execute();
+};
+$sql->finish();
 
 # Main loop
-$sql = $db->prepare("SELECT *,ROWID FROM auto_modules WHERE enabled = 1;");
+my $runcount = 0;
+$sql = $db->prepare("SELECT * FROM auto_modules WHERE enabled = 1;");
 $sql->execute();
 while(my @res = $sql->fetchrow_array())
 {
-	if((to_int($res[6]) == 0 && to_int($res[3]) + 400 < time()) || (to_int($res[6]) == 1 && to_int($res[3]) + 1000 < time()) || (to_int($res[6]) == 2 && to_int($res[3]) + 3700 < time()) || (to_int($res[6]) == 3 && to_int($res[3]) + 86500 < time()) || (to_int($res[6]) == 4 && to_int($res[3]) + 604900 < time()))
+	if((to_int($res[6]) == 0 && to_int($res[3]) + 290 < time()) || (to_int($res[6]) == 1 && to_int($res[3]) + 890 < time()) || (to_int($res[6]) == 2 && to_int($res[3]) + 3590 < time()) || (to_int($res[6]) == 3 && to_int($res[3]) + 86390 < time()) || (to_int($res[6]) == 4 && to_int($res[3]) + 604790 < time()))
   	{
+		$runcount += 1;
+		my $result = "Failed";
+		if($res[0] eq 'Backup')
+		{
+			my $folder = "";
+			my $type = "Time stamped";
+			my $sql2 = $db->prepare("SELECT * FROM auto_config WHERE module = 'Backup';");
+			$sql2->execute();
+			while(my @res2 = $sql2->fetchrow_array())
+			{
+				if($res2[1] eq 'folder') { $folder = $res2[2]; }
+				if($res2[1] eq 'type') { $type = $res2[2]; }
+			}
+			if($folder eq "")
+			{
+				logevent($res[0], "Missing folder configuration value.");
+			}
+			elsif(!-d $folder) 
+			{
+				logevent($res[0], "Backup folder does not exist.");
+			}
+			else
+			{
+				my $zip = Archive::Zip->new();
+				$zip->addFile($cfg->load('db_address'), "nodepoint.db");
+				if($cfg->load('upload_folder'))
+				{
+					opendir(DIR, $cfg->load('upload_folder')) or logevent($res[0], "Error archiving uploads folder.");
+					while(my $file = readdir(DIR))
+					{
+						next if ($file =~ m/^\./);
+						$zip->addFile($cfg->load('upload_folder') . $cfg->sep . $file, $file);
+					}
+					closedir(DIR);
+				}
+				my $zipfile = $folder . $cfg->sep . "nodepoint.zip";
+				if($type eq "Time stamped") { $zipfile = $folder . $cfg->sep . "nodepoint_" . to_int(time()) . ".zip"; }
+				if($zip->writeToFileNamed($zipfile) == 0)
+				{
+					$result = "Success";
+					logevent($res[0], "Backup archive created.");
+				}
+				else
+				{
+					logevent($res[0], "Could not backup database.");						
+				}
+			}
+		}
 		# TODO: Go module by module and read config, do stuff
-		logevent($res[0], "Executing action.");
-		my $sql2 = $db->prepare("UPDATE auto_modules SET lastrun = ?, timestamp = ?, result = ? WHERE ROWID = ?;");
-		$sql2->execute(now(), time(), "Success", $res[7]);
+		else { logevent($res[0], "Not implemented."); }
+		$sql2 = $db->prepare("UPDATE auto_modules SET lastrun = ?, timestamp = ?, result = ? WHERE name = ?;");
+		$sql2->execute(now(), time(), $result, $res[0]);
 
 	}
 }
 # Finish
 $sql = $db->prepare("DELETE FROM auto;");
 $sql->execute();
-$sql = $db->prepare("INSERT INTO auto VALUES (?, 'Success');");
+$sql = $db->prepare("INSERT INTO auto VALUES (?, 'Ran " . $runcount . " modules at " . now() . ".');");
 $sql->execute(time());
