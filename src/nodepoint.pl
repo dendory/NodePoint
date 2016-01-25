@@ -22,6 +22,7 @@ use MIME::Base64;
 use Time::HiRes qw(time);
 use Time::Piece;
 use Text::Markdown 'markdown';
+use Crypt::RC4;
 
 my ($cfg, $db, $sql, $cn, $cp, $cgs, $last_login, $perf);
 my $logged_user = "";
@@ -597,7 +598,7 @@ sub db_check
 		$sql->execute();
 		$sql = $db->prepare("INSERT INTO auto_modules VALUES ('Bulk export', 0, 'Never', 0, '', 'This module will export a specific table to a file location automatically in CSV format. Specify the full path of a local file and the table to export.', 0);");
 		$sql->execute();
-		$sql = $db->prepare("INSERT INTO auto_modules VALUES ('Users sync', 0, 'Never', 0, '', 'This module can keep the internal users list in sync with an external source.', 0);");
+		$sql = $db->prepare("INSERT INTO auto_modules VALUES ('Users sync', 0, 'Never', 0, '', 'This module can keep the internal users list in sync with your Active Directory domain. This requires credentials of a user with delegated administration access. The Base DN should be the OU where your users are kept, and the filter can be used to filter specific object types. Emails can optionally be updated for all users as well.', 0);");
 		$sql->execute();
 	};
 	$sql->finish();
@@ -4656,6 +4657,33 @@ elsif($q->param('m')) # Modules
 					if($table eq "Tasks") { print " selected"; }
 					print ">Tasks</option></select></div></div></p>";
 				}
+				elsif($res[0] eq "Users sync")
+				{
+					my $aduser = "Administrator";
+					my $adpass = "";
+					my $searchfilter = "(&(objectCategory=person)(objectClass=user))";
+					my $basedn = "CN=Users,DC=" . $cfg->load("ad_domain") . ",DC=com";
+					my $importemail = 0;
+					my $sql2 = $db->prepare("SELECT * FROM auto_config WHERE module = 'Users sync';");
+					$sql2->execute();
+					while(my @res2 = $sql2->fetchrow_array())
+					{
+						if($res2[1] eq 'basedn') { $basedn = $res2[2]; }
+						if($res2[1] eq 'searchfilter') { $searchfilter = $res2[2]; }
+						if($res2[1] eq 'aduser') { $aduser = $res2[2]; }
+						if($res2[1] eq 'adpass') { $adpass = RC4($cfg->load("api_write"), $res2[2]); }
+						if($res2[1] eq 'importemail') { $importemail = to_int($res2[2]); }
+					}
+					print "<p><div class='row'><div class='col-sm-4'>Base DN:</div><div class='col-sm-8'><input class='form-control' type='text' name='basedn' value='" . $basedn . "'></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>Filter:</div><div class='col-sm-8'><input class='form-control' type='text' name='searchfilter' value='" . $searchfilter . "'></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>Username:</div><div class='col-sm-8'><input class='form-control' type='text' name='aduser' value='" . $aduser . "'></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>Password:</div><div class='col-sm-8'><input class='form-control' type='password' name='adpass' value='" . $adpass . "'></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>Import email addresses:</div><div class='col-sm-8'><select class='form-control' name='importemail'><option";
+					if($importemail == 1) { print " selected"; }
+					print ">Yes</option><option";
+					if($importemail == 0) { print " selected"; }
+					print ">No</option></select></div></div></p>";
+				}
 				# TODO: Go module by module and show config options
 				print "<p><input type='hidden' name='m' value='auto'><input type='hidden' name='save' value='" . $q->param('config') . "'><input class='btn btn-primary pull-right' type='submit' value='Save'></p>";
 				print "</form></div></div>\n";
@@ -4695,6 +4723,22 @@ elsif($q->param('m')) # Modules
 					$sql->execute(sanitize_html($q->param('filename')));
 					$sql = $db->prepare("INSERT INTO auto_config VALUES ('Bulk export', 'table', ?);");
 					$sql->execute(sanitize_html($q->param('table')));
+				}
+				elsif(to_int($q->param('save')) == 5)
+				{
+					$sql = $db->prepare("DELETE FROM auto_config WHERE module = 'Users sync';");
+					$sql->execute();
+					$sql = $db->prepare("INSERT INTO auto_config VALUES ('Users sync', 'basedn', ?);");
+					$sql->execute(sanitize_html($q->param('basedn')));
+					$sql = $db->prepare("INSERT INTO auto_config VALUES ('Users sync', 'searchfilter', ?);");
+					$sql->execute(sanitize_html($q->param('searchfilter')));
+					$sql = $db->prepare("INSERT INTO auto_config VALUES ('Users sync', 'aduser', ?);");
+					$sql->execute(sanitize_html($q->param('aduser')));
+					$sql = $db->prepare("INSERT INTO auto_config VALUES ('Users sync', 'adpass', ?);");
+					$sql->execute(RC4($cfg->load("api_write"), $q->param('adpass')));
+					$sql = $db->prepare("INSERT INTO auto_config VALUES ('Users sync', 'importemail', ?);");
+					if($q->param('importemail') eq "Yes") { $sql->execute(1); }
+					else { $sql->execute(0); }
 				}
 				# TODO: Go module by module and save config
 				msg("Changes saved.", 3)

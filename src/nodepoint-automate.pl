@@ -13,9 +13,12 @@ use Digest::SHA qw(sha1_hex);
 use DBI;
 use Scalar::Util qw(looks_like_number);
 use Time::HiRes qw(time);
+use Mail::RFC822::Address qw(valid);
 use File::Basename qw(dirname);
 use File::Copy;
 use Archive::Zip;
+use Net::LDAP;
+use Crypt::RC4;
 
 my ($cfg, $db, $sql, $sql2);
 
@@ -249,6 +252,80 @@ while(my @res = $sql->fetchrow_array())
 				close($OUTFILE);
 				$result = "Success";
 				logevent($res[0], "Exported " . $rowcount . " rows.");
+			}
+		}
+		elsif($res[0] eq 'Users sync')
+		{
+			my $aduser = "";
+			my $adpass = "";
+			my $basedn = "";
+			my $searchfilter = "";
+			my $importemail = 0;
+			my $sql2 = $db->prepare("SELECT * FROM auto_config WHERE module = 'Users sync';");
+			$sql2->execute();
+			while(my @res2 = $sql2->fetchrow_array())
+			{
+				if($res2[1] eq 'basedn') { $basedn = $res2[2]; }
+				if($res2[1] eq 'searchfilter') { $searchfilter = $res2[2]; }
+				if($res2[1] eq 'aduser') { $aduser = $res2[2]; }
+				if($res2[1] eq 'adpass') { $adpass = RC4($cfg->load("api_write"), $res2[2]); }
+				if($res2[1] eq 'importemail') { $importemail = to_int($res2[2]); }
+			}
+			if($basedn eq "")
+			{
+				logevent($res[0], "Missing Base DN configuration value.");
+			}
+			else
+			{
+				my $ldap = Net::LDAP->new($cfg->load("ad_server"));
+				my $mesg = $ldap->bind($cfg->load("ad_domain") . "\\" . $aduser, password => $adpass);
+				$mesg = $ldap->search(base => $basedn, filter => $searchfilter);
+				if($mesg->code)
+				{
+					logevent($res[0], "LDAP: " . $mesg->error . " [" . $mesg->code . "]");
+				}
+				else
+				{
+					my $rowcount = 0;
+					my $updcount = 0;
+					my $newcount = 0;
+					foreach my $entry ($mesg->entries)
+					{
+						my $name = $entry->get_value('sAMAccountName');
+						my $mail = $entry->get_value('mail');
+						my $existing = 0;
+						$sql2 = $db->prepare("SELECT COUNT(*) FROM users WHERE name = ?;");
+						$sql2->execute(sanitize_alpha($name));
+						while(my @res2 = $sql2->fetchrow_array())
+						{
+							$existing = to_int($res2[0]);
+						}
+						if(lc(sanitize_alpha($name)) eq "guest" || lc(sanitize_alpha($name)) eq "system" || lc(sanitize_alpha($name)) eq "api" || lc(sanitize_alpha($name)) eq lc($cfg->load('admin_name')))
+						{}
+						elsif($existing > 0 && $importemail == 1)
+						{
+							$sql2 = $db->prepare("UPDATE users SET email = ? WHERE name = ?");
+							$sql2->execute(sanitize_email($mail), sanitize_alpha($name));
+							$updcount += 1;
+						}
+						elsif($existing == 0 && $importemail == 1)
+						{
+							$sql2 = $db->prepare("INSERT INTO users VALUES(?, ?, ?, ?, ?, ?);");
+							$sql2->execute(sanitize_alpha($name), "*********", sanitize_email($mail), to_int($cfg->load('default_lvl')), now(), "");
+							$newcount += 1;
+						}
+						elsif($existing == 0 && $importemail == 0)
+						{
+							$sql2 = $db->prepare("INSERT INTO users VALUES(?, ?, ?, ?, ?, ?);");
+							$sql2->execute(sanitize_alpha($name), "*********", "", to_int($cfg->load('default_lvl')), now(), "");
+							$newcount += 1;
+						}
+						$rowcount += 1; 
+					}
+					$mesg = $ldap->unbind; 
+					$result = "Success";
+					logevent($res[0], "Listed " . $rowcount . " accounts, updated " . $updcount . ", created " . $newcount . ".");
+				}
 			}
 		}
 		# TODO: Go module by module and read config, do stuff
