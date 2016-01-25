@@ -590,15 +590,15 @@ sub db_check
 	{
 		$sql = $db->prepare("CREATE TABLE auto_modules (name TEXT, enabled INT, lastrun TEXT, timestamp INT, result TEXT, description TEXT, schedule INT);");
 		$sql->execute();
-		$sql = $db->prepare("INSERT INTO auto_modules VALUES ('Backup', 0, 'Never', 0, '', 'This module allows you to backup the database along with the uploads folder to another location for safe keeping. The folder must be a local path, and the type of backup can be a single archive file or a series of time stamped files.', 0);");
+		$sql = $db->prepare("INSERT INTO auto_modules VALUES ('Backup', 0, 'Never', 0, '', \"This module allows you to backup the database along with the uploads folder to another location for safe keeping. The folder must be a local path, and the type of backup can be a single archive file or a series of time stamped files.\", 0);");
 		$sql->execute();
-		$sql = $db->prepare("INSERT INTO auto_modules VALUES ('Email to Ticket', 0, 'Never', 0, '', 'This module can fetch emails from an IMAP account and turn them into tickets automatically.', 0);");
+		$sql = $db->prepare("INSERT INTO auto_modules VALUES ('Email to Ticket', 0, 'Never', 0, '', \"This module can fetch emails from an IMAP account and turn them into tickets automatically. The mail server and inbox information must be provided in order to log in.\", 0);");
 		$sql->execute();
-		$sql = $db->prepare("INSERT INTO auto_modules VALUES ('Bulk import', 0, 'Never', 0, '', 'This module will connect to an external source and import items automatically.', 0);");
+		$sql = $db->prepare("INSERT INTO auto_modules VALUES ('Bulk export', 0, 'Never', 0, '', \"This module will export a specific table to a file location automatically in CSV format. Specify the full path of a local file and the table to export.\", 0);");
 		$sql->execute();
-		$sql = $db->prepare("INSERT INTO auto_modules VALUES ('Bulk export', 0, 'Never', 0, '', 'This module will export a specific table to a file location automatically in CSV format. Specify the full path of a local file and the table to export.', 0);");
+		$sql = $db->prepare("INSERT INTO auto_modules VALUES ('Users sync', 0, 'Never', 0, '', \"This module can keep the internal users list in sync with your Active Directory domain. This requires credentials of a user with object listing rights. The Base DN should be the OU where your users are kept, and the filter can be used to filter specific object types. Emails can optionally be updated for all users as well.\", 0);");
 		$sql->execute();
-		$sql = $db->prepare("INSERT INTO auto_modules VALUES ('Users sync', 0, 'Never', 0, '', 'This module can keep the internal users list in sync with your Active Directory domain. This requires credentials of a user with delegated administration access. The Base DN should be the OU where your users are kept, and the filter can be used to filter specific object types. Emails can optionally be updated for all users as well.', 0);");
+		$sql = $db->prepare("INSERT INTO auto_modules VALUES ('Computers sync', 0, 'Never', 0, '', \"This module will list computer objects from your Active Directory domain and create entries in the Inventory Control component. The Base DN should be the OU where your computers are kept. The serial will be set to the machine's hostname. This requires credentials of a user with object listing rights.\", 0);");
 		$sql->execute();
 	};
 	$sql->finish();
@@ -4599,8 +4599,8 @@ elsif($q->param('m')) # Modules
 		headers("Automation");
 		if($q->param('config'))
 		{
-			$sql = $db->prepare("SELECT * FROM auto_modules WHERE ROWID = ?;");
-			$sql->execute(to_int($q->param('config')));
+			$sql = $db->prepare("SELECT * FROM auto_modules WHERE name = ?;");
+			$sql->execute(sanitize_html($q->param('config')));
 			while(my @res = $sql->fetchrow_array())
 			{
 				print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>" . $res[0] . "</h3></div><div class='panel-body'><form method='POST' action='./?m=auto'>\n";
@@ -4684,8 +4684,44 @@ elsif($q->param('m')) # Modules
 					if($importemail == 0) { print " selected"; }
 					print ">No</option></select></div></div></p>";
 				}
+				elsif($res[0] eq "Computers sync")
+				{
+					my $aduser = "Administrator";
+					my $adpass = "";
+					my $type = "Desktop";
+					my $approval = 0;
+					my $searchfilter = "(&(objectCategory=computer))";
+					my $basedn = "CN=Computers,DC=" . $cfg->load("ad_domain") . ",DC=com";
+					my $sql2 = $db->prepare("SELECT * FROM auto_config WHERE module = 'Computers sync';");
+					$sql2->execute();
+					while(my @res2 = $sql2->fetchrow_array())
+					{
+						if($res2[1] eq 'basedn') { $basedn = $res2[2]; }
+						if($res2[1] eq 'type') { $type = $res2[2]; }
+						if($res2[1] eq 'searchfilter') { $searchfilter = $res2[2]; }
+						if($res2[1] eq 'aduser') { $aduser = $res2[2]; }
+						if($res2[1] eq 'adpass') { $adpass = RC4($cfg->load("api_write"), $res2[2]); }
+						if($res2[1] eq 'approval') { $approval = to_int($res2[2]); }
+					}
+					print "<p><div class='row'><div class='col-sm-4'>Base DN:</div><div class='col-sm-8'><input class='form-control' type='text' name='basedn' value='" . $basedn . "'></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>Filter:</div><div class='col-sm-8'><input class='form-control' type='text' name='searchfilter' value='" . $searchfilter . "'></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>Username:</div><div class='col-sm-8'><input class='form-control' type='text' name='aduser' value='" . $aduser . "'></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>Password:</div><div class='col-sm-8'><input class='form-control' type='password' name='adpass' value='" . $adpass . "'></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>Require checkout approval:</div><div class='col-sm-8'><select class='form-control' name='approval'><option";
+					if($approval == 1) { print " selected"; }
+					print ">Yes</option><option";
+					if($approval == 0) { print " selected"; }
+					print ">No</option></select></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>Computer type:</div><div class='col-sm-8'><select class='form-control' name='type'><option";
+					if($type eq "Desktop") { print " selected"; }
+					print ">Desktop</option><option";
+					if($type eq "Laptop") { print " selected"; }
+					print ">Laptop</option><option";
+					if($type eq "Server") { print " selected"; }
+					print ">Server</option></select></div></div></p>";
+				}
 				# TODO: Go module by module and show config options
-				print "<p><input type='hidden' name='m' value='auto'><input type='hidden' name='save' value='" . $q->param('config') . "'><input class='btn btn-primary pull-right' type='submit' value='Save'></p>";
+				print "<p><input type='hidden' name='m' value='auto'><input type='hidden' name='save' value='" . sanitize_html($q->param('config')) . "'><input class='btn btn-primary pull-right' type='submit' value='Save'></p>";
 				print "</form></div></div>\n";
 			}
 		}
@@ -4704,9 +4740,9 @@ elsif($q->param('m')) # Modules
 			}
 			if($q->param('save') && defined($q->param('schedule')) && defined($q->param('enabled')))
 			{
-				$sql = $db->prepare("UPDATE auto_modules SET enabled = ?, schedule = ? WHERE ROWID = ?;");
-				$sql->execute(to_int($q->param('enabled')), to_int($q->param('schedule')), to_int($q->param('save')));
-				if(to_int($q->param('save')) == 1)
+				$sql = $db->prepare("UPDATE auto_modules SET enabled = ?, schedule = ? WHERE name = ?;");
+				$sql->execute(to_int($q->param('enabled')), to_int($q->param('schedule')), $q->param('save'));
+				if($q->param('save') eq "Backup")
 				{
 					$sql = $db->prepare("DELETE FROM auto_config WHERE module = 'Backup';");
 					$sql->execute();
@@ -4715,7 +4751,7 @@ elsif($q->param('m')) # Modules
 					$sql = $db->prepare("INSERT INTO auto_config VALUES ('Backup', 'type', ?);");
 					$sql->execute(sanitize_html($q->param('type')));
 				}
-				elsif(to_int($q->param('save')) == 4)
+				elsif($q->param('save') eq "Bulk export")
 				{
 					$sql = $db->prepare("DELETE FROM auto_config WHERE module = 'Bulk export';");
 					$sql->execute();
@@ -4724,7 +4760,7 @@ elsif($q->param('m')) # Modules
 					$sql = $db->prepare("INSERT INTO auto_config VALUES ('Bulk export', 'table', ?);");
 					$sql->execute(sanitize_html($q->param('table')));
 				}
-				elsif(to_int($q->param('save')) == 5)
+				elsif($q->param('save') eq "Users sync")
 				{
 					$sql = $db->prepare("DELETE FROM auto_config WHERE module = 'Users sync';");
 					$sql->execute();
@@ -4738,6 +4774,24 @@ elsif($q->param('m')) # Modules
 					$sql->execute(RC4($cfg->load("api_write"), $q->param('adpass')));
 					$sql = $db->prepare("INSERT INTO auto_config VALUES ('Users sync', 'importemail', ?);");
 					if($q->param('importemail') eq "Yes") { $sql->execute(1); }
+					else { $sql->execute(0); }
+				}
+				elsif($q->param('save') eq "Computers sync")
+				{
+					$sql = $db->prepare("DELETE FROM auto_config WHERE module = 'Computers sync';");
+					$sql->execute();
+					$sql = $db->prepare("INSERT INTO auto_config VALUES ('Computers sync', 'basedn', ?);");
+					$sql->execute(sanitize_html($q->param('basedn')));
+					$sql = $db->prepare("INSERT INTO auto_config VALUES ('Computers sync', 'searchfilter', ?);");
+					$sql->execute(sanitize_html($q->param('searchfilter')));
+					$sql = $db->prepare("INSERT INTO auto_config VALUES ('Computers sync', 'aduser', ?);");
+					$sql->execute(sanitize_html($q->param('aduser')));
+					$sql = $db->prepare("INSERT INTO auto_config VALUES ('Computers sync', 'type', ?);");
+					$sql->execute(sanitize_html($q->param('type')));
+					$sql = $db->prepare("INSERT INTO auto_config VALUES ('Computers sync', 'adpass', ?);");
+					$sql->execute(RC4($cfg->load("api_write"), $q->param('adpass')));
+					$sql = $db->prepare("INSERT INTO auto_config VALUES ('Computers sync', 'approval', ?);");
+					if($q->param('approval') eq "Yes") { $sql->execute(1); }
 					else { $sql->execute(0); }
 				}
 				# TODO: Go module by module and save config
@@ -4755,7 +4809,7 @@ elsif($q->param('m')) # Modules
 			print "<table class='table table-striped' id='auto_table'><thead><tr><th>Name</th><th>Status</th><th>Schedule</th><th>Last run time</th><th>Last result</th></tr></thead><tbody>\n";
 			while(my @res = $sql->fetchrow_array())
 			{
-				print "<tr><td><a href='./?m=auto&config=" . $res[0] . "'>" . $res[1] . "</a></td><td>";
+				print "<tr><td><a href='./?m=auto&config=" . $res[1] . "'>" . $res[1] . "</a></td><td>";
 				if(to_int($res[2]) == 1) { print "<font color='green'>Enabled</font>"; }
 				else { print "<font color='red'>Disabled</font>"; }
 				print "</td><td>";
@@ -4764,7 +4818,10 @@ elsif($q->param('m')) # Modules
 				elsif(to_int($res[7]) == 2) { print "Hourly"; }
 				elsif(to_int($res[7]) == 3) { print "Daily"; }
 				elsif(to_int($res[7]) == 4) { print "Weekly"; }
-				print "</td><td>" . $res[3] . "</td><td>" . $res[5] . "</td></tr>";
+				print "</td><td>" . $res[3] . "</td><td>";
+				if($res[5] eq "Success") { print "<font color='green'>Success</font>"; }
+				else { print "<font color='red'>" . $res[5] . "</font>"; }
+				print "</td></tr>";
 			}
 			print "</tbody></table><p><form method='POST' action='./?m=auto'><input type='hidden' name='m' value='auto'><input type='hidden' name='run_all' value='1'><input class='btn btn-primary' type='submit' value='Process all modules on next run'></form></p></div></div>\n";
 			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Automation log</h3></div><div class='panel-body'>\n";

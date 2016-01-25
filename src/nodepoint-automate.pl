@@ -328,6 +328,75 @@ while(my @res = $sql->fetchrow_array())
 				}
 			}
 		}
+		elsif($res[0] eq 'Computers sync')
+		{
+			my $aduser = "";
+			my $adpass = "";
+			my $type = "";
+			my $basedn = "";
+			my $approval = 0;
+			my $searchfilter = "";
+			my $sql2 = $db->prepare("SELECT * FROM auto_config WHERE module = 'Computers sync';");
+			$sql2->execute();
+			while(my @res2 = $sql2->fetchrow_array())
+			{
+				if($res2[1] eq 'basedn') { $basedn = $res2[2]; }
+				if($res2[1] eq 'type') { $type = $res2[2]; }
+				if($res2[1] eq 'searchfilter') { $searchfilter = $res2[2]; }
+				if($res2[1] eq 'aduser') { $aduser = $res2[2]; }
+				if($res2[1] eq 'adpass') { $adpass = RC4($cfg->load("api_write"), $res2[2]); }
+				if($res2[1] eq 'approval') { $approval = to_int($res2[2]); }
+			}
+			if($basedn eq "")
+			{
+				logevent($res[0], "Missing Base DN configuration value.");
+			}
+			else
+			{
+				my $ldap = Net::LDAP->new($cfg->load("ad_server"));
+				my $mesg = $ldap->bind($cfg->load("ad_domain") . "\\" . $aduser, password => $adpass);
+				$mesg = $ldap->search(base => $basedn, filter => $searchfilter);
+				if($mesg->code)
+				{
+					logevent($res[0], "LDAP: " . $mesg->error . " [" . $mesg->code . "]");
+				}
+				else
+				{
+					my $rowcount = 0;
+					my $updcount = 0;
+					my $newcount = 0;
+					foreach my $entry ($mesg->entries)
+					{
+						my $name = $entry->get_value('sAMAccountName');
+						my $serial = $entry->get_value('dNSHostName');
+						my $os = $entry->get_value('operatingSystem');
+						my $existing = "";
+						$sql2 = $db->prepare("SELECT serial FROM items WHERE name = ?;");
+						$sql2->execute(sanitize_html($name));
+						while(my @res2 = $sql2->fetchrow_array())
+						{
+							$existing = $res2[0];
+						}
+						if($existing ne sanitize_html($serial) && $existing ne "")
+						{
+							$sql2 = $db->prepare("UPDATE items SET serial = ? WHERE name = ?");
+							$sql2->execute(sanitize_html($serial), sanitize_html($name));
+							$updcount += 1;
+						}
+						elsif($existing eq "")
+						{
+							$sql2 = $db->prepare("INSERT INTO items VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);");
+							$sql2->execute(sanitize_html($name), $type, sanitize_html($serial), 0, 0, $approval, 1, "", sanitize_html($os));
+							$newcount += 1;
+						}
+						$rowcount += 1; 
+					}
+					$mesg = $ldap->unbind; 
+					$result = "Success";
+					logevent($res[0], "Listed " . $rowcount . " computers, updated " . $updcount . ", created " . $newcount . ".");
+				}
+			}
+		}
 		# TODO: Go module by module and read config, do stuff
 		else { logevent($res[0], "Not implemented."); }
 		$sql2 = $db->prepare("UPDATE auto_modules SET lastrun = ?, timestamp = ?, result = ? WHERE name = ?;");

@@ -514,23 +514,24 @@ The Billing component allows you to assign tickets to clients with either a fixe
 When editing a ticket, a user of level 3 of higher can select a client from the drop down list, among clients that have been entered in the directory. Once tickets have been assigned to a client, the list of tickets with hours spent are listed on that client's page. The cost and currency can also be adjusted on that page.
 
 \subsection{Automation}
-NodePoint ships with an automation engine called \textbf{nodepoint-automate}. This engine is set as a scheduled task during the installation process, and controls the background automation modules, processes that can run without user intervention. Each module can be enabled or disabled individually, and scheduled on its own schedule of 5 minutes, 15 minutes, hourly, daily or weekly. Configuration is done under the \textbf{Tools} menu by users with the right access level.
+NodePoint ships with an automation engine called \textbf{nodepoint-automate}. This engine is set as a scheduled task during the installation process, and controls the background automation modules, processes that can run without user intervention. Each module can be enabled or disabled individually, and scheduled on its own schedule of 5 minutes, 15 minutes, hourly, daily or weekly. Configuration is done under the \textbf{Tools} menu by users with the right access level. A log of these processes is also available there.
 
 These are the available automation modules:
 
 \subsubsection{Backup}
-
 This module allows you to backup the database along with the uploads folder to another location for safe keeping. The folder must be a local path, and the type of backup can be a single archive file or a series of time stamped files.
 
 \subsubsection{Email to Ticket}
-
-\subsubsection{Bulk import}
+This module can fetch emails from an IMAP account and turn them into tickets automatically. The mail server and inbox information must be provided in order to log in.
 
 \subsubsection{Bulk export}
-
 This module will export a specific table to a file location automatically in CSV format. Specify the full path of a local file and the table to export.
 
 \subsubsection{Users sync}
+This module can keep the internal users list in sync with your Active Directory domain. This requires credentials of a user with object listing rights. The Base DN should be the OU where your users are kept, and the filter can be used to filter specific object types. Emails can optionally be updated for all users as well.
+
+\subsubsection{Computers sync}
+This module will list computer objects from your Active Directory domain and create entries in the Inventory Control component. The Base DN should be the OU where your computers are kept. The serial will be set to the machine's hostname. This requires credentials of a user with object listing rights.
 
 \clearpage
 \section{JSON API}
