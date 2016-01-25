@@ -197,7 +197,7 @@ Make sure you have the \textit{CGI} and \textit{ISAPI Extensions} IIS features i
 
 You will need to remove the initial configuration settings and recreate them in order to recover access. This configuration is stored locally on the server inside the Windows Registry. Use \texttt{regedit.exe} and navigate to \texttt{HKLM/SOFTWARE/NodePoint}.
 
-\subsubsection{Automation tasks do not run}
+\subsubsection{If automation tasks do not run}
 
 Make sure the \textbf{nodepoint-automate} process is running every 5 minutes. Open the \textit{Task Scheduler} and look for the \textit{NodePoint Automation} task, which is added during installation.
 }
@@ -222,7 +222,7 @@ Make sure NodePoint has write access to the database, by default \texttt{../db/n
 
 Simply delete the \texttt{nodepoint.cfg} configuration file on the server and recreate it through the web interface from \textit{localhost}.
 
-\subsubsection{Automation tasks do not run}
+\subsubsection{If automation tasks do not run}
 
 Make sure the \textbf{nodepoint-automate} process is running every 5 minutes. You should have a listing under \texttt{crontab -L} that shows the proper path, under a user that has access to the NodePoint database file.
 }
@@ -253,6 +253,8 @@ The most important data is held in the database file. This includes tickets, art
 
 Finally, all uploads are stored in the \texttt{../uploads} folder. This includes both images used with products, along with files uploaded by users as part of ticket comments. These should also be backed up as part of any backup strategy you may have.
 
+If you use the \textbf{Automation} component, a backup module is provided that will make regular backups of your database and uploads.
+
 \subsubsection{Restores}
 Restoring a NodePoint installation is fairly simple. Once you have finished a new installation, simply restore your backed up data before accessing the NodePoint site. There is nothing to restart and no service to worry about.
 
@@ -266,11 +268,7 @@ By default, data stored in the database is accessible from anyone with login acc
 
 Using SSL is highly recommended and does not impact the operation of NodePoint at all. Simply add an encryption certificate to your web server and access the product normally.
 
-NodePoint is a stateless system, which means that users are re-authenticated at every operation. This means that things like cookie hijacking or manipulation will not allow a user to gain access if their password becomes invalid. Note that users cannot be deleted in order to avoid many items and operations becoming orphaned. To remove permissions from a user, setting their access level to 0 is the best way to proceed. If email notifications are enabled and Active Directory integration is disabled, users can also reset their own passwords through the \textit{lost password} form.
-
 The API provided uses a read and write key. This means that all operations are done as a special \textit{api} user. Different amounts of secrecy can be used for the two keys, such as users having access to a script that exposes the read key, but the write key only being used on a server side script. If \textbf{User Impersonation} is configured, the API calls can specify a specific user for a number of operations as well.
-
-If you specify a SMTP server for email notifications along with a username and password, these will be stored in plain text. This is unavoidable for NodePoint to be able to log into your email server. It is recommended that you use IP based filtering instead of a specific account.
 
 NodePoint provides a file upload system. This can be used to upload project images, file attachments to comments, and file upload fields on custom forms. Users may use this feature to upload malicious files. You should use an anti-virus software to scan for potential threats. You can also restrict the access level required to upload files on the \textbf{Settings} page, or disable uploads completely.
 
@@ -360,7 +358,7 @@ These are the configuration options for NodePoint. They have to be defined durin
 \clearpage
 
 \section{Users and activity}
-NodePoint provides a simple way to manage users based on their access levels. Users have a specific level, which determines what shows up to them in the interface and what they can do. They can also enter an optional email address for notifications. Email addresses must be confirmed through the sending of an automated token when they first register, if email notifications are turned on. Users also have a password which can be changed by the user under the \textbf{Settings} page, or reset by someone with the Users Management level.
+NodePoint provides a simple way to manage users based on their access levels. Users have a specific level, which determines what shows up to them in the interface and what they can do. They can also enter an optional email address for notifications. Email addresses must be confirmed through the sending of an automated token when they first register, if email notifications are turned on. Users also have a password which can be changed by the user under the \textbf{Settings} page, through the \textit{lost password} form, or reset by someone with the Users Management level. Users can be disabled but not deleted.
 
 These are the access levels used by NodePoint along with a short description:
 
@@ -519,19 +517,19 @@ NodePoint ships with an automation engine called \textbf{nodepoint-automate}. Th
 These are the available automation modules:
 
 \subsubsection{Backup}
-This module allows you to backup the database along with the uploads folder to another location for safe keeping. The folder must be a local path, and the type of backup can be a single archive file or a series of time stamped files.
+This module allows you to backup the database along with the uploads folder to another location for safe keeping. The folder must be a local or network path, and the type of backup can be a single archive file or a series of time stamped files.
 
 \subsubsection{Email to Ticket}
-This module can fetch emails from an IMAP account and turn them into tickets automatically. The mail server and inbox information must be provided in order to log in.
+This module can fetch emails from an IMAP account and turn them into tickets automatically. The mail server and inbox information must be provided in order to log in, along with information about the ticket to create, and whether to delete the email afterward.
 
 \subsubsection{Bulk export}
 This module will export a specific table to a file location automatically in CSV format. Specify the full path of a local file and the table to export.
 
 \subsubsection{Users sync}
-This module can keep the internal users list in sync with your Active Directory domain. This requires credentials of a user with object listing rights. The Base DN should be the OU where your users are kept, and the filter can be used to filter specific object types. Emails can optionally be updated for all users as well.
+This module can keep the internal users list in sync with your Active Directory server. This requires credentials of a user with object listing rights. The Base DN should be the OU where your users are kept, and the filter can be used to filter specific object types. Emails can optionally be updated for all users as well.
 
 \subsubsection{Computers sync}
-This module will list computer objects from your Active Directory domain and create entries in the Inventory Control component. The Base DN should be the OU where your computers are kept. The serial will be set to the machine's hostname. This requires credentials of a user with object listing rights.
+This module will list computer objects from your Active Directory server and create entries in the Inventory Control component. The Base DN should be the OU where your computers are kept. The serial will be set to the machine's hostname. This requires credentials of a user with object listing rights.
 
 \clearpage
 \section{JSON API}

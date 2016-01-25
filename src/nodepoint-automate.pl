@@ -18,7 +18,10 @@ use File::Basename qw(dirname);
 use File::Copy;
 use Archive::Zip;
 use Net::LDAP;
+use Net::SMTP;
 use Crypt::RC4;
+use Net::IMAP::Simple;
+use Email::Simple;
 
 my ($cfg, $db, $sql, $sql2);
 
@@ -70,6 +73,52 @@ sub sanitize_email
 		else { return ""; }
 	}
 	else { return ""; }
+}
+
+# Send email
+sub notify
+{
+	my ($u, $title, $mesg) = @_;
+	if($cfg->load('ext_plugin'))
+	{
+		my $cmd = $cfg->load('ext_plugin');
+		my $u2 = $u;
+		$u2 =~ s/"/''/g;
+		my $title2 = $title;
+		$title2 =~ s/"/''/g;
+		my $mesg2 = $mesg;
+		$mesg2 =~ s/"/''/g;		
+		$cmd =~ s/\%user\%/\"$u2\"/g;
+		$cmd =~ s/\%title\%/\"$title2\"/g;
+		$cmd =~ s/\%message\%/\"$mesg2\"/g;
+		$cmd =~ s/\n/ /g;
+		$cmd =~ s/\r/ /g;
+		system($cmd);
+	}
+	if($cfg->load('smtp_server') && $cfg->load('smtp_port') && $cfg->load('smtp_from') && $u && $title && $mesg)
+	{
+		my $lsql = $db->prepare("SELECT * FROM users;");
+		$lsql->execute();
+		while(my @res = $lsql->fetchrow_array())
+		{
+			if($res[0] eq $u && $res[2] ne "" && ($res[5] eq "" || $title eq "Email confirmation")) # user is good, email is not null, confirm is empty or this is confirm email
+			{
+				my $smtp = Net::SMTP->new($cfg->load('smtp_server'), Port => to_int($cfg->load('smtp_port')), Timeout => 5);
+				if($cfg->load('smtp_user') && $cfg->load('smtp_pass')) { $smtp->auth($cfg->load('smtp_user'), $cfg->load('smtp_pass')); }
+				$smtp->mail($cfg->load('smtp_from'));
+				if($smtp->to($res[2]))
+				{
+					$smtp->data();
+					$smtp->datasend("From: " . $cfg->load('smtp_from') . "\n");
+					$smtp->datasend("To: " . $res[2] . "\n");
+					$smtp->datasend("Subject: " . $cfg->load('site_name') . " - " . $title . "\n\n");
+					$smtp->datasend($mesg . "\n\nThis is an automated message from " . $cfg->load('site_name') . ". To disable notifications, log into your account and remove the email under Settings.\n");
+					$smtp->datasend();
+					$smtp->quit;
+				}
+			}
+		}
+	}
 }
 
 # Log an event
@@ -166,8 +215,9 @@ while(my @res = $sql->fetchrow_array())
 				if($type eq "Time stamped") { $zipfile = $folder . $cfg->sep . "nodepoint_" . to_int(time()) . ".zip"; }
 				if($zip->writeToFileNamed($zipfile) == 0)
 				{
+					my $size = -s $zipfile;
 					$result = "Success";
-					logevent($res[0], "Backup archive created.");
+					logevent($res[0], $size . " bytes archive created.");
 				}
 				else
 				{
@@ -277,7 +327,7 @@ while(my @res = $sql->fetchrow_array())
 			}
 			else
 			{
-				my $ldap = Net::LDAP->new($cfg->load("ad_server"));
+				my $ldap = Net::LDAP->new($cfg->load("ad_server")) or logevent($res[0], "Could not connect to AD server.");
 				my $mesg = $ldap->bind($cfg->load("ad_domain") . "\\" . $aduser, password => $adpass);
 				$mesg = $ldap->search(base => $basedn, filter => $searchfilter);
 				if($mesg->code)
@@ -353,7 +403,7 @@ while(my @res = $sql->fetchrow_array())
 			}
 			else
 			{
-				my $ldap = Net::LDAP->new($cfg->load("ad_server"));
+				my $ldap = Net::LDAP->new($cfg->load("ad_server")) or logevent($res[0], "Could not connect to AD server.");
 				my $mesg = $ldap->bind($cfg->load("ad_domain") . "\\" . $aduser, password => $adpass);
 				$mesg = $ldap->search(base => $basedn, filter => $searchfilter);
 				if($mesg->code)
@@ -394,6 +444,110 @@ while(my @res = $sql->fetchrow_array())
 					$mesg = $ldap->unbind; 
 					$result = "Success";
 					logevent($res[0], "Listed " . $rowcount . " computers, updated " . $updcount . ", created " . $newcount . ".");
+				}
+			}
+		}
+		elsif($res[0] eq 'Email to Ticket')
+		{
+			my $imapserver = "";
+			my $imapuser = "";
+			my $imappass = "";			
+			my $imapport = 143;
+			my $imapssl = 0;
+			my $productid = 0;
+			my $deleteemail = 0;
+			my $releaseid = "";
+			my $priority = "Normal";
+			my $sql2 = $db->prepare("SELECT * FROM auto_config WHERE module = 'Email to Ticket';");
+			$sql2->execute();
+			while(my @res2 = $sql2->fetchrow_array())
+			{
+				if($res2[1] eq 'imapserver') { $imapserver = $res2[2]; }
+				if($res2[1] eq 'imapport') { $imapport = to_int($res2[2]); }
+				if($res2[1] eq 'imapssl') { $imapssl = to_int($res2[2]); }
+				if($res2[1] eq 'productid') { $productid = to_int($res2[2]); }
+				if($res2[1] eq 'deleteemail') { $deleteemail = to_int($res2[2]); }
+				if($res2[1] eq 'releaseid') { $releaseid = $res2[2]; }
+				if($res2[1] eq 'priority') { $priority = $res2[2]; }
+				if($res2[1] eq 'imapuser') { $imapuser = $res2[2]; }
+				if($res2[1] eq 'imappass') { $imappass = RC4($cfg->load("api_write"), $res2[2]); }
+			}
+			if($imapserver eq "")
+			{
+				logevent($res[0], "Missing server configuration value.");
+			}
+			else
+			{
+				my $rowcount = 0;
+				my $newcount = 0;
+				my $imap = Net::IMAP::Simple->new($imapserver, port => $imapport, use_ssl => $imapssl) or logevent($res[0], "Could not connect to IMAP server.");
+				if(!$imap->login($imapuser, $imappass))
+				{
+					logevent($res[0], "Could not login to IMAP server. " . $imap->errstr)
+				}
+				else
+				{
+					my $nm = $imap->select('INBOX');
+					for(my $i = 1; $i <= $nm; $i++)
+					{
+						if(!$imap->seen($i))
+						{
+							my $es = Email::Simple->new(join '', @{$imap->get($i)});
+							my $fromaddr = sanitize_email($es->header('From') =~ /^.*<(.*)>.*/);
+							my $from = "System";
+							if($fromaddr ne "")
+							{
+								$sql2 = $db->prepare("SELECT name FROM users WHERE email = ?;");
+								$sql2->execute($fromaddr);
+								while(my @res2 = $sql2->fetchrow_array()) { $from = $res2[0]; }
+							}
+							$sql2 = $db->prepare("INSERT INTO tickets VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);");
+							$sql2->execute($productid, $releaseid, $from, "", sanitize_html($es->header('Subject')), sanitize_html($es->body), $priority, "New", "", "", now(), "Never");
+							$sql2 = $db->prepare("SELECT last_insert_rowid();");
+							$sql2->execute();
+							my $rowid = -1;
+							while(my @res2 = $sql2->fetchrow_array()) { $rowid = to_int($res2[0]); }
+							$sql2 = $db->prepare("SELECT * FROM releases WHERE productid = ?;");
+							$sql2->execute($productid);
+							while(my @res2 = $sql2->fetchrow_array())
+							{
+								notify($res2[1], "New ticket created", "A new ticket was created for one of your projects:\n\nUser: " . $from . " <" . $fromaddr . ">\nTitle: " . sanitize_html($es->header('Subject')) . "\nPriority: " . $priority . "\nDescription: " . sanitize_html($es->body));
+							}
+							my $assignedto = "";
+							$sql2 = $db->prepare("SELECT user FROM autoassign WHERE productid = ?;");
+							$sql2->execute($productid);
+							while(my @res2 = $sql2->fetchrow_array()) { $assignedto .= $res2[0] . " "; }
+							foreach my $assign (split(' ', $assignedto))
+							{
+								notify($assign, "New ticket created", "A new ticket was created for a project assigned to you:\n\nUser: " . $from . " <" . $fromaddr . ">\nTitle: " . sanitize_html($es->header('Subject')) . "\nPriority: " . $priority . "\nDescription: " . sanitize_html($es->body));
+							}
+							if($cfg->load('newticket_plugin'))
+							{
+								my $cmd = $cfg->load('newticket_plugin');
+								my $s0 = $productid;
+								my $s1 = $releaseid;
+								my $s2 = sanitize_html($es->header('Subject'));
+								my $s3 = sanitize_html($es->body);
+								my $s4 = $rowid;
+								my $s5 = $from . " <" . $fromaddr . ">";
+								$cmd =~ s/\%product\%/\"$s0\"/g;
+								$cmd =~ s/\%release\%/\"$s1\"/g;
+								$cmd =~ s/\%title\%/\"$s2\"/g;
+								$cmd =~ s/\%description\%/\"$s3\"/g;
+								$cmd =~ s/\%ticket\%/\"$s4\"/g;
+								$cmd =~ s/\%user\%/\"$s5\"/g;
+								$cmd =~ s/\n/ /g;
+								$cmd =~ s/\r/ /g;
+								system($cmd);
+							}
+							$newcount += 1;
+							if($deleteemail) { $imap->delete($i); }
+						}
+						$rowcount += 1;
+					}
+					$imap->quit;
+					$result = "Success";
+					logevent($res[0], "Listed " . $rowcount . " emails, " . $newcount . " tickets created.");
 				}
 			}
 		}

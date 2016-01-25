@@ -11,7 +11,7 @@
 \contentsline {subsubsection}{\numberline {1.5.4}If you get the error The page you are requesting cannot be served because of the ISAPI and CGI Restriction list settings on the Web server}{6}{subsubsection.1.5.4}
 \contentsline {subsubsection}{\numberline {1.5.5}If the server tries to download the file instead of executing it}{6}{subsubsection.1.5.5}
 \contentsline {subsubsection}{\numberline {1.5.6}If you forgot your admin password}{7}{subsubsection.1.5.6}
-\contentsline {subsubsection}{\numberline {1.5.7}Automation tasks do not run}{7}{subsubsection.1.5.7}
+\contentsline {subsubsection}{\numberline {1.5.7}If automation tasks do not run}{7}{subsubsection.1.5.7}
 \contentsline {subsubsection}{\numberline {1.5.8}If email notifications don't work}{7}{subsubsection.1.5.8}
 \contentsline {subsection}{\numberline {1.6}Best practices}{7}{subsection.1.6}
 \contentsline {subsubsection}{\numberline {1.6.1}Backups}{7}{subsubsection.1.6.1}

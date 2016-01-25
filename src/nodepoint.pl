@@ -590,15 +590,15 @@ sub db_check
 	{
 		$sql = $db->prepare("CREATE TABLE auto_modules (name TEXT, enabled INT, lastrun TEXT, timestamp INT, result TEXT, description TEXT, schedule INT);");
 		$sql->execute();
-		$sql = $db->prepare("INSERT INTO auto_modules VALUES ('Backup', 0, 'Never', 0, '', \"This module allows you to backup the database along with the uploads folder to another location for safe keeping. The folder must be a local path, and the type of backup can be a single archive file or a series of time stamped files.\", 0);");
+		$sql = $db->prepare("INSERT INTO auto_modules VALUES ('Backup', 0, 'Never', 0, '', \"This module allows you to backup the database along with the uploads folder to another location for safe keeping. The folder must be a local or network path, and the type of backup can be a single archive file or a series of time stamped files.\", 0);");
 		$sql->execute();
-		$sql = $db->prepare("INSERT INTO auto_modules VALUES ('Email to Ticket', 0, 'Never', 0, '', \"This module can fetch emails from an IMAP account and turn them into tickets automatically. The mail server and inbox information must be provided in order to log in.\", 0);");
+		$sql = $db->prepare("INSERT INTO auto_modules VALUES ('Email to Ticket', 0, 'Never', 0, '', \"This module can fetch emails from an IMAP account and turn them into tickets automatically. The mail server and inbox information must be provided in order to log in, along with information about the ticket to create, and whether to delete the email afterward.\", 0);");
 		$sql->execute();
 		$sql = $db->prepare("INSERT INTO auto_modules VALUES ('Bulk export', 0, 'Never', 0, '', \"This module will export a specific table to a file location automatically in CSV format. Specify the full path of a local file and the table to export.\", 0);");
 		$sql->execute();
-		$sql = $db->prepare("INSERT INTO auto_modules VALUES ('Users sync', 0, 'Never', 0, '', \"This module can keep the internal users list in sync with your Active Directory domain. This requires credentials of a user with object listing rights. The Base DN should be the OU where your users are kept, and the filter can be used to filter specific object types. Emails can optionally be updated for all users as well.\", 0);");
+		$sql = $db->prepare("INSERT INTO auto_modules VALUES ('Users sync', 0, 'Never', 0, '', \"This module can keep the internal users list in sync with your Active Directory server. This requires credentials of a user with object listing rights. The Base DN should be the OU where your users are kept, and the filter can be used to filter specific object types. Emails can optionally be updated for all users as well.\", 0);");
 		$sql->execute();
-		$sql = $db->prepare("INSERT INTO auto_modules VALUES ('Computers sync', 0, 'Never', 0, '', \"This module will list computer objects from your Active Directory domain and create entries in the Inventory Control component. The Base DN should be the OU where your computers are kept. The serial will be set to the machine's hostname. This requires credentials of a user with object listing rights.\", 0);");
+		$sql = $db->prepare("INSERT INTO auto_modules VALUES ('Computers sync', 0, 'Never', 0, '', \"This module will list computer objects from your Active Directory server and create entries in the Inventory Control component. The Base DN should be the OU where your computers are kept. The serial will be set to the machine's hostname. This requires credentials of a user with object listing rights.\", 0);");
 		$sql->execute();
 	};
 	$sql->finish();
@@ -658,7 +658,7 @@ sub save_config
 	$cfg->save("smtp_port", to_int($q->param('smtp_port')));
 	$cfg->save("smtp_from", sanitize_html($q->param('smtp_from')));
 	$cfg->save("smtp_user", sanitize_html($q->param('smtp_user')));
-	$cfg->save("smtp_pass", $q->param('smtp_pass'));
+	$cfg->save("smtp_pass", RC4($cfg->load("api_write"), $q->param('smtp_pass')));
 	$cfg->save("api_read", sanitize_html($q->param('api_read')));
 	$cfg->save("api_write", sanitize_html($q->param('api_write')));
 	$cfg->save("api_imp", $q->param('api_imp'));
@@ -899,7 +899,7 @@ sub notify
 				eval
 				{
 					my $smtp = Net::SMTP->new($cfg->load('smtp_server'), Port => to_int($cfg->load('smtp_port')), Timeout => 5);
-					if($cfg->load('smtp_user') && $cfg->load('smtp_pass')) { $smtp->auth($cfg->load('smtp_user'), $cfg->load('smtp_pass')); }
+					if($cfg->load('smtp_user') && $cfg->load('smtp_pass')) { $smtp->auth($cfg->load('smtp_user'), RC4($cfg->load("api_write"), $cfg->load('smtp_pass'))); }
 					$smtp->mail($cfg->load('smtp_from'));
 					if($smtp->to($res[2]))
 					{
@@ -3073,7 +3073,7 @@ elsif($q->param('m')) # Modules
 			print "<tr><td style='width:50%'>SMTP server</td><td><input class='form-control' type='text' name='smtp_server' value=\"" . $cfg->load("smtp_server") . "\"></td></tr>\n";
 			print "<tr><td style='width:50%'>SMTP port</td><td><input class='form-control' type='text' name='smtp_port' value=\"" . $cfg->load("smtp_port") . "\"></td></tr>\n";
 			print "<tr><td style='width:50%'>SMTP username</td><td><input class='form-control' type='text' name='smtp_user' value=\"" . $cfg->load("smtp_user") . "\"></td></tr>\n";
-			print "<tr><td style='width:50%'>SMTP password</td><td><input class='form-control' type='password' name='smtp_pass' value=\"" . $cfg->load("smtp_pass") . "\"></td></tr>\n";
+			print "<tr><td style='width:50%'>SMTP password</td><td><input class='form-control' type='password' name='smtp_pass' value=\"" . RC4($cfg->load("api_write"), $cfg->load("smtp_pass")) . "\"></td></tr>\n";
 			print "<tr><td style='width:50%'>Support email</td><td><input class='form-control' type='text' name='smtp_from' value=\"" . $cfg->load("smtp_from") . "\"></td></tr>\n";
 			print "</table><h4>Access levels</h4><table class='table table-striped'>";
 			print "<tr><td style='width:50%'>New users access level</td><td><input class='form-control' type='text' name='default_lvl' value=\"" . to_int($cfg->load("default_lvl")) . "\"></td></tr>\n";
@@ -4684,6 +4684,55 @@ elsif($q->param('m')) # Modules
 					if($importemail == 0) { print " selected"; }
 					print ">No</option></select></div></div></p>";
 				}
+				elsif($res[0] eq "Email to Ticket")
+				{
+					my $imapuser = "";
+					my $imappass = "";
+					my $imapserver = "";
+					my $imapport = 143;
+					my $imapssl = 0;
+					my $deleteemail = 0;
+					my $productid = 1;
+					my $releaseid = "1.0";
+					my $priority = "Normal";
+					my $sql2 = $db->prepare("SELECT * FROM auto_config WHERE module = 'Email to Ticket';");
+					$sql2->execute();
+					while(my @res2 = $sql2->fetchrow_array())
+					{
+						if($res2[1] eq 'productid') { $productid = to_int($res2[2]); }
+						if($res2[1] eq 'releaseid') { $releaseid = $res2[2]; }
+						if($res2[1] eq 'priority') { $priority = $res2[2]; }
+						if($res2[1] eq 'imapport') { $imapport = to_int($res2[2]); }
+						if($res2[1] eq 'deleteemail') { $deleteemail = to_int($res2[2]); }
+						if($res2[1] eq 'imapssl') { $imapssl = to_int($res2[2]); }
+						if($res2[1] eq 'imapuser') { $imapuser = $res2[2]; }
+						if($res2[1] eq 'imappass') { $imappass = RC4($cfg->load("api_write"), $res2[2]); }
+						if($res2[1] eq 'imapserver') { $imapserver = $res2[2]; }
+					}
+					print "<p><div class='row'><div class='col-sm-4'>IMAP Server:</div><div class='col-sm-8'><input class='form-control' type='text' name='imapserver' value='" . $imapserver . "'></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>IMAP Port:</div><div class='col-sm-8'><input class='form-control' type='number' name='imapport' value='" . $imapport . "'></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>Username:</div><div class='col-sm-8'><input class='form-control' type='text' name='imapuser' value='" . $imapuser . "'></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>Password:</div><div class='col-sm-8'><input class='form-control' type='password' name='imappass' value='" . $imappass . "'></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>Use SSL:</div><div class='col-sm-8'><select class='form-control' name='imapssl'><option";
+					if($imapssl == 1) { print " selected"; }
+					print ">Yes</option><option";
+					if($imapssl == 0) { print " selected"; }
+					print ">No</option></select></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>Delete emails:</div><div class='col-sm-8'><select class='form-control' name='deleteemail'><option";
+					if($deleteemail == 1) { print " selected"; }
+					print ">Yes</option><option";
+					if($deleteemail == 0) { print " selected"; }
+					print ">No</option></select></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>" . $items{"Product"} . " ID:</div><div class='col-sm-8'><input class='form-control' type='number' name='productid' value='" . $productid . "'></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>" . $items{"Release"} . ":</div><div class='col-sm-8'><input class='form-control' type='text' name='releaseid' value='" . $releaseid . "'></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>Priority:</div><div class='col-sm-8'><select class='form-control' name='priority'><option";
+					if($priority eq "High") { print " selected"; }
+					print ">High</option><option";
+					if($priority eq "Normal") { print " selected"; }
+					print ">Normal</option><option";
+					if($priority eq "Low") { print " selected"; }
+					print ">Low</option></select></div></div></p>";
+				}
 				elsif($res[0] eq "Computers sync")
 				{
 					my $aduser = "Administrator";
@@ -4720,7 +4769,6 @@ elsif($q->param('m')) # Modules
 					if($type eq "Server") { print " selected"; }
 					print ">Server</option></select></div></div></p>";
 				}
-				# TODO: Go module by module and show config options
 				print "<p><input type='hidden' name='m' value='auto'><input type='hidden' name='save' value='" . sanitize_html($q->param('config')) . "'><input class='btn btn-primary pull-right' type='submit' value='Save'></p>";
 				print "</form></div></div>\n";
 			}
@@ -4794,7 +4842,31 @@ elsif($q->param('m')) # Modules
 					if($q->param('approval') eq "Yes") { $sql->execute(1); }
 					else { $sql->execute(0); }
 				}
-				# TODO: Go module by module and save config
+				elsif($q->param('save') eq "Email to Ticket")
+				{
+					$sql = $db->prepare("DELETE FROM auto_config WHERE module = 'Email to Ticket';");
+					$sql->execute();
+					$sql = $db->prepare("INSERT INTO auto_config VALUES ('Email to Ticket', 'imapserver', ?);");
+					$sql->execute(sanitize_html($q->param('imapserver')));
+					$sql = $db->prepare("INSERT INTO auto_config VALUES ('Email to Ticket', 'imapport', ?);");
+					$sql->execute(to_int($q->param('imapport')));
+					$sql = $db->prepare("INSERT INTO auto_config VALUES ('Email to Ticket', 'productid', ?);");
+					$sql->execute(to_int($q->param('productid')));
+					$sql = $db->prepare("INSERT INTO auto_config VALUES ('Email to Ticket', 'releaseid', ?);");
+					$sql->execute(sanitize_html($q->param('releaseid')));
+					$sql = $db->prepare("INSERT INTO auto_config VALUES ('Email to Ticket', 'priority', ?);");
+					$sql->execute(sanitize_alpha($q->param('priority')));
+					$sql = $db->prepare("INSERT INTO auto_config VALUES ('Email to Ticket', 'imapuser', ?);");
+					$sql->execute(sanitize_html($q->param('imapuser')));
+					$sql = $db->prepare("INSERT INTO auto_config VALUES ('Email to Ticket', 'imappass', ?);");
+					$sql->execute(RC4($cfg->load("api_write"), $q->param('imappass')));
+					$sql = $db->prepare("INSERT INTO auto_config VALUES ('Email to Ticket', 'imapssl', ?);");
+					if($q->param('imapssl') eq "Yes") { $sql->execute(1); }
+					else { $sql->execute(0); }
+					$sql = $db->prepare("INSERT INTO auto_config VALUES ('Email to Ticket', 'deleteemail', ?);");
+					if($q->param('deleteemail') eq "Yes") { $sql->execute(1); }
+					else { $sql->execute(0); }
+				}
 				msg("Changes saved.", 3)
 			}
 			$sql = $db->prepare("SELECT * FROM auto;");
