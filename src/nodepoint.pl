@@ -1428,16 +1428,16 @@ elsif(!$cfg->load("db_address") || !$cfg->load("site_name")) # first use
 				print "<p><div class='row'><div class='col-sm-4'>New ticket plugin:</div><div class='col-sm-4'><input type='text' style='width:300px' name='newticket_plugin' value=''></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Ticket resolution plugin:</div><div class='col-sm-4'><input type='text' style='width:300px' name='ticket_plugin' value=''></div></div></p>\n";
 				print "<p>Select which major components of NodePoint you want to activate:</p>";
-				print "<p><div class='row'><div class='col-sm-4'>Component: Tickets Management</div><div class='col-sm-4'><input type='checkbox' name='comp_tickets' checked></div></div></p>\n";
-				print "<p><div class='row'><div class='col-sm-4'>Component: Support Articles</div><div class='col-sm-4'><input type='checkbox' name='comp_articles' checked></div></div></p>\n";
-				print "<p><div class='row'><div class='col-sm-4'>Component: Time Tracking</div><div class='col-sm-4'><input type='checkbox' name='comp_time' checked></div></div></p>\n";
-				print "<p><div class='row'><div class='col-sm-4'>Component: Shoutbox</div><div class='col-sm-4'><input type='checkbox' name='comp_shoutbox' checked></div></div></p>\n";
-				print "<p><div class='row'><div class='col-sm-4'>Component: Clients Directory</div><div class='col-sm-4'><input type='checkbox' name='comp_clients' checked></div></div></p>\n";
-				print "<p><div class='row'><div class='col-sm-4'>Component: Tasks Management</div><div class='col-sm-4'><input type='checkbox' name='comp_steps' checked></div></div></p>\n";
-				print "<p><div class='row'><div class='col-sm-4'>Component: Inventory Control</div><div class='col-sm-4'><input type='checkbox' name='comp_items' checked></div></div></p>\n";
-				print "<p><div class='row'><div class='col-sm-4'>Component: Files Management</div><div class='col-sm-4'><input type='checkbox' name='comp_files' checked></div></div></p>\n";
-				print "<p><div class='row'><div class='col-sm-4'>Component: Billing</div><div class='col-sm-4'><input type='checkbox' name='comp_billing' checked></div></div></p>\n";
-				print "<p><div class='row'><div class='col-sm-4'>Component: Automation</div><div class='col-sm-4'><input type='checkbox' name='comp_auto' checked></div></div></p>\n";
+				print "<p><div class='row'><div class='col-sm-4'>Component: Tickets Management (Allow users to file tickets against projects and track work done on open issues)</div><div class='col-sm-4'><input type='checkbox' name='comp_tickets' checked></div></div></p>\n";
+				print "<p><div class='row'><div class='col-sm-4'>Component: Support Articles (Create a knowledge base and provide documentation to your users)</div><div class='col-sm-4'><input type='checkbox' name='comp_articles' checked></div></div></p>\n";
+				print "<p><div class='row'><div class='col-sm-4'>Component: Time Tracking (Track time spent on individual tickets)</div><div class='col-sm-4'><input type='checkbox' name='comp_time' checked></div></div></p>\n";
+				print "<p><div class='row'><div class='col-sm-4'>Component: Shoutbox (Chat in real time between users)</div><div class='col-sm-4'><input type='checkbox' name='comp_shoutbox' checked></div></div></p>\n";
+				print "<p><div class='row'><div class='col-sm-4'>Component: Clients Directory (Create a directory of contacts linked to items, billable tickets, and to track events)</div><div class='col-sm-4'><input type='checkbox' name='comp_clients' checked></div></div></p>\n";
+				print "<p><div class='row'><div class='col-sm-4'>Component: Tasks Management (Create and assign tasks to your users with completion rates and due dates)</div><div class='col-sm-4'><input type='checkbox' name='comp_steps' checked></div></div></p>\n";
+				print "<p><div class='row'><div class='col-sm-4'>Component: Inventory Control (Track your assets, allow users to request item checkout with full approval process)</div><div class='col-sm-4'><input type='checkbox' name='comp_items' checked></div></div></p>\n";
+				print "<p><div class='row'><div class='col-sm-4'>Component: Files Management (Allow users to upload files for clients or suppliers and track downloads)</div><div class='col-sm-4'><input type='checkbox' name='comp_files' checked></div></div></p>\n";
+				print "<p><div class='row'><div class='col-sm-4'>Component: Billing (Track billable tickets for your clients and assign fixed or per hour rates)</div><div class='col-sm-4'><input type='checkbox' name='comp_billing' checked></div></div></p>\n";
+				print "<p><div class='row'><div class='col-sm-4'>Component: Automation (Run background processes to synchronize AD users or items, create backups, bulk exports, monitor emails for tickets, etc)</div><div class='col-sm-4'><input type='checkbox' name='comp_auto' checked></div></div></p>\n";
 				print "<p>See the <a href='./manual.pdf'>manual</a> file for detailed information.<input class='btn btn-primary pull-right' type='submit' value='Save'></p></form>\n"; 
 #			}
 #			else

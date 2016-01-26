@@ -22,6 +22,7 @@ use Net::SMTP;
 use Crypt::RC4;
 use Net::IMAP::Simple;
 use Email::Simple;
+use Email::MIME;
 
 my ($cfg, $db, $sql, $sql2);
 
@@ -104,7 +105,7 @@ sub notify
 			if($res[0] eq $u && $res[2] ne "" && ($res[5] eq "" || $title eq "Email confirmation")) # user is good, email is not null, confirm is empty or this is confirm email
 			{
 				my $smtp = Net::SMTP->new($cfg->load('smtp_server'), Port => to_int($cfg->load('smtp_port')), Timeout => 5);
-				if($cfg->load('smtp_user') && $cfg->load('smtp_pass')) { $smtp->auth($cfg->load('smtp_user'), $cfg->load('smtp_pass')); }
+				if($cfg->load('smtp_user') && $cfg->load('smtp_pass')) { $smtp->auth($cfg->load('smtp_user'), RC4($cfg->load("api_write"),  $cfg->load('smtp_pass'))); }
 				$smtp->mail($cfg->load('smtp_from'));
 				if($smtp->to($res[2]))
 				{
@@ -144,29 +145,10 @@ if(!defined($db))
 	exit(1);
 };
 
-$sql = $db->prepare("SELECT * FROM auto_log WHERE 0 = 1;") or do
-{
-	$sql = $db->prepare("CREATE TABLE auto_log (module TEXT, event TEXT, time TEXT);");
-	$sql->execute();
-};
-$sql->finish();
-$sql = $db->prepare("SELECT * FROM auto_modules WHERE 0 = 1;") or do
-{
-	$sql = $db->prepare("CREATE TABLE auto_modules (name TEXT, enabled INT, lastrun TEXT, timestamp INT, result TEXT, description TEXT, schedule INT);");
-};
-$sql->finish();
-$sql = $db->prepare("SELECT * FROM auto WHERE 0 = 1;") or do
-{
-	$sql = $db->prepare("CREATE TABLE auto (timestamp INT, result TEXT);");
-	$sql->execute();
-};
-$sql->finish();
-$sql = $db->prepare("SELECT * FROM auto_config WHERE 0 = 1;") or do
-{
-	$sql = $db->prepare("CREATE TABLE auto_config (module TEXT, key TEXT, value TEXT);");
-	$sql->execute();
-};
-$sql->finish();
+$sql = $db->prepare("SELECT * FROM auto_log WHERE 0 = 1;") or quit(1);
+$sql = $db->prepare("SELECT * FROM auto_modules WHERE 0 = 1;") or quit(1);
+$sql = $db->prepare("SELECT * FROM auto WHERE 0 = 1;") or quit(1);
+$sql = $db->prepare("SELECT * FROM auto_config WHERE 0 = 1;") or quit(1);
 
 # Main loop
 my $runcount = 0;
@@ -494,6 +476,8 @@ while(my @res = $sql->fetchrow_array())
 						{
 							my $es = Email::Simple->new(join '', @{$imap->get($i)});
 							my $fromaddr = sanitize_email($es->header('From') =~ /^.*<(.*)>.*/);
+							if($fromaddr eq "") { $fromaddr = sanitize_email($es->header('From')); }
+							my $sentfrom = "\n\nSent by email.";
 							my $from = "System";
 							if($fromaddr ne "")
 							{
@@ -501,8 +485,18 @@ while(my @res = $sql->fetchrow_array())
 								$sql2->execute($fromaddr);
 								while(my @res2 = $sql2->fetchrow_array()) { $from = $res2[0]; }
 							}
+							if($from eq "System") { $sentfrom = "\n\nSent by email from: " . $fromaddr; }
+							my $body = $es->body;
+							my $parts = Email::MIME->new($es->body);
+							for my $part ($parts->parts) 
+							{
+								if($part->content_type =~ m!text/plain! or lc($part->content_type) eq 'text')
+								{
+									for my $subpart ($part->parts) { $body = $subpart->body; }
+								}
+							}
 							$sql2 = $db->prepare("INSERT INTO tickets VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);");
-							$sql2->execute($productid, $releaseid, $from, "", sanitize_html($es->header('Subject')), sanitize_html($es->body), $priority, "New", "", "", now(), "Never");
+							$sql2->execute($productid, $releaseid, $from, "", sanitize_html($es->header('Subject')), sanitize_html($body)  . $sentfrom, $priority, "New", "", "", now(), "Never");
 							$sql2 = $db->prepare("SELECT last_insert_rowid();");
 							$sql2->execute();
 							my $rowid = -1;
@@ -511,7 +505,7 @@ while(my @res = $sql->fetchrow_array())
 							$sql2->execute($productid);
 							while(my @res2 = $sql2->fetchrow_array())
 							{
-								notify($res2[1], "New ticket created", "A new ticket was created for one of your projects:\n\nUser: " . $from . " <" . $fromaddr . ">\nTitle: " . sanitize_html($es->header('Subject')) . "\nPriority: " . $priority . "\nDescription: " . sanitize_html($es->body));
+								notify($res2[1], "New ticket created", "A new ticket was created for one of your projects:\n\nUser: " . $from . "\nTitle: " . sanitize_html($es->header('Subject')) . "\nPriority: " . $priority . "\nDescription: " . sanitize_html($body));
 							}
 							my $assignedto = "";
 							$sql2 = $db->prepare("SELECT user FROM autoassign WHERE productid = ?;");
@@ -519,7 +513,7 @@ while(my @res = $sql->fetchrow_array())
 							while(my @res2 = $sql2->fetchrow_array()) { $assignedto .= $res2[0] . " "; }
 							foreach my $assign (split(' ', $assignedto))
 							{
-								notify($assign, "New ticket created", "A new ticket was created for a project assigned to you:\n\nUser: " . $from . " <" . $fromaddr . ">\nTitle: " . sanitize_html($es->header('Subject')) . "\nPriority: " . $priority . "\nDescription: " . sanitize_html($es->body));
+								notify($assign, "New ticket created", "A new ticket was created for a project assigned to you:\n\nUser: " . $from . "\nTitle: " . sanitize_html($es->header('Subject')) . "\nPriority: " . $priority . "\nDescription: " . sanitize_html($body));
 							}
 							if($cfg->load('newticket_plugin'))
 							{
@@ -527,7 +521,7 @@ while(my @res = $sql->fetchrow_array())
 								my $s0 = $productid;
 								my $s1 = $releaseid;
 								my $s2 = sanitize_html($es->header('Subject'));
-								my $s3 = sanitize_html($es->body);
+								my $s3 = sanitize_html($body);
 								my $s4 = $rowid;
 								my $s5 = $from . " <" . $fromaddr . ">";
 								$cmd =~ s/\%product\%/\"$s0\"/g;
