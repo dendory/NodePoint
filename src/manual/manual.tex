@@ -11,7 +11,7 @@
 % Conditional compilation for Windows and Linux
 \usepackage{ifthen}
 \newboolean{Windows}
-\setboolean{Windows}{true} % change to false for Linux
+\setboolean{Windows}{false} % change to false for Linux
 \ifthenelse{\boolean{Windows}}
 {\def\NodePointManual{NodePoint IT System - Windows version 1.6.0}}
 {\def\NodePointManual{NodePoint IT System - Linux version 1.6.0}}
@@ -107,6 +107,7 @@ Here are some of the available features:
 \item \textbf{Responsive design:} Using the Bootstrap framework, NodePoint works just as well on the desktop as on mobile.
 \item \textbf{Simple and elegant interface:} The interface is easy to understand and elegant for your users to use.
 \item \textbf{Email notifications:} NodePoint comes with built-in email notifications.
+\item \textbf{Automation engine:} Run background processes without user input.
 \item \textbf{JSON API:} Create custom scripts or link other systems to enter tickets automatically.
 \end{itemize}
 
@@ -264,7 +265,7 @@ Data stored in the \texttt{nodepoint.db} file is stored in SQL format, using ver
 This does mean that you can access the data directly using a SQLite client. This however is highly discouraged without first contacting us for support. Doing the \textit{vacuum} operation for example will corrupt your data.
 
 \subsection{Security concerns}
-By default, data stored in the database is accessible from anyone with login access to the server. As such, only administrators should be given physical access to the server used. User passwords are stored in a hashed format, both for the administrator and regular users.
+By default, data stored in the database is accessible from anyone with login access to the server. As such, only administrators should be given physical access to the server used. User passwords are stored in a hashed format, both for the administrator and regular users. Administrative passwords for SMTP and automation tasks are stored in RC4 encrypted using the API Write key.
 
 Using SSL is highly recommended and does not impact the operation of NodePoint at all. Simply add an encryption certificate to your web server and access the product normally.
 
@@ -530,6 +531,9 @@ This module can keep the internal users list in sync with your Active Directory 
 
 \subsubsection{Computers sync}
 This module will list computer objects from your Active Directory server and create entries in the Inventory Control component. The Base DN should be the OU where your computers are kept. The serial will be set to the machine's hostname. This requires credentials of a user with object listing rights.
+
+\subsubsection{Ticket expiration}
+This module interacts with active tickets that were modified more than x days ago. It can notify assigned users, and close the ticket.
 
 \clearpage
 \section{JSON API}

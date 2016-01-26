@@ -8,7 +8,7 @@
 #
 
 use strict;
-use Config::Win32;
+use Config::Linux;
 use Digest::SHA qw(sha1_hex);
 use DBI;
 use Scalar::Util qw(looks_like_number);
@@ -23,6 +23,7 @@ use Crypt::RC4;
 use Net::IMAP::Simple;
 use Email::Simple;
 use Email::MIME;
+use Date::Parse;
 
 my ($cfg, $db, $sql, $sql2);
 
@@ -132,7 +133,7 @@ sub logevent
 
 # Initial config
 chdir dirname($0);
-$cfg = Config::Win32->new("NodePoint", "settings");
+$cfg = Config::Linux->new("NodePoint", "settings");
 
 if($cfg->load("db_address"))
 {
@@ -545,7 +546,55 @@ while(my @res = $sql->fetchrow_array())
 				}
 			}
 		}
-		# TODO: Go module by module and read config, do stuff
+		elsif($res[0] eq 'Ticket expiration')
+		{
+			my $numdays = 0;
+			my $closeticket = 0;
+			my $remindticket = 0;
+			my $sql2 = $db->prepare("SELECT * FROM auto_config WHERE module = 'Ticket expiration';");
+			$sql2->execute();
+			while(my @res2 = $sql2->fetchrow_array())
+			{
+				if($res2[1] eq 'numdays') { $numdays = to_int($res2[2]); }
+				if($res2[1] eq 'closeticket') { $closeticket = to_int($res2[2]); }
+				if($res2[1] eq 'remindticket') { $remindticket = to_int($res2[2]); }
+			}
+			if($numdays == 0)
+			{
+				logevent($res[0], "Invalid days amount.");
+			}
+			else
+			{
+				my $ticketcount = 0;
+				my $actcount = 0;
+				$sql2 = $db->prepare("SELECT ROWID,title,assignedto,modified,created FROM tickets WHERE status != 'Closed';");
+				$sql2->execute();
+				while(my @res2 = $sql2->fetchrow_array())
+				{
+					$ticketcount += 1;
+					my $tickettime = $res2[3];
+					if($tickettime eq "Never") { $tickettime = $res2[4]; }
+					if((str2time($tickettime) + (86400 * $numdays)) < time())
+					{
+						$actcount += 1;
+						if($closeticket == 1)
+						{
+							my $sql3 = $db->prepare("UPDATE tickets SET status = 'Closed', resolution = 'Closed by automation engine.', modified = ? WHERE ROWID = ?;");
+							$sql3->execute(now(), $res2[0]);
+						}
+						if($remindticket == 1)
+						{
+							foreach my $assign (split(' ', $res2[2]))
+							{
+								notify($assign, "Ticket (" . $res2[0] . ") requires your attention", "Ticket " . $res2[1] . " assigned to you has reached its expiration threshold and requires your attention.");
+							}
+						}
+					}
+				}
+				$result = "Success";
+				logevent($res[0], "Found " . $ticketcount . " active tickets, acted on " . $actcount . ".");
+			}
+		}
 		else { logevent($res[0], "Not implemented."); }
 		$sql2 = $db->prepare("UPDATE auto_modules SET lastrun = ?, timestamp = ?, result = ? WHERE name = ?;");
 		$sql2->execute(now(), time(), $result, $res[0]);

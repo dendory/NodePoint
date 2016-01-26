@@ -8,7 +8,7 @@
 #
 
 use strict;
-use Config::Win32;
+use Config::Linux;
 use Digest::SHA qw(sha1_hex);
 use DBI;
 use CGI;
@@ -600,6 +600,8 @@ sub db_check
 		$sql->execute();
 		$sql = $db->prepare("INSERT INTO auto_modules VALUES ('Computers sync', 0, 'Never', 0, '', \"This module will list computer objects from your Active Directory server and create entries in the Inventory Control component. The Base DN should be the OU where your computers are kept. The serial will be set to the machine's hostname. This requires credentials of a user with object listing rights.\", 0);");
 		$sql->execute();
+		$sql = $db->prepare("INSERT INTO auto_modules VALUES ('Ticket expiration', 0, 'Never', 0, '', \"This module interacts with active tickets that were modified more than x days ago. It can notify assigned users, and close the ticket.\", 0);");
+		$sql->execute();
 	};
 	$sql->finish();
 	$sql = $db->prepare("SELECT * FROM auto_log WHERE 0 = 1;") or do
@@ -658,9 +660,9 @@ sub save_config
 	$cfg->save("smtp_port", to_int($q->param('smtp_port')));
 	$cfg->save("smtp_from", sanitize_html($q->param('smtp_from')));
 	$cfg->save("smtp_user", sanitize_html($q->param('smtp_user')));
+	$cfg->save("api_write", sanitize_html($q->param('api_write')));
 	$cfg->save("smtp_pass", RC4($cfg->load("api_write"), $q->param('smtp_pass')));
 	$cfg->save("api_read", sanitize_html($q->param('api_read')));
-	$cfg->save("api_write", sanitize_html($q->param('api_write')));
 	$cfg->save("api_imp", $q->param('api_imp'));
 	$cfg->save("theme_color", $q->param('theme_color'));
 	$cfg->save("upload_folder", sanitize_html($q->param('upload_folder')));
@@ -1222,11 +1224,11 @@ sub home
 # Connect to config
 eval
 {
-	$cfg = Config::Win32->new("NodePoint", "settings");
+	$cfg = Config::Linux->new("NodePoint", "settings");
 };
 if(!defined($cfg)) # Can't even use headers() if this fails.
 {
-	print "Content-type: text/html\n\nError: Could not access " . Config::Win32->type . ". Please ensure NodePoint has the proper permissions.";
+	print "Content-type: text/html\n\nError: Could not access " . Config::Linux->type . ". Please ensure NodePoint has the proper permissions.";
 	exit(0);
 };
 
@@ -4769,6 +4771,31 @@ elsif($q->param('m')) # Modules
 					if($type eq "Server") { print " selected"; }
 					print ">Server</option></select></div></div></p>";
 				}
+				elsif($res[0] eq "Ticket expiration")
+				{
+					my $numdays = 30;
+					my $closeticket = 0;
+					my $remindticket = 0;
+					my $sql2 = $db->prepare("SELECT * FROM auto_config WHERE module = 'Ticket expiration';");
+					$sql2->execute();
+					while(my @res2 = $sql2->fetchrow_array())
+					{
+						if($res2[1] eq 'numdays') { $numdays = to_int($res2[2]); }
+						if($res2[1] eq 'closeticket') { $closeticket = to_int($res2[2]); }
+						if($res2[1] eq 'remindticket') { $remindticket = to_int($res2[2]); }
+					}
+					print "<p><div class='row'><div class='col-sm-4'>Number of days old:</div><div class='col-sm-8'><input class='form-control' type='number' name='numdays' value='" . $numdays . "'></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>Notify assigned users:</div><div class='col-sm-8'><select class='form-control' name='remindticket'><option";
+					if($remindticket == 1) { print " selected"; }
+					print ">Yes</option><option";
+					if($remindticket == 0) { print " selected"; }
+					print ">No</option></select></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>Close tickets:</div><div class='col-sm-8'><select class='form-control' name='closeticket'><option";
+					if($closeticket == 1) { print " selected"; }
+					print ">Yes</option><option";
+					if($closeticket == 0) { print " selected"; }
+					print ">No</option></select></div></div></p>";
+				}
 				print "<p><input type='hidden' name='m' value='auto'><input type='hidden' name='save' value='" . sanitize_html($q->param('config')) . "'><input class='btn btn-primary pull-right' type='submit' value='Save'></p>";
 				print "</form></div></div>\n";
 			}
@@ -4777,9 +4804,16 @@ elsif($q->param('m')) # Modules
 		{
 			if($q->param('run_all'))
 			{
-				$sql = $db->prepare("UPDATE auto_modules SET timestamp = 0");
+				$sql = $db->prepare("UPDATE auto_modules SET timestamp = 0;");
 				$sql->execute();
 				msg("All enabled modules will be executed on next run regardless of scheduling.", 3)
+			}
+			if($q->param('clear_all') && $logged_lvl > 5)
+			{
+				$sql = $db->prepare("DROP TABLE auto_modules;");
+				$sql->execute();
+				msg("<meta http-equiv='REFRESH' content='0;url=./?m=auto'>Please wait for this page to reload...", 3);
+				quit(0);
 			}
 			if($q->param('clear_log') && $logged_lvl > 5)
 			{
@@ -4867,6 +4901,19 @@ elsif($q->param('m')) # Modules
 					if($q->param('deleteemail') eq "Yes") { $sql->execute(1); }
 					else { $sql->execute(0); }
 				}
+				elsif($q->param('save') eq "Ticket expiration")
+				{
+					$sql = $db->prepare("DELETE FROM auto_config WHERE module = 'Ticket expiration';");
+					$sql->execute();
+					$sql = $db->prepare("INSERT INTO auto_config VALUES ('Ticket expiration', 'numdays', ?);");
+					$sql->execute(to_int($q->param('numdays')));
+					$sql = $db->prepare("INSERT INTO auto_config VALUES ('Ticket expiration', 'remindticket', ?);");
+					if($q->param('remindticket') eq "Yes") { $sql->execute(1); }
+					else { $sql->execute(0); }
+					$sql = $db->prepare("INSERT INTO auto_config VALUES ('Ticket expiration', 'closeticket', ?);");
+					if($q->param('closeticket') eq "Yes") { $sql->execute(1); }
+					else { $sql->execute(0); }
+				}
 				msg("Changes saved.", 3)
 			}
 			$sql = $db->prepare("SELECT * FROM auto;");
@@ -4895,7 +4942,9 @@ elsif($q->param('m')) # Modules
 				else { print "<font color='red'>" . $res[5] . "</font>"; }
 				print "</td></tr>";
 			}
-			print "</tbody></table><p><form method='POST' action='./?m=auto'><input type='hidden' name='m' value='auto'><input type='hidden' name='run_all' value='1'><input class='btn btn-primary' type='submit' value='Process all modules on next run'></form></p></div></div>\n";
+			print "</tbody></table><p><form method='POST' action='./?m=auto'><input type='hidden' name='m' value='auto'><input class='btn btn-primary' type='submit' name='run_all' value='Process all modules on next run'>";
+			if($logged_lvl > 5) { print "<input class='btn btn-danger pull-right' type='submit' name='clear_all' value='Reset modules'>"; }
+			print "</form></p></div></div>\n";
 			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Automation log</h3></div><div class='panel-body'>\n";
 			if($logged_lvl > 5) { print "<form style='display:inline' method='POST' action='./?m=auto'><input type='hidden' name='m' value='auto'><input type='hidden' name='clear_log' value='1'><input class='btn btn-danger pull-right' type='submit' value='Clear log'><br></form>"; }
 			$sql = $db->prepare("SELECT * FROM auto;");
