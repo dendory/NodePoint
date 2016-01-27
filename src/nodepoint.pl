@@ -661,7 +661,7 @@ sub save_config
 	$cfg->save("smtp_from", sanitize_html($q->param('smtp_from')));
 	$cfg->save("smtp_user", sanitize_html($q->param('smtp_user')));
 	$cfg->save("api_write", sanitize_html($q->param('api_write')));
-	$cfg->save("smtp_pass", RC4($cfg->load("api_write"), $q->param('smtp_pass')));
+	$cfg->save("smtp_pass", encode_base64(RC4($cfg->load("api_write"), $q->param('smtp_pass'))));
 	$cfg->save("api_read", sanitize_html($q->param('api_read')));
 	$cfg->save("api_imp", $q->param('api_imp'));
 	$cfg->save("theme_color", $q->param('theme_color'));
@@ -901,7 +901,7 @@ sub notify
 				eval
 				{
 					my $smtp = Net::SMTP->new($cfg->load('smtp_server'), Port => to_int($cfg->load('smtp_port')), Timeout => 5);
-					if($cfg->load('smtp_user') && $cfg->load('smtp_pass')) { $smtp->auth($cfg->load('smtp_user'), RC4($cfg->load("api_write"), $cfg->load('smtp_pass'))); }
+					if($cfg->load('smtp_user') && $cfg->load('smtp_pass')) { $smtp->auth($cfg->load('smtp_user'), RC4($cfg->load("api_write"), decode_base64($cfg->load('smtp_pass')))); }
 					$smtp->mail($cfg->load('smtp_from'));
 					if($smtp->to($res[2]))
 					{
@@ -3075,7 +3075,7 @@ elsif($q->param('m')) # Modules
 			print "<tr><td style='width:50%'>SMTP server</td><td><input class='form-control' type='text' name='smtp_server' value=\"" . $cfg->load("smtp_server") . "\"></td></tr>\n";
 			print "<tr><td style='width:50%'>SMTP port</td><td><input class='form-control' type='text' name='smtp_port' value=\"" . $cfg->load("smtp_port") . "\"></td></tr>\n";
 			print "<tr><td style='width:50%'>SMTP username</td><td><input class='form-control' type='text' name='smtp_user' value=\"" . $cfg->load("smtp_user") . "\"></td></tr>\n";
-			print "<tr><td style='width:50%'>SMTP password</td><td><input class='form-control' type='password' name='smtp_pass' value=\"" . RC4($cfg->load("api_write"), $cfg->load("smtp_pass")) . "\"></td></tr>\n";
+			print "<tr><td style='width:50%'>SMTP password</td><td><input class='form-control' type='password' name='smtp_pass' value=\"" . RC4($cfg->load("api_write"), decode_base64($cfg->load("smtp_pass"))) . "\"></td></tr>\n";
 			print "<tr><td style='width:50%'>Support email</td><td><input class='form-control' type='text' name='smtp_from' value=\"" . $cfg->load("smtp_from") . "\"></td></tr>\n";
 			print "</table><h4>Access levels</h4><table class='table table-striped'>";
 			print "<tr><td style='width:50%'>New users access level</td><td><input class='form-control' type='text' name='default_lvl' value=\"" . to_int($cfg->load("default_lvl")) . "\"></td></tr>\n";
@@ -4673,7 +4673,7 @@ elsif($q->param('m')) # Modules
 						if($res2[1] eq 'basedn') { $basedn = $res2[2]; }
 						if($res2[1] eq 'searchfilter') { $searchfilter = $res2[2]; }
 						if($res2[1] eq 'aduser') { $aduser = $res2[2]; }
-						if($res2[1] eq 'adpass') { $adpass = RC4($cfg->load("api_write"), $res2[2]); }
+						if($res2[1] eq 'adpass') { $adpass = RC4($cfg->load("api_write"), decode_base64($res2[2])); }
 						if($res2[1] eq 'importemail') { $importemail = to_int($res2[2]); }
 					}
 					print "<p><div class='row'><div class='col-sm-4'>Base DN:</div><div class='col-sm-8'><input class='form-control' type='text' name='basedn' value='" . $basedn . "'></div></div></p>";
@@ -4708,7 +4708,7 @@ elsif($q->param('m')) # Modules
 						if($res2[1] eq 'deleteemail') { $deleteemail = to_int($res2[2]); }
 						if($res2[1] eq 'imapssl') { $imapssl = to_int($res2[2]); }
 						if($res2[1] eq 'imapuser') { $imapuser = $res2[2]; }
-						if($res2[1] eq 'imappass') { $imappass = RC4($cfg->load("api_write"), $res2[2]); }
+						if($res2[1] eq 'imappass') { $imappass = RC4($cfg->load("api_write"), decode_base64($res2[2])); }
 						if($res2[1] eq 'imapserver') { $imapserver = $res2[2]; }
 					}
 					print "<p><div class='row'><div class='col-sm-4'>IMAP Server:</div><div class='col-sm-8'><input class='form-control' type='text' name='imapserver' value='" . $imapserver . "'></div></div></p>";
@@ -4751,7 +4751,7 @@ elsif($q->param('m')) # Modules
 						if($res2[1] eq 'type') { $type = $res2[2]; }
 						if($res2[1] eq 'searchfilter') { $searchfilter = $res2[2]; }
 						if($res2[1] eq 'aduser') { $aduser = $res2[2]; }
-						if($res2[1] eq 'adpass') { $adpass = RC4($cfg->load("api_write"), $res2[2]); }
+						if($res2[1] eq 'adpass') { $adpass = RC4($cfg->load("api_write"), decode_base64($res2[2])); }
 						if($res2[1] eq 'approval') { $approval = to_int($res2[2]); }
 					}
 					print "<p><div class='row'><div class='col-sm-4'>Base DN:</div><div class='col-sm-8'><input class='form-control' type='text' name='basedn' value='" . $basedn . "'></div></div></p>";
@@ -4853,7 +4853,7 @@ elsif($q->param('m')) # Modules
 					$sql = $db->prepare("INSERT INTO auto_config VALUES ('Users sync', 'aduser', ?);");
 					$sql->execute(sanitize_html($q->param('aduser')));
 					$sql = $db->prepare("INSERT INTO auto_config VALUES ('Users sync', 'adpass', ?);");
-					$sql->execute(RC4($cfg->load("api_write"), $q->param('adpass')));
+					$sql->execute(encode_base64(RC4($cfg->load("api_write"), $q->param('adpass'))));
 					$sql = $db->prepare("INSERT INTO auto_config VALUES ('Users sync', 'importemail', ?);");
 					if($q->param('importemail') eq "Yes") { $sql->execute(1); }
 					else { $sql->execute(0); }
@@ -4871,7 +4871,7 @@ elsif($q->param('m')) # Modules
 					$sql = $db->prepare("INSERT INTO auto_config VALUES ('Computers sync', 'type', ?);");
 					$sql->execute(sanitize_html($q->param('type')));
 					$sql = $db->prepare("INSERT INTO auto_config VALUES ('Computers sync', 'adpass', ?);");
-					$sql->execute(RC4($cfg->load("api_write"), $q->param('adpass')));
+					$sql->execute(encode_base64(RC4($cfg->load("api_write"), $q->param('adpass'))));
 					$sql = $db->prepare("INSERT INTO auto_config VALUES ('Computers sync', 'approval', ?);");
 					if($q->param('approval') eq "Yes") { $sql->execute(1); }
 					else { $sql->execute(0); }
@@ -4893,7 +4893,7 @@ elsif($q->param('m')) # Modules
 					$sql = $db->prepare("INSERT INTO auto_config VALUES ('Email to Ticket', 'imapuser', ?);");
 					$sql->execute(sanitize_html($q->param('imapuser')));
 					$sql = $db->prepare("INSERT INTO auto_config VALUES ('Email to Ticket', 'imappass', ?);");
-					$sql->execute(RC4($cfg->load("api_write"), $q->param('imappass')));
+					$sql->execute(encode_base64(RC4($cfg->load("api_write"), $q->param('imappass'))));
 					$sql = $db->prepare("INSERT INTO auto_config VALUES ('Email to Ticket', 'imapssl', ?);");
 					if($q->param('imapssl') eq "Yes") { $sql->execute(1); }
 					else { $sql->execute(0); }

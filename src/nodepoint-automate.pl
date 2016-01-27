@@ -24,6 +24,7 @@ use Net::IMAP::Simple;
 use Email::Simple;
 use Email::MIME;
 use Date::Parse;
+use MIME::Base64;
 
 my ($cfg, $db, $sql, $sql2);
 
@@ -106,7 +107,7 @@ sub notify
 			if($res[0] eq $u && $res[2] ne "" && ($res[5] eq "" || $title eq "Email confirmation")) # user is good, email is not null, confirm is empty or this is confirm email
 			{
 				my $smtp = Net::SMTP->new($cfg->load('smtp_server'), Port => to_int($cfg->load('smtp_port')), Timeout => 5);
-				if($cfg->load('smtp_user') && $cfg->load('smtp_pass')) { $smtp->auth($cfg->load('smtp_user'), RC4($cfg->load("api_write"),  $cfg->load('smtp_pass'))); }
+				if($cfg->load('smtp_user') && $cfg->load('smtp_pass')) { $smtp->auth($cfg->load('smtp_user'), RC4($cfg->load("api_write"),  decode_base64($cfg->load('smtp_pass')))); }
 				$smtp->mail($cfg->load('smtp_from'));
 				if($smtp->to($res[2]))
 				{
@@ -301,7 +302,7 @@ while(my @res = $sql->fetchrow_array())
 				if($res2[1] eq 'basedn') { $basedn = $res2[2]; }
 				if($res2[1] eq 'searchfilter') { $searchfilter = $res2[2]; }
 				if($res2[1] eq 'aduser') { $aduser = $res2[2]; }
-				if($res2[1] eq 'adpass') { $adpass = RC4($cfg->load("api_write"), $res2[2]); }
+				if($res2[1] eq 'adpass') { $adpass = RC4($cfg->load("api_write"), decode_base64($res2[2])); }
 				if($res2[1] eq 'importemail') { $importemail = to_int($res2[2]); }
 			}
 			if($basedn eq "")
@@ -377,7 +378,7 @@ while(my @res = $sql->fetchrow_array())
 				if($res2[1] eq 'type') { $type = $res2[2]; }
 				if($res2[1] eq 'searchfilter') { $searchfilter = $res2[2]; }
 				if($res2[1] eq 'aduser') { $aduser = $res2[2]; }
-				if($res2[1] eq 'adpass') { $adpass = RC4($cfg->load("api_write"), $res2[2]); }
+				if($res2[1] eq 'adpass') { $adpass = RC4($cfg->load("api_write"), decode_base64($res2[2])); }
 				if($res2[1] eq 'approval') { $approval = to_int($res2[2]); }
 			}
 			if($basedn eq "")
@@ -453,7 +454,7 @@ while(my @res = $sql->fetchrow_array())
 				if($res2[1] eq 'releaseid') { $releaseid = $res2[2]; }
 				if($res2[1] eq 'priority') { $priority = $res2[2]; }
 				if($res2[1] eq 'imapuser') { $imapuser = $res2[2]; }
-				if($res2[1] eq 'imappass') { $imappass = RC4($cfg->load("api_write"), $res2[2]); }
+				if($res2[1] eq 'imappass') { $imappass = RC4($cfg->load("api_write"), decode_base64($res2[2])); }
 			}
 			if($imapserver eq "")
 			{
