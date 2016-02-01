@@ -8,7 +8,7 @@
 #
 
 use strict;
-use Config::Linux;
+use Config::Win32;
 use Digest::SHA qw(sha1_hex);
 use DBI;
 use CGI;
@@ -601,6 +601,8 @@ sub db_check
 		$sql = $db->prepare("INSERT INTO auto_modules VALUES ('Computers sync', 0, 'Never', 0, '', \"This module will list computer objects from your Active Directory server and create entries in the Inventory Control component. The Base DN should be the OU where your computers are kept. The serial will be set to the machine's hostname. This requires credentials of a user with object listing rights.\", 0);");
 		$sql->execute();
 		$sql = $db->prepare("INSERT INTO auto_modules VALUES ('Ticket expiration', 0, 'Never', 0, '', \"This module interacts with active tickets that were modified more than x days ago. It can notify assigned users, and close the ticket.\", 0);");
+		$sql->execute();
+		$sql = $db->prepare("INSERT INTO auto_modules VALUES ('Reminder notifications', 0, 'Never', 0, '', \"This module will notify users about expired items checked out, overdue tasks and tickets requiring attention.\", 0);");
 		$sql->execute();
 	};
 	$sql->finish();
@@ -1224,11 +1226,11 @@ sub home
 # Connect to config
 eval
 {
-	$cfg = Config::Linux->new("NodePoint", "settings");
+	$cfg = Config::Win32->new("NodePoint", "settings");
 };
 if(!defined($cfg)) # Can't even use headers() if this fails.
 {
-	print "Content-type: text/html\n\nError: Could not access " . Config::Linux->type . ". Please ensure NodePoint has the proper permissions.";
+	print "Content-type: text/html\n\nError: Could not access " . Config::Win32->type . ". Please ensure NodePoint has the proper permissions.";
 	exit(0);
 };
 
@@ -4796,6 +4798,35 @@ elsif($q->param('m')) # Modules
 					if($closeticket == 0) { print " selected"; }
 					print ">No</option></select></div></div></p>";
 				}
+				elsif($res[0] eq "Reminder notifications")
+				{
+					my $reminditems = 0;
+					my $remindtasks = 0;
+					my $remindtickets = 0;
+					my $sql2 = $db->prepare("SELECT * FROM auto_config WHERE module = 'Reminder notifications';");
+					$sql2->execute();
+					while(my @res2 = $sql2->fetchrow_array())
+					{
+						if($res2[1] eq 'reminditems') { $reminditems = to_int($res2[2]); }
+						if($res2[1] eq 'remindtasks') { $remindtasks = to_int($res2[2]); }
+						if($res2[1] eq 'remindtickets') { $remindtickets = to_int($res2[2]); }
+					}
+					print "<p><div class='row'><div class='col-sm-4'>Expired checkout items:</div><div class='col-sm-8'><select class='form-control' name='reminditems'><option";
+					if($reminditems == 1) { print " selected"; }
+					print ">Yes</option><option";
+					if($reminditems == 0) { print " selected"; }
+					print ">No</option></select></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>Overdue tasks:</div><div class='col-sm-8'><select class='form-control' name='remindtasks'><option";
+					if($remindtasks == 1) { print " selected"; }
+					print ">Yes</option><option";
+					if($remindtasks == 0) { print " selected"; }
+					print ">No</option></select></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>Tickets notifications:</div><div class='col-sm-8'><select class='form-control' name='remindtickets'><option";
+					if($remindtickets == 1) { print " selected"; }
+					print ">Yes</option><option";
+					if($remindtickets == 0) { print " selected"; }
+					print ">No</option></select></div></div></p>";
+				}
 				print "<p><input type='hidden' name='m' value='auto'><input type='hidden' name='save' value='" . sanitize_html($q->param('config')) . "'><input class='btn btn-primary pull-right' type='submit' value='Save'></p>";
 				print "</form></div></div>\n";
 			}
@@ -4912,6 +4943,20 @@ elsif($q->param('m')) # Modules
 					else { $sql->execute(0); }
 					$sql = $db->prepare("INSERT INTO auto_config VALUES ('Ticket expiration', 'closeticket', ?);");
 					if($q->param('closeticket') eq "Yes") { $sql->execute(1); }
+					else { $sql->execute(0); }
+				}
+				elsif($q->param('save') eq "Reminder notifications")
+				{
+					$sql = $db->prepare("DELETE FROM auto_config WHERE module = 'Reminder notifications';");
+					$sql->execute();
+					$sql = $db->prepare("INSERT INTO auto_config VALUES ('Reminder notifications', 'remindtickets', ?);");
+					if($q->param('remindtickets') eq "Yes") { $sql->execute(1); }
+					else { $sql->execute(0); }
+					$sql = $db->prepare("INSERT INTO auto_config VALUES ('Reminder notifications', 'remindtasks', ?);");
+					if($q->param('remindtasks') eq "Yes") { $sql->execute(1); }
+					else { $sql->execute(0); }
+					$sql = $db->prepare("INSERT INTO auto_config VALUES ('Reminder notifications', 'reminditems', ?);");
+					if($q->param('reminditems') eq "Yes") { $sql->execute(1); }
 					else { $sql->execute(0); }
 				}
 				msg("Changes saved.", 3)

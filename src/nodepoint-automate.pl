@@ -8,11 +8,12 @@
 #
 
 use strict;
-use Config::Linux;
+use Config::Win32;
 use Digest::SHA qw(sha1_hex);
 use DBI;
 use Scalar::Util qw(looks_like_number);
 use Time::HiRes qw(time);
+use Time::Piece;
 use Mail::RFC822::Address qw(valid);
 use File::Basename qw(dirname);
 use File::Copy;
@@ -27,6 +28,9 @@ use Date::Parse;
 use MIME::Base64;
 
 my ($cfg, $db, $sql, $sql2);
+my $m = localtime->strftime('%m');
+my $y = localtime->strftime('%Y');
+my $d = localtime->strftime('%d');
 
 # Convert to int so it doesnt throw up on invalid numbers
 sub to_int
@@ -134,7 +138,7 @@ sub logevent
 
 # Initial config
 chdir dirname($0);
-$cfg = Config::Linux->new("NodePoint", "settings");
+$cfg = Config::Win32->new("NodePoint", "settings");
 
 if($cfg->load("db_address"))
 {
@@ -492,7 +496,11 @@ while(my @res = $sql->fetchrow_array())
 							my $parts = Email::MIME->new($es->body);
 							for my $part ($parts->parts) 
 							{
-								if($part->content_type =~ m!text/plain! or lc($part->content_type) eq 'text')
+								if(!$part->content_type)
+								{
+									$body = $part->body;
+								}
+								elsif($part->content_type =~ m!text/plain! or lc($part->content_type) eq 'text')
 								{
 									for my $subpart ($part->parts) { $body = $subpart->body; }
 								}
@@ -595,6 +603,71 @@ while(my @res = $sql->fetchrow_array())
 				$result = "Success";
 				logevent($res[0], "Found " . $ticketcount . " active tickets, acted on " . $actcount . ".");
 			}
+		}
+		elsif($res[0] eq 'Reminder notifications')
+		{
+			my $remindtickets = 0;
+			my $remindtasks = 0;
+			my $reminditems = 0;
+			my $sql2 = $db->prepare("SELECT * FROM auto_config WHERE module = 'Reminder notifications';");
+			$sql2->execute();
+			while(my @res2 = $sql2->fetchrow_array())
+			{
+				if($res2[1] eq 'remindtickets') { $remindtickets = to_int($res2[2]); }
+				if($res2[1] eq 'remindtasks') { $remindtasks = to_int($res2[2]); }
+				if($res2[1] eq 'reminditems') { $reminditems = to_int($res2[2]); }
+			}
+			my $rowcount = 0;
+			if($remindtickets == 1)
+			{
+				$sql2 = $db->prepare("SELECT * FROM escalate;");
+				$sql2->execute();
+				while(my @res2 = $sql2->fetchrow_array())
+				{
+					my $sql3 = $db->prepare("SELECT title FROM tickets WHERE ROWID = ?;");
+					$sql3->execute(to_int($res2[0]));
+					while(my @res3 = $sql3->fetchrow_array())
+					{
+						$rowcount += 1;
+						notify($res2[1], "Ticket (" . $res2[0] . ") requires your attention", "The following ticket requires your attention:\n\n" . $res2[0] . " - " . $res3[0])
+					}
+				}
+			}
+			if($remindtasks == 1)
+			{
+				$sql2 = $db->prepare("SELECT ROWID,name,user,due FROM steps WHERE completion < 100;");
+				$sql2->execute();
+				while(my @res2 = $sql2->fetchrow_array())
+				{
+					my @dueby = split(/\//, $res2[3]);
+					if($dueby[2] < $y || ($dueby[2] == $y && $dueby[0] < $m) || ($dueby[2] == $y && $dueby[0] == $m && $dueby[1] < $d))
+					{
+						$rowcount += 1;
+						notify($res2[2], "Task (" . $res2[0] . ") is overdue", "The following task is overdue:\n\nTask: " . $res2[1] . "\nDue on: " . $res2[3])
+					}
+				}
+			}
+			if($reminditems == 1)
+			{
+				$sql2 = $db->prepare("SELECT * FROM item_expiration;");
+				$sql2->execute();
+				while(my @res2 = $sql2->fetchrow_array())
+				{
+					my $sql3 = $db->prepare("SELECT name,user FROM items WHERE status = 3 AND ROWID = ?;");
+					$sql3->execute(to_int($res2[0]));
+					while(my @res3 = $sql3->fetchrow_array())
+					{
+						my @dueby = split(/\//, $res2[1]);
+						if($dueby[2] < $y || ($dueby[2] == $y && $dueby[0] < $m) || ($dueby[2] == $y && $dueby[0] == $m && $dueby[1] < $d))
+						{
+							$rowcount += 1;
+							notify($res3[1], "Item (" . $res2[0] . ") has expired", "The following checked out item is expired:\n\nItem: " . $res3[0] . "\nExpiration date: " . $res2[1])
+						}
+					}
+				}
+			}
+			$result = "Success";
+			logevent($res[0], "Sent " . $rowcount . " notifications.");
 		}
 		else { logevent($res[0], "Not implemented."); }
 		$sql2 = $db->prepare("UPDATE auto_modules SET lastrun = ?, timestamp = ?, result = ? WHERE name = ?;");
