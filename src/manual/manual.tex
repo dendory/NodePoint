@@ -11,10 +11,10 @@
 % Conditional compilation for Windows and Linux
 \usepackage{ifthen}
 \newboolean{Windows}
-\setboolean{Windows}{false} % change to false for Linux
+\setboolean{Windows}{true} % change to false for Linux
 \ifthenelse{\boolean{Windows}}
-{\def\NodePointManual{NodePoint IT System - Windows version 1.6.0}}
-{\def\NodePointManual{NodePoint IT System - Linux version 1.6.0}}
+{\def\NodePointManual{NodePoint IT System - Windows version 1.6.1}}
+{\def\NodePointManual{NodePoint IT System - Linux version 1.6.1}}
 
 % Margins and paper type
 \geometry{a4paper, right=1.5cm, left=1.5cm, top=2cm, bottom=1.5cm}
@@ -378,7 +378,7 @@ These are the access levels used by NodePoint along with a short description:
 \hline
 \end{tabular}
 
-NodePoint has a few special user accounts. The \textit{admin} account is used as product administrator and acts differently than normal user accounts. It should only be used for administrative functions. \textit{Guest} is used to specify people who are not logged in, and cannot be registered as a user account. The name \textit{api} refers to any change made using the JSON API. The \textit{demo} account can be registered normally but cannot change its own password, and is meant for product demos.
+NodePoint has a few special user accounts. The \textit{admin} account is used as product administrator and acts differently than normal user accounts. It should only be used for administrative functions. \textit{Guest} is used to specify people who are not logged in, and cannot be registered as a user account. The name \textit{api} refers to any change made using the JSON API while \textit{System} is used for automation. The \textit{demo} account can be registered normally but cannot change its own password, and is meant for product demos.
 
 \subsection{Users management}
 Management of user passwords and access levels can be done by anyone with access level 5 or higher. With the right access level, this panel will then be available in the \textbf{Tools} menu:
@@ -537,6 +537,9 @@ This module interacts with active tickets that were modified more than x days ag
 
 \subsubsection{Reminder notifications}
 This module will notify users about expired items checked out, overdue tasks and tickets requiring attention.
+
+\subsubsection{ServiceNow CMDB}
+This module can import CMDB data from a ServiceNow instance and import the data into the Inventory Control component. You need to enter valid credentials and the name of the table to read, along with the table header mappings.
 
 \clearpage
 \section{JSON API}

@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/bin/perl
 #
 # NodePoint - (C) 2015 Patrick Lambert - http://nodepoint.ca
 # Provided under the MIT License
@@ -26,11 +26,18 @@ use Email::Simple;
 use Email::MIME;
 use Date::Parse;
 use MIME::Base64;
+use LWP::UserAgent;
+use SOAP::Lite;
 
-my ($cfg, $db, $sql, $sql2);
+my ($cfg, $db, $sql, $sql2, $soap_user, $soap_pass);
 my $m = localtime->strftime('%m');
 my $y = localtime->strftime('%Y');
 my $d = localtime->strftime('%d');
+
+# SOAP creds
+sub SOAP::Transport::HTTP::Client::get_basic_credentials {
+    return $soap_user => $soap_pass;
+}
 
 # Convert to int so it doesnt throw up on invalid numbers
 sub to_int
@@ -409,29 +416,104 @@ while(my @res = $sql->fetchrow_array())
 						my $serial = $entry->get_value('dNSHostName');
 						my $os = $entry->get_value('operatingSystem');
 						my $existing = "";
-						$sql2 = $db->prepare("SELECT serial FROM items WHERE name = ?;");
-						$sql2->execute(sanitize_html($name));
-						while(my @res2 = $sql2->fetchrow_array())
+						if($serial ne "" && $name ne "")
 						{
-							$existing = $res2[0];
-						}
-						if($existing ne sanitize_html($serial) && $existing ne "")
-						{
-							$sql2 = $db->prepare("UPDATE items SET serial = ? WHERE name = ?");
-							$sql2->execute(sanitize_html($serial), sanitize_html($name));
-							$updcount += 1;
-						}
-						elsif($existing eq "")
-						{
-							$sql2 = $db->prepare("INSERT INTO items VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);");
-							$sql2->execute(sanitize_html($name), $type, sanitize_html($serial), 0, 0, $approval, 1, "", sanitize_html($os));
-							$newcount += 1;
+							$sql2 = $db->prepare("SELECT name FROM items WHERE serial = ?;");
+							$sql2->execute(sanitize_html($serial));
+							while(my @res2 = $sql2->fetchrow_array()) { $existing = $res2[0]; }
+							if($existing eq "")
+							{
+								$sql2 = $db->prepare("INSERT INTO items VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);");
+								$sql2->execute(sanitize_html($name), $type, sanitize_html($serial), 0, 0, $approval, 1, "", sanitize_html($os));
+								$newcount += 1;
+							}
+							elsif($existing ne sanitize_html($name))
+							{
+								$sql2 = $db->prepare("UPDATE items SET name = ? WHERE serial = ?");
+								$sql2->execute(sanitize_html($name), sanitize_html($serial));
+								$updcount += 1;
+							}
 						}
 						$rowcount += 1; 
 					}
 					$mesg = $ldap->unbind; 
 					$result = "Success";
 					logevent($res[0], "Listed " . $rowcount . " computers, updated " . $updcount . ", created " . $newcount . ".");
+				}
+			}
+		}
+		elsif($res[0] eq 'ServiceNow CMDB')
+		{
+			my $type = "";
+			my $cmdburl = "";
+			my $cmdbtable = "";
+			my $mapname = "";
+			my $mapserial = "";
+			my $mapinfo = "";
+			my $approval = 0;
+			my $cmdbuser = "";
+			my $cmdbpass = "";
+			my $sql2 = $db->prepare("SELECT * FROM auto_config WHERE module = 'ServiceNow CMDB';");
+			$sql2->execute();
+			while(my @res2 = $sql2->fetchrow_array())
+			{
+				if($res2[1] eq 'type') { $type = $res2[2]; }
+				if($res2[1] eq 'cmdburl') { $cmdburl = $res2[2]; }
+				if($res2[1] eq 'cmdbtable') { $cmdbtable = $res2[2]; }
+				if($res2[1] eq 'mapname') { $mapname = $res2[2]; }
+				if($res2[1] eq 'mapserial') { $mapserial = $res2[2]; }
+				if($res2[1] eq 'mapinfo') { $mapinfo = $res2[2]; }
+				if($res2[1] eq 'cmdbuser') { $soap_user = $res2[2]; }
+				if($res2[1] eq 'cmdbpass') { $soap_pass = RC4($cfg->load("api_write"), decode_base64($res2[2])); }
+				if($res2[1] eq 'approval') { $approval = to_int($res2[2]); }
+			}
+			if($cmdburl eq "" || $cmdbtable eq "")
+			{
+				logevent($res[0], "Missing ServiceNow URL or CMDB table configuration value.");
+			}
+			else
+			{
+				my $rowcount = 0;
+				my $updcount = 0;
+				my $crtcount = 0;
+				my $url = $cmdburl . "/" . $cmdbtable . ".do?SOAP";
+				my $som;
+				my $soap = SOAP::Lite->proxy($url);
+				eval
+				{
+					my $method = SOAP::Data->name("getRecords")->attr({xmlns => "http://www.service-now.com/"});
+					my @params = (SOAP::Data->name());
+					$som = $soap->call($method => @params);
+				} or logevent($res[0], "Could not connect to SOAP endpoint: " . $url . " [" . $soap->transport->status . "]");
+				if($som)
+				{
+					my @data;
+					eval { @data = @{$som->body->{getRecordsResponse}->{getRecordsResult}} } or logevent($res[0], "Invalid or empty response from server.");
+					foreach my $rec (@data)
+					{
+						$rowcount += 1;
+						if($rec->{$mapserial} ne "" && $rec->{$mapname} ne "")
+						{
+							$sql2 = $db->prepare("SELECT name FROM items WHERE serial = ?;");
+							$sql2->execute(sanitize_html($rec->{$mapserial}));
+							my $existing = "";
+							while(my @res2 = $sql2->fetchrow_array()) { $existing = $res2[0]; }
+							if($existing eq "")
+							{
+								$sql2 = $db->prepare("INSERT INTO items VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);");
+								$sql2->execute(sanitize_html($rec->{$mapname}), sanitize_alpha($type), sanitize_html($rec->{$mapserial}), 0, 0, $approval, 1, "", sanitize_html($rec->{$mapinfo}));
+								$crtcount += 1;
+							}
+							elsif($existing ne sanitize_html($rec->{$mapname}))
+							{
+								$sql2 = $db->prepare("UPDATE items SET name = ? WHERE serial = ?");
+								$sql2->execute(sanitize_html($rec->{$mapname}), sanitize_html($rec->{$mapserial}));
+								$updcount += 1;
+							}
+						}
+					}
+					$result = "Success";
+					logevent($res[0], "Listed " . $rowcount . " items, updated " . $updcount . ", created " . $crtcount . ".");
 				}
 			}
 		}

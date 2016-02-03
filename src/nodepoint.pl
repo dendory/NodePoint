@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/bin/perl
 #
 # NodePoint - (C) 2015 Patrick Lambert - http://nodepoint.ca
 # Provided under the MIT License
@@ -603,6 +603,8 @@ sub db_check
 		$sql = $db->prepare("INSERT INTO auto_modules VALUES ('Ticket expiration', 0, 'Never', 0, '', \"This module interacts with active tickets that were modified more than x days ago. It can notify assigned users, and close the ticket.\", 0);");
 		$sql->execute();
 		$sql = $db->prepare("INSERT INTO auto_modules VALUES ('Reminder notifications', 0, 'Never', 0, '', \"This module will notify users about expired items checked out, overdue tasks and tickets requiring attention.\", 0);");
+		$sql->execute();
+		$sql = $db->prepare("INSERT INTO auto_modules VALUES ('ServiceNow CMDB', 0, 'Never', 0, '', \"This module can import CMDB data from a ServiceNow instance and import the data into the Inventory Control component. You need to enter valid credentials and the name of the table to read, along with the table header mappings.\", 0);");
 		$sql->execute();
 	};
 	$sql->finish();
@@ -4827,6 +4829,71 @@ elsif($q->param('m')) # Modules
 					if($remindtickets == 0) { print " selected"; }
 					print ">No</option></select></div></div></p>";
 				}
+				elsif($res[0] eq "ServiceNow CMDB")
+				{
+					my $type = "Server";
+					my $cmdburl = "https://mycompany.service-now.com";
+					my $cmdbtable = "cmdb_ci_server";
+					my $mapname = "name";
+					my $mapserial = "asset_tag";
+					my $mapinfo = "os";
+					my $approval = 0;
+					my $cmdbuser = "admin";
+					my $cmdbpass = "";
+					my $sql2 = $db->prepare("SELECT * FROM auto_config WHERE module = 'ServiceNow CMDB';");
+					$sql2->execute();
+					while(my @res2 = $sql2->fetchrow_array())
+					{
+						if($res2[1] eq 'type') { $type = $res2[2]; }
+						if($res2[1] eq 'cmdburl') { $cmdburl = $res2[2]; }
+						if($res2[1] eq 'cmdbtable') { $cmdbtable = $res2[2]; }
+						if($res2[1] eq 'mapname') { $mapname = $res2[2]; }
+						if($res2[1] eq 'mapserial') { $mapserial = $res2[2]; }
+						if($res2[1] eq 'mapinfo') { $mapinfo = $res2[2]; }
+						if($res2[1] eq 'cmdbuser') { $cmdbuser = $res2[2]; }
+						if($res2[1] eq 'cmdbpass') { $cmdbpass = RC4($cfg->load("api_write"), decode_base64($res2[2])); }
+						if($res2[1] eq 'approval') { $approval = to_int($res2[2]); }
+					}
+					print "<p><div class='row'><div class='col-sm-4'>ServiceNow URL:</div><div class='col-sm-8'><input class='form-control' type='text' name='cmdburl' value='" . $cmdburl . "'></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>ServiceNow CMDB table:</div><div class='col-sm-8'><input class='form-control' type='text' name='cmdbtable' value='" . $cmdbtable . "'></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>Username:</div><div class='col-sm-8'><input class='form-control' type='text' name='cmdbuser' value='" . $cmdbuser . "'></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>Password:</div><div class='col-sm-8'><input class='form-control' type='password' name='cmdbpass' value='" . $cmdbpass . "'></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>Require checkout approval:</div><div class='col-sm-8'><select class='form-control' name='approval'><option";
+					if($approval == 1) { print " selected"; }
+					print ">Yes</option><option";
+					if($approval == 0) { print " selected"; }
+					print ">No</option></select></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>Asset type:</div><div class='col-sm-8'><select class='form-control' name='type'><option";
+					if($type eq "Desktop") { print " selected"; }
+					print ">Desktop</option><option";
+					if($type eq "Laptop") { print " selected"; }
+					print ">Laptop</option><option";
+					if($type eq "Server") { print " selected"; }
+					print ">Server</option><option";
+					if($type eq "Keyboard") { print " selected"; }
+					print ">Keyboard</option><option";
+					if($type eq "Mouse") { print " selected"; }
+					print ">Mouse</option><option";
+					if($type eq "Display") { print " selected"; }
+					print ">Display</option><option";
+					if($type eq "Phone") { print " selected"; }
+					print ">Phone</option><option";
+					if($type eq "Software") { print " selected"; }
+					print ">Software</option><option";
+					if($type eq "Printer") { print " selected"; }
+					print ">Printer</option><option";
+					if($type eq "Peripheral") { print " selected"; }
+					print ">Peripheral</option><option";
+					if($type eq "Furniture") { print " selected"; }
+					print ">Furniture</option><option";
+					if($type eq "Tool") { print " selected"; }
+					print ">Tool</option><option";
+					if($type eq "Other") { print " selected"; }
+					print ">Other</option></select></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>Mapping for 'name':</div><div class='col-sm-8'><input class='form-control' type='text' name='mapname' value='" . $mapname . "'></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>Mapping for 'serial':</div><div class='col-sm-8'><input class='form-control' type='text' name='mapserial' value='" . $mapserial . "'></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>Mapping for 'info':</div><div class='col-sm-8'><input class='form-control' type='text' name='mapinfo' value='" . $mapinfo . "'></div></div></p>";
+				}
 				print "<p><input type='hidden' name='m' value='auto'><input type='hidden' name='save' value='" . sanitize_html($q->param('config')) . "'><input class='btn btn-primary pull-right' type='submit' value='Save'></p>";
 				print "</form></div></div>\n";
 			}
@@ -4904,6 +4971,30 @@ elsif($q->param('m')) # Modules
 					$sql = $db->prepare("INSERT INTO auto_config VALUES ('Computers sync', 'adpass', ?);");
 					$sql->execute(encode_base64(RC4($cfg->load("api_write"), $q->param('adpass'))));
 					$sql = $db->prepare("INSERT INTO auto_config VALUES ('Computers sync', 'approval', ?);");
+					if($q->param('approval') eq "Yes") { $sql->execute(1); }
+					else { $sql->execute(0); }
+				}
+				elsif($q->param('save') eq "ServiceNow CMDB")
+				{
+					$sql = $db->prepare("DELETE FROM auto_config WHERE module = 'ServiceNow CMDB';");
+					$sql->execute();
+					$sql = $db->prepare("INSERT INTO auto_config VALUES ('ServiceNow CMDB', 'cmdburl', ?);");
+					$sql->execute(sanitize_html($q->param('cmdburl')));
+					$sql = $db->prepare("INSERT INTO auto_config VALUES ('ServiceNow CMDB', 'cmdbtable', ?);");
+					$sql->execute(sanitize_html($q->param('cmdbtable')));
+					$sql = $db->prepare("INSERT INTO auto_config VALUES ('ServiceNow CMDB', 'mapname', ?);");
+					$sql->execute(sanitize_html($q->param('mapname')));
+					$sql = $db->prepare("INSERT INTO auto_config VALUES ('ServiceNow CMDB', 'mapserial', ?);");
+					$sql->execute(sanitize_html($q->param('mapserial')));
+					$sql = $db->prepare("INSERT INTO auto_config VALUES ('ServiceNow CMDB', 'mapinfo', ?);");
+					$sql->execute(sanitize_html($q->param('mapinfo')));
+					$sql = $db->prepare("INSERT INTO auto_config VALUES ('ServiceNow CMDB', 'cmdbuser', ?);");
+					$sql->execute(sanitize_html($q->param('cmdbuser')));
+					$sql = $db->prepare("INSERT INTO auto_config VALUES ('ServiceNow CMDB', 'type', ?);");
+					$sql->execute(sanitize_html($q->param('type')));
+					$sql = $db->prepare("INSERT INTO auto_config VALUES ('ServiceNow CMDB', 'cmdbpass', ?);");
+					$sql->execute(encode_base64(RC4($cfg->load("api_write"), $q->param('cmdbpass'))));
+					$sql = $db->prepare("INSERT INTO auto_config VALUES ('ServiceNow CMDB', 'approval', ?);");
 					if($q->param('approval') eq "Yes") { $sql->execute(1); }
 					else { $sql->execute(0); }
 				}
