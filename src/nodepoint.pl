@@ -606,6 +606,8 @@ sub db_check
 		$sql->execute();
 		$sql = $db->prepare("INSERT INTO auto_modules VALUES ('ServiceNow CMDB', 0, 'Never', 0, '', \"This module can import CMDB data from a ServiceNow instance and import the data into the Inventory Control component. You need to enter valid credentials and the name of the table to read, along with the table header mappings.\", 0);");
 		$sql->execute();
+		$sql = $db->prepare("INSERT INTO auto_modules VALUES ('Update MOTD', 0, 'Never', 0, '', \"This module will dynamically update the MOTD from a text file.\", 0);");
+		$sql->execute();
 	};
 	$sql->finish();
 	$sql = $db->prepare("SELECT * FROM auto_log WHERE 0 = 1;") or do
@@ -4663,6 +4665,17 @@ elsif($q->param('m')) # Modules
 					if($table eq "Tasks") { print " selected"; }
 					print ">Tasks</option></select></div></div></p>";
 				}
+				elsif($res[0] eq "Update MOTD")
+				{
+					my $filename = "motd.txt";
+					my $sql2 = $db->prepare("SELECT * FROM auto_config WHERE module = 'Update MOTD';");
+					$sql2->execute();
+					while(my @res2 = $sql2->fetchrow_array())
+					{
+						if($res2[1] eq 'filename') { $filename = $res2[2]; }
+					}
+					print "<p><div class='row'><div class='col-sm-4'>Text file:</div><div class='col-sm-8'><input class='form-control' type='text' name='filename' value='" . $filename . "'></div></div></p>";
+				}
 				elsif($res[0] eq "Users sync")
 				{
 					my $aduser = "Administrator";
@@ -4940,6 +4953,13 @@ elsif($q->param('m')) # Modules
 					$sql = $db->prepare("INSERT INTO auto_config VALUES ('Bulk export', 'table', ?);");
 					$sql->execute(sanitize_html($q->param('table')));
 				}
+				elsif($q->param('save') eq "Update MOTD")
+				{
+					$sql = $db->prepare("DELETE FROM auto_config WHERE module = 'Update MOTD';");
+					$sql->execute();
+					$sql = $db->prepare("INSERT INTO auto_config VALUES ('Update MOTD', 'filename', ?);");
+					$sql->execute(sanitize_html($q->param('filename')));
+				}
 				elsif($q->param('save') eq "Users sync")
 				{
 					$sql = $db->prepare("DELETE FROM auto_config WHERE module = 'Users sync';");
@@ -5059,7 +5079,7 @@ elsif($q->param('m')) # Modules
 				if(to_int($res[0]) + 700 < time()) { msg("The scheduled task <b>nodepoint-automate</b> does not seem to be running. Please check your installation.", 1); }
 			}
 			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Automation modules</h3></div><div class='panel-body'>\n";
-			$sql = $db->prepare("SELECT ROWID,* FROM auto_modules;");
+			$sql = $db->prepare("SELECT ROWID,* FROM auto_modules ORDER BY name ASC;");
 			$sql->execute();
 			print "<table class='table table-striped' id='auto_table'><thead><tr><th>Name</th><th>Status</th><th>Schedule</th><th>Last run time</th><th>Last result</th></tr></thead><tbody>\n";
 			while(my @res = $sql->fetchrow_array())

@@ -299,6 +299,33 @@ while(my @res = $sql->fetchrow_array())
 				logevent($res[0], "Exported " . $rowcount . " rows.");
 			}
 		}
+		elsif($res[0] eq 'Update MOTD')
+		{
+			my $filename = "";
+			my $sql2 = $db->prepare("SELECT * FROM auto_config WHERE module = 'Update MOTD';");
+			$sql2->execute();
+			while(my @res2 = $sql2->fetchrow_array())
+			{
+				if($res2[1] eq 'filename') { $filename = $res2[2]; }
+			}
+			if($filename eq "")
+			{
+				logevent($res[0], "Missing filename configuration value.");
+			}
+			else
+			{
+				my $motd = "";
+				if(open(my $F, $filename))
+				{
+					$motd = <$F>;
+					close($F);
+					$cfg->save("motd", sanitize_html($motd));
+					$result = "Success";
+					logevent($res[0], "Updated motd.");
+				}
+				else { logevent($res[0], "Error reading file."); }
+			}
+		}
 		elsif($res[0] eq 'Users sync')
 		{
 			my $aduser = "";
