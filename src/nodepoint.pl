@@ -4933,6 +4933,8 @@ elsif($q->param('m')) # Modules
 			}
 			if($q->param('save') && defined($q->param('schedule')) && defined($q->param('enabled')))
 			{
+				$sql = $db->prepare("BEGIN");
+				$sql->execute();
 				$sql = $db->prepare("UPDATE auto_modules SET enabled = ?, schedule = ? WHERE name = ?;");
 				$sql->execute(to_int($q->param('enabled')), to_int($q->param('schedule')), $q->param('save'));
 				if($q->param('save') eq "Backup")
@@ -5070,6 +5072,8 @@ elsif($q->param('m')) # Modules
 					if($q->param('reminditems') eq "Yes") { $sql->execute(1); }
 					else { $sql->execute(0); }
 				}
+				$sql = $db->prepare("END");
+				$sql->execute();
 				msg("Changes saved.", 3)
 			}
 			$sql = $db->prepare("SELECT * FROM auto;");
