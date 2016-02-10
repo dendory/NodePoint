@@ -602,6 +602,8 @@ sub db_check
 		$sql->execute();
 		$sql = $db->prepare("INSERT INTO auto_modules VALUES ('Ticket expiration', 0, 'Never', 0, '', \"This module interacts with active tickets that were modified more than x days ago. It can notify assigned users, and close the ticket.\", 0);");
 		$sql->execute();
+		$sql = $db->prepare("INSERT INTO auto_modules VALUES ('File expiration', 0, 'Never', 0, '', \"This module can remove files uploaded using the Files component after a set amount of days.\", 0);");
+		$sql->execute();
 		$sql = $db->prepare("INSERT INTO auto_modules VALUES ('Reminder notifications', 0, 'Never', 0, '', \"This module will notify users about expired items checked out, overdue tasks and tickets requiring attention.\", 0);");
 		$sql->execute();
 		$sql = $db->prepare("INSERT INTO auto_modules VALUES ('ServiceNow CMDB', 0, 'Never', 0, '', \"This module can import CMDB data from a ServiceNow instance and import the data into the Inventory Control component. You need to enter valid credentials and the name of the table to read, along with the table header mappings.\", 0);");
@@ -4813,6 +4815,17 @@ elsif($q->param('m')) # Modules
 					if($closeticket == 0) { print " selected"; }
 					print ">No</option></select></div></div></p>";
 				}
+				elsif($res[0] eq "File expiration")
+				{
+					my $numdays = 30;
+					my $sql2 = $db->prepare("SELECT * FROM auto_config WHERE module = 'File expiration';");
+					$sql2->execute();
+					while(my @res2 = $sql2->fetchrow_array())
+					{
+						if($res2[1] eq 'numdays') { $numdays = to_int($res2[2]); }
+					}
+					print "<p><div class='row'><div class='col-sm-4'>Number of days old:</div><div class='col-sm-8'><input class='form-control' type='number' name='numdays' value='" . $numdays . "'></div></div></p>";
+				}
 				elsif($res[0] eq "Reminder notifications")
 				{
 					my $reminditems = 0;
@@ -5058,6 +5071,13 @@ elsif($q->param('m')) # Modules
 					if($q->param('closeticket') eq "Yes") { $sql->execute(1); }
 					else { $sql->execute(0); }
 				}
+				elsif($q->param('save') eq "File expiration")
+				{
+					$sql = $db->prepare("DELETE FROM auto_config WHERE module = 'File expiration';");
+					$sql->execute();
+					$sql = $db->prepare("INSERT INTO auto_config VALUES ('File expiration', 'numdays', ?);");
+					$sql->execute(to_int($q->param('numdays')));
+				}
 				elsif($q->param('save') eq "Reminder notifications")
 				{
 					$sql = $db->prepare("DELETE FROM auto_config WHERE module = 'Reminder notifications';");
@@ -5134,7 +5154,7 @@ elsif($q->param('m')) # Modules
 			if(length($filedata) == 36)
 			{
 				open(my $OUTFILE, ">", $cfg->load('upload_folder') . $cfg->sep . $filedata) or die $@;
-				print $OUTFILE "";
+				print $OUTFILE "This file is no longer available.";
 				close($OUTFILE);
 				$sql = $db->prepare("DELETE FROM files WHERE file = ?;");
 				$sql->execute($filedata);

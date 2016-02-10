@@ -515,6 +515,8 @@ When editing a ticket, a user of level 3 of higher can select a client from the 
 \subsection{Automation}
 NodePoint ships with an automation engine called \textbf{nodepoint-automate}. This engine is set as a scheduled task during the installation process, and controls the background automation modules, processes that can run without user intervention. Each module can be enabled or disabled individually, and scheduled on its own schedule of 5 minutes, 15 minutes, hourly, daily or weekly. Configuration is done under the \textbf{Tools} menu by users with the right access level. A log of these processes is also available there.
 
+Note that some tasks may take a significant amount of time to run and slow the interface down for users while they are running. It is recommended that you set up resource intensive tasks outside of peak hours. You can also run the automation binary manually from the command line to get an idea of the time delay, or to troubleshoot any unexpected error.
+
 These are the available automation modules:
 
 \subsubsection{Backup}
@@ -543,6 +545,9 @@ This module can import CMDB data from a ServiceNow instance and import the data 
 
 \subsubsection{Update MOTD}
 This module will dynamically update the MOTD from a text file.
+
+\subsubsection{File expiration}
+This module can remove files uploaded using the Files component after a set amount of days.
 
 \clearpage
 \section{JSON API}

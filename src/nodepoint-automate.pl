@@ -713,6 +713,43 @@ while(my @res = $sql->fetchrow_array())
 				logevent($res[0], "Found " . $ticketcount . " active tickets, acted on " . $actcount . ".");
 			}
 		}
+		elsif($res[0] eq 'File expiration')
+		{
+			my $numdays = 0;
+			my $sql2 = $db->prepare("SELECT * FROM auto_config WHERE module = 'File expiration';");
+			$sql2->execute();
+			while(my @res2 = $sql2->fetchrow_array())
+			{
+				if($res2[1] eq 'numdays') { $numdays = to_int($res2[2]); }
+			}
+			if($numdays == 0)
+			{
+				logevent($res[0], "Invalid days amount.");
+			}
+			else
+			{
+				my $filecount = 0;
+				my $delcount = 0;
+				$sql2 = $db->prepare("SELECT ROWID,* FROM files;");
+				$sql2->execute();
+				while(my @res2 = $sql2->fetchrow_array())
+				{
+					$filecount += 1;
+					my $filetime = $res2[4];
+					if((str2time($filetime) + (86400 * $numdays)) < time())
+					{
+						$delcount += 1;
+						open(my $OUTFILE, ">", $cfg->load('upload_folder') . $cfg->sep . $res2[2]);
+						print $OUTFILE "This file is no longer available.";
+						close($OUTFILE);
+						my $sql3 = $db->prepare("DELETE FROM files WHERE file = ?;");
+						$sql3->execute($res2[2]);
+					}
+				}
+				$result = "Success";
+				logevent($res[0], "Found " . $filecount . " files, removed " . $delcount . ".");
+			}
+		}
 		elsif($res[0] eq 'Reminder notifications')
 		{
 			my $remindtickets = 0;
