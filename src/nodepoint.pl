@@ -11,7 +11,7 @@ use strict;
 use Config::Win32;
 use Digest::SHA qw(sha1_hex);
 use DBI;
-use CGI;
+use CGI '-utf8';
 use Net::SMTP;
 use Mail::RFC822::Address qw(valid);
 use Data::GUID;
@@ -23,15 +23,19 @@ use Time::HiRes qw(time);
 use Time::Piece;
 use Text::Markdown 'markdown';
 use Crypt::RC4;
+use utf8;
+use Encode;
+use nodepointlc;
 
 my ($cfg, $db, $sql, $cn, $cp, $cgs, $last_login, $perf);
 my $logged_user = "";
 my $logged_lvl = -1;
 my $q = new CGI;
 my $VERSION = "1.6.1";
-my %items = ("Product", "Product", "Release", "Release", "Model", "SKU/Model");
 my @itemtypes = ("None");
+my %items = ("Product", "Product", "Release", "Release", "Model", "SKU/Model");
 my @themes = ("primary", "default", "success", "info", "warning", "danger");
+my %T = nodepointlc->lang("EN");
 
 $perf = time/100;
 $perf = int(($perf - int($perf)) * 100000);
@@ -42,11 +46,11 @@ sub headers
 	my ($page) = @_;
 	if($cn && $cp || $cgs)
 	{
-		if($cn && $cp && $cgs) { print $q->header(-type => "text/html", -cookie => [$cn, $cp, $cgs]); }
-		elsif($cgs) { print $q->header(-type => "text/html", -cookie => [$cgs]); }
-		else { print $q->header(-type => "text/html", -cookie => [$cn, $cp]); }
+		if($cn && $cp && $cgs) { print $q->header(-charset => 'UTF-8', -type => "text/html", -cookie => [$cn, $cp, $cgs]); }
+		elsif($cgs) { print $q->header(-charset => 'UTF-8', -type => "text/html", -cookie => [$cgs]); }
+		else { print $q->header(-charset => 'UTF-8', -type => "text/html", -cookie => [$cn, $cp]); }
 	}
-	else { print $q->header(-type => "text/html"); }
+	else { print $q->header(-charset => 'UTF-8', -type => "text/html"); }
 	print "<!DOCTYPE html>\n";
 	print "<html>\n";
 	print " <head>\n";
@@ -145,7 +149,7 @@ sub navbar
 	{
 		if($q->param('m') && ($q->param('m') eq "tickets" || $q->param('m') eq "new_ticket" || $q->param('m') eq "follow_ticket" || $q->param('m') eq "unfollow_ticket" || $q->param('m') eq "update_comment" || $q->param('m') eq "add_comment" || $q->param('m') eq "add_ticket" || $q->param('m') eq "view_ticket" || $q->param('m') eq "update_ticket"))
 		{
-			print "	 <li><a href='.'>Home</a></li>\n";
+			print "	 <li><a href='.'>" . $T{'Home'} . "</a></li>\n";
 			print "	 <li><a href='./?m=products'>" . $items{"Product"} . "s</a></li>\n";
 			if($cfg->load('comp_tickets') eq "on") { print "	 <li class='active'><a href='./?m=tickets'>Tickets</a></li>\n"; }
 			if($cfg->load('comp_articles') eq "on") { print "	 <li><a href='./?m=articles'>Articles</a></li>\n"; }
@@ -163,7 +167,7 @@ sub navbar
 		}
 		elsif($q->param('m') && ($q->param('m') eq "products" || $q->param('m') eq "add_product" ||$q->param('m') eq "view_product" || $q->param('m') eq "edit_product" || $q->param('m') eq "add_release" || $q->param('m') eq "add_step" || $q->param('m') eq "delete_step" || $q->param('m') eq "delete_release"))
 		{
-			print "	 <li><a href='.'>Home</a></li>\n";
+			print "	 <li><a href='.'>" . $T{'Home'} . "</a></li>\n";
 			print "	 <li class='active'><a href='./?m=products'>" . $items{"Product"} . "s</a></li>\n";
 			if($cfg->load('comp_tickets') eq "on") { print "	 <li><a href='./?m=tickets'>Tickets</a></li>\n"; }
 			if($cfg->load('comp_articles') eq "on") { print "	 <li><a href='./?m=articles'>Articles</a></li>\n"; }
@@ -181,7 +185,7 @@ sub navbar
 		}
 		elsif($q->param('m') && ($q->param('m') eq "settings" || $q->param('m') eq "stats" || $q->param('m') eq "auto" || $q->param('m') eq "show_report" || $q->param('m') eq "triggers" || $q->param('m') eq "customforms" || $q->param('m') eq "users" || $q->param('m') eq "log" || $q->param('m') eq "confirm_delete" || $q->param('m') eq "clear_log" || $q->param('m') eq "stats" || $q->param('m') eq "change_lvl" || $q->param('m') eq "files" || $q->param('m') eq "confirm_email" || $q->param('m') eq "reset_pass" || $q->param('m') eq "logout" || $q->param('m') eq "summary") || $q->param('create_form') || $q->param('edit_form') || $q->param('save_form'))
 		{
-			print "	 <li><a href='.'>Home</a></li>\n";
+			print "	 <li><a href='.'>" . $T{'Home'} . "</a></li>\n";
 			print "	 <li><a href='./?m=products'>" . $items{"Product"} . "s</a></li>\n";
 			if($cfg->load('comp_tickets') eq "on") { print "	 <li><a href='./?m=tickets'>Tickets</a></li>\n"; }
 			if($cfg->load('comp_articles') eq "on") { print "	 <li><a href='./?m=articles'>Articles</a></li>\n"; }
@@ -199,7 +203,7 @@ sub navbar
 		}
 		elsif($q->param('m') && ($q->param('m') eq "clients" || $q->param('m') eq "add_client" || $q->param('m') eq  "view_client" || $q->param('m') eq  "view_event" || $q->param('m') eq "save_client" || $q->param('m') eq "set_defaults"))
 		{
-			print "	 <li><a href='.'>Home</a></li>\n";
+			print "	 <li><a href='.'>" . $T{'Home'} . "</a></li>\n";
 			print "	 <li><a href='./?m=products'>" . $items{"Product"} . "s</a></li>\n";
 			if($cfg->load('comp_tickets') eq "on") { print "	 <li><a href='./?m=tickets'>Tickets</a></li>\n"; }
 			if($cfg->load('comp_articles') eq "on") { print "	 <li><a href='./?m=articles'>Articles</a></li>\n"; }
@@ -217,7 +221,7 @@ sub navbar
 		}
 		elsif($q->param('kb') || $q->param('m') && ($q->param('m') eq "articles" || $q->param('m') eq "add_article" || $q->param('m') eq "save_article" || $q->param('m') eq "unlink_article" || $q->param('m') eq "subscribe" || $q->param('m') eq "unsubscribe"))
 		{
-			print "	 <li><a href='.'>Home</a></li>\n";
+			print "	 <li><a href='.'>" . $T{'Home'} . "</a></li>\n";
 			print "	 <li><a href='./?m=products'>" . $items{"Product"} . "s</a></li>\n";
 			if($cfg->load('comp_tickets') eq "on") { print "	 <li><a href='./?m=tickets'>Tickets</a></li>\n"; }
 			if($cfg->load('comp_articles') eq "on") { print "	 <li class='active'><a href='./?m=articles'>Articles</a></li>\n"; }
@@ -235,7 +239,7 @@ sub navbar
 		}
 		elsif($q->param('m') && $q->param('m') eq "items")
 		{
-			print "	 <li><a href='.'>Home</a></li>\n";
+			print "	 <li><a href='.'>" . $T{'Home'} . "</a></li>\n";
 			print "	 <li><a href='./?m=products'>" . $items{"Product"} . "s</a></li>\n";
 			if($cfg->load('comp_tickets') eq "on") { print "	 <li><a href='./?m=tickets'>Tickets</a></li>\n"; }
 			if($cfg->load('comp_articles') eq "on") { print "	 <li><a href='./?m=articles'>Articles</a></li>\n"; }
@@ -253,7 +257,7 @@ sub navbar
 		}
 		else
 		{
-			print "	 <li class='active'><a href='.'>Home</a></li>\n";
+			print "	 <li class='active'><a href='.'>" . $T{'Home'} . "</a></li>\n";
 			print "	 <li><a href='./?m=products'>" . $items{"Product"} . "s</a></li>\n";
 			if($cfg->load('comp_tickets') eq "on") { print "	 <li><a href='./?m=tickets'>Tickets</a></li>\n"; }
 			if($cfg->load('comp_articles') eq "on") { print "	 <li><a href='./?m=articles'>Articles</a></li>\n"; }
@@ -674,6 +678,7 @@ sub save_config
 	$cfg->save("api_read", sanitize_html($q->param('api_read')));
 	$cfg->save("api_imp", $q->param('api_imp'));
 	$cfg->save("theme_color", $q->param('theme_color'));
+	$cfg->save("lang", $q->param('lang'));
 	$cfg->save("upload_folder", sanitize_html($q->param('upload_folder')));
 	$cfg->save("items_managed", $q->param('items_managed'));
 	$cfg->save("ext_plugin", sanitize_html($q->param('ext_plugin')));
@@ -917,8 +922,10 @@ sub notify
 						$smtp->data();
 						$smtp->datasend("From: " . $cfg->load('smtp_from') . "\n");
 						$smtp->datasend("To: " . $res[2] . "\n");
-						$smtp->datasend("Subject: " . $cfg->load('site_name') . " - " . $title . "\n\n");
-						$smtp->datasend($mesg . "\n\nThis is an automated message from " . $cfg->load('site_name') . ". To disable notifications, log into your account and remove the email under Settings.\n");
+						$smtp->datasend("Subject: " . $cfg->load('site_name') . " - " . $title . "\n");
+						$smtp->datasend("Content-type: text/plain; charset=UTF-8\n");
+						$smtp->datasend("Content-Transfer-Encoding: base64\n\n");
+						$smtp->datasend(encode_base64(encode('utf8', $mesg . "\n\nThis is an automated message from " . $cfg->load('site_name') . ". To disable notifications, log into your account and remove the email under Settings.\n")));
 						$smtp->datasend();
 						$smtp->quit;
 					}
@@ -1241,6 +1248,12 @@ if(!defined($cfg)) # Can't even use headers() if this fails.
 	exit(0);
 };
 
+# Language
+if($cfg->load("lang") ne "" && $cfg->load("lang") ne "EN") { %T = nodepointlc->lang($cfg->load("lang")); }
+$items{"Product"} = $T{"Product"};
+$items{"Release"} = $T{"Release"};
+$items{"Model"} = $T{"SKU/Model"};
+
 # Connect to DB
 if($cfg->load("db_address"))
 {
@@ -1287,27 +1300,27 @@ if($cfg->load("items_managed"))
 {
 	if($cfg->load("items_managed") eq "Projects with goals and milestones")
 	{
-		$items{"Product"} = "Project";
-		$items{"Model"} = "Goal";
-		$items{"Release"} = "Milestone";
+		$items{"Product"} = $T{"Project"};
+		$items{"Model"} = $T{"Goal"};
+		$items{"Release"} = $T{"Milestone"};
 	}
 	elsif($cfg->load("items_managed") eq "Resources with locations and updates")
 	{
-		$items{"Product"} = "Resource";
-		$items{"Model"} = "Location";
-		$items{"Release"} = "Update";
+		$items{"Product"} = $T{"Resource"};
+		$items{"Model"} = $T{"Location"};
+		$items{"Release"} = $T{"Update"};
 	}
 	elsif($cfg->load("items_managed") eq "Applications with platforms and versions")
 	{
-		$items{"Product"} = "Application";
-		$items{"Model"} = "Platform";
-		$items{"Release"} = "Version";
+		$items{"Product"} = $T{"Application"};
+		$items{"Model"} = $T{"Platform"};
+		$items{"Release"} = $T{"Version"};
 	}
 	elsif($cfg->load("items_managed") eq "Assets with types and instances")
 	{
-		$items{"Product"} = "Asset";
-		$items{"Model"} = "Type";
-		$items{"Release"} = "Instance";
+		$items{"Product"} = $T{"Asset"};
+		$items{"Model"} = $T{"Type"};
+		$items{"Release"} = $T{"Instance"};
 	}
 }
 
@@ -1350,6 +1363,7 @@ if($q->param('site_name') && $q->param('db_address') && $logged_user ne "" && $l
 		if(!$q->param('api_write')) { $text .= "<span class='label label-danger'>API write key</span> "; }
 		if(!$q->param('api_imp')) { $text .= "<span class='label label-danger'>Allow user impersonation</span> "; }
 		if(!defined($q->param('theme_color'))) { $text .= "<span class='label label-danger'>Interface theme color</span> "; }
+		if(!defined($q->param('lang'))) { $text .= "<span class='label label-danger'>Default language</span> "; }
 		if(!$q->param('comp_tickets')) { $text .= "<span class='label label-danger'>Component: Tickets management</span> "; }
 		if(!$q->param('comp_articles')) { $text .= "<span class='label label-danger'>Component: Support articles</span> "; }
 		if(!$q->param('comp_time')) { $text .= "<span class='label label-danger'>Component: Time tracking</span> "; }
@@ -1405,6 +1419,7 @@ elsif(!$cfg->load("db_address") || !$cfg->load("site_name")) # first use
 				print "<p><div class='row'><div class='col-sm-4'>Main page logo:</div><div class='col-sm-4'><input style='width:300px' type='text' name='logo' value=''></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Bootstrap template:</div><div class='col-sm-4'><input style='width:300px' type='text' name='css_template' value='default.css'></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Interface theme color:</div><div class='col-sm-4'><select style='width:300px' name='theme_color'><option value='0'>Blue</option><option value='1'>Grey</option><option value='2'>Green</option><option value='3'>Cyan</option><option value='4'>Orange</option><option value='5'>Red</option></select></div></div></p>\n";
+				print "<p><div class='row'><div class='col-sm-4'>Default language:</div><div class='col-sm-4'><select style='width:300px' name='lang'><option value='EN'>English</option><option value='FR'>Français</option></select></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Ticket visibility:</div><div class='col-sm-4'><select name='default_vis' style='width:300px'><option>Public</option><option>Private</option><option>Restricted</option></select></div></div></p>\n";
 				print "<p>Tickets will have a default visibility when created. Public tickets can be seen by people not logged in, while private tickets require people to be logged in to view. Restricted ones can only be seen by authors and users with the <b>2 - Restricted view</b> level, ideal for helpdesk/support portals.</p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Allow user registrations:</div><div class='col-sm-4'><input type='checkbox' name='allow_registrations' checked=checked></div></div></p>\n";
@@ -1465,7 +1480,7 @@ elsif(!$cfg->load("db_address") || !$cfg->load("site_name")) # first use
 elsif($q->param('api')) # API calls
 {
 	$logged_user = "api";
-	print $q->header(-type => "text/plain");
+	print $q->header(-charset => 'UTF-8', -type => "text/plain");
 	if($q->param('api') eq "show_ticket")
 	{
 		if(!$q->param('id'))
@@ -3045,6 +3060,11 @@ elsif($q->param('m')) # Modules
 			print ">Orange</option><option value='5'";
 			if($cfg->load("theme_color") eq "5") { print " selected"; }
 			print ">Red</option></select>";
+			print "<tr><td style='width:50%'>Default language</td><td><select class='form-control' name='lang'><option value='EN'";
+			if($cfg->load("lang") eq "EN") { print " selected"; }
+			print ">English</option><option value='FR'";
+			if($cfg->load("lang") eq "FR") { print " selected"; }
+			print ">Français</option></select>";
 			print "<tr><td style='width:50%'>Favicon</td><td><input class='form-control' type='text' name='favicon' value=\"" . $cfg->load("favicon") . "\"></td></tr>\n";
 			print "<tr><td style='width:50%'>Main page logo</td><td><input class='form-control' type='text' name='logo' value=\"" . $cfg->load("logo") . "\"></td></tr>\n";
 			print "<tr><td style='width:50%'>Items managed</td><td><select class='form-control' name='items_managed'>";

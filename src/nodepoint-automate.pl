@@ -28,11 +28,15 @@ use Date::Parse;
 use MIME::Base64;
 use LWP::UserAgent;
 use SOAP::Lite;
+use utf8;
+use Encode;
+use nodepointlc;
 
 my ($cfg, $db, $sql, $sql2, $soap_user, $soap_pass);
 my $m = localtime->strftime('%m');
 my $y = localtime->strftime('%Y');
 my $d = localtime->strftime('%d');
+my %T = nodepointlc->lang('English');
 
 # SOAP creds
 sub SOAP::Transport::HTTP::Client::get_basic_credentials {
@@ -125,8 +129,10 @@ sub notify
 					$smtp->data();
 					$smtp->datasend("From: " . $cfg->load('smtp_from') . "\n");
 					$smtp->datasend("To: " . $res[2] . "\n");
-					$smtp->datasend("Subject: " . $cfg->load('site_name') . " - " . $title . "\n\n");
-					$smtp->datasend($mesg . "\n\nThis is an automated message from " . $cfg->load('site_name') . ". To disable notifications, log into your account and remove the email under Settings.\n");
+					$smtp->datasend("Subject: " . $cfg->load('site_name') . " - " . $title . "\n");
+					$smtp->datasend("Content-type: text/plain; charset=UTF-8\n");
+					$smtp->datasend("Content-Transfer-Encoding: base64\n\n");
+					$smtp->datasend(encode_base64(encode('utf8', $mesg . "\n\nThis is an automated message from " . $cfg->load('site_name') . ". To disable notifications, log into your account and remove the email under Settings.\n")));
 					$smtp->datasend();
 					$smtp->quit;
 				}
@@ -157,6 +163,8 @@ if(!defined($db))
 	print "Error: Could not access database file. Please ensure NodePoint has the proper permissions.";
 	exit(1);
 };
+
+if($cfg->load("lang") ne "" && $cfg->load("lang") ne "EN") { %T = nodepointlc->lang($cfg->load("lang")); }
 
 $sql = $db->prepare("SELECT * FROM auto_log WHERE 0 = 1;") or quit(1);
 $sql = $db->prepare("SELECT * FROM auto_modules WHERE 0 = 1;") or quit(1);
