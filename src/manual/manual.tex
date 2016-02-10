@@ -115,14 +115,14 @@ Here are some of the available features:
 \subsection{Requirements}
 \ifthenelse{\boolean{Windows}}
 {
-NodePoint was created for small to medium sized organizations (less than 5,000 users, less than 100,000 tickets). It runs on a single server and does not require any external resource. Configuration settings are stored in the Windows Registry while data is stored in a file database from a customizable location (the \texttt{../db} folder by default). As such, only two requirements are needed to install:
+NodePoint was created for small to medium sized organizations (less than 1,000 users, less than 50,000 tickets). It runs on a single server and does not require any external resource. Configuration settings are stored in the Windows Registry while data is stored in a file database from a customizable location (the \texttt{../db} folder by default). As such, only two requirements are needed to install:
 \begin{itemize}
 \item A 64 bits Windows host (7, 8, 10, Server 2008, Server 2012 should all work).
 \item IIS installed with \textit{CGI} and \textit{ISAPI Extensions} features.
 \end{itemize}
 }
 {
-NodePoint was created for small to medium sized organizations (less than 5,000 users, less than 100,000 tickets). It runs on a single server and does not require any external resource. Configuration settings are stored in the \texttt{../nodepoint.cfg} file while data is stored in a file database from a customizable location (the \texttt{../db} folder by default). As such, only two requirements are needed to install:
+NodePoint was created for small to medium sized organizations (less than 1,000 users, less than 10,000 tickets). It runs on a single server and does not require any external resource. Configuration settings are stored in the \texttt{../nodepoint.cfg} file while data is stored in a file database from a customizable location (the \texttt{../db} folder by default). As such, only two requirements are needed to install:
 \begin{itemize}
 \item A 64 bits Linux host.
 \item Apache web server.
@@ -321,6 +321,7 @@ These are the configuration options for NodePoint. They have to be defined durin
 \item \textbf{Favicon:} This is the icon shown by web browsers in the URL bar.
 \item \textbf{Main page logo:} Image file shown on the login page.
 \item \textbf{Ticket visibility:} When set to \textit{Public}, all tickets will be visible by logged in and guest users. When set to \textit{Private}, people need to log in to view tickets. \textit{Restricted} prevents people without at least the Restricted View access level from viewing others' tickets. This is a good choice for IT/Helpdesk systems.
+\item \textbf{Hide closed tickets:}  Do not show closed tickets on the Tickets page. This is mostly for performance and does not hide them from reports or prevents users from manually entering a closed ticket number.
 \item \textbf{Allow registrations:} Allow guest users to register a new account. If set to no, the only way to add new accounts is if a user with Users Management access adds one.
 \item \textbf{Allow guest tickets:} Allow guest users to file tickets.
 \item \textbf{Maximum file upload:} Maximum file size for uploads to project images, ticket comments and the File Management component.

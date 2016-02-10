@@ -28,7 +28,7 @@ my ($cfg, $db, $sql, $cn, $cp, $cgs, $last_login, $perf);
 my $logged_user = "";
 my $logged_lvl = -1;
 my $q = new CGI;
-my $VERSION = "1.6.0";
+my $VERSION = "1.6.1";
 my %items = ("Product", "Product", "Release", "Release", "Model", "SKU/Model");
 my @itemtypes = ("None");
 my @themes = ("primary", "default", "success", "info", "warning", "danger");
@@ -649,6 +649,7 @@ sub save_config
 	$cfg->save("favicon", sanitize_html($q->param('favicon')));
 	$cfg->save("logo", sanitize_html($q->param('logo')));
 	$cfg->save("default_vis", $q->param('default_vis'));
+	$cfg->save("hide_close", $q->param('hide_close'));
 	$cfg->save("default_lvl", to_int($q->param('default_lvl')));
 	$cfg->save("tasks_lvl", to_int($q->param('tasks_lvl')));
 	$cfg->save("summary_lvl", to_int($q->param('summary_lvl')));
@@ -1329,7 +1330,7 @@ if(to_int($cfg->load("max_size")) < 1) { $cfg->save("max_size", 999000); }
 if($q->param('site_name') && $q->param('db_address') && $logged_user ne "" && $logged_user eq $cfg->load('admin_name')) # Save config by admin
 {
 	headers("Settings");
-	if($q->param('site_name') && $q->param('db_address') && $q->param('admin_name') && defined($q->param('default_lvl')) && $q->param('default_vis') && $q->param('api_write') && defined($q->param('theme_color')) &&  $q->param('api_imp') && $q->param('api_read') && $q->param('comp_tickets') && $q->param('comp_articles') && $q->param('comp_time') && $q->param('comp_shoutbox') && $q->param('comp_billing') && $q->param('comp_clients') && $q->param('comp_items') && $q->param('comp_files') && $q->param('comp_auto') && $q->param('comp_steps')) # All required values have been filled out
+	if($q->param('site_name') && $q->param('db_address') && $q->param('admin_name') && defined($q->param('default_lvl')) && $q->param('default_vis') && $q->param('hide_close') && $q->param('api_write') && defined($q->param('theme_color')) &&  $q->param('api_imp') && $q->param('api_read') && $q->param('comp_tickets') && $q->param('comp_articles') && $q->param('comp_time') && $q->param('comp_shoutbox') && $q->param('comp_billing') && $q->param('comp_clients') && $q->param('comp_items') && $q->param('comp_files') && $q->param('comp_auto') && $q->param('comp_steps')) # All required values have been filled out
 	{
 		# Test database settings
 		$db = DBI->connect("dbi:SQLite:dbname=" . $q->param('db_address'), '', '', { RaiseError => 0, PrintError => 0 }) or do { msg("Could not verify database settings. Please hit back and try again.<br><br>" . $DBI::errstr, 0); exit(0); };
@@ -1344,6 +1345,7 @@ if($q->param('site_name') && $q->param('db_address') && $logged_user ne "" && $l
 		if(!$q->param('admin_name')) { $text .= "<span class='label label-danger'>Admin name</span> "; }
 		if(!defined($q->param('default_lvl'))) { $text .= "<span class='label label-danger'>New users access level</span> "; }
 		if(!$q->param('default_vis')) { $text .= "<span class='label label-danger'>Ticket visibility</span> "; }
+		if(!$q->param('hide_close')) { $text .= "<span class='label label-danger'>Hide closed tickets</span> "; }
 		if(!$q->param('api_read')) { $text .= "<span class='label label-danger'>API read key</span> "; }
 		if(!$q->param('api_write')) { $text .= "<span class='label label-danger'>API write key</span> "; }
 		if(!$q->param('api_imp')) { $text .= "<span class='label label-danger'>Allow user impersonation</span> "; }
@@ -1366,7 +1368,7 @@ if($q->param('site_name') && $q->param('db_address') && $logged_user ne "" && $l
 elsif(!$cfg->load("db_address") || !$cfg->load("site_name")) # first use
 {
 	headers("Initial configuration");
-	if($q->param('site_name') && $q->param('db_address') && $q->param('admin_name') && $q->param('admin_pass') && $q->param('default_lvl') && $q->param('default_vis') && $q->param('api_write') && $q->param('api_read')) # All required values have been filled out
+	if($q->param('site_name') && $q->param('db_address') && $q->param('admin_name') && $q->param('admin_pass') && $q->param('default_lvl') && $q->param('default_vis') && $q->param('hide_close') && $q->param('api_write') && $q->param('api_read')) # All required values have been filled out
 	{
 		# Test database settings
 		$db = DBI->connect("dbi:SQLite:dbname=" . $q->param('db_address'), '', '', { RaiseError => 0, PrintError => 0 }) or do { msg("Could not verify database settings. Please hit back and try again.<br><br>" . $DBI::errstr, 0); exit(0); };
@@ -1384,6 +1386,7 @@ elsif(!$cfg->load("db_address") || !$cfg->load("site_name")) # first use
 			if(!$q->param('admin_pass')) { $text .= "<span class='label label-danger'>Admin password</span> "; }
 			if(!$q->param('default_lvl')) { $text .= "<span class='label label-danger'>New users access level</span> "; }
 			if(!$q->param('default_vis')) { $text .= "<span class='label label-danger'>Ticket visibility</span> "; }
+			if(!$q->param('hide_close')) { $text .= "<span class='label label-danger'>Hide closed tickets</span> "; }
 			if(!$q->param('api_read')) { $text .= "<span class='label label-danger'>API read key</span> "; }
 			if(!$q->param('api_write')) { $text .= "<span class='label label-danger'>API write key</span> "; }
 			$text .= " Please go back and try again.";
@@ -1405,6 +1408,7 @@ elsif(!$cfg->load("db_address") || !$cfg->load("site_name")) # first use
 				print "<p><div class='row'><div class='col-sm-4'>Ticket visibility:</div><div class='col-sm-4'><select name='default_vis' style='width:300px'><option>Public</option><option>Private</option><option>Restricted</option></select></div></div></p>\n";
 				print "<p>Tickets will have a default visibility when created. Public tickets can be seen by people not logged in, while private tickets require people to be logged in to view. Restricted ones can only be seen by authors and users with the <b>2 - Restricted view</b> level, ideal for helpdesk/support portals.</p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Allow user registrations:</div><div class='col-sm-4'><input type='checkbox' name='allow_registrations' checked=checked></div></div></p>\n";
+				print "<p><div class='row'><div class='col-sm-4'>Hide closed tickets:</div><div class='col-sm-4'><input type='checkbox' name='hide_close' checked></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Allow guest tickets:</div><div class='col-sm-4'><input type='checkbox' name='guest_tickets'></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>New users access level:</div><div class='col-sm-4'><select name='default_lvl' style='width:300px'><option value=5>5 - Users management</option><option value=4>4 - Projects management</option><option value=3>3 - Tickets management</option><option value=2>2 - Restricted view</option><option value=1 selected=selected>1 - Authorized users</option><option value=0>0 - Unauthorized users</option></select></div></div></p>\n";
 				print "<p>New registered users will be assigned a default access level, which can then be modified by users with the <b>5 - Users management</b> level. These are the access levels, with each rank having the lower permissions as well:</p>\n";
@@ -3051,6 +3055,10 @@ elsif($q->param('m')) # Modules
 			else { print "<option selected>Products with models and releases</option><option>Projects with goals and milestones</option><option>Resources with locations and updates</option><option>Applications with platforms and versions</option><option>Assets with types and instances</option>"; }
 			print "</select></td></tr>\n";
 			print "<tr><td style='width:50%'>Number of rows per page</td><td><input class='form-control' type='text' name='page_len' value=\"" . $cfg->load("page_len") . "\"></td></tr>\n";
+			print "<tr><td style='width:50%'>Hide closed tickets</td><td><select class='form-control' name='hide_close'>";
+			if($cfg->load("hide_close") eq "on") { print "<option selected>on</option><option>off</option>"; }
+			else { print "<option>on</option><option selected>off</option>"; }
+			print "</select></td></tr>\n";
 			print "</table><h4>Security</h4><table class='table table-striped'>";
 			print "<tr><td style='width:50%'>Admin name</td><td><input class='form-control' type='text' name='admin_name' value=\"" .  $cfg->load("admin_name") . "\" readonly></td></tr>\n";
 			print "<tr><td style='width:50%'>Admin password</td><td><input class='form-control' type='password' name='admin_pass' value=''></td></tr>\n";
@@ -6167,9 +6175,13 @@ elsif($q->param('m')) # Modules
 			}
 			print "</select></div><div class='col-sm-4'><input type='hidden' name='m' value='new_ticket'><input class='btn btn-primary pull-right' type='submit' value='Next'></div></div></p></form></div></div>\n";
 		}
-		print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Tickets</h3></div><div class='panel-body'>\n";
+		print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>";
+		if($cfg->load("hide_close") eq "on") { print "Active tickets"; }
+		else { print "Tickets"; }
+		print "</h3></div><div class='panel-body'>\n";
 		print "<table class='table table-stripped' id='tickets_table'><thead><tr><th>ID</th><th>User</th><th>" . $items{"Product"} . "</th><th>Title</th><th>Status</th><th>Date</th></tr></thead><tbody>\n";
-		$sql = $db->prepare("SELECT ROWID,* FROM tickets ORDER BY ROWID DESC;");
+		if($cfg->load("hide_close") eq "on") { $sql = $db->prepare("SELECT ROWID,* FROM tickets WHERE status != 'Closed' ORDER BY ROWID DESC;"); }
+		else { $sql = $db->prepare("SELECT ROWID,* FROM tickets ORDER BY ROWID DESC;"); }
 		$sql->execute();
 		while(my @res = $sql->fetchrow_array())
 		{
