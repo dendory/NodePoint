@@ -118,31 +118,31 @@ sub navbar
 	{
 		if($q->param('m') && ($q->param('m') eq "products" || $q->param('m') eq "view_product"))
 		{
-			print "	 <li><a href='.'>Login</a></li>\n";
+			print "	 <li><a href='.'>" . $T{"Login"} . "</a></li>\n";
 			print "	 <li class='active'><a href='./?m=products'>" . $items{"Product"} . "s</a></li>\n";
-			if($cfg->load('comp_tickets') eq "on") { print "	 <li><a href='./?m=tickets'>Tickets</a></li>\n"; }
-			if($cfg->load('comp_articles') eq "on") { print "	 <li><a href='./?m=articles'>Articles</a></li>\n"; }
+			if($cfg->load('comp_tickets') eq "on") { print "	 <li><a href='./?m=tickets'>" . $T{"Tickets"} . "</a></li>\n"; }
+			if($cfg->load('comp_articles') eq "on") { print "	 <li><a href='./?m=articles'>" . $T{"Articles"} . "</a></li>\n"; }
 		}
 		elsif($q->param('m') && ($q->param('m') eq "tickets" || $q->param('m') eq "view_ticket" || $q->param('m') eq "add_ticket" || $q->param('m') eq "new_ticket"))
 		{
-			print "	 <li><a href='.'>Login</a></li>\n";
+			print "	 <li><a href='.'>" . $T{"Login"} . "</a></li>\n";
 			print "	 <li><a href='./?m=products'>" . $items{"Product"} . "s</a></li>\n";
-			if($cfg->load('comp_tickets') eq "on") { print "	 <li class='active'><a href='./?m=tickets'>Tickets</a></li>\n"; }
-			if($cfg->load('comp_articles') eq "on") { print "	 <li><a href='./?m=articles'>Articles</a></li>\n"; }
+			if($cfg->load('comp_tickets') eq "on") { print "	 <li class='active'><a href='./?m=tickets'>" . $T{"Tickets"} . "</a></li>\n"; }
+			if($cfg->load('comp_articles') eq "on") { print "	 <li><a href='./?m=articles'>" . $T{"Articles"} . "</a></li>\n"; }
 		}
 		elsif($q->param('kb') || ($q->param('m') && $q->param('m') eq "articles"))
 		{
-			print "	 <li><a href='.'>Login</a></li>\n";
+			print "	 <li><a href='.'>" . $T{"Login"} . "</a></li>\n";
 			print "	 <li><a href='./?m=products'>" . $items{"Product"} . "s</a></li>\n";
-			if($cfg->load('comp_tickets') eq "on") { print "	 <li><a href='./?m=tickets'>Tickets</a></li>\n"; }
-			if($cfg->load('comp_articles') eq "on") { print "	 <li class='active'><a href='./?m=articles'>Articles</a></li>\n"; }
+			if($cfg->load('comp_tickets') eq "on") { print "	 <li><a href='./?m=tickets'>" . $T{"Tickets"} . "</a></li>\n"; }
+			if($cfg->load('comp_articles') eq "on") { print "	 <li class='active'><a href='./?m=articles'>" . $T{"Articles"} . "</a></li>\n"; }
 		}
 		else
 		{
-			print "	 <li class='active'><a href='.'>Login</a></li>\n";
+			print "	 <li class='active'><a href='.'>" . $T{"Login"} . "</a></li>\n";
 			print "	 <li><a href='./?m=products'>" . $items{"Product"} . "s</a></li>\n";
-			if($cfg->load('comp_tickets') eq "on") { print "	 <li><a href='./?m=tickets'>Tickets</a></li>\n"; }
-			if($cfg->load('comp_articles') eq "on") { print "	 <li><a href='./?m=articles'>Articles</a></li>\n"; }
+			if($cfg->load('comp_tickets') eq "on") { print "	 <li><a href='./?m=tickets'>" . $T{"Tickets"} . "</a></li>\n"; }
+			if($cfg->load('comp_articles') eq "on") { print "	 <li><a href='./?m=articles'>" . $T{"Articles"} . "</a></li>\n"; }
 		}
 	}
 	else
@@ -151,142 +151,142 @@ sub navbar
 		{
 			print "	 <li><a href='.'>" . $T{'Home'} . "</a></li>\n";
 			print "	 <li><a href='./?m=products'>" . $items{"Product"} . "s</a></li>\n";
-			if($cfg->load('comp_tickets') eq "on") { print "	 <li class='active'><a href='./?m=tickets'>Tickets</a></li>\n"; }
-			if($cfg->load('comp_articles') eq "on") { print "	 <li><a href='./?m=articles'>Articles</a></li>\n"; }
-			if($cfg->load('comp_items') eq "on") { print "	 <li><a href='./?m=items'>Items</a></li>\n"; }
-			if($cfg->load('comp_clients') eq "on") { print "	 <li><a href='./?m=clients'>Clients</a></li>\n"; }
-			print "  <li class='dropdown'><a href='#' class='dropdown-toggle' data-toggle='dropdown' role='button' aria-haspopup='true' aria-expanded='false'>Tools <span class='caret'></span></a><ul class='dropdown-menu'>\n";
-			print "   <li><a href='./?m=settings'>Settings</a></li>\n";
-			if($logged_lvl >= to_int($cfg->load("report_lvl"))) { print "   <li><a href='./?m=stats'>Statistics</a></li>\n"; }
-			if($logged_lvl >= to_int($cfg->load("upload_lvl")) && $cfg->load('comp_files') eq "on") { print "   <li><a href='./?m=files'>Files</a></li>\n"; }
-			if($logged_lvl >= to_int($cfg->load("auto_lvl")) && $cfg->load('comp_auto') eq "on") { print "   <li><a href='./?m=auto'>Automation</a></li>\n"; }
-			if($logged_lvl >= to_int($cfg->load("customs_lvl")) && $cfg->load('comp_tickets') eq "on")	{ print "   <li><a href='./?m=customforms'>Custom forms</a></li>\n"; }
-			if($logged_lvl >= to_int($cfg->load("summary_lvl"))) { print "   <li><a href='./?m=users'>Users management</a></li>\n"; }
-			if($logged_lvl > 5) { print "   <li><a href='./?m=log'>System log</a></li>\n"; }
-			print "  <li role='separator' class='divider'></li><li><a href='./?m=logout'>Logout</a></li></ul></li>\n";
+			if($cfg->load('comp_tickets') eq "on") { print "	 <li class='active'><a href='./?m=tickets'>" . $T{"Tickets"} . "</a></li>\n"; }
+			if($cfg->load('comp_articles') eq "on") { print "	 <li><a href='./?m=articles'>" . $T{"Articles"} . "</a></li>\n"; }
+			if($cfg->load('comp_items') eq "on") { print "	 <li><a href='./?m=items'>" . $T{"Items"} . "</a></li>\n"; }
+			if($cfg->load('comp_clients') eq "on") { print "	 <li><a href='./?m=clients'>" . $T{"Clients"} . "</a></li>\n"; }
+			print "  <li class='dropdown'><a href='#' class='dropdown-toggle' data-toggle='dropdown' role='button' aria-haspopup='true' aria-expanded='false'>" . $T{"Tools"} . " <span class='caret'></span></a><ul class='dropdown-menu'>\n";
+			print "   <li><a href='./?m=settings'>" . $T{"Settings"} . "</a></li>\n";
+			if($logged_lvl >= to_int($cfg->load("report_lvl"))) { print "   <li><a href='./?m=stats'>" . $T{"Statistics"} . "</a></li>\n"; }
+			if($logged_lvl >= to_int($cfg->load("upload_lvl")) && $cfg->load('comp_files') eq "on") { print "   <li><a href='./?m=files'>" . $T{"Files"} . "</a></li>\n"; }
+			if($logged_lvl >= to_int($cfg->load("auto_lvl")) && $cfg->load('comp_auto') eq "on") { print "   <li><a href='./?m=auto'>" . $T{"Automation"} . "</a></li>\n"; }
+			if($logged_lvl >= to_int($cfg->load("customs_lvl")) && $cfg->load('comp_tickets') eq "on")	{ print "   <li><a href='./?m=customforms'>" . $T{"Custom forms"} . "</a></li>\n"; }
+			if($logged_lvl >= to_int($cfg->load("summary_lvl"))) { print "   <li><a href='./?m=users'>" . $T{"Users management"} . "</a></li>\n"; }
+			if($logged_lvl > 5) { print "   <li><a href='./?m=log'>" . $T{"System log"} . "</a></li>\n"; }
+			print "  <li role='separator' class='divider'></li><li><a href='./?m=logout'>" . $T{"Logout"} . "</a></li></ul></li>\n";
 		}
 		elsif($q->param('m') && ($q->param('m') eq "products" || $q->param('m') eq "add_product" ||$q->param('m') eq "view_product" || $q->param('m') eq "edit_product" || $q->param('m') eq "add_release" || $q->param('m') eq "add_step" || $q->param('m') eq "delete_step" || $q->param('m') eq "delete_release"))
 		{
 			print "	 <li><a href='.'>" . $T{'Home'} . "</a></li>\n";
 			print "	 <li class='active'><a href='./?m=products'>" . $items{"Product"} . "s</a></li>\n";
-			if($cfg->load('comp_tickets') eq "on") { print "	 <li><a href='./?m=tickets'>Tickets</a></li>\n"; }
-			if($cfg->load('comp_articles') eq "on") { print "	 <li><a href='./?m=articles'>Articles</a></li>\n"; }
-			if($cfg->load('comp_items') eq "on") { print "	 <li><a href='./?m=items'>Items</a></li>\n"; }
-			if($cfg->load('comp_clients') eq "on") { print "	 <li><a href='./?m=clients'>Clients</a></li>\n"; }
-			print "  <li class='dropdown'><a href='#' class='dropdown-toggle' data-toggle='dropdown' role='button' aria-haspopup='true' aria-expanded='false'>Tools <span class='caret'></span></a><ul class='dropdown-menu'>\n";
-			print "   <li><a href='./?m=settings'>Settings</a></li>\n";
-			if($logged_lvl >= to_int($cfg->load("report_lvl"))) { print "   <li><a href='./?m=stats'>Statistics</a></li>\n"; }
-			if($logged_lvl >= to_int($cfg->load("upload_lvl")) && $cfg->load('comp_files') eq "on") { print "   <li><a href='./?m=files'>Files</a></li>\n"; }
-			if($logged_lvl >= to_int($cfg->load("auto_lvl")) && $cfg->load('comp_auto') eq "on") { print "   <li><a href='./?m=auto'>Automation</a></li>\n"; }
-			if($logged_lvl >= to_int($cfg->load("customs_lvl")) && $cfg->load('comp_tickets') eq "on")	{ print "   <li><a href='./?m=customforms'>Custom forms</a></li>\n"; }
-			if($logged_lvl >= to_int($cfg->load("summary_lvl"))) { print "   <li><a href='./?m=users'>Users management</a></li>\n"; }
-			if($logged_lvl > 5) { print "   <li><a href='./?m=log'>System log</a></li>\n"; }
-			print "  <li role='separator' class='divider'></li><li><a href='./?m=logout'>Logout</a></li></ul></li>\n";
+			if($cfg->load('comp_tickets') eq "on") { print "	 <li><a href='./?m=tickets'>" . $T{"Tickets"} . "</a></li>\n"; }
+			if($cfg->load('comp_articles') eq "on") { print "	 <li><a href='./?m=articles'>" . $T{"Articles"} . "</a></li>\n"; }
+			if($cfg->load('comp_items') eq "on") { print "	 <li><a href='./?m=items'>" . $T{"Items"} . "</a></li>\n"; }
+			if($cfg->load('comp_clients') eq "on") { print "	 <li><a href='./?m=clients'>" . $T{"Clients"} . "</a></li>\n"; }
+			print "  <li class='dropdown'><a href='#' class='dropdown-toggle' data-toggle='dropdown' role='button' aria-haspopup='true' aria-expanded='false'>" . $T{"Tools"} . " <span class='caret'></span></a><ul class='dropdown-menu'>\n";
+			print "   <li><a href='./?m=settings'>" . $T{"Settings"} . "</a></li>\n";
+			if($logged_lvl >= to_int($cfg->load("report_lvl"))) { print "   <li><a href='./?m=stats'>" . $T{"Statistics"} . "</a></li>\n"; }
+			if($logged_lvl >= to_int($cfg->load("upload_lvl")) && $cfg->load('comp_files') eq "on") { print "   <li><a href='./?m=files'>" . $T{"Files"} . "</a></li>\n"; }
+			if($logged_lvl >= to_int($cfg->load("auto_lvl")) && $cfg->load('comp_auto') eq "on") { print "   <li><a href='./?m=auto'>" . $T{"Automation"} . "</a></li>\n"; }
+			if($logged_lvl >= to_int($cfg->load("customs_lvl")) && $cfg->load('comp_tickets') eq "on")	{ print "   <li><a href='./?m=customforms'>" . $T{"Custom forms"} . "</a></li>\n"; }
+			if($logged_lvl >= to_int($cfg->load("summary_lvl"))) { print "   <li><a href='./?m=users'>" . $T{"Users management"} . "</a></li>\n"; }
+			if($logged_lvl > 5) { print "   <li><a href='./?m=log'>" . $T{"System log"} . "</a></li>\n"; }
+			print "  <li role='separator' class='divider'></li><li><a href='./?m=logout'>" . $T{"Logout"} . "</a></li></ul></li>\n";
 		}
 		elsif($q->param('m') && ($q->param('m') eq "settings" || $q->param('m') eq "stats" || $q->param('m') eq "auto" || $q->param('m') eq "show_report" || $q->param('m') eq "triggers" || $q->param('m') eq "customforms" || $q->param('m') eq "users" || $q->param('m') eq "log" || $q->param('m') eq "confirm_delete" || $q->param('m') eq "clear_log" || $q->param('m') eq "stats" || $q->param('m') eq "change_lvl" || $q->param('m') eq "files" || $q->param('m') eq "confirm_email" || $q->param('m') eq "reset_pass" || $q->param('m') eq "logout" || $q->param('m') eq "summary") || $q->param('create_form') || $q->param('edit_form') || $q->param('save_form'))
 		{
 			print "	 <li><a href='.'>" . $T{'Home'} . "</a></li>\n";
 			print "	 <li><a href='./?m=products'>" . $items{"Product"} . "s</a></li>\n";
-			if($cfg->load('comp_tickets') eq "on") { print "	 <li><a href='./?m=tickets'>Tickets</a></li>\n"; }
-			if($cfg->load('comp_articles') eq "on") { print "	 <li><a href='./?m=articles'>Articles</a></li>\n"; }
-			if($cfg->load('comp_items') eq "on") { print "	 <li><a href='./?m=items'>Items</a></li>\n"; }
-			if($cfg->load('comp_clients') eq "on") { print "	 <li><a href='./?m=clients'>Clients</a></li>\n"; }
-			print "  <li class='dropdown active'><a href='#' class='dropdown-toggle' data-toggle='dropdown' role='button' aria-haspopup='true' aria-expanded='false'>Tools <span class='caret'></span></a><ul class='dropdown-menu'>\n";
-			print "   <li><a href='./?m=settings'>Settings</a></li>\n";
-			if($logged_lvl >= to_int($cfg->load("report_lvl"))) { print "   <li><a href='./?m=stats'>Statistics</a></li>\n"; }
-			if($logged_lvl >= to_int($cfg->load("upload_lvl")) && $cfg->load('comp_files') eq "on") { print "   <li><a href='./?m=files'>Files</a></li>\n"; }
-			if($logged_lvl >= to_int($cfg->load("auto_lvl")) && $cfg->load('comp_auto') eq "on") { print "   <li><a href='./?m=auto'>Automation</a></li>\n"; }
-			if($logged_lvl >= to_int($cfg->load("customs_lvl")) && $cfg->load('comp_tickets') eq "on")	{ print "   <li><a href='./?m=customforms'>Custom forms</a></li>\n"; }
-			if($logged_lvl >= to_int($cfg->load("summary_lvl"))) { print "   <li><a href='./?m=users'>Users management</a></li>\n"; }
-			if($logged_lvl > 5) { print "   <li><a href='./?m=log'>System log</a></li>\n"; }
-			print "  <li role='separator' class='divider'></li><li><a href='./?m=logout'>Logout</a></li></ul></li>\n";
+			if($cfg->load('comp_tickets') eq "on") { print "	 <li><a href='./?m=tickets'>" . $T{"Tickets"} . "</a></li>\n"; }
+			if($cfg->load('comp_articles') eq "on") { print "	 <li><a href='./?m=articles'>" . $T{"Articles"} . "</a></li>\n"; }
+			if($cfg->load('comp_items') eq "on") { print "	 <li><a href='./?m=items'>" . $T{"Items"} . "</a></li>\n"; }
+			if($cfg->load('comp_clients') eq "on") { print "	 <li><a href='./?m=clients'>" . $T{"Clients"} . "</a></li>\n"; }
+			print "  <li class='dropdown active'><a href='#' class='dropdown-toggle' data-toggle='dropdown' role='button' aria-haspopup='true' aria-expanded='false'>" . $T{"Tools"} . " <span class='caret'></span></a><ul class='dropdown-menu'>\n";
+			print "   <li><a href='./?m=settings'>" . $T{"Settings"} . "</a></li>\n";
+			if($logged_lvl >= to_int($cfg->load("report_lvl"))) { print "   <li><a href='./?m=stats'>" . $T{"Statistics"} . "</a></li>\n"; }
+			if($logged_lvl >= to_int($cfg->load("upload_lvl")) && $cfg->load('comp_files') eq "on") { print "   <li><a href='./?m=files'>" . $T{"Files"} . "</a></li>\n"; }
+			if($logged_lvl >= to_int($cfg->load("auto_lvl")) && $cfg->load('comp_auto') eq "on") { print "   <li><a href='./?m=auto'>" . $T{"Automation"} . "</a></li>\n"; }
+			if($logged_lvl >= to_int($cfg->load("customs_lvl")) && $cfg->load('comp_tickets') eq "on")	{ print "   <li><a href='./?m=customforms'>" . $T{"Custom forms"} . "</a></li>\n"; }
+			if($logged_lvl >= to_int($cfg->load("summary_lvl"))) { print "   <li><a href='./?m=users'>" . $T{"Users management"} . "</a></li>\n"; }
+			if($logged_lvl > 5) { print "   <li><a href='./?m=log'>" . $T{"System log"} . "</a></li>\n"; }
+			print "  <li role='separator' class='divider'></li><li><a href='./?m=logout'>" . $T{"Logout"} . "</a></li></ul></li>\n";
 		}
 		elsif($q->param('m') && ($q->param('m') eq "clients" || $q->param('m') eq "add_client" || $q->param('m') eq  "view_client" || $q->param('m') eq  "view_event" || $q->param('m') eq "save_client" || $q->param('m') eq "set_defaults"))
 		{
 			print "	 <li><a href='.'>" . $T{'Home'} . "</a></li>\n";
 			print "	 <li><a href='./?m=products'>" . $items{"Product"} . "s</a></li>\n";
-			if($cfg->load('comp_tickets') eq "on") { print "	 <li><a href='./?m=tickets'>Tickets</a></li>\n"; }
-			if($cfg->load('comp_articles') eq "on") { print "	 <li><a href='./?m=articles'>Articles</a></li>\n"; }
-			if($cfg->load('comp_items') eq "on") { print "	 <li><a href='./?m=items'>Items</a></li>\n"; }
-			if($cfg->load('comp_clients') eq "on") { print "	 <li class='active'><a href='./?m=clients'>Clients</a></li>\n"; }
-			print "  <li class='dropdown'><a href='#' class='dropdown-toggle' data-toggle='dropdown' role='button' aria-haspopup='true' aria-expanded='false'>Tools <span class='caret'></span></a><ul class='dropdown-menu'>\n";
-			print "   <li><a href='./?m=settings'>Settings</a></li>\n";
-			if($logged_lvl >= to_int($cfg->load("report_lvl"))) { print "   <li><a href='./?m=stats'>Statistics</a></li>\n"; }
-			if($logged_lvl >= to_int($cfg->load("upload_lvl")) && $cfg->load('comp_files') eq "on") { print "   <li><a href='./?m=files'>Files</a></li>\n"; }
-			if($logged_lvl >= to_int($cfg->load("auto_lvl")) && $cfg->load('comp_auto') eq "on") { print "   <li><a href='./?m=auto'>Automation</a></li>\n"; }
-			if($logged_lvl >= to_int($cfg->load("customs_lvl")) && $cfg->load('comp_tickets') eq "on")	{ print "   <li><a href='./?m=customforms'>Custom forms</a></li>\n"; }
-			if($logged_lvl >= to_int($cfg->load("summary_lvl"))) { print "   <li><a href='./?m=users'>Users management</a></li>\n"; }
-			if($logged_lvl > 5) { print "   <li><a href='./?m=log'>System log</a></li>\n"; }
-			print "  <li role='separator' class='divider'></li><li><a href='./?m=logout'>Logout</a></li></ul></li>\n";
+			if($cfg->load('comp_tickets') eq "on") { print "	 <li><a href='./?m=tickets'>" . $T{"Tickets"} . "</a></li>\n"; }
+			if($cfg->load('comp_articles') eq "on") { print "	 <li><a href='./?m=articles'>" . $T{"Articles"} . "</a></li>\n"; }
+			if($cfg->load('comp_items') eq "on") { print "	 <li><a href='./?m=items'>" . $T{"Items"} . "</a></li>\n"; }
+			if($cfg->load('comp_clients') eq "on") { print "	 <li class='active'><a href='./?m=clients'>" . $T{"Clients"} . "</a></li>\n"; }
+			print "  <li class='dropdown'><a href='#' class='dropdown-toggle' data-toggle='dropdown' role='button' aria-haspopup='true' aria-expanded='false'>" . $T{"Tools"} . " <span class='caret'></span></a><ul class='dropdown-menu'>\n";
+			print "   <li><a href='./?m=settings'>" . $T{"Settings"} . "</a></li>\n";
+			if($logged_lvl >= to_int($cfg->load("report_lvl"))) { print "   <li><a href='./?m=stats'>" . $T{"Statistics"} . "</a></li>\n"; }
+			if($logged_lvl >= to_int($cfg->load("upload_lvl")) && $cfg->load('comp_files') eq "on") { print "   <li><a href='./?m=files'>" . $T{"Files"} . "</a></li>\n"; }
+			if($logged_lvl >= to_int($cfg->load("auto_lvl")) && $cfg->load('comp_auto') eq "on") { print "   <li><a href='./?m=auto'>" . $T{"Automation"} . "</a></li>\n"; }
+			if($logged_lvl >= to_int($cfg->load("customs_lvl")) && $cfg->load('comp_tickets') eq "on")	{ print "   <li><a href='./?m=customforms'>" . $T{"Custom forms"} . "</a></li>\n"; }
+			if($logged_lvl >= to_int($cfg->load("summary_lvl"))) { print "   <li><a href='./?m=users'>" . $T{"Users management"} . "</a></li>\n"; }
+			if($logged_lvl > 5) { print "   <li><a href='./?m=log'>" . $T{"System log"} . "</a></li>\n"; }
+			print "  <li role='separator' class='divider'></li><li><a href='./?m=logout'>" . $T{"Logout"} . "</a></li></ul></li>\n";
 		}
 		elsif($q->param('kb') || $q->param('m') && ($q->param('m') eq "articles" || $q->param('m') eq "add_article" || $q->param('m') eq "save_article" || $q->param('m') eq "unlink_article" || $q->param('m') eq "subscribe" || $q->param('m') eq "unsubscribe"))
 		{
 			print "	 <li><a href='.'>" . $T{'Home'} . "</a></li>\n";
 			print "	 <li><a href='./?m=products'>" . $items{"Product"} . "s</a></li>\n";
-			if($cfg->load('comp_tickets') eq "on") { print "	 <li><a href='./?m=tickets'>Tickets</a></li>\n"; }
-			if($cfg->load('comp_articles') eq "on") { print "	 <li class='active'><a href='./?m=articles'>Articles</a></li>\n"; }
-			if($cfg->load('comp_items') eq "on") { print "	 <li><a href='./?m=items'>Items</a></li>\n"; }
-			if($cfg->load('comp_clients') eq "on") { print "	 <li><a href='./?m=clients'>Clients</a></li>\n"; }
-			print "  <li class='dropdown'><a href='#' class='dropdown-toggle' data-toggle='dropdown' role='button' aria-haspopup='true' aria-expanded='false'>Tools <span class='caret'></span></a><ul class='dropdown-menu'>\n";
-			print "   <li><a href='./?m=settings'>Settings</a></li>\n";
-			if($logged_lvl >= to_int($cfg->load("report_lvl"))) { print "   <li><a href='./?m=stats'>Statistics</a></li>\n"; }
-			if($logged_lvl >= to_int($cfg->load("upload_lvl")) && $cfg->load('comp_files') eq "on") { print "   <li><a href='./?m=files'>Files</a></li>\n"; }
-			if($logged_lvl >= to_int($cfg->load("auto_lvl")) && $cfg->load('comp_auto') eq "on") { print "   <li><a href='./?m=auto'>Automation</a></li>\n"; }
-			if($logged_lvl >= to_int($cfg->load("customs_lvl")) && $cfg->load('comp_tickets') eq "on")	{ print "   <li><a href='./?m=customforms'>Custom forms</a></li>\n"; }
-			if($logged_lvl >= to_int($cfg->load("summary_lvl"))) { print "   <li><a href='./?m=users'>Users management</a></li>\n"; }
-			if($logged_lvl > 5) { print "   <li><a href='./?m=log'>System log</a></li>\n"; }
-			print "  <li role='separator' class='divider'></li><li><a href='./?m=logout'>Logout</a></li></ul></li>\n";
+			if($cfg->load('comp_tickets') eq "on") { print "	 <li><a href='./?m=tickets'>" . $T{"Tickets"} . "</a></li>\n"; }
+			if($cfg->load('comp_articles') eq "on") { print "	 <li class='active'><a href='./?m=articles'>" . $T{"Articles"} . "</a></li>\n"; }
+			if($cfg->load('comp_items') eq "on") { print "	 <li><a href='./?m=items'>" . $T{"Items"} . "</a></li>\n"; }
+			if($cfg->load('comp_clients') eq "on") { print "	 <li><a href='./?m=clients'>" . $T{"Clients"} . "</a></li>\n"; }
+			print "  <li class='dropdown'><a href='#' class='dropdown-toggle' data-toggle='dropdown' role='button' aria-haspopup='true' aria-expanded='false'>" . $T{"Tools"} . " <span class='caret'></span></a><ul class='dropdown-menu'>\n";
+			print "   <li><a href='./?m=settings'>" . $T{"Settings"} . "</a></li>\n";
+			if($logged_lvl >= to_int($cfg->load("report_lvl"))) { print "   <li><a href='./?m=stats'>" . $T{"Statistics"} . "</a></li>\n"; }
+			if($logged_lvl >= to_int($cfg->load("upload_lvl")) && $cfg->load('comp_files') eq "on") { print "   <li><a href='./?m=files'>" . $T{"Files"} . "</a></li>\n"; }
+			if($logged_lvl >= to_int($cfg->load("auto_lvl")) && $cfg->load('comp_auto') eq "on") { print "   <li><a href='./?m=auto'>" . $T{"Automation"} . "</a></li>\n"; }
+			if($logged_lvl >= to_int($cfg->load("customs_lvl")) && $cfg->load('comp_tickets') eq "on")	{ print "   <li><a href='./?m=customforms'>" . $T{"Custom forms"} . "</a></li>\n"; }
+			if($logged_lvl >= to_int($cfg->load("summary_lvl"))) { print "   <li><a href='./?m=users'>" . $T{"Users management"} . "</a></li>\n"; }
+			if($logged_lvl > 5) { print "   <li><a href='./?m=log'>" . $T{"System log"} . "</a></li>\n"; }
+			print "  <li role='separator' class='divider'></li><li><a href='./?m=logout'>" . $T{"Logout"} . "</a></li></ul></li>\n";
 		}
 		elsif($q->param('m') && $q->param('m') eq "items")
 		{
 			print "	 <li><a href='.'>" . $T{'Home'} . "</a></li>\n";
 			print "	 <li><a href='./?m=products'>" . $items{"Product"} . "s</a></li>\n";
-			if($cfg->load('comp_tickets') eq "on") { print "	 <li><a href='./?m=tickets'>Tickets</a></li>\n"; }
-			if($cfg->load('comp_articles') eq "on") { print "	 <li><a href='./?m=articles'>Articles</a></li>\n"; }
-			if($cfg->load('comp_items') eq "on") { print "	 <li class='active'><a href='./?m=items'>Items</a></li>\n"; }
-			if($cfg->load('comp_clients') eq "on") { print "	 <li><a href='./?m=clients'>Clients</a></li>\n"; }
-			print "  <li class='dropdown'><a href='#' class='dropdown-toggle' data-toggle='dropdown' role='button' aria-haspopup='true' aria-expanded='false'>Tools <span class='caret'></span></a><ul class='dropdown-menu'>\n";
-			print "   <li><a href='./?m=settings'>Settings</a></li>\n";
-			if($logged_lvl >= to_int($cfg->load("report_lvl"))) { print "   <li><a href='./?m=stats'>Statistics</a></li>\n"; }
-			if($logged_lvl >= to_int($cfg->load("upload_lvl")) && $cfg->load('comp_files') eq "on") { print "   <li><a href='./?m=files'>Files</a></li>\n"; }
-			if($logged_lvl >= to_int($cfg->load("auto_lvl")) && $cfg->load('comp_auto') eq "on") { print "   <li><a href='./?m=auto'>Automation</a></li>\n"; }
-			if($logged_lvl >= to_int($cfg->load("customs_lvl")) && $cfg->load('comp_tickets') eq "on")	{ print "   <li><a href='./?m=customforms'>Custom forms</a></li>\n"; }
-			if($logged_lvl >= to_int($cfg->load("summary_lvl"))) { print "   <li><a href='./?m=users'>Users management</a></li>\n"; }
-			if($logged_lvl > 5) { print "   <li><a href='./?m=log'>System log</a></li>\n"; }
-			print "  <li role='separator' class='divider'></li><li><a href='./?m=logout'>Logout</a></li></ul></li>\n";
+			if($cfg->load('comp_tickets') eq "on") { print "	 <li><a href='./?m=tickets'>" . $T{"Tickets"} . "</a></li>\n"; }
+			if($cfg->load('comp_articles') eq "on") { print "	 <li><a href='./?m=articles'>" . $T{"Articles"} . "</a></li>\n"; }
+			if($cfg->load('comp_items') eq "on") { print "	 <li class='active'><a href='./?m=items'>" . $T{"Items"} . "</a></li>\n"; }
+			if($cfg->load('comp_clients') eq "on") { print "	 <li><a href='./?m=clients'>" . $T{"Clients"} . "</a></li>\n"; }
+			print "  <li class='dropdown'><a href='#' class='dropdown-toggle' data-toggle='dropdown' role='button' aria-haspopup='true' aria-expanded='false'>" . $T{"Tools"} . " <span class='caret'></span></a><ul class='dropdown-menu'>\n";
+			print "   <li><a href='./?m=settings'>" . $T{"Settings"} . "</a></li>\n";
+			if($logged_lvl >= to_int($cfg->load("report_lvl"))) { print "   <li><a href='./?m=stats'>" . $T{"Statistics"} . "</a></li>\n"; }
+			if($logged_lvl >= to_int($cfg->load("upload_lvl")) && $cfg->load('comp_files') eq "on") { print "   <li><a href='./?m=files'>" . $T{"Files"} . "</a></li>\n"; }
+			if($logged_lvl >= to_int($cfg->load("auto_lvl")) && $cfg->load('comp_auto') eq "on") { print "   <li><a href='./?m=auto'>" . $T{"Automation"} . "</a></li>\n"; }
+			if($logged_lvl >= to_int($cfg->load("customs_lvl")) && $cfg->load('comp_tickets') eq "on")	{ print "   <li><a href='./?m=customforms'>" . $T{"Custom forms"} . "</a></li>\n"; }
+			if($logged_lvl >= to_int($cfg->load("summary_lvl"))) { print "   <li><a href='./?m=users'>" . $T{"Users management"} . "</a></li>\n"; }
+			if($logged_lvl > 5) { print "   <li><a href='./?m=log'>" . $T{"System log"} . "</a></li>\n"; }
+			print "  <li role='separator' class='divider'></li><li><a href='./?m=logout'>" . $T{"Logout"} . "</a></li></ul></li>\n";
 		}
 		else
 		{
 			print "	 <li class='active'><a href='.'>" . $T{'Home'} . "</a></li>\n";
 			print "	 <li><a href='./?m=products'>" . $items{"Product"} . "s</a></li>\n";
-			if($cfg->load('comp_tickets') eq "on") { print "	 <li><a href='./?m=tickets'>Tickets</a></li>\n"; }
-			if($cfg->load('comp_articles') eq "on") { print "	 <li><a href='./?m=articles'>Articles</a></li>\n"; }
-			if($cfg->load('comp_items') eq "on") { print "	 <li><a href='./?m=items'>Items</a></li>\n"; }
-			if($cfg->load('comp_clients') eq "on") { print "	 <li><a href='./?m=clients'>Clients</a></li>\n"; }
-			print "  <li class='dropdown'><a href='#' class='dropdown-toggle' data-toggle='dropdown' role='button' aria-haspopup='true' aria-expanded='false'>Tools <span class='caret'></span></a><ul class='dropdown-menu'>\n";
-			print "   <li><a href='./?m=settings'>Settings</a></li>\n";
-			if($logged_lvl >= to_int($cfg->load("report_lvl"))) { print "   <li><a href='./?m=stats'>Statistics</a></li>\n"; }
-			if($logged_lvl >= to_int($cfg->load("upload_lvl")) && $cfg->load('comp_files') eq "on") { print "   <li><a href='./?m=files'>Files</a></li>\n"; }
-			if($logged_lvl >= to_int($cfg->load("auto_lvl")) && $cfg->load('comp_auto') eq "on") { print "   <li><a href='./?m=auto'>Automation</a></li>\n"; }
-			if($logged_lvl >= to_int($cfg->load("customs_lvl")) && $cfg->load('comp_tickets') eq "on")	{ print "   <li><a href='./?m=customforms'>Custom forms</a></li>\n"; }
-			if($logged_lvl >= to_int($cfg->load("summary_lvl"))) { print "   <li><a href='./?m=users'>Users management</a></li>\n"; }
-			if($logged_lvl > 5) { print "   <li><a href='./?m=log'>System log</a></li>\n"; }
-			print "  <li role='separator' class='divider'></li><li><a href='./?m=logout'>Logout</a></li></ul></li>\n";
+			if($cfg->load('comp_tickets') eq "on") { print "	 <li><a href='./?m=tickets'>" . $T{"Tickets"} . "</a></li>\n"; }
+			if($cfg->load('comp_articles') eq "on") { print "	 <li><a href='./?m=articles'>" . $T{"Articles"} . "</a></li>\n"; }
+			if($cfg->load('comp_items') eq "on") { print "	 <li><a href='./?m=items'>" . $T{"Items"} . "</a></li>\n"; }
+			if($cfg->load('comp_clients') eq "on") { print "	 <li><a href='./?m=clients'>" . $T{"Clients"} . "</a></li>\n"; }
+			print "  <li class='dropdown'><a href='#' class='dropdown-toggle' data-toggle='dropdown' role='button' aria-haspopup='true' aria-expanded='false'>" . $T{"Tools"} . " <span class='caret'></span></a><ul class='dropdown-menu'>\n";
+			print "   <li><a href='./?m=settings'>" . $T{"Settings"} . "</a></li>\n";
+			if($logged_lvl >= to_int($cfg->load("report_lvl"))) { print "   <li><a href='./?m=stats'>" . $T{"Statistics"} . "</a></li>\n"; }
+			if($logged_lvl >= to_int($cfg->load("upload_lvl")) && $cfg->load('comp_files') eq "on") { print "   <li><a href='./?m=files'>" . $T{"Files"} . "</a></li>\n"; }
+			if($logged_lvl >= to_int($cfg->load("auto_lvl")) && $cfg->load('comp_auto') eq "on") { print "   <li><a href='./?m=auto'>" . $T{"Automation"} . "</a></li>\n"; }
+			if($logged_lvl >= to_int($cfg->load("customs_lvl")) && $cfg->load('comp_tickets') eq "on")	{ print "   <li><a href='./?m=customforms'>" . $T{"Custom forms"} . "</a></li>\n"; }
+			if($logged_lvl >= to_int($cfg->load("summary_lvl"))) { print "   <li><a href='./?m=users'>" . $T{"Users management"} . "</a></li>\n"; }
+			if($logged_lvl > 5) { print "   <li><a href='./?m=log'>" . $T{"System log"} . "</a></li>\n"; }
+			print "  <li role='separator' class='divider'></li><li><a href='./?m=logout'>" . $T{"Logout"} . "</a></li></ul></li>\n";
 		}
 		if($cfg->load('comp_tickets') eq "on") 
 		{ 
 			print "   <form class='navbar-form navbar-right' method='GET' action='./'>";
 			print "    <div class='form-group'>";
-			print "     <input type='number' placeholder='Ticket ID' style='-moz-appearance:textfield;-webkit-appearance:none;' name='t' class='form-control'><input type='hidden' name='m' value='view_ticket'>";
+			print "     <input type='number' placeholder='" . $T{"Ticket ID"} . "' style='-moz-appearance:textfield;-webkit-appearance:none;' name='t' class='form-control'><input type='hidden' name='m' value='view_ticket'>";
 			print "    </div>";
-			print "    <button type='submit' class='btn btn-primary'>Open</button>";
+			print "    <button type='submit' class='btn btn-primary'>" . $T{"Open"} . "</button>";
 			print "   </form>";
 		}
 	}
 	print "	 </ul>\n";
 	print "	 <ul class='nav navbar-nav navbar-right'>\n";
 	if($logged_user ne "") { print "	  <li role='presentation'><a href='#'><b>" . $logged_user . " <span class='badge'>" . $logged_lvl . "</span></b></a></li>\n"; }
-	else { print "	  <li role='presentation'><a href='#'>Guest</a></li>\n"; }
+	else { print "	  <li role='presentation'><a href='#'>" . $T{"Guest"} . "</a></li>\n"; }
 	print "	</ul>\n";
 	print "	</div>\n";
 	print "    </div>\n";
@@ -329,10 +329,10 @@ sub by_month
 sub msg
 {
 	my ($text, $code) = @_;
-	if($code == 0) { print "<div class='alert alert-danger' role='alert'><b>Error:</b> " . $text . "</div>\n"; }
-	elsif($code == 2) { print "<div class='alert alert-info' role='alert'><b>Info:</b> " . $text . "</div>\n"; }
-	elsif($code == 3) { print "<div class='alert alert-success' role='alert'><b>Success:</b> " . $text . "</div>\n"; }
-	else { print "<div class='alert alert-warning' role='alert'><b>Warning:</b> " . $text . "</div>\n"; }
+	if($code == 0) { print "<div class='alert alert-danger' role='alert'><b>" . $T{"Error"} . ":</b> " . $text . "</div>\n"; }
+	elsif($code == 2) { print "<div class='alert alert-info' role='alert'><b>" . $T{"Info"} . ":</b> " . $text . "</div>\n"; }
+	elsif($code == 3) { print "<div class='alert alert-success' role='alert'><b>" . $T{"Success"} . ":</b> " . $text . "</div>\n"; }
+	else { print "<div class='alert alert-warning' role='alert'><b>" . $T{"Warning"} . ":</b> " . $text . "</div>\n"; }
 }
 
 # Login form
@@ -345,26 +345,26 @@ sub login
 		print "<div class='col-sm-3'>&nbsp;</div>\n";
 	}
 	print "<div class='col-sm-6'>\n";
-	print "<h3>Login</h3><form data-toggle='validator' role='form' method='POST' action='.'><div class='form-group'>\n";
-	if($cfg->load('ad_server') && $cfg->load('ad_domain')) { print "<p>Enter your " . $cfg->load('ad_domain') . " credentials.</p>"; }
-	print "<p><input type='text' name='name' placeholder='User name' class='form-control' data-error='User name must be between 2 and 50 characters.' data-minlength='2' maxlength='50' required></p>\n";
-	print "<p><input type='password' name='pass' placeholder='Password' class='form-control' required></p>\n";
+	print "<h3>" . $T{"Login"} . "</h3><form data-toggle='validator' role='form' method='POST' action='.'><div class='form-group'>\n";
+	if($cfg->load('ad_server') && $cfg->load('ad_domain')) { print "<p>" . $T{"Enter your "} . $cfg->load('ad_domain') . $T{" credentials."} . "</p>"; }
+	print "<p><input type='text' name='name' placeholder='" . $T{"User name"} . "' class='form-control' data-error='" . $T{"User name must be between 2 and 20 characters."} . "' data-minlength='2' maxlength='50' required></p>\n";
+	print "<p><input type='password' name='pass' placeholder='" . $T{"Password"} . "' class='form-control' data-error='" . $T{"Please fill out this field."} . "' required></p>\n";
 	print "<div class='help-block with-errors'></div></div>";
-	print "<p><input class='btn btn-primary' type='submit' value='Login'></p></form>\n";
+	print "<p><input class='btn btn-primary' type='submit' value='" . $T{"Login"} . "'></p></form>\n";
 	if($cfg->load('allow_registrations') && $cfg->load('allow_registrations') ne 'off' && !$cfg->load('ad_server'))
 	{
-		print "</div><div class='col-sm-6'><h3>Register a new account</h3><form data-toggle='validator' role='form' method='POST' action='.'><div class='form-group'>\n";
-		print "<p><input type='text' name='new_name' placeholder='User name' class='form-control' data-error='User name must be between 2 and 20 letters or numbers.' data-minlength='2' maxlength='20' required></p>\n";
-		print "<p><input type='password' name='new_pass1' placeholder='Password' data-minlength='6' class='form-control' id='new_pass1' required></p>\n";
-		print "<p><input type='password' name='new_pass2' class='form-control' id='inputPasswordConfirm' data-match='#new_pass1' data-match-error='Passwords do not match.' placeholder='Confirm' required></p>\n";
-		print "<p><input type='email' name='new_email' placeholder='Email (optional)' class='form-control' data-error='Must be a valid email.' maxlength='99'></p>\n";
+		print "</div><div class='col-sm-6'><h3>" . $T{"Register a new account"} . "</h3><form data-toggle='validator' role='form' method='POST' action='.'><div class='form-group'>\n";
+		print "<p><input type='text' name='new_name' placeholder='" . $T{"User name"} . "' class='form-control' data-error='" . $T{"User name must be between 2 and 20 characters."} . "' data-minlength='2' maxlength='20' required></p>\n";
+		print "<p><input type='password' name='new_pass1' placeholder='" . $T{"Password"} . "' data-minlength='6' class='form-control' id='new_pass1' data-error='" . $T{"Please fill out this field."} . "' required></p>\n";
+		print "<p><input type='password' name='new_pass2' class='form-control' id='inputPasswordConfirm' data-match='#new_pass1' data-match-error='" . $T{"Passwords do not match."} . "' placeholder='" . $T{"Confirm"} . "' data-error='" . $T{"Please fill out this field."} . "' required></p>\n";
+		print "<p><input type='email' name='new_email' placeholder='" . $T{"Email (optional)"} . "' class='form-control' data-error='" . $T{"Must be a valid email."} . "' maxlength='99'></p>\n";
 		print "<div class='help-block with-errors'></div></div>";
-		print "<p><input class='btn btn-primary' type='submit' value='Register'></p></form>\n";
+		print "<p><input class='btn btn-primary' type='submit' value='" . $T{"Register"} . "'></p></form>\n";
 	}
 	print "</div></div>";
 	if($cfg->load("smtp_server") && !$cfg->load("ad_server"))
 	{
-		print "<p style='font-size:12px'><a href='./?m=lostpass'>Forgot your password?</a></p>";
+		print "<p style='font-size:12px'><a href='./?m=lostpass'>" . $T{"Forgot your password?"} . "</a></p>";
 	}
 	print "</center>\n";
 }
@@ -925,17 +925,17 @@ sub notify
 						$smtp->datasend("Subject: " . $cfg->load('site_name') . " - " . $title . "\n");
 						$smtp->datasend("Content-type: text/plain; charset=UTF-8\n");
 						$smtp->datasend("Content-Transfer-Encoding: base64\n\n");
-						$smtp->datasend(encode_base64(encode('utf8', $mesg . "\n\nThis is an automated message from " . $cfg->load('site_name') . ". To disable notifications, log into your account and remove the email under Settings.\n")));
+						$smtp->datasend(encode_base64(encode('utf8', $mesg . "\n\n" . $T{"This is an automated message from "} . $cfg->load('site_name') . ". " . $T{"To disable notifications, log into your account and remove the email under Settings."} . "\n")));
 						$smtp->datasend();
 						$smtp->quit;
 					}
 					else
 					{
-						if($logged_user ne "api") { msg("Could not send notification email to " . $u . ", target email was rejected.", 1); }
+						if($logged_user ne "api") { msg($T{"Could not send notification email to "} . $u . $T{", target email was rejected."}, 1); }
 						logevent("Email notification error: " . $smtp->message());
 					}
 				} or do {
-					if($logged_user ne "api") { msg("Could not send notification email to " . $u . ", connection to SMTP server failed.", 1); }
+					if($logged_user ne "api") { msg($T{"Could not send notification email to "} . $u . $T{", connection to SMTP server failed."}, 1); }
 					logevent("Email notification error: Connection to SMTP server failed.");
 				};
 			}
@@ -963,33 +963,33 @@ sub home
 		$sql = $db->prepare("SELECT COUNT(*) FROM items WHERE status = 2;");
 		$sql->execute();
 		while(my @res = $sql->fetchrow_array()) { $apprcount = int($res[0]); }
-		if($apprcount > 0) { msg("There are <b>" . $apprcount . "</b> items awaiting checkout approval. Press <a href='./?m=items'>here</a> to view the list.", 2); }
+		if($apprcount > 0) { msg($T{"There are "} . "<b>" . $apprcount . "</b>" . $T{" items awaiting checkout approval. Press <a href='./?m=items'>here</a> to view the list."}, 2); }
 	}
 
 	if($logged_user ne "")
 	{
 		$sql = $db->prepare("SELECT DISTINCT ticketid FROM escalate WHERE user = ?;");
 		$sql->execute(lc($logged_user));
-		while(my @res = $sql->fetchrow_array()) { msg("<span class='pull-right'><a href='./?delete_notify=" . $res[0] . "'>Clear</a></span>Ticket <a href='./?m=view_ticket&t=" . $res[0] . "'>" . $res[0] . "</a> requires your attention.", 2); }
+		while(my @res = $sql->fetchrow_array()) { msg("<span class='pull-right'><a href='./?delete_notify=" . $res[0] . "'>" . $T{"Clear"} . "</a></span>" . $T{"Ticket"} . " <a href='./?m=view_ticket&t=" . $res[0] . "'>" . $res[0] . "</a> " . $T{"requires your attention."}, 2); }
 	}
 
 	if(!$q->cookie('np_gs'))
 	{
-		print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Getting started</h3></div><div class='panel-body'>\n";
-		print "<p>Use the <b>" . $items{"Product"} . "s</b> tab to browse available " . lc($items{"Product"}) . "s along with their " . lc($items{"Release"}) . "s. You can view basic information about them and see their description.";
-		if($cfg->load('comp_tickets') eq "on") { print " Use the <b>Tickets</b> tab to browse current tickets and comments."; }
-		if($cfg->load('comp_articles') eq "on") { print " The <b>Articles</b> tab contains related support articles."; }
-		if($cfg->load('comp_items') eq "on") { print " The <b>Items</b> tab contains inventory items you can checkout."; }
-		if($cfg->load('comp_clients') eq "on") { print " The <b>Clients</b> tab contains a list of contacts."; }
-		print " You can also change your email address and password under the <b>Settings</b> tab.</p>\n";
-		print "<p>Your current access level is <b>" . $logged_lvl . "</b>.</p>\n";
+		print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>" . $T{"Getting started"} . "</h3></div><div class='panel-body'>\n";
+		print $T{"<p>Use the <b>"} . $items{"Product"} . $T{"s</b> tab to browse available "} . lc($items{"Product"}) . $T{"s along with their "} . lc($items{"Release"}) . $T{"s. You can view basic information about them and see their description."};
+		if($cfg->load('comp_tickets') eq "on") { print $T{" Use the <b>Tickets</b> tab to browse current tickets and comments."}; }
+		if($cfg->load('comp_articles') eq "on") { print $T{" The <b>Articles</b> tab contains related support articles."}; }
+		if($cfg->load('comp_items') eq "on") { print $T{" The <b>Items</b> tab contains inventory items you can checkout."}; }
+		if($cfg->load('comp_clients') eq "on") { print $T{" The <b>Clients</b> tab contains a list of contacts."}; }
+		print $T{" You can also change your email address and password under the <b>Settings</b> tab.</p>"};
+		print "<p>" . $T{"Your current access level is"} . " <b>" . $logged_lvl . "</b>.</p>" . "\n";
 		$sql = $db->prepare("SELECT * FROM users;");
 		$sql->execute();
 		while(my @res = $sql->fetchrow_array())
 		{
 			if($res[0] eq $logged_user && $res[2] ne "" && $res[5] ne "" && $cfg->load('smtp_server'))
 			{
-				print "<p>Your email address is not currently confirmed. Make sure you go to the Settings tab to enter your confirmation code. You can also change your email address if you did not receive your confirmation email.</p>\n";
+				print $T{"<p>Your email address is not currently confirmed. Make sure you go to the Settings tab to enter your confirmation code. You can also change your email address if you did not receive your confirmation email.</p>"};
 			}
 		}
 		print "</div></div>\n";
@@ -1007,7 +1007,7 @@ sub home
 			$sql = $db->prepare("DELETE FROM shoutbox WHERE ROWID = ?;");
 			$sql->execute(to_int($q->param('shoutbox_delete')));		
 		}
-		print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Shoutbox</h3></div><div class='panel-body'><div style='max-height:200px;overflow-y:scroll'><table class='table table-striped'>\n";
+		print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>" . $T{"Shoutbox"} . "</h3></div><div class='panel-body'><div style='max-height:200px;overflow-y:scroll'><table class='table table-striped'>\n";
 		$sql = $db->prepare("SELECT ROWID,* FROM shoutbox ORDER BY ROWID DESC LIMIT 30");
 		$sql->execute();
 		while(my @res = $sql->fetchrow_array())
@@ -1016,7 +1016,7 @@ sub home
 			if($logged_lvl > 4) { print "<span class='pull-right'><form method='POST' action='.'><input type='hidden' name='shoutbox_delete' value='" . $res[0] . "'><input class='btn btn-danger pull-right' type='submit' value='X'></form></span>"; }
 			print $res[2] . "</td></tr>";
 		}
-		print "</table></div><form method='POST' action='.'><div class='row'><div class='col-sm-10'><input maxlength='999' class='form-control' name='shoutbox_post' placeholder='Type your message here'></div><div class='col-sm-2'><input type='submit' value='Post' class='btn btn-primary pull-right'></div></div></form></div></div>\n";
+		print "</table></div><form method='POST' action='.'><div class='row'><div class='col-sm-10'><input maxlength='999' class='form-control' name='shoutbox_post' placeholder='" . $T{"Type your message here"} . "'></div><div class='col-sm-2'><input type='submit' value='" . $T{"Post"} . "' class='btn btn-primary pull-right'></div></div></form></div></div>\n";
 	}
 
 	if($logged_lvl > 0 && $cfg->load('comp_tickets') eq "on")
@@ -1027,8 +1027,8 @@ sub home
 		while(my @res = $sql->fetchrow_array())	{ $count1 = to_int($res[0]); }
 		if($count1 > 0)
 		{
-			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Tickets you created</h3></div><div class='panel-body'><table class='table table-striped' id='home1_table'>\n";
-			print "<thead><tr><th>ID</th><th>" . $items{"Product"} . "</th><th>Title</th><th>Status</th><th>Last modified</th></tr></thead><tbody>\n";
+			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>" . $T{"Tickets you created"} . "</h3></div><div class='panel-body'><table class='table table-striped' id='home1_table'>\n";
+			print "<thead><tr><th>" . $T{"ID"} . "</th><th>" . $items{"Product"} . "</th><th>" . $T{"Title"} . "</th><th>" . $T{"Status"} . "</th><th>" . $T{"Last modified"} . "</th></tr></thead><tbody>\n";
 			$sql = $db->prepare("SELECT ROWID,* FROM tickets WHERE status != 'Closed' ORDER BY ROWID DESC");
 			$sql->execute();
 			while(my @res = $sql->fetchrow_array())
@@ -1036,9 +1036,9 @@ sub home
 				if($products[$res[1]] && $res[3] eq $logged_user) 
 				{ 
 					print "<tr><td><nobr>";
-					if($res[7] eq "High") { print "<img src='icons/high.png' title='High'> "; }
-					elsif($res[7] eq "Low") { print "<img src='icons/low.png' title='Low'> "; }
-					else { print "<img src='icons/normal.png' title='Normal'> "; }
+					if($res[7] eq "High") { print "<img src='icons/high.png' title='" . $T{"High"} . "'> "; }
+					elsif($res[7] eq "Low") { print "<img src='icons/low.png' title='" . $T{"Low"} . "'> "; }
+					else { print "<img src='icons/normal.png' title='" . $T{"Normal"} . "'> "; }
 					print $res[0] . "</nobr></td><td>" . $products[$res[1]] . "</td><td><a href='./?m=view_ticket&t=" . $res[0] . "'>" . $res[5] . "</a></td><td>" . $res[8] . "</td><td>" . $res[12] . "</td></tr>\n"; 
 				}
 			}
@@ -1054,8 +1054,8 @@ sub home
 		while(my @res = $sql->fetchrow_array())	{ $count2 = to_int($res[0]); }
 		if($count2 > 0)
 		{
-			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Tickets you follow</h3></div><div class='panel-body'><table class='table table-striped' id='home2_table'>\n";
-			print "<thead><tr><th>ID</th><th>" . $items{"Product"} . "</th><th>Title</th><th>Status</th><th>Last modified</th></tr></thead><tbody>\n";
+			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>" . $T{"Tickets you follow"} . "</h3></div><div class='panel-body'><table class='table table-striped' id='home2_table'>\n";
+			print "<thead><tr><th>" . $T{"ID"} . "</th><th>" . $items{"Product"} . "</th><th>" . $T{"Title"} . "</th><th>" . $T{"Status"} . "</th><th>" . $T{"Last modified"} . "</th></tr></thead><tbody>\n";
 			$sql = $db->prepare("SELECT ROWID,* FROM tickets WHERE status != 'Closed' ORDER BY ROWID DESC;");
 			$sql->execute();
 			while(my @res = $sql->fetchrow_array())
@@ -1063,9 +1063,9 @@ sub home
 				if($products[$res[1]] && $res[10] =~ /\b$logged_user\b/) 
 				{ 
 					print "<tr><td><nobr>";
-					if($res[7] eq "High") { print "<img src='icons/high.png' title='High'> "; }
-					elsif($res[7] eq "Low") { print "<img src='icons/low.png' title='Low'> "; }
-					else { print "<img src='icons/normal.png' title='Normal'> "; }
+					if($res[7] eq "High") { print "<img src='icons/high.png' title='" . $T{"High"} . "'> "; }
+					elsif($res[7] eq "Low") { print "<img src='icons/low.png' title='" . $T{"Low"} . "'> "; }
+					else { print "<img src='icons/normal.png' title='" . $T{"Normal"} . "'> "; }
 					print $res[0] . "</nobr></td><td>" . $products[$res[1]] . "</td><td><a href='./?m=view_ticket&t=" . $res[0] . "'>" . $res[5] . "</a></td><td>" . $res[8] . "</td><td>" . $res[12] . "</td></tr>\n"; 
 				}
 			}
@@ -1081,8 +1081,8 @@ sub home
 		while(my @res = $sql->fetchrow_array())	{ $count3 = to_int($res[0]); }
 		if($count3 > 0)
 		{
-			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Tickets assigned to you</h3></div><div class='panel-body'><table class='table table-striped' id='home3_table'>\n";
-			print "<thead><tr><th>ID</th><th>" . $items{"Product"} . "</th><th>Title</th><th>Status</th><th>Last modified</th></tr></thead><tbody>\n";
+			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>" . $T{"Tickets assigned to you"} . "</h3></div><div class='panel-body'><table class='table table-striped' id='home3_table'>\n";
+			print "<thead><tr><th>" . $T{"ID"} . "</th><th>" . $items{"Product"} . "</th><th>" . $T{"Title"} . "</th><th>" . $T{"Status"} . "</th><th>" . $T{"Last modified"} . "</th></tr></thead><tbody>\n";
 			$sql = $db->prepare("SELECT ROWID,* FROM tickets WHERE status != 'Closed' ORDER BY ROWID DESC;");
 			$sql->execute();
 			while(my @res = $sql->fetchrow_array())
@@ -1090,9 +1090,9 @@ sub home
 				if($products[$res[1]] && $res[4] =~ /\b$logged_user\b/) 
 				{ 
 					print "<tr><td><nobr>";
-					if($res[7] eq "High") { print "<img src='icons/high.png' title='High'> "; }
-					elsif($res[7] eq "Low") { print "<img src='icons/low.png' title='Low'> "; }
-					else { print "<img src='icons/normal.png' title='Normal'> "; }
+					if($res[7] eq "High") { print "<img src='icons/high.png' title='" . $T{"High"} . "'> "; }
+					elsif($res[7] eq "Low") { print "<img src='icons/low.png' title='" . $T{"Low"} . "'> "; }
+					else { print "<img src='icons/normal.png' title='" . $T{"Normal"} . "'> "; }
 					print $res[0] . "</nobr></td><td>" . $products[$res[1]] . "</td><td><a href='./?m=view_ticket&t=" . $res[0] . "'>" . $res[5] . "</a></td><td>" . $res[8] . "</td><td>" . $res[12] . "</td></tr>\n"; 
 				}
 			}
@@ -1136,8 +1136,8 @@ sub home
 			$sql = $db->prepare("SELECT ROWID,* FROM products;");
 			$sql->execute();
 			while(my @res = $sql->fetchrow_array()) { $products[$res[0]] = $res[1]; }
-			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Tasks assigned to you</h3></div><div class='panel-body'><table class='table table-striped' id='home4_table'>\n";
-			print "<thead><tr><th>" . $items{"Product"} . "</th><th>Task</th><th>Due by</th><th>Completion</th><th></th></tr></thead><tbody>\n";
+			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>" . $T{"Tasks assigned to you"} . "</h3></div><div class='panel-body'><table class='table table-striped' id='home4_table'>\n";
+			print "<thead><tr><th>" . $items{"Product"} . "</th><th>" . $T{"Task"} . "</th><th>" . $T{"Due by"} . "</th><th>" . $T{"Completion"} . "</th><th></th></tr></thead><tbody>\n";
 			$sql = $db->prepare("SELECT ROWID,* FROM steps WHERE user = ? AND completion < 100");
 			$sql->execute($logged_user);
 			my $m = localtime->strftime('%m');
@@ -1149,8 +1149,8 @@ sub home
 				{
 					print "<tr><td>" . $products[$res[1]] . "</td><td>" . $res[2] . "</td><td>";
 					my @dueby = split(/\//, $res[5]);
-					if(to_int($res[4]) == 100) { print "<font color='green'>Completed</font>"; }
-					elsif($dueby[2] < $y || ($dueby[2] == $y && $dueby[0] < $m) || ($dueby[2] == $y && $dueby[0] == $m && $dueby[1] < $d)) { print "<font color='red'>Overdue</font>"; }
+					if(to_int($res[4]) == 100) { print "<font color='green'>" . $T{"Completed"} . "</font>"; }
+					elsif($dueby[2] < $y || ($dueby[2] == $y && $dueby[0] < $m) || ($dueby[2] == $y && $dueby[0] == $m && $dueby[1] < $d)) { print "<font color='red'>" . $T{"Overdue"} . "</font>"; }
 					else { print $res[5]; }
 					print "</td><td><form method='POST' action='.'><input type='hidden' name='set_step' value='" . $res[0] . "'><select name='completion' class='form-control'>";
 					if(to_int($res[4]) == 0) { print "<option value='0' selected>0%</option>"; }
@@ -1175,7 +1175,7 @@ sub home
 					else { print "<option value='90'>90%</option>"; }
 					if(to_int($res[4]) == 100) { print "<option value='100' selected>100%</option>"; }
 					else { print "<option value='100'>100%</option>"; }
-					print "</select></td><td><input type='submit' class='btn btn-primary pull-right' value='Save'></form></td></tr>";
+					print "</select></td><td><input type='submit' class='btn btn-primary pull-right' value='" . $T{"Save"} . "'></form></td></tr>";
 				}
 			}
 			print "</tbody></table><script>\$(document).ready(function(){\$('#home4_table').DataTable({'order':[[2,'desc']],pageLength:" .  to_int($cfg->load('page_len')). ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script></div></div>";
@@ -1190,8 +1190,8 @@ sub home
 		while(my @res = $sql->fetchrow_array())	{ $count5 = to_int($res[0]); }
 		if($count5 > 0)
 		{
-			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Subscribed articles</h3></div><div class='panel-body'><table class='table table-striped' id='home5_table'>\n";
-			print "<thead><tr><th>ID</th><th>Title</th><th>Last modified</th></tr></thead><tbody>\n";
+			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>" . $T{"Subscribed articles"} . "</h3></div><div class='panel-body'><table class='table table-striped' id='home5_table'>\n";
+			print "<thead><tr><th>ID</th><th>" . $T{"Title"} . "</th><th>" . $T{"Last modified"} . "</th></tr></thead><tbody>\n";
 			$sql = $db->prepare("SELECT articleid FROM subscribe WHERE user = ?");
 			$sql->execute($logged_user);
 			while(my @res = $sql->fetchrow_array())
@@ -1217,14 +1217,14 @@ sub home
 		while(my @res = $sql->fetchrow_array())	{ $count6 = to_int($res[0]); }
 		if($count6 > 0)
 		{	
-			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Checked out items</h3></div><div class='panel-body'><table class='table table-striped' id='home6_table'>\n";
-			print "<thead><tr><th>Type</th><th>Name</th><th>Serial</th></tr></thead><tbody>\n";
+			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>" . $T{"Checked out items"} . "</h3></div><div class='panel-body'><table class='table table-striped' id='home6_table'>\n";
+			print "<thead><tr><th>" . $T{"Type"} . "</th><th>" . $T{"Name"} . "</th><th>" . $T{"Serial"} . "</th></tr></thead><tbody>\n";
 			$sql = $db->prepare("SELECT ROWID,* FROM items WHERE user = ?");
 			$sql->execute($logged_user);
 			while(my @res = $sql->fetchrow_array())
 			{
 				print "<tr><td>" . $res[2] . "</td><td><a href='./?m=items&i=" . $res[0] . "'>" . $res[1] . "</a></td><td>";
-				if($res[7] == 2) { print "<input type='submit' name='checkin' class='btn btn-default pull-right' value='Waiting approval' disabled>" . $res[3]; }
+				if($res[7] == 2) { print "<input type='submit' name='checkin' class='btn btn-default pull-right' value='" . $T{"Waiting approval"} . "' disabled>" . $res[3]; }
 				else { print "<form method='POST' action='.'><input type='hidden' name='m' value='items'><input type='hidden' name='i' value='" . $res[0] . "'><input type='submit' name='checkin' value='Return' class='btn btn-primary pull-right'>" . $res[3] . "</form>"; }
 				print "</td></tr>\n";
 			}
@@ -1249,7 +1249,20 @@ if(!defined($cfg)) # Can't even use headers() if this fails.
 };
 
 # Language
-if($cfg->load("lang") ne "" && $cfg->load("lang") ne "EN") { %T = nodepointlc->lang($cfg->load("lang")); }
+if($q->param('lang'))
+{
+	$cgs = $q->cookie(-name => "np_lang", -expires => '+3M', -value => $q->param('lang'));
+	%T = nodepointlc->lang($q->param('lang'));
+}
+elsif($q->cookie('np_lang'))
+{
+	%T = nodepointlc->lang($q->cookie('np_lang'));
+}
+else
+{
+	if($cfg->load("lang") ne "" && $cfg->load("lang") ne "EN") { %T = nodepointlc->lang($cfg->load("lang")); }
+}
+
 $items{"Product"} = $T{"Product"};
 $items{"Release"} = $T{"Release"};
 $items{"Model"} = $T{"SKU/Model"};
@@ -3029,6 +3042,8 @@ elsif($q->param('m')) # Modules
 			}
 			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Change your email</h3></div><div class='panel-body'>\n";
 			print "<div class='form-group'><p><form method='POST' action='.' data-toggle='validator' role='form'><input type='hidden' name='m' value='change_email'><div class='row'><div class='col-sm-6'>To change your notification email address, enter a new address here. Leave empty to disable notifications:</div><div class='col-sm-6'><input type='email' name='new_email' class='form-control' data-error='Must be a valid email.' placeholder='Email address' maxlength='99' value='" . $email . "'></div></div></p><div class='help-block with-errors'></div></div><input class='btn btn-primary pull-right' type='submit' value='Change email'></form></div></div>";
+			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Change your language</h3></div><div class='panel-body'>\n";
+			print "<form method='GET' action='.'><p><div class='row'><div class='col-sm-6'>Select your language:</div><div class='col-sm-6'><select name='lang' class='form-control'><option value='EN'>English</option><option value='FR'>Français</option></select></div></div></p><p><input class='btn btn-primary pull-right' type='submit' value='Change language'></p></form></div></div>";
 			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Change your password</h3></div><div class='panel-body'>\n";
 			if($cfg->load("ad_server")) { print "<p>Password management is synchronized with Active Directory.</p>"; }
 			elsif($logged_user eq "demo") { print "<p>The demo account cannot change its password.</p>"; }
@@ -4642,7 +4657,7 @@ elsif($q->param('m')) # Modules
 			while(my @res = $sql->fetchrow_array())
 			{
 				print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>" . $res[0] . "</h3></div><div class='panel-body'><form method='POST' action='./?m=auto'>\n";
-				print "<p><div class='row'><div class='col-sm-12'>" . $res[5] . "</div></div></p>";
+				print "<p><div class='row'><div class='col-sm-12'>" . $T{$res[5]} . "</div></div></p>";
 				print "<p><div class='row'><div class='col-sm-6'>Last run: <b>" . $res[2] . "</b></div><div class='col-sm-6'>Last result: <b>" . $res[4] . "</b></div></div></p><hr>";
 				print "<p><div class='row'><div class='col-sm-6'>Status: <select class='form-control' name='enabled'><option value='0'>Disabled</option><option value='1'";
 				if(to_int($res[1]) == 1) { print " selected"; }
