@@ -275,7 +275,14 @@ NodePoint provides a file upload system. This can be used to upload project imag
 
 Finally, while NodePoint offers Active Directory integration, note that this is done using LDAP Simple Bind, not Kerberos, in order to allow both the Windows and Linux version to support this feature. LDAP over SSL can be implemented to provide encryption.
 
+\subsection{Localization}
+
+NodePoint supports localization. There are a number of built-in languages and more can be added by modifying the source code. Note that only the user interface elements are translated, not the messages shown only to the product administrator. Also, some server specific elements such as dates may be left untranslated.
+
+The default interface language can be set in the basic configuration, and each user can select their own language on their \textbf{Settings} page. This sets a browser-based cookie with the language option.
+
 \subsection{Support}
+
 If you need any functionality that is not covered by the base product, check out the \textbf{Resources} section of the web site where various scripts can be found. You can use the plugin options along with the JSON API to extend the functionality of the product.
 
 Here are some examples of scripts available:
@@ -318,7 +325,7 @@ These are the configuration options for NodePoint. They have to be defined durin
 \item \textbf{Public notice:} This notice is shown on every page. Leave empty to remove the notice.
 \item \textbf{Bootstrap template:} This is a CSS file used by NodePoint. It should be a valid Bootstrap template, or could contain extra CSS elements you wish to use. The default file is \texttt{default.css} and contains a few such elements.
 \item \textbf{Interface theme color:} The color of panels in the interface.
-\item \textbf{Default language:} The default language of the interface. Note that the settings are not translated.
+\item \textbf{Default language:} The default language of the interface.
 \item \textbf{Favicon:} This is the icon shown by web browsers in the URL bar.
 \item \textbf{Main page logo:} Image file shown on the login page.
 \item \textbf{Ticket visibility:} When set to \textit{Public}, all tickets will be visible by logged in and guest users. When set to \textit{Private}, people need to log in to view tickets. \textit{Restricted} prevents people without at least the Restricted View access level from viewing others' tickets. This is a good choice for IT/Helpdesk systems.

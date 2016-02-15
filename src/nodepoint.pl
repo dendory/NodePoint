@@ -1042,7 +1042,7 @@ sub home
 					print $res[0] . "</nobr></td><td>" . $products[$res[1]] . "</td><td><a href='./?m=view_ticket&t=" . $res[0] . "'>" . $res[5] . "</a></td><td>" . $res[8] . "</td><td>" . $res[12] . "</td></tr>\n"; 
 				}
 			}
-			print "</tbody></table><script>\$(document).ready(function(){\$('#home1_table').DataTable({'order':[[0,'desc']],pageLength:" .  to_int($cfg->load('page_len')). ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script></div></div>";
+			print "</tbody></table><script>\$(document).ready(function(){\$('#home1_table').DataTable({'language':{'url':'" . $T{"datatables.lang.json"} . "'},'order':[[0,'desc']],pageLength:" .  to_int($cfg->load('page_len')). ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script></div></div>";
 		}
 	}
 	
@@ -1069,7 +1069,7 @@ sub home
 					print $res[0] . "</nobr></td><td>" . $products[$res[1]] . "</td><td><a href='./?m=view_ticket&t=" . $res[0] . "'>" . $res[5] . "</a></td><td>" . $res[8] . "</td><td>" . $res[12] . "</td></tr>\n"; 
 				}
 			}
-			print "</tbody></table><script>\$(document).ready(function(){\$('#home2_table').DataTable({'order':[[0,'desc']],pageLength:" .  to_int($cfg->load('page_len')). ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script></div></div>";
+			print "</tbody></table><script>\$(document).ready(function(){\$('#home2_table').DataTable({'language':{'url':'" . $T{"datatables.lang.json"} . "'},'order':[[0,'desc']],pageLength:" .  to_int($cfg->load('page_len')). ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script></div></div>";
 		}
 	}
 	
@@ -1096,7 +1096,7 @@ sub home
 					print $res[0] . "</nobr></td><td>" . $products[$res[1]] . "</td><td><a href='./?m=view_ticket&t=" . $res[0] . "'>" . $res[5] . "</a></td><td>" . $res[8] . "</td><td>" . $res[12] . "</td></tr>\n"; 
 				}
 			}
-			print "</tbody></table><script>\$(document).ready(function(){\$('#home3_table').DataTable({'order':[[0,'desc']],pageLength:" .  to_int($cfg->load('page_len')). ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script></div></div>";
+			print "</tbody></table><script>\$(document).ready(function(){\$('#home3_table').DataTable({'language':{'url':'" . $T{"datatables.lang.json"} . "'},'order':[[0,'desc']],pageLength:" .  to_int($cfg->load('page_len')). ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script></div></div>";
 		}
 	}
 
@@ -1178,7 +1178,7 @@ sub home
 					print "</select></td><td><input type='submit' class='btn btn-primary pull-right' value='" . $T{"Save"} . "'></form></td></tr>";
 				}
 			}
-			print "</tbody></table><script>\$(document).ready(function(){\$('#home4_table').DataTable({'order':[[2,'desc']],pageLength:" .  to_int($cfg->load('page_len')). ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script></div></div>";
+			print "</tbody></table><script>\$(document).ready(function(){\$('#home4_table').DataTable({'language':{'url':'" . $T{"datatables.lang.json"} . "'},'order':[[2,'desc']],pageLength:" .  to_int($cfg->load('page_len')). ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script></div></div>";
 		}
 	}
 
@@ -1205,7 +1205,7 @@ sub home
 					print "<tr><td>" . $res[0] . "</td><td><a href='./?kb=" . $res[0] . "'>" . $res2[0] . "</a></td><td>" . $res2[1] . "</td></tr>\n";
 				}
 			}
-			print "</tbody></table><script>\$(document).ready(function(){\$('#home5_table').DataTable({'order':[[1,'asc']],pageLength:" .  to_int($cfg->load('page_len')). ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script></div></div>";
+			print "</tbody></table><script>\$(document).ready(function(){\$('#home5_table').DataTable({'language':{'url':'" . $T{"datatables.lang.json"} . "'},'order':[[1,'asc']],pageLength:" .  to_int($cfg->load('page_len')). ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script></div></div>";
 		}
 	}
 
@@ -1228,7 +1228,7 @@ sub home
 				else { print "<form method='POST' action='.'><input type='hidden' name='m' value='items'><input type='hidden' name='i' value='" . $res[0] . "'><input type='submit' name='checkin' value='Return' class='btn btn-primary pull-right'>" . $res[3] . "</form>"; }
 				print "</td></tr>\n";
 			}
-			print "</tbody></table><script>\$(document).ready(function(){\$('#home6_table').DataTable({'order':[[0,'asc']],pageLength:" .  to_int($cfg->load('page_len')). ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script></div></div>";
+			print "</tbody></table><script>\$(document).ready(function(){\$('#home6_table').DataTable({'language':{'url':'" . $T{"datatables.lang.json"} . "'},'order':[[0,'asc']],pageLength:" .  to_int($cfg->load('page_len')). ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script></div></div>";
 		}
 	}
 }
@@ -2976,8 +2976,8 @@ elsif($q->param('file') && $cfg->load('upload_folder')) # Show an image
 	my $type = $ft->checktype_filename($filename);
 	if(!$type)
 	{
-		headers("Error");
-		msg("File not found or corrupted.", 0);
+		headers($T{"Error"});
+		msg($T{"File not found or corrupted."}, 0);
 		exit(0);
 	}
 	my $actualfile = sanitize_alpha($q->param('file'));
@@ -3005,14 +3005,14 @@ elsif($q->param('m')) # Modules
 	{
 		$cgs = $q->cookie(-name => "np_gs", -expires => '+3M', -value => "1");
 		headers("Settings");
-		print "<p>You are logged in as <b>" . $logged_user . "</b> and your access level is <b>" . $logged_lvl . "</b>.</p>\n";
+		print $T{"<p>You are logged in as <b>"} . $logged_user . $T{"</b> and your access level is <b>"} . $logged_lvl . "</b>.</p>\n";
 		if($logged_lvl > 2 && $cfg->load('comp_time') eq "on")
 		{
 			$sql = $db->prepare("SELECT * FROM timetracking WHERE name = ?;");
 			$sql->execute($logged_user);
 			my $totaltime = 0;
 			while(my @res = $sql->fetchrow_array()) { $totaltime = $totaltime + to_float($res[2]); }
-			print "<p>You have spent a total of <b>" . $totaltime . "</b> hours on tickets.</p>\n";
+			print $T{"<p>You have spent a total of <b>"} . $totaltime . $T{"</b> hours on tickets.</p>"};
 		}
 		if($logged_lvl > 5)
 		{
@@ -3024,10 +3024,10 @@ elsif($q->param('m')) # Modules
 		{
 			if($res[0] eq $logged_user && $res[2] ne "" && $res[5] ne "" && $cfg->load('smtp_server'))
 			{
-				msg("<nobr><form method='POST' action='.'><input type='hidden' name='m' value='confirm_email'></nobr>Your email is not yet confirmed. Please enter the confirmation code here: <input type='text' name='code'> <input class='btn btn-primary pull-right' type='submit' value='Confirm'></form>", 2);
+				msg("<nobr><form method='POST' action='.'><input type='hidden' name='m' value='confirm_email'></nobr>" . $T{"Your email is not yet confirmed. Please enter the confirmation code here:"} . " <input type='text' name='code'> <input class='btn btn-primary pull-right' type='submit' value='" . $T{"Confirm"} . "'></form>", 2);
 			}
 		}
-		if($logged_user ne $cfg->load('admin_name') && !$cfg->load('smtp_server')) { msg("Email notifications are disabled.", 1); }
+		if($logged_user ne $cfg->load('admin_name') && !$cfg->load('smtp_server')) { msg($T{"Email notifications are disabled."}, 1); }
 		if($logged_lvl != 6)
 		{
 			my $email = "";
@@ -3040,16 +3040,16 @@ elsif($q->param('m')) # Modules
 					$email = $res[2];
 				}
 			}
-			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Change your email</h3></div><div class='panel-body'>\n";
-			print "<div class='form-group'><p><form method='POST' action='.' data-toggle='validator' role='form'><input type='hidden' name='m' value='change_email'><div class='row'><div class='col-sm-6'>To change your notification email address, enter a new address here. Leave empty to disable notifications:</div><div class='col-sm-6'><input type='email' name='new_email' class='form-control' data-error='Must be a valid email.' placeholder='Email address' maxlength='99' value='" . $email . "'></div></div></p><div class='help-block with-errors'></div></div><input class='btn btn-primary pull-right' type='submit' value='Change email'></form></div></div>";
-			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Change your language</h3></div><div class='panel-body'>\n";
-			print "<form method='GET' action='.'><p><div class='row'><div class='col-sm-6'>Select your language:</div><div class='col-sm-6'><select name='lang' class='form-control'><option value='EN'>English</option><option value='FR'>Français</option></select></div></div></p><p><input class='btn btn-primary pull-right' type='submit' value='Change language'></p></form></div></div>";
-			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Change your password</h3></div><div class='panel-body'>\n";
-			if($cfg->load("ad_server")) { print "<p>Password management is synchronized with Active Directory.</p>"; }
-			elsif($logged_user eq "demo") { print "<p>The demo account cannot change its password.</p>"; }
+			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>" . $T{"Change your email"} . "</h3></div><div class='panel-body'>\n";
+			print "<div class='form-group'><p><form method='POST' action='.' data-toggle='validator' role='form'><input type='hidden' name='m' value='change_email'><div class='row'><div class='col-sm-6'>" . $T{"To change your notification email address, enter a new address here. Leave empty to disable notifications:"} . "</div><div class='col-sm-6'><input type='email' name='new_email' class='form-control' data-error='" . $T{"Must be a valid email."} . "' placeholder='" . $T{"Email address"} . "' maxlength='99' value='" . $email . "'></div></div></p><div class='help-block with-errors'></div></div><input class='btn btn-primary pull-right' type='submit' value='" . $T{"Change email"} . "'></form></div></div>";
+			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>" . $T{"Change your language"} . "</h3></div><div class='panel-body'>\n";
+			print "<form method='GET' action='.'><p><div class='row'><div class='col-sm-6'>" . $T{"Select your language:"} . "</div><div class='col-sm-6'><select name='lang' class='form-control'><option value='EN'>English</option><option value='FR'>Français</option></select></div></div></p><p><input class='btn btn-primary pull-right' type='submit' value='" . $T{"Change language"} . "'></p></form></div></div>";
+			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>" . $T{"Change your password"} . "</h3></div><div class='panel-body'>\n";
+			if($cfg->load("ad_server")) { print $T{"<p>Password management is synchronized with Active Directory.</p>"}; }
+			elsif($logged_user eq "demo") { print $T{"<p>The demo account cannot change its password.</p>"}; }
 			else
 			{
-				print "<div class='form-group'><p><form method='POST' action='.' data-toggle='validator' role='form'><input type='hidden' name='m' value='change_pass'><div class='row'><div class='col-sm-4'><input placeholder='Current password' class='form-control' type='password' name='current_pass'></div><div class='col-sm-4'><input placeholder='New password' type='password' class='form-control' name='new_pass1' data-minlength='6' id='new_pass1' required></div><div class='col-sm-4'><input class='form-control' type='password' name='new_pass2' id='inputPasswordConfirm' data-match='#new_pass1' data-match-error='Passwords do not match.' placeholder='Confirm' required></div></div></p><div class='help-block with-errors'></div><input class='btn btn-primary pull-right' type='submit' value='Change password'></form></div>";
+				print "<div class='form-group'><p><form method='POST' action='.' data-toggle='validator' role='form'><input type='hidden' name='m' value='change_pass'><div class='row'><div class='col-sm-4'><input placeholder='" . $T{"Current password"} . "' class='form-control' type='password' name='current_pass' data-error='" . $T{"Please fill out this field."} . "' required></div><div class='col-sm-4'><input placeholder='" . $T{"New password"} . "' type='password' class='form-control' name='new_pass1' data-minlength='6' id='new_pass1' data-error='" . $T{"Please fill out this field."} . "' required></div><div class='col-sm-4'><input class='form-control' type='password' name='new_pass2' id='inputPasswordConfirm' data-match='#new_pass1' data-match-error='" . $T{"Passwords do not match."} . "' placeholder='" . $T{"Confirm"} . "' required></div></div></p><div class='help-block with-errors'></div><input class='btn btn-primary pull-right' type='submit' value='" . $T{"Change password"} . "'></form></div>";
 			}
 			print "</div></div>";
 		}
@@ -3201,7 +3201,7 @@ elsif($q->param('m')) # Modules
 		{
 			print "<tr><td><a href='./?m=summary&u=" . $res[0] . "'>" . $res[0] . "</a></td><td>" . $res[2] . "</td><td>" . $res[3] . "</td><td>" . $res[4] . "</td></tr>\n";
 		}
-		print "</tbody></table><script>\$(document).ready(function(){\$('#users_table').DataTable({'order':[[0,'asc']],pageLength:" . to_int($cfg->load('page_len')) . ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script>\n";
+		print "</tbody></table><script>\$(document).ready(function(){\$('#users_table').DataTable({'language':{'url':'" . $T{"datatables.lang.json"} . "'},'order':[[0,'asc']],pageLength:" . to_int($cfg->load('page_len')) . ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script>\n";
 		if(!$cfg->load('ad_server'))
 		{
 			print "<div class='form-group'><h4>Add a new user:</h4><form method='POST' action='.' data-toggle='validator' role='form'>\n";
@@ -3440,7 +3440,7 @@ elsif($q->param('m')) # Modules
 			if($res[0] == $defaultform) { print " <b>(default form)</b>"; }
 			print "</td><td><a href='./?edit_form=" . $res[0] . "'>" . $res[2] . "</a></td><td>" . $res[23] . "</td></tr>\n";
 		}
-		print "</tbody></table><script>\$(document).ready(function(){\$('#customs_table').DataTable({'order':[[1,'asc']],pageLength:" . to_int($cfg->load('page_len')) . ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script></p></div></div>";
+		print "</tbody></table><script>\$(document).ready(function(){\$('#customs_table').DataTable({'language':{'url':'" . $T{"datatables.lang.json"} . "'},'order':[[1,'asc']],pageLength:" . to_int($cfg->load('page_len')) . ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script></p></div></div>";
 	}
 	elsif($q->param('m') eq "log" && $logged_lvl > 5)
 	{
@@ -3462,7 +3462,7 @@ elsif($q->param('m')) # Modules
 		{
 			print "<tr><td>" . $res[0] . "</td><td>" . $res[1] . "</td><td>" . $res[2] . "</td><td>" . $res[3] . "</td></tr>\n";
 		}
-		print "</tbody></table><script>\$(document).ready(function(){\$('#log_table').DataTable({'order':[[3,'desc']],pageLength:" . to_int($cfg->load('page_len')) . ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script></div></div>\n";
+		print "</tbody></table><script>\$(document).ready(function(){\$('#log_table').DataTable({'language':{'url':'" . $T{"datatables.lang.json"} . "'},'order':[[3,'desc']],pageLength:" . to_int($cfg->load('page_len')) . ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script></div></div>\n";
 	}
 	elsif($q->param('m') eq "clients" && $logged_user ne "" && $cfg->load('comp_clients') eq "on")
 	{
@@ -3485,7 +3485,7 @@ elsif($q->param('m')) # Modules
 			if($logged_lvl >= to_int($cfg->load('client_lvl'))) { print "</a>"; }
 			print "</td><td>" . $res[3] . "</td><td>" . $res[2] . "</td></tr>";
 		}		
-		print "</tbody></table><script>\$(document).ready(function(){\$('#clients_table').DataTable({'order':[[0,'asc']],pageLength:" . to_int($cfg->load('page_len')) . ",dom:'Bfrtip',buttons:['copy','csv','excel','pdf','print']});});</script>";
+		print "</tbody></table><script>\$(document).ready(function(){\$('#clients_table').DataTable({'language':{'url':'" . $T{"datatables.lang.json"} . "'},'order':[[0,'asc']],pageLength:" . to_int($cfg->load('page_len')) . ",dom:'Bfrtip',buttons:['copy','csv','excel','pdf','print']});});</script>";
 		print "</div></div>\n";
 	}
 	elsif($q->param('m') eq "save_client" && $q->param('c') && $logged_lvl > 4)
@@ -3768,7 +3768,7 @@ elsif($q->param('m')) # Modules
 			{
 				print "<tr><td>" . $res[2] . "</td><td>" . $res[3] . "</td><td><a href='./?m=view_event&e=" . $res[0] . "&c=" . to_int($q->param('c')) . "'>" . $res[4] . "</a></td><td>" . $res[6] . "</td></tr>\n";
 			}
-			print "</tbody></table><script>\$(document).ready(function(){\$('#events_table').DataTable({'order':[[3,'desc']],pageLength:" .  to_int($cfg->load('page_len')). ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script>\n";
+			print "</tbody></table><script>\$(document).ready(function(){\$('#events_table').DataTable({'language':{'url':'" . $T{"datatables.lang.json"} . "'},'order':[[3,'desc']],pageLength:" .  to_int($cfg->load('page_len')). ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script>\n";
 			print "</div></div>\n";
 			if($cfg->load('comp_billing') eq "on" && $cfg->load('comp_tickets') eq "on")
 			{
@@ -3828,7 +3828,7 @@ elsif($q->param('m')) # Modules
 					print "</td></tr>\n";
 				}
 				print "</tbody><tfoot><tr><th>Total</th><th></th><th>\$" . $total . "</th></tr>\n";
-				print "</tfoot></table><script>\$(document).ready(function(){\$('#billing_table').DataTable({'order':[[0,'desc']],pageLength:" .  to_int($cfg->load('page_len')). ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script></p></div></div>\n";
+				print "</tfoot></table><script>\$(document).ready(function(){\$('#billing_table').DataTable({'language':{'url':'" . $T{"datatables.lang.json"} . "'},'order':[[0,'desc']],pageLength:" .  to_int($cfg->load('page_len')). ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script></p></div></div>\n";
 			}
 		}
 		if($cfg->load('comp_items') eq "on")
@@ -3845,7 +3845,7 @@ elsif($q->param('m')) # Modules
 				else { print "<font color='red'>Checked out by: " . $res[8] . "</font>"; }
 				print "</td></tr>\n";
 			}
-			print "</tbody></table><script>\$(document).ready(function(){\$('#clientitems_table').DataTable({'order':[[0,'asc']],pageLength:" .  to_int($cfg->load('page_len')). ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script></div></div>\n";
+			print "</tbody></table><script>\$(document).ready(function(){\$('#clientitems_table').DataTable({'language':{'url':'" . $T{"datatables.lang.json"} . "'},'order':[[0,'asc']],pageLength:" .  to_int($cfg->load('page_len')). ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script></div></div>\n";
 		}
 	}
 	elsif($q->param('m') eq "add_client" && $logged_lvl > 4)
@@ -3889,11 +3889,11 @@ elsif($q->param('m')) # Modules
 				$sql = $db->prepare("UPDATE users SET confirm = '' WHERE name = ?;");
 				$sql->execute($logged_user);
 				$found = 1;
-				msg("Email address confirmed. Press <a href='.'>here</a> to continue.", 3);
+				msg($T{"Email address confirmed. Press <a href='.'>here</a> to continue."}, 3);
 				last;
 			}
 		}
-		if(!$found) { msg("Confirmation code not found. Please go back and try again.", 0); }
+		if(!$found) { msg($T{"Confirmation code not found. Please go back and try again."}, 0); }
 	}
 	elsif($q->param('m') eq "change_pass" && $logged_user ne "" && defined($q->param('new_pass1')) && defined($q->param('new_pass2')) && defined($q->param('current_pass')))
 	{
@@ -3946,8 +3946,8 @@ elsif($q->param('m')) # Modules
 					$sql->execute($logged_user);
 					$sql = $db->prepare("UPDATE users SET email = '" . sanitize_email($q->param('new_email')) . "' WHERE name = ?;");
 					$sql->execute($logged_user);
-					msg("Email address updated. Press <a href='.'>here</a> to continue.", 3);
-					notify($logged_user, "Email confirmation", "You are receiving this email because a user was created with this email address. Please confirm your email by logging into the NodePoint interface, and entering the following confirmation code under Settings: " . $confirm);
+					msg($T{"Email address updated. Press <a href='.'>here</a> to continue."}, 3);
+					notify($logged_user, $T{"Email confirmation"}, $T{"You are receiving this email because a user was created with this email address. Please confirm your email by logging into the NodePoint interface, and entering the following confirmation code under Settings: "} . $confirm);
 					last;
 				}
 			}
@@ -3960,29 +3960,29 @@ elsif($q->param('m')) # Modules
 		headers("Settings");
 		$sql = $db->prepare("DELETE FROM sessions WHERE user = ?;");
 		$sql->execute($logged_user);
-		msg("You have now logged out. Press <a href='.'>here</a> to go back to the login page.", 3);
+		msg($T{"You have now logged out. Press <a href='.'>here</a> to go back to the login page."}, 3);
 	}
 	elsif($q->param('m') eq "change_lvl" && $logged_lvl > 4 && $q->param('u') && defined($q->param('newlvl')))
 	{
 		headers("Users management");
 		if(to_int($q->param('newlvl')) < 0 || to_int($q->param('newlvl')) > 5)
 		{
-			msg("Invalid access level. Please go back and try again.", 0);
+			msg($T{"Invalid access level. Please go back and try again."}, 0);
 		}
 		else
 		{
 			$sql = $db->prepare("UPDATE users SET level = ? WHERE name = ?;");
 			$sql->execute(to_int($q->param('newlvl')), sanitize_alpha($q->param('u')));
-			msg("Updated access level for user <b>" . sanitize_alpha($q->param('u')) . "</b>. Press <a href='./?m=users'>here</a> to continue.", 3);
-			logevent("Level change: " . sanitize_alpha($q->param('u')));
+			msg($T{"Updated access level for user <b>"} . sanitize_alpha($q->param('u')) . $T{"</b>. Press <a href='./?m=users'>here</a> to continue."}, 3);
+			logevent($T{"Level change: "} . sanitize_alpha($q->param('u')));
 		}
 	}
 	elsif($q->param('m') eq "change_lvl" && $logged_lvl > 4 && $q->param('u'))
 	{
 		headers("Users management");
-		print "<p><form method='POST' action='.'><input type='hidden' name='m' value='change_lvl'><input type='hidden' name='u' value='" . sanitize_alpha($q->param('u')) . "'>Select a new access level for user <b>" . sanitize_alpha($q->param('u')) . "</b>: <select name='newlvl'><option>0</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select><br><input class='btn btn-primary' type='submit' value='Change level'></form></p><br>\n";
-		print "<p>Here is a list of available NodePoint levels:</p>\n";
-		print "<table class='table table-striped'><tr><th>Level</th><th>Name</th><th>Description</th></tr><tr><td>6</td><td>NodePoint Admin</td><td>Can change basic NodePoint settings</td></tr><td>5</td><td>Users management</td><td>Can manage users, reset passwords, edit clients</td></tr><tr><td>4</td><td>" . $items{"Product"} . "s management</td><td>Can add, retire and edit " . lc($items{"Product"}) . "s, edit articles and items</td></tr><tr><td>3</td><td>Tickets management</td><td>Can create " . lc($items{"Release"}) . "s, update tickets, track time</td></tr><tr><td>2</td><td>Restricted view</td><td>Can view restricted tickets and " . lc($items{"Product"}) . "s</td></tr><tr><td>1</td><td>Authorized users</td><td>Can create tickets and comments</td></tr><tr><td>0</td><td>Unauthorized users</td><td>Can view private tickets</td></tr></table>\n";
+		print "<p><form method='POST' action='.'><input type='hidden' name='m' value='change_lvl'><input type='hidden' name='u' value='" . sanitize_alpha($q->param('u')) . "'>" . $T{"Select a new access level for user <b>"} . sanitize_alpha($q->param('u')) . "</b>: <select name='newlvl'><option>0</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select><br><input class='btn btn-primary' type='submit' value='Change level'></form></p><br>\n";
+		print $T{"<p>Here is a list of available NodePoint levels:</p>"};
+		print "<table class='table table-striped'><tr><th>Level</th><th>Name</th><th>Description</th></tr><tr><td>6</td><td>NodePoint Admin</td><td>" . $T{"Can change basic NodePoint settings"} . "</td></tr><td>5</td><td>Users management</td><td>" . $T{"Can manage users, reset passwords, edit clients"} . "</td></tr><tr><td>4</td><td>" . $items{"Product"} . "s management</td><td>" . $T{"Can add, retire and edit "} . lc($items{"Product"}) . $T{"s, edit articles and items"} . "</td></tr><tr><td>3</td><td>Tickets management</td><td>" . $T{"Can create "} . lc($items{"Release"}) . $T{"s, update tickets, track time"} . "</td></tr><tr><td>2</td><td>Restricted view</td><td>" . $T{"Can view restricted tickets and "} . lc($items{"Product"}) . "s</td></tr><tr><td>1</td><td>Authorized users</td><td>" . $T{"Can create tickets and comments"} . "</td></tr><tr><td>0</td><td>Unauthorized users</td><td>" . $T{"Can view private tickets"} . "</td></tr></table>\n";
 	}
 	elsif($q->param('m') eq "reset_pass" && $logged_lvl > 4 && $q->param('u'))
 	{
@@ -3990,8 +3990,8 @@ elsif($q->param('m')) # Modules
 		my $newpass = join'', map +(0..9,'a'..'z','A'..'Z')[rand(10+26*2)], 1..8;
 		$sql = $db->prepare("UPDATE users SET pass = ? WHERE name = ?;");
 		$sql->execute(sha1_hex($newpass), sanitize_alpha($q->param('u')));
-		msg("Password reset for user <b>" . sanitize_alpha($q->param('u')) . "</b>. The new password is  <b>" . $newpass . "</b>  Press <a href='./?m=users'>here</a> to continue.", 3);
-		notify(sanitize_alpha($q->param('u')), "Password reset", "Your password has been reset by user: " . $logged_user);
+		msg($T{"Password reset for user <b>"} . sanitize_alpha($q->param('u')) . $T{"</b>. The new password is <b>"} . $newpass . $T{"</b>. Press <a href='./?m=users'>here</a> to continue."}, 3);
+		notify(sanitize_alpha($q->param('u')), $T{"Password reset"}, $T{"Your password has been reset by user: "} . $logged_user);
 		logevent("Password change: " . sanitize_alpha($q->param('u')));
 	}
 	elsif($q->param('m') eq "auto_assign" && $q->param('p') && $q->param('a') && $logged_lvl > 2)
@@ -4082,7 +4082,7 @@ elsif($q->param('m')) # Modules
 				else { print "<tr><td>" . $res[0] . "</td><td>" . $product . "</td><td><a href='./?kb=" . $res[0] . "'>" . $res[2] . "</a></td><td>" . $res[7] . "</td></tr>\n"; }
 			}			
 		}
-		print "</tbody></table><script>\$(document).ready(function(){\$('#articles_table').DataTable({'order':[[2,'asc']],pageLength:" .  to_int($cfg->load('page_len')). ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script></div></div>\n";
+		print "</tbody></table><script>\$(document).ready(function(){\$('#articles_table').DataTable({'language':{'url':'" . $T{"datatables.lang.json"} . "'},'order':[[2,'asc']],pageLength:" .  to_int($cfg->load('page_len')). ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script></div></div>\n";
 	}
 	elsif($q->param('m') eq "view_product" && $q->param('p'))
 	{
@@ -4161,7 +4161,7 @@ elsif($q->param('m')) # Modules
 					if($logged_lvl > 2) { print "<span class='pull-right'><form method='GET' action='.'><input type='hidden' name='product_id' value='" . to_int($q->param('p')) . "'><input type='hidden' name='m' value='delete_release'><input type='hidden' name='release_id' value='" . $res[0] . "'><input class='btn btn-danger' type='submit' value='X'></form></span>"; } 
 					print "</td></tr>\n";
 				}
-				print "</tbody></table><script>\$(document).ready(function(){\$('#releases_table').DataTable({'order':[[3,'desc']],pageLength:" .  to_int($cfg->load('page_len')). ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script></div></div>\n";
+				print "</tbody></table><script>\$(document).ready(function(){\$('#releases_table').DataTable({'language':{'url':'" . $T{"datatables.lang.json"} . "'},'order':[[3,'desc']],pageLength:" .  to_int($cfg->load('page_len')). ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script></div></div>\n";
 			}
 			if($cfg->load('comp_steps') eq "on" && (($vis eq "Restricted" && $logged_lvl > 1) || $logged_lvl > 0))
 			{
@@ -4190,7 +4190,7 @@ elsif($q->param('m')) # Modules
 					if($logged_lvl >= to_int($cfg->load('tasks_lvl')) && $vis ne "Archived") { print "<span class='pull-right'><form method='POST' action='.'><input type='hidden' name='product_id' value='" . to_int($q->param('p')) . "'><input type='hidden' name='m' value='delete_step'><input type='hidden' name='step_id' value='" . $res[0] . "'><input class='btn btn-danger pull-right' type='submit' value='X'></form></span>"; }
 					print "</td></tr>";
 				}				
-				print "</tbody></table><script>\$(document).ready(function(){\$('#tasks_table').DataTable({'order':[[3,'desc']],pageLength:" .  to_int($cfg->load('page_len')). ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script></div></div>\n";    
+				print "</tbody></table><script>\$(document).ready(function(){\$('#tasks_table').DataTable({'language':{'url':'" . $T{"datatables.lang.json"} . "'},'order':[[3,'desc']],pageLength:" .  to_int($cfg->load('page_len')). ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script></div></div>\n";    
 			}
 			if($cfg->load('comp_articles') eq "on" && ($vis eq "Public" || ($vis eq "Private" && $logged_user ne "") || ($vis eq "Restricted" && $logged_lvl > 1) || $logged_lvl > 3))
 			{
@@ -4217,7 +4217,7 @@ elsif($q->param('m')) # Modules
 						else { print "<tr><td>" . $res[0] . "</td><td><a href='./?kb=" . $res[0] . "'>" . $res[2] . "</a></td><td>" . $res[7] . "</td></tr>\n"; }
 					}			
 				}
-				print "</tbody></table><script>\$(document).ready(function(){\$('#relatedarticles_table').DataTable({'order':[[0,'asc']],pageLength:" .  to_int($cfg->load('page_len')). ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script></div></div>\n";
+				print "</tbody></table><script>\$(document).ready(function(){\$('#relatedarticles_table').DataTable({'language':{'url':'" . $T{"datatables.lang.json"} . "'},'order':[[0,'asc']],pageLength:" .  to_int($cfg->load('page_len')). ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script></div></div>\n";
 			}
 		}
 		if($cfg->load('comp_items') eq "on" && ($vis eq "Public" || ($vis eq "Private" && $logged_user ne "") || ($vis eq "Restricted" && $logged_lvl > 1) || $logged_lvl > 3))
@@ -4234,7 +4234,7 @@ elsif($q->param('m')) # Modules
 				else { print "<font color='red'>Checked out by: " . $res[8] . "</font>"; }
 				print "</td></tr>\n";
 			}
-			print "</tbody></table><script>\$(document).ready(function(){\$('#relateditems_table').DataTable({'order':[[0,'asc']],pageLength:" .  to_int($cfg->load('page_len')). ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script></div></div>\n";
+			print "</tbody></table><script>\$(document).ready(function(){\$('#relateditems_table').DataTable({'language':{'url':'" . $T{"datatables.lang.json"} . "'},'order':[[0,'asc']],pageLength:" .  to_int($cfg->load('page_len')). ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script></div></div>\n";
 		}
 	}
 	elsif($logged_lvl > 2 && $q->param('m') eq "delete_release")
@@ -4516,7 +4516,7 @@ elsif($q->param('m')) # Modules
 		{
 			if($res[5] eq "Public" || ($res[5] eq "Private" && $logged_user ne "") || ($res[5] eq "Restricted" && $logged_lvl > 1) || $logged_lvl > 3) { print "<tr><td>" . $res[0] . "</td><td><a href='./?m=view_product&p=" . $res[0] . "'>" . $res[1] . "</a></td><td>" . $res[2] . "</td></tr>\n"; }
 		}
-		print "</tbody></table><script>\$(document).ready(function(){\$('#projects_table').DataTable({'order':[[1,'asc']],pageLength:" .  to_int($cfg->load('page_len')). ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script></div></div>\n";
+		print "</tbody></table><script>\$(document).ready(function(){\$('#projects_table').DataTable({'language':{'url':'" . $T{"datatables.lang.json"} . "'},'order':[[1,'asc']],pageLength:" .  to_int($cfg->load('page_len')). ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script></div></div>\n";
 	}
 	elsif($q->param('m') eq "update_ticket" && $logged_lvl > 2 && $q->param('t'))
 	{
@@ -5183,7 +5183,7 @@ elsif($q->param('m')) # Modules
 			{
 				print "<tr><td>" . $res[0] . "</td><td>" . $res[1] . "</td><td>" . $res[2] . "</td></tr>";
 			}
-			print "</tbody></table><script>\$(document).ready(function(){\$('#autolog_table').DataTable({'order':[[2,'desc']],pageLength:" . to_int($cfg->load('page_len')) . ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script></div></div>\n";
+			print "</tbody></table><script>\$(document).ready(function(){\$('#autolog_table').DataTable({'language':{'url':'" . $T{"datatables.lang.json"} . "'},'order':[[2,'desc']],pageLength:" . to_int($cfg->load('page_len')) . ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script></div></div>\n";
 		}
 	}
 	elsif($q->param('m') eq "files" && $cfg->load('comp_files') eq "on" && $logged_lvl >= to_int($cfg->load('upload_lvl')))
@@ -5256,7 +5256,7 @@ elsif($q->param('m')) # Modules
 			while(my @res2 = $sql2->fetchrow_array()) { $accesscount = to_int($res2[0]); }
 			print "<tr><td>" . $res[2] . "</td><td>" . to_int($res[4]) . "</td><td>" . $res[0] . "</td><td>" . $res[3] . "</td><td>" . $accesscount . "</td><td><a href='./?file=" . $res[1] . "'>" . $res[1] . "</a><span class='pull-right'><form method='POST' action='.'><input type='hidden' name='m' value='files'><input type='hidden' name='delete_file' value='" . $res[1] . "'><input class='btn btn-danger pull-right' type='submit' value='X'></form></span></td></tr>\n";
 		}
-		print "</tbody></table><script>\$(document).ready(function(){\$('#files_table').DataTable({'order':[[0,'asc']],pageLength:" . to_int($cfg->load('page_len')) . ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script>\n";
+		print "</tbody></table><script>\$(document).ready(function(){\$('#files_table').DataTable({'language':{'url':'" . $T{"datatables.lang.json"} . "'},'order':[[0,'asc']],pageLength:" . to_int($cfg->load('page_len')) . ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script>\n";
 		print "</div></div>\n";
 		if($logged_lvl > 5)
 		{
@@ -5274,7 +5274,7 @@ elsif($q->param('m')) # Modules
 			{
 				print "<tr><td>" . $res[0] . "</td><td>" . $res[1] . "</td><td>" . $res[2] . "</td></tr>\n";
 			}
-			print "</tbody></table><script>\$(document).ready(function(){\$('#files_log').DataTable({'order':[[2,'desc']],pageLength:" . to_int($cfg->load('page_len')) . ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script>\n";
+			print "</tbody></table><script>\$(document).ready(function(){\$('#files_log').DataTable({'language':{'url':'" . $T{"datatables.lang.json"} . "'},'order':[[2,'desc']],pageLength:" . to_int($cfg->load('page_len')) . ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script>\n";
 			print "</div></div>\n";
 		}
 	}
@@ -5541,7 +5541,7 @@ elsif($q->param('m')) # Modules
 						$totaltime += to_float($res[2]);
 					}
 					print "</tbody><tfoot><tr><th>Total</th><th>" . $totaltime . "</th><th></th></tr></tfoot>\n";
-					print "</table><script>\$(document).ready(function(){\$('#time_table').DataTable({'order':[[2,'desc']],pageLength:" . to_int($cfg->load('page_len')) . ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script></div></div>\n";
+					print "</table><script>\$(document).ready(function(){\$('#time_table').DataTable({'language':{'url':'" . $T{"datatables.lang.json"} . "'},'order':[[2,'desc']],pageLength:" . to_int($cfg->load('page_len')) . ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script></div></div>\n";
 				}
 				print "<h3>Comments</h3>";
 				if($logged_lvl > 0 && $res[8] ne "Closed")
@@ -6182,7 +6182,7 @@ elsif($q->param('m')) # Modules
 		}
 		if(to_int($totalresults) == 0) { $totalresults = keys(%results); }
 		print "</tbody><tfoot><tr><td><b>Total</b></td><td><b>" . $totalresults . "</b></td></tr>";
-		print "</tfoot></table><script>\$(document).ready(function(){\$('#report_table').DataTable({'order':[[0,'asc']],pageLength:" .  to_int($cfg->load('page_len')). ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script></div></div>"; 
+		print "</tfoot></table><script>\$(document).ready(function(){\$('#report_table').DataTable({'language':{'url':'" . $T{"datatables.lang.json"} . "'},'order':[[0,'asc']],pageLength:" .  to_int($cfg->load('page_len')). ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script></div></div>"; 
 	}
 	elsif($q->param('m') eq "unlink_article" && $q->param('articleid') && $q->param('ticketid') && $logged_lvl > 3)
 	{
@@ -6229,7 +6229,7 @@ elsif($q->param('m')) # Modules
 				print $res[0] . "</nobr></td><td>" . $res[3] . "</td><td>" . $products[$res[1]] . "</td><td><a href='./?m=view_ticket&t=" . $res[0] . "'>" . $res[5] . "</a></td><td>" . $res[8] . "</td><td>" . $res[11] . "</td></tr>\n"; 
 			}
 		}
-		print "</tbody></table><script>\$(document).ready(function(){\$('#tickets_table').DataTable({'order':[[0,'desc']],pageLength:" . to_int($cfg->load('page_len')) . ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script></div></div>\n";
+		print "</tbody></table><script>\$(document).ready(function(){\$('#tickets_table').DataTable({'language':{'url':'" . $T{"datatables.lang.json"} . "'},'order':[[0,'desc']],pageLength:" . to_int($cfg->load('page_len')) . ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script></div></div>\n";
 	}
 	elsif($q->param('m') eq "items" && $cfg->load('comp_items') eq "on" && $logged_user ne "")
 	{
@@ -6632,7 +6632,7 @@ elsif($q->param('m')) # Modules
 				{
 					print "<tr><td>" . $res[0] . "</td><td>" . $res[1] . "</td><td>" . $res[2] . "</td></tr>";
 				}
-				print "</tbody></table><script>\$(document).ready(function(){\$('#checkouts_table').DataTable({'order':[[2,'desc']],pageLength:" .  to_int($cfg->load('page_len')). ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script></div></div>";
+				print "</tbody></table><script>\$(document).ready(function(){\$('#checkouts_table').DataTable({'language':{'url':'" . $T{"datatables.lang.json"} . "'},'order':[[2,'desc']],pageLength:" .  to_int($cfg->load('page_len')). ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script></div></div>";
 			}
 		}
 		else # Items list
@@ -6678,7 +6678,7 @@ elsif($q->param('m')) # Modules
 					{
 						print "<tr><td>" . $res[2] . "</td><td>" . $res[1] . "</td><td>" . $res[3] . "</td><td>" . $res[8] . "</td><td><form method='POST' action='.'><input type='hidden' name='m' value='items'><input type='hidden' name='i' value='" . $res[0] . "'><input class='btn btn-success' type='submit' name='approve' value='Approve'> <input type='submit' class='btn btn-danger' name='deny' value='Deny'></form></td></tr>\n";
 					}
-					print "</tbody></table><script>\$(document).ready(function(){\$('#approval_table').DataTable({'order':[[0,'asc']],pageLength:" .  to_int($cfg->load('page_len')). ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script><hr><h4>Items list</h4>\n";
+					print "</tbody></table><script>\$(document).ready(function(){\$('#approval_table').DataTable({'language':{'url':'" . $T{"datatables.lang.json"} . "'},'order':[[0,'asc']],pageLength:" .  to_int($cfg->load('page_len')). ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script><hr><h4>Items list</h4>\n";
 				}
 			}
 			print "<table class='table table-striped' id='items_table'><thead><tr><th>Type</th><th>Name</th><th>Serial</th><th>Status</th></tr></thead><tbody>\n";
@@ -6705,7 +6705,7 @@ elsif($q->param('m')) # Modules
 				print "</td></tr>\n";
 				$expired = 0;
 			}
-			print "</tbody></table><script>\$(document).ready(function(){\$('#items_table').DataTable({'order':[[0,'asc']],pageLength:" . to_int($cfg->load('page_len')) . ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script></div></div>\n";
+			print "</tbody></table><script>\$(document).ready(function(){\$('#items_table').DataTable({'language':{'url':'" . $T{"datatables.lang.json"} . "'},'order':[[0,'asc']],pageLength:" . to_int($cfg->load('page_len')) . ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script></div></div>\n";
 		}
 	}
 	else # This happens if an invalid address was specified, or if the user's session ran out
@@ -6960,7 +6960,7 @@ elsif($q->param('kb') && $cfg->load('comp_articles') eq "on")
 						print "</tr>\n";
 					} 
 				}
-				print "</tbody></table><script>\$(document).ready(function(){\$('#linkedtickets_table').DataTable({'order':[[0,'desc']],pageLength:" .  to_int($cfg->load('page_len')). ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script></div></div>\n";
+				print "</tbody></table><script>\$(document).ready(function(){\$('#linkedtickets_table').DataTable({'language':{'url':'" . $T{"datatables.lang.json"} . "'},'order':[[0,'desc']],pageLength:" .  to_int($cfg->load('page_len')). ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script></div></div>\n";
 			}
 		}
 		else

@@ -16,9 +16,12 @@ package nodepointlc;
 # - Try to match the punctuation and capitalization as best you can.
 # - Add the new language in the lang() function at the bottom.
 # - Add the new language to 3 locations in nodepoint.pl (look for 'Default language' and 'Change your language').
+# - Download the needed datatables.<lang>.json file from https://www.datatables.net/plug-ins/i18n/
 
 %TMPL =
 (
+	# Language files
+	"datatables.lang.json", "",
 	# Tabs
 	"Home", "",
 	"Product", "",
@@ -89,6 +92,10 @@ package nodepointlc;
 	"Could not send notification email to ", "",
 	", target email was rejected.", "",
 	", connection to SMTP server failed.", "",
+	"Email confirmation", "",
+	"You are receiving this email because a user was created with this email address. Please confirm your email by logging into the NodePoint interface, and entering the following confirmation code under Settings: ", "",
+	"Password reset", "",
+	"Your password has been reset by user: ", "",
 	# Home page
 	"There are ", "",
 	" items awaiting checkout approval. Press <a href='./?m=items'>here</a> to view the list.", "",
@@ -132,14 +139,63 @@ package nodepointlc;
 	"Type", "",
 	"Name", "",
 	"Serial", "",
-	
+	# Settings
+	"<p>You are logged in as <b>", "",
+	"</b> and your access level is <b>", "",
+	"<p>You have spent a total of <b>", "",
+	"</b> hours on tickets.</p>", "",
+	"Your email is not yet confirmed. Please enter the confirmation code here:", "",
+	"Email notifications are disabled.", "",
+	"Change your email", "",
+	"To change your notification email address, enter a new address here. Leave empty to disable notifications:", "",
+	"Must be a valid email.", "",
+	"Email address", "",
+	"Change email", "",
+	"Change your language", "",
+	"Select your language:", "",
+	"Change language", "",
+	"Change your password", "",
+	"<p>Password management is synchronized with Active Directory.</p>", "",
+	"<p>The demo account cannot change its password.</p>", "",
+	"Current password", "",
+	"New password", "",
+	"Passwords do not match.", "",
+	"Change password", "",
+	"Email address confirmed. Press <a href='.'>here</a> to continue.", "",
+	"Confirmation code not found. Please go back and try again.", "",
+	"Email address updated. Press <a href='.'>here</a> to continue.", "",
+	# Users
+	"You have now logged out. Press <a href='.'>here</a> to go back to the login page.", "",
+	"Invalid access level. Please go back and try again.", "",
+	"Updated access level for user <b>", "",
+	"</b>. Press <a href='./?m=users'>here</a> to continue.", "",
+	"Level change: ", "",
+	"Select a new access level for user <b>", "",
+	"<p>Here is a list of available NodePoint levels:</p>", "",
+	"Can change basic NodePoint settings", "",
+	"Can manage users, reset passwords, edit clients", "",
+	"Can add, retire and edit ", "",
+	"s, edit articles and items", "",
+	"Can create ", "",
+	"s, update tickets, track time", "",
+	"Can view restricted tickets and ", "",
+	"Can create tickets and comments", "",
+	"Can view private tickets", "",
+	"Password reset for user <b>", "",
+	"</b>. The new password is <b>", "",
+	"</b>. Press <a href='./?m=users'>here</a> to continue." ,"",
+	# Files
+	"File not found or corrupted.", "",
 	# Buttons
 	"Post", "",
 	"Save", "",
+	"Confirm", "",
 );
 
 %EN =
 (
+	# Language files
+	"datatables.lang.json", "datatables.en.json",
 	# Tabs
 	"Home", "Home",
 	"Product", "Product",
@@ -210,6 +266,10 @@ package nodepointlc;
 	"Could not send notification email to ", "Could not send notification email to ",
 	", target email was rejected.", ", target email was rejected.",
 	", connection to SMTP server failed.", ", connection to SMTP server failed.",
+	"Email confirmation", "Email confirmation",
+	"You are receiving this email because a user was created with this email address. Please confirm your email by logging into the NodePoint interface, and entering the following confirmation code under Settings: ", "You are receiving this email because a user was created with this email address. Please confirm your email by logging into the NodePoint interface, and entering the following confirmation code under Settings: ",
+	"Password reset", "Password reset",
+	"Your password has been reset by user: ", "Your password has been reset by user: ",
 	# Home page
 	"There are ", "There are ",
 	" items awaiting checkout approval. Press <a href='./?m=items'>here</a> to view the list.", " items awaiting checkout approval. Press <a href='./?m=items'>here</a> to view the list.",
@@ -253,15 +313,63 @@ package nodepointlc;
 	"Type", "Type",
 	"Name", "Name",
 	"Serial", "Serial",
-	 
+	# Settings
+	"<p>You are logged in as <b>", "<p>You are logged in as <b>",
+	"</b> and your access level is <b>", "</b> and your access level is <b>",
+	"<p>You have spent a total of <b>", "<p>You have spent a total of <b>",
+	"</b> hours on tickets.</p>", "</b> hours on tickets.</p>",
+	"Your email is not yet confirmed. Please enter the confirmation code here:", "Your email is not yet confirmed. Please enter the confirmation code here:",
+	"Email notifications are disabled.", "Email notifications are disabled.",
+	"Change your email", "Change your email",
+	"To change your notification email address, enter a new address here. Leave empty to disable notifications:", "To change your notification email address, enter a new address here. Leave empty to disable notifications:",
+	"Must be a valid email.", "Must be a valid email.",
+	"Email address", "Email address",
+	"Change email", "Change email",
+	"Change your language", "Change your language",
+	"Select your language:", "Select your language:",
+	"Change language", "Change language",
+	"Change your password", "Change your password",
+	"<p>Password management is synchronized with Active Directory.</p>", "<p>Password management is synchronized with Active Directory.</p>",
+	"<p>The demo account cannot change its password.</p>", "<p>The demo account cannot change its password.</p>",
+	"Current password", "Current password",
+	"New password", "New password",
+	"Passwords do not match.", "Passwords do not match.",
+	"Change password", "Change password",
+	"Email address confirmed. Press <a href='.'>here</a> to continue.", "Email address confirmed. Press <a href='.'>here</a> to continue.",
+	"Confirmation code not found. Please go back and try again.", "Confirmation code not found. Please go back and try again.",
+	"Email address updated. Press <a href='.'>here</a> to continue.", "Email address updated. Press <a href='.'>here</a> to continue.",
+	# Users
+	"You have now logged out. Press <a href='.'>here</a> to go back to the login page.", "You have now logged out. Press <a href='.'>here</a> to go back to the login page.",
+	"Invalid access level. Please go back and try again.", "Invalid access level. Please go back and try again.",
+	"Updated access level for user <b>", "Updated access level for user <b>",
+	"</b>. Press <a href='./?m=users'>here</a> to continue.", "</b>. Press <a href='./?m=users'>here</a> to continue.",
+	"Level change: ", "Level change: ",
+	"Select a new access level for user <b>", "Select a new access level for user <b>",
+	"<p>Here is a list of available NodePoint levels:</p>", "<p>Here is a list of available NodePoint levels:</p>",
+	"Can change basic NodePoint settings", "Can change basic NodePoint settings",
+	"Can manage users, reset passwords, edit clients", "Can manage users, reset passwords, edit clients",
+	"Can add, retire and edit ", "Can add, retire and edit ",
+	"s, edit articles and items", "s, edit articles and items",
+	"Can create ", "Can create ",
+	"s, update tickets, track time", "s, update tickets, track time",
+	"Can view restricted tickets and ", "Can view restricted tickets and ",
+	"Can create tickets and comments", "Can create tickets and comments",
+	"Can view private tickets", "Can view private tickets",
+	"Password reset for user <b>", "Password reset for user <b>",
+	"</b>. The new password is <b>", "</b>. The new password is <b>",
+	"</b>. Press <a href='./?m=users'>here</a> to continue.", "</b>. Press <a href='./?m=users'>here</a> to continue.",
+	# Files
+	"File not found or corrupted.", "File not found or corrupted.",
 	# Buttons
 	"Post", "Post",
 	"Save", "Save",
-	
+	"Confirm", "Confirm",
 );
 
 %FR =
 (
+	# Language files
+	"datatables.lang.json", "datatables.fr.json",
 	# Tabs
 	"Home", "Accueil",
 	"Product", "Produit",
@@ -332,6 +440,10 @@ package nodepointlc;
 	"Could not send notification email to ", "Impossible d'envoyer une notification email à ",
 	", target email was rejected.", ", le email a été rejeté.",
 	", connection to SMTP server failed.", ", la connexion au serveur SMTP a échoué.",
+	"Email confirmation", "Confirmation email",
+	"You are receiving this email because a user was created with this email address. Please confirm your email by logging into the NodePoint interface, and entering the following confirmation code under Settings: ", "Vous recevez ce email car un utilisateur a été créé à cette adresse e-mail. S'il vous plaît confirmer votre email en vous connectant à l'interface NodePoint, et en entrant le code de confirmation suivant sous Paramètres: ",
+	"Password reset", "Changement de mot de passe",
+	"Your password has been reset by user: ", "Votre mot de passe a été réinitialisé par l'utilisateur: ",
 	# Home page
 	"There are ", "Il y a ",
 	" items awaiting checkout approval. Press <a href='./?m=items'>here</a> to view the list.", " objets en attente d&apos;approbation. Appuyez <a href='./?m=items'>ici</a> pour afficher la liste.",
@@ -375,11 +487,56 @@ package nodepointlc;
 	"Type", "Type",
 	"Name", "Nom",
 	"Serial", "Num. de série",
-	
+	# Settings
+	"<p>You are logged in as <b>", "<p>Vous êtes connecté sous <b>",
+	"</b> and your access level is <b>", "</b> et votre niveau d'accès est <b>",
+	"<p>You have spent a total of <b>", "<p>Vous avez passé un total de <b>",
+	"</b> hours on tickets.</p>", "</b> heures sur des billets.</p>",
+	"Your email is not yet confirmed. Please enter the confirmation code here:", "Votre email n'est pas encore confirmé. S'il vous plaît entrez le code de confirmation:",
+	"Email notifications are disabled.", "Les notifications email sont désactivées.",
+	"Change your email", "Changer votre email",
+	"To change your notification email address, enter a new address here. Leave empty to disable notifications:", "Pour changer votre adresse email de notification, entrez une nouvelle adresse ici. Laisser vide pour désactiver les notifications:",
+	"Must be a valid email.", "Doit être une adresse email valide.",
+	"Email address", "Adresse email",
+	"Change email", "Change email",
+	"Change your language", "Changer votre langue",
+	"Select your language:", "Entrez votre langue:",
+	"Change language", "Changer langue",
+	"Change your password", "Changer votre mot de passe",
+	"<p>Password management is synchronized with Active Directory.</p>", "<p>La gestion des mots de passe est synchronisé avec Active Directory.</p>",
+	"<p>The demo account cannot change its password.</p>", "<p>Le compte démo ne peut pas changer son mot de passe.</p>",
+	"Current password", "Mot de passe actuel",
+	"New password", "Nouveau mot de passe",
+	"Passwords do not match.", "Les mots de passe ne correspondent pas.",
+	"Change password", "Changer mot de passe",
+	"Email address confirmed. Press <a href='.'>here</a> to continue.", "Adresse email confirmée. Appuyez <a href='.'>ici</a> pour continuer.",
+	"Confirmation code not found. Please go back and try again.", "Code de confirmation non trouvé. S'il vous plaît revenir en arrière et essayer à nouveau.",
+	"Email address updated. Press <a href='.'>here</a> to continue.", "Adresse email mis à jour. Appuyez <a href='.'>ici</a> pour continuer.",
+	# Users
+	"You have now logged out. Press <a href='.'>here</a> to go back to the login page.", "Vous êtes déconnecté. Appuyez <a href='.'>ici</a> pour revenir à la page de connexion.",
+	"Invalid access level. Please go back and try again.", "Niveau d'accès non valide. S'il vous plaît revenir en arrière et essayer à nouveau.",
+	"Updated access level for user <b>", "Niveau d'accès Mise à jour pour l'utilisateur", "</b>. Appuiyez <a href='./?m=users'>ici</a> pour continuer.",
+	"Level change: ", "Changement de niveau: ",
+	"Select a new access level for user <b>", "Sélectionnez un nouveau niveau d'accès pour l'utilisateur <b>",
+	"<p>Here is a list of available NodePoint levels:</p>", "<p>Voici une liste des niveaux NodePoint disponibles:</p>",
+	"Can change basic NodePoint settings", "Modifier les paramètres de base de NodePoint",
+	"Can manage users, reset passwords, edit clients", "Gérer les utilisateurs, les mots de passe et modifier les clients",
+	"Can add, retire and edit ", "Ajouter , retirer et modifier les ",
+	"s, edit articles and items", "s, modifier les articles et objets",
+	"Can create ", "Créer les ",
+	"s, update tickets, track time", "s, modifier les billets, suivre le temps", 
+	"Can view restricted tickets and ", "Afficher les billets privés et ", 
+	"Can create tickets and comments",  "Créer des billets et commentaires",
+	"Can view private tickets", "Afficher billets privés",
+	"Password reset for user <b>", "Réinitialisation du mot de passe pour l'utilisateur <b>",
+	"</b>. The new password is <b>", "<b> effectué. Le nouveau mot de passe est <b>",
+	"</b>. Press <a href='./?m=users'>here</a> to continue.", "</b>. Appuyez <a href='./?m=users'>ici</a> pour continuer.",
+	# Files
+	"File not found or corrupted.", "Fichier introuvable ou corrompu.",
 	# Buttons
 	"Post", "Poster",
 	"Save", "Sauvegarder",
-	
+	"Confirm", "Confirmer",	
 );
 
 sub lang()
