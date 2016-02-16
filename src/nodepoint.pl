@@ -24,7 +24,6 @@ use Time::Piece;
 use Text::Markdown 'markdown';
 use Crypt::RC4;
 use utf8;
-use Encode;
 use nodepointlc;
 
 my ($cfg, $db, $sql, $cn, $cp, $cgs, $last_login, $perf);
@@ -910,7 +909,7 @@ sub notify
 		$lsql->execute();
 		while(my @res = $lsql->fetchrow_array())
 		{
-			if($res[0] eq $u && $res[2] ne "" && ($res[5] eq "" || $title eq "Email confirmation")) # user is good, email is not null, confirm is empty or this is confirm email
+			if($res[0] eq $u && $res[2] ne "" && ($res[5] eq "" || $title eq $T{"Email confirmation"})) # user is good, email is not null, confirm is empty or this is confirm email
 			{
 				eval
 				{
@@ -924,8 +923,8 @@ sub notify
 						$smtp->datasend("To: " . $res[2] . "\n");
 						$smtp->datasend("Subject: " . $cfg->load('site_name') . " - " . $title . "\n");
 						$smtp->datasend("Content-type: text/plain; charset=UTF-8\n");
-						$smtp->datasend("Content-Transfer-Encoding: base64\n\n");
-						$smtp->datasend(encode_base64(encode('utf8', $mesg . "\n\n" . $T{"This is an automated message from "} . $cfg->load('site_name') . ". " . $T{"To disable notifications, log into your account and remove the email under Settings."} . "\n")));
+						$smtp->datasend("Content-Transfer-Encoding: 8bit\n\n");
+						$smtp->datasend($mesg . "\n\n" . $T{"This is an automated message from "} . $cfg->load('site_name') . ". " . $T{"To disable notifications, log into your account and remove the email under Settings."} . "\n");
 						$smtp->datasend();
 						$smtp->quit;
 					}
@@ -1016,7 +1015,7 @@ sub home
 			if($logged_lvl > 4) { print "<span class='pull-right'><form method='POST' action='.'><input type='hidden' name='shoutbox_delete' value='" . $res[0] . "'><input class='btn btn-danger pull-right' type='submit' value='X'></form></span>"; }
 			print $res[2] . "</td></tr>";
 		}
-		print "</table></div><form method='POST' action='.'><div class='row'><div class='col-sm-10'><input maxlength='999' class='form-control' name='shoutbox_post' placeholder='" . $T{"Type your message here"} . "'></div><div class='col-sm-2'><input type='submit' value='" . $T{"Post"} . "' class='btn btn-primary pull-right'></div></div></form></div></div>\n";
+		print "</table></div><form method='POST' action='.' data-toggle='validator' role='form'><div class='row'><div class='col-sm-10'><input maxlength='999' class='form-control' name='shoutbox_post' placeholder='" . $T{"Type your message here"} . "' required></div><div class='col-sm-2'><input type='submit' value='" . $T{"Post"} . "' class='btn btn-primary pull-right'></div></div></form></div></div>\n";
 	}
 
 	if($logged_lvl > 0 && $cfg->load('comp_tickets') eq "on")
@@ -2389,7 +2388,7 @@ elsif($q->param('api')) # API calls
 				if($q->param('email'))
 				{ 
 					$sql->execute(sanitize_alpha($q->param('user')), sha1_hex($q->param('password')), sanitize_email($q->param('email')), to_int($cfg->load('default_lvl')), "Never", $confirm); 
-					notify(sanitize_alpha($q->param('user')), "Email confirmation", "You are receiving this email because a new user was created with this email address. Please confirm your email by logging into the NodePoint interface, and entering the following confirmation code under Settings: " . $confirm);
+					notify(sanitize_alpha($q->param('user')), $T{"Email confirmation"}, $T{"You are receiving this email because a new user was created with this email address. Please confirm your email by logging into the NodePoint interface, and entering the following confirmation code under Settings: "} . $confirm);
 					print " \"confirm\": \"" . $confirm . "\",\n";
 				}
 				else { $sql->execute(sanitize_alpha($q->param('user')), sha1_hex($q->param('password')), "", to_int($cfg->load('default_lvl')), "Never", ""); }
@@ -3049,7 +3048,7 @@ elsif($q->param('m')) # Modules
 			elsif($logged_user eq "demo") { print $T{"<p>The demo account cannot change its password.</p>"}; }
 			else
 			{
-				print "<div class='form-group'><p><form method='POST' action='.' data-toggle='validator' role='form'><input type='hidden' name='m' value='change_pass'><div class='row'><div class='col-sm-4'><input placeholder='" . $T{"Current password"} . "' class='form-control' type='password' name='current_pass' data-error='" . $T{"Please fill out this field."} . "' required></div><div class='col-sm-4'><input placeholder='" . $T{"New password"} . "' type='password' class='form-control' name='new_pass1' data-minlength='6' id='new_pass1' data-error='" . $T{"Please fill out this field."} . "' required></div><div class='col-sm-4'><input class='form-control' type='password' name='new_pass2' id='inputPasswordConfirm' data-match='#new_pass1' data-match-error='" . $T{"Passwords do not match."} . "' placeholder='" . $T{"Confirm"} . "' required></div></div></p><div class='help-block with-errors'></div><input class='btn btn-primary pull-right' type='submit' value='" . $T{"Change password"} . "'></form></div>";
+				print "<div class='form-group'><p><form method='POST' action='.' data-toggle='validator' role='form'><input type='hidden' name='m' value='change_pass'><div class='row'><div class='col-sm-4'><input placeholder='" . $T{"Current password"} . "' class='form-control' type='password' name='current_pass' data-error='" . $T{"Please fill out this field."} . "' required></div><div class='col-sm-4'><input placeholder='" . $T{"New password"} . "' type='password' class='form-control' name='new_pass1' data-minlength='6' id='new_pass1' data-error='" . $T{"Please fill out this field."} . "' required></div><div class='col-sm-4'><input class='form-control' type='password' name='new_pass2' id='inputPasswordConfirm' data-match='#new_pass1' data-match-error='" . $T{"Passwords do not match."} . "' data-error='" . $T{"Please fill out this field."} . "' placeholder='" . $T{"Confirm"} . "' required></div></div></p><div class='help-block with-errors'></div><input class='btn btn-primary pull-right' type='submit' value='" . $T{"Change password"} . "'></form></div>";
 			}
 			print "</div></div>";
 		}
@@ -3193,8 +3192,8 @@ elsif($q->param('m')) # Modules
 	elsif($q->param('m') eq "users" && $logged_lvl >= to_int($cfg->load("summary_lvl")))
 	{
 		headers("Users management");
-		print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Users management</h3></div><div class='panel-body'>\n";
-		print "<table class='table table-stripped' id='users_table'><thead><tr><th>User name</th><th>Email</th><th>Level</th><th>Last login</th></tr></thead><tbody>\n";
+		print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>" . $T{"Users management"} . "</h3></div><div class='panel-body'>\n";
+		print "<table class='table table-stripped' id='users_table'><thead><tr><th>" . $T{"User name"} . "</th><th>" . $T{"Email"} . "</th><th>" . $T{"Level"} . "</th><th>" . $T{"Last login"} . "</th></tr></thead><tbody>\n";
 		$sql = $db->prepare("SELECT * FROM users ORDER BY name;");
 		$sql->execute();
 		while(my @res = $sql->fetchrow_array())
@@ -3204,8 +3203,8 @@ elsif($q->param('m')) # Modules
 		print "</tbody></table><script>\$(document).ready(function(){\$('#users_table').DataTable({'language':{'url':'" . $T{"datatables.lang.json"} . "'},'order':[[0,'asc']],pageLength:" . to_int($cfg->load('page_len')) . ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script>\n";
 		if(!$cfg->load('ad_server'))
 		{
-			print "<div class='form-group'><h4>Add a new user:</h4><form method='POST' action='.' data-toggle='validator' role='form'>\n";
-			print "<p><div class='row'><div class='col-sm-6'><input type='text' name='new_name' placeholder='User name' class='form-control' maxlength='20' required></div><div class='col-sm-6'><input type='email' name='new_email' placeholder='Email address (optional)' class='form-control'></div></div></p><p><div class='row'><div class='col-sm-6'><input type='password' name='new_pass1' data-minlength='6' id='new_pass1' class='form-control' placeholder='Password' required></div><div class='col-sm-6'><input type='password' name='new_pass2' id='inputPasswordConfirm' data-match='#new_pass1' data-match-error='Passwords do not match.' placeholder='Confirm password' class='form-control' required></div></div></p><div class='help-block with-errors'></div><input class='btn btn-primary pull-right' type='submit' value='Add user'></form></div>\n";
+			print "<div class='form-group'><h4>" . $T{"Add a new user:"} . "</h4><form method='POST' action='.' data-toggle='validator' role='form'>\n";
+			print "<p><div class='row'><div class='col-sm-6'><input type='text' name='new_name' placeholder='" . $T{"User name"} . "' class='form-control' maxlength='20' data-error='" . $T{"Please fill out this field."} . "' required></div><div class='col-sm-6'><input type='email' name='new_email' placeholder='" . $T{"Email (optional)"} . "' class='form-control'></div></div></p><p><div class='row'><div class='col-sm-6'><input type='password' name='new_pass1' data-minlength='6' id='new_pass1' class='form-control' placeholder='" . $T{"Password"} . "' data-error='" . $T{"Please fill out this field."} . "'  required></div><div class='col-sm-6'><input type='password' name='new_pass2' id='inputPasswordConfirm' data-match='#new_pass1' data-match-error='" . $T{"Passwords do not match."} . "' placeholder='" . $T{"Confirm"} . "' class='form-control' data-error='" . $T{"Please fill out this field."} . "' required></div></div></p><div class='help-block with-errors'></div><input class='btn btn-primary pull-right' type='submit' value='" . $T{"Add user"} . "'></form></div>\n";
 		}
 		print "</div></div>\n";
 	}
@@ -3917,7 +3916,7 @@ elsif($q->param('m')) # Modules
 				{
 					$sql = $db->prepare("UPDATE users SET pass = '" . sha1_hex($q->param('new_pass1')) . "' WHERE name = ?;");
 					$sql->execute($logged_user);
-					msg("Password changed. Press <a href='.'>here</a> to go back to the login page.", 3);
+					msg($T{"Password changed. Press <a href='.'>here</a> to go back home."}, 3);
 					logevent("Password change: " . $logged_user);
 					$found = 1;
 					last;
@@ -4658,20 +4657,20 @@ elsif($q->param('m')) # Modules
 			{
 				print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>" . $res[0] . "</h3></div><div class='panel-body'><form method='POST' action='./?m=auto'>\n";
 				print "<p><div class='row'><div class='col-sm-12'>" . $T{$res[5]} . "</div></div></p>";
-				print "<p><div class='row'><div class='col-sm-6'>Last run: <b>" . $res[2] . "</b></div><div class='col-sm-6'>Last result: <b>" . $res[4] . "</b></div></div></p><hr>";
-				print "<p><div class='row'><div class='col-sm-6'>Status: <select class='form-control' name='enabled'><option value='0'>Disabled</option><option value='1'";
+				print "<p><div class='row'><div class='col-sm-6'>Last run: <b>" . $res[2] . "</b></div><div class='col-sm-6'>" . $T{"Last result"} . ": <b>" . $T{$res[4]} . "</b></div></div></p><hr>";
+				print "<p><div class='row'><div class='col-sm-6'>" . $T{"Status"} . ": <select class='form-control' name='enabled'><option value='0'>" . $T{"Disabled"} . "</option><option value='1'";
 				if(to_int($res[1]) == 1) { print " selected"; }
-				print ">Enabled</option></select></div><div class='col-sm-6'>Schedule: <select class='form-control' name='schedule'><option value='0'";
+				print ">" . $T{"Enabled"} . "</option></select></div><div class='col-sm-6'>" . $T{"Schedule"} . ": <select class='form-control' name='schedule'><option value='0'";
 				if($res[6] == 0) { print "selected"; }
-				print ">5 minutes</option><option value='1'";
+				print ">" . $T{"5 minutes"} . "</option><option value='1'";
 				if($res[6] == 1) { print "selected"; }
-				print ">15 minutes</option><option value='2'";
+				print ">" . $T{"15 minutes"} . "</option><option value='2'";
 				if($res[6] == 2) { print "selected"; }
-				print ">Hourly</option><option value='3'";
+				print ">" . $T{"Hourly"} . "</option><option value='3'";
 				if($res[6] == 3) { print "selected"; }
-				print ">Daily</option><option value='4'";
+				print ">" . $T{"Daily"} . "</option><option value='4'";
 				if($res[6] == 4) { print "selected"; }
-				print ">Weekly</option></select></div></div></p>";
+				print ">" . $T{"Weekly"} . "</option></select></div></div></p>";
 				if($res[0] eq "Backup")
 				{
 					my $folder = $0 . "_backups";
@@ -4683,8 +4682,8 @@ elsif($q->param('m')) # Modules
 						if($res2[1] eq 'folder') { $folder = $res2[2]; }
 						if($res2[1] eq 'type') { $type = $res2[2]; }
 					}
-					print "<p><div class='row'><div class='col-sm-4'>Backup folder:</div><div class='col-sm-8'><input class='form-control' type='text' name='folder' value='" . $folder . "'></div></div></p>";
-					print "<p><div class='row'><div class='col-sm-4'>Archive type:</div><div class='col-sm-8'><select class='form-control' name='type'><option>Time stamped</option><option";
+					print "<p><div class='row'><div class='col-sm-4'>" . $T{"Backup folder:"} . "</div><div class='col-sm-8'><input class='form-control' type='text' name='folder' value='" . $folder . "'></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>" . $T{"Archive type:"} . "</div><div class='col-sm-8'><select class='form-control' name='type'><option>Time stamped</option><option";
 					if($type eq "Overwrite") { print " selected"; }
 					print ">Overwrite</option></select></div></div></p>";
 				}
@@ -4699,16 +4698,16 @@ elsif($q->param('m')) # Modules
 						if($res2[1] eq 'filename') { $filename = $res2[2]; }
 						if($res2[1] eq 'table') { $table = $res2[2]; }
 					}
-					print "<p><div class='row'><div class='col-sm-4'>Export file:</div><div class='col-sm-8'><input class='form-control' type='text' name='filename' value='" . $filename . "'></div></div></p>";
-					print "<p><div class='row'><div class='col-sm-4'>Table to export:</div><div class='col-sm-8'><select class='form-control' name='table'><option>Tickets</option><option";
+					print "<p><div class='row'><div class='col-sm-4'>" . $T{"Export file:"} . "</div><div class='col-sm-8'><input class='form-control' type='text' name='filename' value='" . $filename . "'></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>" . $T{"Table to export:"} . "</div><div class='col-sm-8'><select class='form-control' name='table'><option>Tickets</option><option value='Items'";
 					if($table eq "Items") { print " selected"; }
-					print ">Items</option><option";
+					print ">" . $T{"Items"} . "</option><option value='Clients'";
 					if($table eq "Clients") { print " selected"; }
-					print ">Clients</option><option";
+					print ">" . $T{"Clients"} . "</option><option value='Users'";
 					if($table eq "Users") { print " selected"; }
-					print ">Users</option><option";
+					print ">" . $T{"Users"} . "</option><option value='Tasks'";
 					if($table eq "Tasks") { print " selected"; }
-					print ">Tasks</option></select></div></div></p>";
+					print ">" . $T{"Tasks"} . "</option></select></div></div></p>";
 				}
 				elsif($res[0] eq "Update MOTD")
 				{
@@ -4719,7 +4718,7 @@ elsif($q->param('m')) # Modules
 					{
 						if($res2[1] eq 'filename') { $filename = $res2[2]; }
 					}
-					print "<p><div class='row'><div class='col-sm-4'>Text file:</div><div class='col-sm-8'><input class='form-control' type='text' name='filename' value='" . $filename . "'></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>" . $T{"Text file:"} . "</div><div class='col-sm-8'><input class='form-control' type='text' name='filename' value='" . $filename . "'></div></div></p>";
 				}
 				elsif($res[0] eq "Users sync")
 				{
@@ -4738,15 +4737,15 @@ elsif($q->param('m')) # Modules
 						if($res2[1] eq 'adpass') { $adpass = RC4($cfg->load("api_write"), decode_base64($res2[2])); }
 						if($res2[1] eq 'importemail') { $importemail = to_int($res2[2]); }
 					}
-					print "<p><div class='row'><div class='col-sm-4'>Base DN:</div><div class='col-sm-8'><input class='form-control' type='text' name='basedn' value='" . $basedn . "'></div></div></p>";
-					print "<p><div class='row'><div class='col-sm-4'>Filter:</div><div class='col-sm-8'><input class='form-control' type='text' name='searchfilter' value='" . $searchfilter . "'></div></div></p>";
-					print "<p><div class='row'><div class='col-sm-4'>Username:</div><div class='col-sm-8'><input class='form-control' type='text' name='aduser' value='" . $aduser . "'></div></div></p>";
-					print "<p><div class='row'><div class='col-sm-4'>Password:</div><div class='col-sm-8'><input class='form-control' type='password' name='adpass' value='" . $adpass . "'></div></div></p>";
-					print "<p><div class='row'><div class='col-sm-4'>Import email addresses:</div><div class='col-sm-8'><select class='form-control' name='importemail'><option";
+					print "<p><div class='row'><div class='col-sm-4'>" . $T{"Base DN:"} . "</div><div class='col-sm-8'><input class='form-control' type='text' name='basedn' value='" . $basedn . "'></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>" . $T{"Filter:"} . "</div><div class='col-sm-8'><input class='form-control' type='text' name='searchfilter' value='" . $searchfilter . "'></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>" . $T{"User name"} . ":</div><div class='col-sm-8'><input class='form-control' type='text' name='aduser' value='" . $aduser . "'></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>" . $T{"Password"} . ":</div><div class='col-sm-8'><input class='form-control' type='password' name='adpass' value='" . $adpass . "'></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>" . $T{"Import email addresses:"} . "</div><div class='col-sm-8'><select class='form-control' name='importemail'><option value='Yes'";
 					if($importemail == 1) { print " selected"; }
-					print ">Yes</option><option";
+					print ">" . $T{"Yes"} . "</option><option value='No'";
 					if($importemail == 0) { print " selected"; }
-					print ">No</option></select></div></div></p>";
+					print ">" . $T{"No"} . "</option></select></div></div></p>";
 				}
 				elsif($res[0] eq "Email to Ticket")
 				{
@@ -4773,29 +4772,29 @@ elsif($q->param('m')) # Modules
 						if($res2[1] eq 'imappass') { $imappass = RC4($cfg->load("api_write"), decode_base64($res2[2])); }
 						if($res2[1] eq 'imapserver') { $imapserver = $res2[2]; }
 					}
-					print "<p><div class='row'><div class='col-sm-4'>IMAP Server:</div><div class='col-sm-8'><input class='form-control' type='text' name='imapserver' value='" . $imapserver . "'></div></div></p>";
-					print "<p><div class='row'><div class='col-sm-4'>IMAP Port:</div><div class='col-sm-8'><input class='form-control' type='number' name='imapport' value='" . $imapport . "'></div></div></p>";
-					print "<p><div class='row'><div class='col-sm-4'>Username:</div><div class='col-sm-8'><input class='form-control' type='text' name='imapuser' value='" . $imapuser . "'></div></div></p>";
-					print "<p><div class='row'><div class='col-sm-4'>Password:</div><div class='col-sm-8'><input class='form-control' type='password' name='imappass' value='" . $imappass . "'></div></div></p>";
-					print "<p><div class='row'><div class='col-sm-4'>Use SSL:</div><div class='col-sm-8'><select class='form-control' name='imapssl'><option";
+					print "<p><div class='row'><div class='col-sm-4'>" . $T{"IMAP Server:"} . "</div><div class='col-sm-8'><input class='form-control' type='text' name='imapserver' value='" . $imapserver . "'></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>" . $T{"IMAP Port:"} . "</div><div class='col-sm-8'><input class='form-control' type='number' name='imapport' value='" . $imapport . "'></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>" . $T{"User name"} . ":</div><div class='col-sm-8'><input class='form-control' type='text' name='imapuser' value='" . $imapuser . "'></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>" . $T{"Password"} . ":</div><div class='col-sm-8'><input class='form-control' type='password' name='imappass' value='" . $imappass . "'></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>" . $T{"Use SSL:"} . "</div><div class='col-sm-8'><select class='form-control' name='imapssl'><option value='Yes'";
 					if($imapssl == 1) { print " selected"; }
-					print ">Yes</option><option";
+					print ">" . $T{"Yes"} . "</option><option value='No'";
 					if($imapssl == 0) { print " selected"; }
-					print ">No</option></select></div></div></p>";
-					print "<p><div class='row'><div class='col-sm-4'>Delete emails:</div><div class='col-sm-8'><select class='form-control' name='deleteemail'><option";
+					print ">" . $T{"No"} . "</option></select></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>" . $T{"Delete emails:"} . "</div><div class='col-sm-8'><select class='form-control' name='deleteemail'><option value='Yes'";
 					if($deleteemail == 1) { print " selected"; }
-					print ">Yes</option><option";
+					print ">" . $T{"Yes"} . "</option><option value='No'";
 					if($deleteemail == 0) { print " selected"; }
-					print ">No</option></select></div></div></p>";
-					print "<p><div class='row'><div class='col-sm-4'>" . $items{"Product"} . " ID:</div><div class='col-sm-8'><input class='form-control' type='number' name='productid' value='" . $productid . "'></div></div></p>";
+					print ">" . $T{"No"} . "</option></select></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>" . $items{"Product"} . " " . $T{"ID"} . ":</div><div class='col-sm-8'><input class='form-control' type='number' name='productid' value='" . $productid . "'></div></div></p>";
 					print "<p><div class='row'><div class='col-sm-4'>" . $items{"Release"} . ":</div><div class='col-sm-8'><input class='form-control' type='text' name='releaseid' value='" . $releaseid . "'></div></div></p>";
-					print "<p><div class='row'><div class='col-sm-4'>Priority:</div><div class='col-sm-8'><select class='form-control' name='priority'><option";
+					print "<p><div class='row'><div class='col-sm-4'>" . $T{"Priority"} . ":</div><div class='col-sm-8'><select class='form-control' name='priority'><option value='High'";
 					if($priority eq "High") { print " selected"; }
-					print ">High</option><option";
+					print ">" . $T{"High"} . "</option><option value='Normal'";
 					if($priority eq "Normal") { print " selected"; }
-					print ">Normal</option><option";
+					print ">" . $T{"Normal"} . "</option><option value='Low'";
 					if($priority eq "Low") { print " selected"; }
-					print ">Low</option></select></div></div></p>";
+					print ">" . $T{"Low"} . "</option></select></div></div></p>";
 				}
 				elsif($res[0] eq "Computers sync")
 				{
@@ -4816,22 +4815,22 @@ elsif($q->param('m')) # Modules
 						if($res2[1] eq 'adpass') { $adpass = RC4($cfg->load("api_write"), decode_base64($res2[2])); }
 						if($res2[1] eq 'approval') { $approval = to_int($res2[2]); }
 					}
-					print "<p><div class='row'><div class='col-sm-4'>Base DN:</div><div class='col-sm-8'><input class='form-control' type='text' name='basedn' value='" . $basedn . "'></div></div></p>";
-					print "<p><div class='row'><div class='col-sm-4'>Filter:</div><div class='col-sm-8'><input class='form-control' type='text' name='searchfilter' value='" . $searchfilter . "'></div></div></p>";
-					print "<p><div class='row'><div class='col-sm-4'>Username:</div><div class='col-sm-8'><input class='form-control' type='text' name='aduser' value='" . $aduser . "'></div></div></p>";
-					print "<p><div class='row'><div class='col-sm-4'>Password:</div><div class='col-sm-8'><input class='form-control' type='password' name='adpass' value='" . $adpass . "'></div></div></p>";
-					print "<p><div class='row'><div class='col-sm-4'>Require checkout approval:</div><div class='col-sm-8'><select class='form-control' name='approval'><option";
+					print "<p><div class='row'><div class='col-sm-4'>" . $T{"Base DN:"} . "</div><div class='col-sm-8'><input class='form-control' type='text' name='basedn' value='" . $basedn . "'></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>" . $T{"Filter:"} . "</div><div class='col-sm-8'><input class='form-control' type='text' name='searchfilter' value='" . $searchfilter . "'></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>" . $T{"User name"} . ":</div><div class='col-sm-8'><input class='form-control' type='text' name='aduser' value='" . $aduser . "'></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>" . $T{"Password"} . ":</div><div class='col-sm-8'><input class='form-control' type='password' name='adpass' value='" . $adpass . "'></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>" . $T{"Require checkout approval"} . ":</div><div class='col-sm-8'><select class='form-control' name='approval'><option value='Yes'";
 					if($approval == 1) { print " selected"; }
-					print ">Yes</option><option";
+					print ">" . $T{"Yes"} . "</option><option value='No'";
 					if($approval == 0) { print " selected"; }
-					print ">No</option></select></div></div></p>";
-					print "<p><div class='row'><div class='col-sm-4'>Computer type:</div><div class='col-sm-8'><select class='form-control' name='type'><option";
+					print ">" . $T{"No"} . "</option></select></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>" . $T{"Computer type:"} . "</div><div class='col-sm-8'><select class='form-control' name='type'><option value='Desktop'";
 					if($type eq "Desktop") { print " selected"; }
-					print ">Desktop</option><option";
+					print ">" . $T{"Desktop"} . "</option><option value='Laptop'";
 					if($type eq "Laptop") { print " selected"; }
-					print ">Laptop</option><option";
+					print ">" . $T{"Laptop"} . "</option><option value='Server'";
 					if($type eq "Server") { print " selected"; }
-					print ">Server</option></select></div></div></p>";
+					print ">" . $T{"Server"} . "</option></select></div></div></p>";
 				}
 				elsif($res[0] eq "Ticket expiration")
 				{
@@ -4846,17 +4845,17 @@ elsif($q->param('m')) # Modules
 						if($res2[1] eq 'closeticket') { $closeticket = to_int($res2[2]); }
 						if($res2[1] eq 'remindticket') { $remindticket = to_int($res2[2]); }
 					}
-					print "<p><div class='row'><div class='col-sm-4'>Number of days old:</div><div class='col-sm-8'><input class='form-control' type='number' name='numdays' value='" . $numdays . "'></div></div></p>";
-					print "<p><div class='row'><div class='col-sm-4'>Notify assigned users:</div><div class='col-sm-8'><select class='form-control' name='remindticket'><option";
+					print "<p><div class='row'><div class='col-sm-4'>" . $T{"Number of days old:"} . "</div><div class='col-sm-8'><input class='form-control' type='number' name='numdays' value='" . $numdays . "'></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>" . $T{"Notify assigned users:"} . "</div><div class='col-sm-8'><select class='form-control' name='remindticket'><option value='Yes'";
 					if($remindticket == 1) { print " selected"; }
-					print ">Yes</option><option";
+					print ">" . $T{"Yes"} . "</option><option value='No'";
 					if($remindticket == 0) { print " selected"; }
-					print ">No</option></select></div></div></p>";
-					print "<p><div class='row'><div class='col-sm-4'>Close tickets:</div><div class='col-sm-8'><select class='form-control' name='closeticket'><option";
+					print ">" . $T{"No"} . "</option></select></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>" . $T{"Close tickets:"} . "</div><div class='col-sm-8'><select class='form-control' name='closeticket'><option value='Yes'";
 					if($closeticket == 1) { print " selected"; }
-					print ">Yes</option><option";
+					print ">" . $T{"Yes"} . "</option><option value='No'";
 					if($closeticket == 0) { print " selected"; }
-					print ">No</option></select></div></div></p>";
+					print ">" . $T{"No"} . "</option></select></div></div></p>";
 				}
 				elsif($res[0] eq "File expiration")
 				{
@@ -4867,7 +4866,7 @@ elsif($q->param('m')) # Modules
 					{
 						if($res2[1] eq 'numdays') { $numdays = to_int($res2[2]); }
 					}
-					print "<p><div class='row'><div class='col-sm-4'>Number of days old:</div><div class='col-sm-8'><input class='form-control' type='number' name='numdays' value='" . $numdays . "'></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>" . $T{"Number of days old:"} . "</div><div class='col-sm-8'><input class='form-control' type='number' name='numdays' value='" . $numdays . "'></div></div></p>";
 				}
 				elsif($res[0] eq "Reminder notifications")
 				{
@@ -4882,21 +4881,21 @@ elsif($q->param('m')) # Modules
 						if($res2[1] eq 'remindtasks') { $remindtasks = to_int($res2[2]); }
 						if($res2[1] eq 'remindtickets') { $remindtickets = to_int($res2[2]); }
 					}
-					print "<p><div class='row'><div class='col-sm-4'>Expired checkout items:</div><div class='col-sm-8'><select class='form-control' name='reminditems'><option";
+					print "<p><div class='row'><div class='col-sm-4'>" . $T{"Expired checkout items:"} . "</div><div class='col-sm-8'><select class='form-control' name='reminditems'><option value='Yes'";
 					if($reminditems == 1) { print " selected"; }
-					print ">Yes</option><option";
+					print ">" . $T{"Yes"} . "</option><option value='No'";
 					if($reminditems == 0) { print " selected"; }
-					print ">No</option></select></div></div></p>";
-					print "<p><div class='row'><div class='col-sm-4'>Overdue tasks:</div><div class='col-sm-8'><select class='form-control' name='remindtasks'><option";
+					print ">" . $T{"No"} . "</option></select></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>" . $T{"Overdue tasks:"} . "</div><div class='col-sm-8'><select class='form-control' name='remindtasks'><option value='Yes'";
 					if($remindtasks == 1) { print " selected"; }
-					print ">Yes</option><option";
+					print ">" . $T{"Yes"} . "</option><option value='No'";
 					if($remindtasks == 0) { print " selected"; }
-					print ">No</option></select></div></div></p>";
-					print "<p><div class='row'><div class='col-sm-4'>Tickets notifications:</div><div class='col-sm-8'><select class='form-control' name='remindtickets'><option";
+					print ">" . $T{"No"} . "</option></select></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>" . $T{"Tickets notifications:"} . "</div><div class='col-sm-8'><select class='form-control' name='remindtickets'><option value='Yes'";
 					if($remindtickets == 1) { print " selected"; }
-					print ">Yes</option><option";
+					print ">" . $T{"Yes"} . "</option><option value='No'";
 					if($remindtickets == 0) { print " selected"; }
-					print ">No</option></select></div></div></p>";
+					print ">" . $T{"No"} . "</option></select></div></div></p>";
 				}
 				elsif($res[0] eq "ServiceNow CMDB")
 				{
@@ -4923,47 +4922,47 @@ elsif($q->param('m')) # Modules
 						if($res2[1] eq 'cmdbpass') { $cmdbpass = RC4($cfg->load("api_write"), decode_base64($res2[2])); }
 						if($res2[1] eq 'approval') { $approval = to_int($res2[2]); }
 					}
-					print "<p><div class='row'><div class='col-sm-4'>ServiceNow URL:</div><div class='col-sm-8'><input class='form-control' type='text' name='cmdburl' value='" . $cmdburl . "'></div></div></p>";
-					print "<p><div class='row'><div class='col-sm-4'>ServiceNow CMDB table:</div><div class='col-sm-8'><input class='form-control' type='text' name='cmdbtable' value='" . $cmdbtable . "'></div></div></p>";
-					print "<p><div class='row'><div class='col-sm-4'>Username:</div><div class='col-sm-8'><input class='form-control' type='text' name='cmdbuser' value='" . $cmdbuser . "'></div></div></p>";
-					print "<p><div class='row'><div class='col-sm-4'>Password:</div><div class='col-sm-8'><input class='form-control' type='password' name='cmdbpass' value='" . $cmdbpass . "'></div></div></p>";
-					print "<p><div class='row'><div class='col-sm-4'>Require checkout approval:</div><div class='col-sm-8'><select class='form-control' name='approval'><option";
+					print "<p><div class='row'><div class='col-sm-4'>" . $T{"ServiceNow URL:"} . "</div><div class='col-sm-8'><input class='form-control' type='text' name='cmdburl' value='" . $cmdburl . "'></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>" . $T{"ServiceNow CMDB table:"} . "</div><div class='col-sm-8'><input class='form-control' type='text' name='cmdbtable' value='" . $cmdbtable . "'></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>" . $T{"User name"} . ":</div><div class='col-sm-8'><input class='form-control' type='text' name='cmdbuser' value='" . $cmdbuser . "'></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>" . $T{"Password"} . ":</div><div class='col-sm-8'><input class='form-control' type='password' name='cmdbpass' value='" . $cmdbpass . "'></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>" . $T{"Require checkout approval"} . ":</div><div class='col-sm-8'><select class='form-control' name='approval'><option value='Yes'";
 					if($approval == 1) { print " selected"; }
-					print ">Yes</option><option";
+					print ">" . $T{"Yes"} . "</option><option value='No'";
 					if($approval == 0) { print " selected"; }
-					print ">No</option></select></div></div></p>";
-					print "<p><div class='row'><div class='col-sm-4'>Asset type:</div><div class='col-sm-8'><select class='form-control' name='type'><option";
+					print ">" . $T{"No"} . "</option></select></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>" . $T{"Asset type:"} . "</div><div class='col-sm-8'><select class='form-control' name='type'><option value='Desktop'";
 					if($type eq "Desktop") { print " selected"; }
-					print ">Desktop</option><option";
+					print ">" . $T{"Desktop"} . "</option><option value='Laptop'";
 					if($type eq "Laptop") { print " selected"; }
-					print ">Laptop</option><option";
+					print ">" . $T{"Laptop"} . "</option><option value='Server'";
 					if($type eq "Server") { print " selected"; }
-					print ">Server</option><option";
+					print ">" . $T{"Server"} . "</option><option value='Keyboard'";
 					if($type eq "Keyboard") { print " selected"; }
-					print ">Keyboard</option><option";
+					print ">" . $T{"Keyboard"} . "</option><option value='Mouse'";
 					if($type eq "Mouse") { print " selected"; }
-					print ">Mouse</option><option";
+					print ">" . $T{"Mouse"} . "</option><option value='Display'";
 					if($type eq "Display") { print " selected"; }
-					print ">Display</option><option";
+					print ">" . $T{"Display"} . "</option><option value='Phone'";
 					if($type eq "Phone") { print " selected"; }
-					print ">Phone</option><option";
+					print ">" . $T{"Phone"} . "</option><option value='Software'";
 					if($type eq "Software") { print " selected"; }
-					print ">Software</option><option";
+					print ">" . $T{"Software"} . "</option><option value='Printer'";
 					if($type eq "Printer") { print " selected"; }
-					print ">Printer</option><option";
+					print ">" . $T{"Printer"} . "</option><option value='Peripheral'";
 					if($type eq "Peripheral") { print " selected"; }
-					print ">Peripheral</option><option";
+					print ">" . $T{"Peripheral"} . "</option><option value='Furniture'";
 					if($type eq "Furniture") { print " selected"; }
-					print ">Furniture</option><option";
+					print ">" . $T{"Furniture"} . "</option><option value='Tool'";
 					if($type eq "Tool") { print " selected"; }
-					print ">Tool</option><option";
+					print ">" . $T{"Tool"} . "</option><option value='Other'";
 					if($type eq "Other") { print " selected"; }
-					print ">Other</option></select></div></div></p>";
-					print "<p><div class='row'><div class='col-sm-4'>Mapping for 'name':</div><div class='col-sm-8'><input class='form-control' type='text' name='mapname' value='" . $mapname . "'></div></div></p>";
-					print "<p><div class='row'><div class='col-sm-4'>Mapping for 'serial':</div><div class='col-sm-8'><input class='form-control' type='text' name='mapserial' value='" . $mapserial . "'></div></div></p>";
-					print "<p><div class='row'><div class='col-sm-4'>Mapping for 'info':</div><div class='col-sm-8'><input class='form-control' type='text' name='mapinfo' value='" . $mapinfo . "'></div></div></p>";
+					print ">" . $T{"Other"} . "</option></select></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>" . $T{"Mapping for 'name':"} . "</div><div class='col-sm-8'><input class='form-control' type='text' name='mapname' value='" . $mapname . "'></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>" . $T{"Mapping for 'serial':"} . "</div><div class='col-sm-8'><input class='form-control' type='text' name='mapserial' value='" . $mapserial . "'></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>" . $T{"Mapping for 'info':"} . "</div><div class='col-sm-8'><input class='form-control' type='text' name='mapinfo' value='" . $mapinfo . "'></div></div></p>";
 				}
-				print "<p><input type='hidden' name='m' value='auto'><input type='hidden' name='save' value='" . sanitize_html($q->param('config')) . "'><input class='btn btn-primary pull-right' type='submit' value='Save'></p>";
+				print "<p><input type='hidden' name='m' value='auto'><input type='hidden' name='save' value='" . sanitize_html($q->param('config')) . "'><input class='btn btn-primary pull-right' type='submit' value='" . $T{"Save"} . "'></p>";
 				print "</form></div></div>\n";
 			}
 		}
@@ -4973,13 +4972,13 @@ elsif($q->param('m')) # Modules
 			{
 				$sql = $db->prepare("UPDATE auto_modules SET timestamp = 0;");
 				$sql->execute();
-				msg("All enabled modules will be executed on next run regardless of scheduling.", 3)
+				msg($T{"All enabled modules will be executed on next run regardless of scheduling."}, 3)
 			}
 			if($q->param('clear_all') && $logged_lvl > 5)
 			{
 				$sql = $db->prepare("DROP TABLE auto_modules;");
 				$sql->execute();
-				msg("<meta http-equiv='REFRESH' content='0;url=./?m=auto'>Please wait for this page to reload...", 3);
+				msg("<meta http-equiv='REFRESH' content='0;url=./?m=auto'>" . $T{"Please wait for this page to reload..."}, 3);
 				quit(0);
 			}
 			if($q->param('clear_log') && $logged_lvl > 5)
@@ -5143,42 +5142,43 @@ elsif($q->param('m')) # Modules
 			$sql->execute();
 			while(my @res = $sql->fetchrow_array())
 			{
-				if(to_int($res[0]) + 700 < time()) { msg("The scheduled task <b>nodepoint-automate</b> does not seem to be running. Please check your installation.", 1); }
+				if(to_int($res[0]) + 700 < time()) { msg($T{"The scheduled task <b>nodepoint-automate</b> does not seem to be running. Please check your installation."}, 1); }
 			}
-			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Automation modules</h3></div><div class='panel-body'>\n";
+			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>" . $T{"Automation modules"} . "</h3></div><div class='panel-body'>\n";
 			$sql = $db->prepare("SELECT ROWID,* FROM auto_modules ORDER BY name ASC;");
 			$sql->execute();
-			print "<table class='table table-striped' id='auto_table'><thead><tr><th>Name</th><th>Status</th><th>Schedule</th><th>Last run time</th><th>Last result</th></tr></thead><tbody>\n";
+			print "<table class='table table-striped' id='auto_table'><thead><tr><th>" . $T{"Name"} . "</th><th>" . $T{"Status"} . "</th><th>" . $T{"Schedule"} . "</th><th>" . $T{"Last run time"} . "</th><th>" . $T{"Last result"} . "</th></tr></thead><tbody>\n";
 			while(my @res = $sql->fetchrow_array())
 			{
 				print "<tr><td><a href='./?m=auto&config=" . $res[1] . "'>" . $res[1] . "</a></td><td>";
-				if(to_int($res[2]) == 1) { print "<font color='green'>Enabled</font>"; }
-				else { print "<font color='red'>Disabled</font>"; }
+				if(to_int($res[2]) == 1) { print "<font color='green'>" . $T{"Enabled"} . "</font>"; }
+				else { print "<font color='red'>" . $T{"Disabled"} . "</font>"; }
 				print "</td><td>";
-				if(to_int($res[7]) == 0) { print "5 minutes"; }
-				elsif(to_int($res[7]) == 1) { print "15 minutes"; }
-				elsif(to_int($res[7]) == 2) { print "Hourly"; }
-				elsif(to_int($res[7]) == 3) { print "Daily"; }
-				elsif(to_int($res[7]) == 4) { print "Weekly"; }
+				if(to_int($res[7]) == 0) { print $T{"5 minutes"}; }
+				elsif(to_int($res[7]) == 1) { print $T{"15 minutes"}; }
+				elsif(to_int($res[7]) == 2) { print $T{"Hourly"}; }
+				elsif(to_int($res[7]) == 3) { print $T{"Daily"}; }
+				elsif(to_int($res[7]) == 4) { print $T{"Weekly"}; }
 				print "</td><td>" . $res[3] . "</td><td>";
-				if($res[5] eq "Success") { print "<font color='green'>Success</font>"; }
-				else { print "<font color='red'>" . $res[5] . "</font>"; }
+				if($res[5] eq "Success") { print "<font color='green'>" . $T{"Success"} . "</font>"; }
+				elsif($res[5] eq "Failed") { print "<font color='red'>" . $T{"Failed"} . "</font>"; }
+				else { print $res[5]; }
 				print "</td></tr>";
 			}
-			print "</tbody></table><p><form method='POST' action='./?m=auto'><input type='hidden' name='m' value='auto'><input class='btn btn-primary' type='submit' name='run_all' value='Process all modules on next run'>";
-			if($logged_lvl > 5) { print "<input class='btn btn-danger pull-right' type='submit' name='clear_all' value='Reset modules'>"; }
+			print "</tbody></table><p><form method='POST' action='./?m=auto'><input type='hidden' name='m' value='auto'><input class='btn btn-primary' type='submit' name='run_all' value='" . $T{"Process all modules on next run"} . "'>";
+			if($logged_lvl > 5) { print "<input class='btn btn-danger pull-right' type='submit' name='clear_all' value='" . $T{"Reset modules"} . "'>"; }
 			print "</form></p></div></div>\n";
-			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Automation log</h3></div><div class='panel-body'>\n";
-			if($logged_lvl > 5) { print "<form style='display:inline' method='POST' action='./?m=auto'><input type='hidden' name='m' value='auto'><input type='hidden' name='clear_log' value='1'><input class='btn btn-danger pull-right' type='submit' value='Clear log'><br></form>"; }
+			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>" . $T{"Automation log"} . "</h3></div><div class='panel-body'>\n";
+			if($logged_lvl > 5) { print "<form style='display:inline' method='POST' action='./?m=auto'><input type='hidden' name='m' value='auto'><input type='hidden' name='clear_log' value='1'><input class='btn btn-danger pull-right' type='submit' value='" . $T{"Clear log"} . "'><br></form>"; }
 			$sql = $db->prepare("SELECT * FROM auto;");
 			$sql->execute();
 			while(my @res = $sql->fetchrow_array())
 			{
-				print "<p>Last automation result: <b>" . $res[1] . "</b></p>";
+				print $T{"<p>Last automation result: <b>"} . $res[1] . "</b></p>";
 			}
 			$sql = $db->prepare("SELECT * FROM auto_log;");
 			$sql->execute();
-			print "<table class='table table-striped' id='autolog_table'><thead><tr><th>Module</th><th>Event</th><th>Date</th></tr></thead><tbody>\n";
+			print "<table class='table table-striped' id='autolog_table'><thead><tr><th>" . $T{"Module"} . "</th><th>" . $T{"Event"} . "</th><th>" . $T{"Date"} . "</th></tr></thead><tbody>\n";
 			while(my @res = $sql->fetchrow_array())
 			{
 				print "<tr><td>" . $res[0] . "</td><td>" . $res[1] . "</td><td>" . $res[2] . "</td></tr>";
@@ -5215,7 +5215,7 @@ elsif($q->param('m')) # Modules
 					my $file_size = (-s $tmpfilename);
 					if($file_size > to_int($cfg->load('max_size')))
 					{
-						msg("File size is larger than accepted value.", 0);
+						msg($T{"File size is larger than accepted value."}, 0);
 					}
 					else
 					{
@@ -5232,22 +5232,22 @@ elsif($q->param('m')) # Modules
 						close($OUTFILE);
 						$sql = $db->prepare("INSERT INTO files VALUES (?, ?, ?, ?, ?);");
 						$sql->execute($logged_user, $filedata, $filename, now(), to_int($file_size));
-						msg("File <b>" . $filedata . "</b> uploaded.", 3);				
+						msg($T{"File <b>"} . $filedata . $T{"</b> uploaded."}, 3);				
 					}
 				}
 			};
 			if($@)
 			{
-				msg("File uploading to <b>" . $cfg->load('upload_folder') . $cfg->sep . $filedata . "</b> failed.", 0); 
+				msg($T{"File uploading to <b>"} . $cfg->load('upload_folder') . $cfg->sep . $filedata . $T{"</b> failed."}, 0); 
 			}
 		}
-		print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Add a new file</h3></div><div class='panel-body'>\n";
-		print "<form method='POST' action='.' enctype='multipart/form-data'><input type='hidden' name='m' value='files'><p>Add new file: <input type='file' name='attach_file'><input class='btn btn-primary pull-right' type='submit' value='Upload'></p></form>\n";
+		print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>" . $T{"Add a new file"} . "</h3></div><div class='panel-body'>\n";
+		print "<form method='POST' action='.' enctype='multipart/form-data'><input type='hidden' name='m' value='files'><p>" . $T{"Select a file"} . ": <input type='file' name='attach_file'><input class='btn btn-primary pull-right' type='submit' value='" . $T{"Upload"} . "'></p></form>\n";
 		print "</div></div>\n";
-		print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Available files</h3></div><div class='panel-body'>\n";
+		print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>" . $T{"Available files"} . "</h3></div><div class='panel-body'>\n";
 		$sql = $db->prepare("SELECT * FROM files;");
 		$sql->execute();
-		print "<table class='table table-striped' id='files_table'><thead><tr><th>File name</th><th>File size</th><th>Uploaded by</th><th>Date</th><th>Hits</th><th>Download link</th></tr></thead><tbody>\n";
+		print "<table class='table table-striped' id='files_table'><thead><tr><th>" . $T{"File name"} . "</th><th>" , $T{"File size"} . "</th><th>" . $T{"Uploaded by"} . "</th><th>" . $T{"Date"} . "</th><th>" . $T{"Hits"} . "</th><th>" . $T{"Download link"} . "</th></tr></thead><tbody>\n";
 		while(my @res = $sql->fetchrow_array())
 		{
 			my $accesscount = 0;
@@ -5265,11 +5265,11 @@ elsif($q->param('m')) # Modules
 				$sql = $db->prepare("DELETE FROM file_access;");
 				$sql->execute();
 			}			
-			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Access log</h3></div><div class='panel-body'>\n";
+			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>" . $T{"Access log"} . "</h3></div><div class='panel-body'>\n";
 			$sql = $db->prepare("SELECT * FROM file_access;");
 			$sql->execute();
-			print "<form style='display:inline' method='POST' action='./?m=files'><input type='hidden' name='m' value='files'><input type='hidden' name='clear_log' value='1'><input class='btn btn-danger pull-right' type='submit' value='Clear log'><br></form>";
-			print "<table class='table table-striped' id='files_log'><thead><tr><th>IP address</th><th>File ID</th><th>Date</th></tr></thead><tbody>\n";
+			print "<form style='display:inline' method='POST' action='./?m=files'><input type='hidden' name='m' value='files'><input type='hidden' name='clear_log' value='1'><input class='btn btn-danger pull-right' type='submit' value='" . $T{"Clear log"} . "'><br></form>";
+			print "<table class='table table-striped' id='files_log'><thead><tr><th>" . $T{"IP address"} . "</th><th>" . $T{"ID"} . "</th><th>" . $T{"Date"} . "</th></tr></thead><tbody>\n";
 			while(my @res = $sql->fetchrow_array())
 			{
 				print "<tr><td>" . $res[0] . "</td><td>" . $res[1] . "</td><td>" . $res[2] . "</td></tr>\n";
@@ -6975,15 +6975,15 @@ elsif(!$cfg->load("ad_server") && $q->param('new_name') && $q->param('new_pass1'
 	headers("Registration");
 	if($q->param('new_pass1') ne $q->param('new_pass2'))
 	{
-		msg("Passwords do not match. Please go back and try again.", 0);
+		msg($T{"Passwords do not match. Please go back and try again."}, 0);
 	}
 	elsif(lc(sanitize_alpha($q->param('new_name'))) eq lc($cfg->load('admin_name')) || lc(sanitize_alpha($q->param('new_name'))) eq "system" || lc(sanitize_alpha($q->param('new_name'))) eq "guest" || lc(sanitize_alpha($q->param('new_name'))) eq "api")
 	{
-		msg("This user name is reserved. Please go back and try again.", 0);
+		msg($T{"This user name is reserved. Please go back and try again."}, 0);
 	}
 	elsif(length(sanitize_alpha($q->param('new_name'))) < 3 || length(sanitize_alpha($q->param('new_name'))) > 20 || ($q->param('new_email') && length(sanitize_alpha($q->param('new_email'))) > 99) || length($q->param('new_pass1')) < 6)
 	{
-		msg("User names should be between 3 and 20 characters, passwords should be at least 6 characters, emails less than 99 characters. Please go back and try again.", 0);
+		msg($T{"User names should be between 3 and 20 characters, passwords should be at least 6 characters, emails less than 99 characters. Please go back and try again."}, 0);
 	}
 	else
 	{
@@ -7000,14 +7000,14 @@ elsif(!$cfg->load("ad_server") && $q->param('new_name') && $q->param('new_pass1'
 			$sql = $db->prepare("INSERT INTO users VALUES(?, ?, ?, ?, ?, ?);");
 			if($q->param('new_email')) { $sql->execute(sanitize_alpha($q->param('new_name')), sha1_hex($q->param('new_pass1')), sanitize_email($q->param('new_email')), to_int($cfg->load('default_lvl')), "Never", $confirm); }
 			else { $sql->execute(sanitize_alpha($q->param('new_name')), sha1_hex($q->param('new_pass1')), "", to_int($cfg->load('default_lvl')), "Never", $confirm); }
-			if($logged_user eq "") { msg("User <b>" . sanitize_alpha($q->param('new_name')) . "</b> added. Press <a href='.'>here</a> to go to the login page.", 3); }
-			else { msg("User <b>" . sanitize_alpha($q->param('new_name')) . "</b> added. Press <a href='./?m=users'>here</a> to continue.", 3); }
+			if($logged_user eq "") { msg($T{"User <b>"} . sanitize_alpha($q->param('new_name')) . $T{"</b> added. Press <a href='.'>here</a> to go to the login page."}, 3); }
+			else { msg($T{"User <b>"} . sanitize_alpha($q->param('new_name')) . $T{"</b> added. Press <a href='./?m=users'>here</a> to continue."}, 3); }
 			logevent("Add new user: " . sanitize_alpha($q->param('new_name')));
-			notify(sanitize_alpha($q->param('new_name')), "Email confirmation", "You are receiving this email because a new user was created with this email address. Please confirm your email by logging into the NodePoint interface, and entering the following confirmation code under Settings: " . $confirm);
+			notify(sanitize_alpha($q->param('new_name')), $T{"Email confirmation"}, $T{"You are receiving this email because a new user was created with this email address. Please confirm your email by logging into the NodePoint interface, and entering the following confirmation code under Settings: "} . $confirm);
 		}
 		else
 		{
-			msg("User already exists. Please go back and try again.", 0);
+			msg($T{"User already exists. Please go back and try again."}, 0);
 		}
 	}
 	footers();
@@ -7018,15 +7018,15 @@ elsif($q->param('name') && $q->param('pass')) # Process login
 	if($logged_user ne "")
 	{
 		headers("Home");
-		if($last_login) { msg("Logged in successfully. Your last login was on " . $last_login . ".", 3); }
-		else { msg("Logged in successfully.", 3); }
+		if($last_login) { msg($T{"Logged in successfully. Your last login was on "} . $last_login . ".", 3); }
+		else { msg($T{"Logged in successfully."}, 3); }
 		logevent("Successful login");
 		home();
 	}
 	else
 	{
 		headers("Login");
-		msg("Invalid login credentials.", 0);
+		msg($T{"Invalid login credentials."}, 0);
 		logevent("Failed login");
 		login();
 	}

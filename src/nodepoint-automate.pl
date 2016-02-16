@@ -29,7 +29,6 @@ use MIME::Base64;
 use LWP::UserAgent;
 use SOAP::Lite;
 use utf8;
-use Encode;
 use nodepointlc;
 
 my ($cfg, $db, $sql, $sql2, $soap_user, $soap_pass);
@@ -131,8 +130,8 @@ sub notify
 					$smtp->datasend("To: " . $res[2] . "\n");
 					$smtp->datasend("Subject: " . $cfg->load('site_name') . " - " . $title . "\n");
 					$smtp->datasend("Content-type: text/plain; charset=UTF-8\n");
-					$smtp->datasend("Content-Transfer-Encoding: base64\n\n");
-					$smtp->datasend(encode_base64(encode('utf8', $mesg . "\n\nThis is an automated message from " . $cfg->load('site_name') . ". To disable notifications, log into your account and remove the email under Settings.\n")));
+					$smtp->datasend("Content-Transfer-Encoding: 8bit\n\n");
+					$smtp->datasend($mesg . "\n\nThis is an automated message from " . $cfg->load('site_name') . ". To disable notifications, log into your account and remove the email under Settings.\n");
 					$smtp->datasend();
 					$smtp->quit;
 				}
