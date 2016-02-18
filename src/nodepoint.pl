@@ -34,7 +34,8 @@ my $VERSION = "1.6.1";
 my @itemtypes = ("None");
 my %items = ("Product", "Product", "Release", "Release", "Model", "SKU/Model");
 my @themes = ("primary", "default", "success", "info", "warning", "danger");
-my %T = nodepointlc->lang("EN");
+my %D = nodepointlc->lang("EN");
+my %T;
 
 $perf = time/100;
 $perf = int(($perf - int($perf)) * 100000);
@@ -1248,6 +1249,8 @@ if(!defined($cfg)) # Can't even use headers() if this fails.
 };
 
 # Language
+if($cfg->load("lang") ne "" && $cfg->load("lang") ne "EN") { %D = nodepointlc->lang($cfg->load("lang")); }
+
 if($q->param('lang'))
 {
 	$cgs = $q->cookie(-name => "np_lang", -expires => '+3M', -value => $q->param('lang'));
@@ -1259,7 +1262,7 @@ elsif($q->cookie('np_lang'))
 }
 else
 {
-	if($cfg->load("lang") ne "" && $cfg->load("lang") ne "EN") { %T = nodepointlc->lang($cfg->load("lang")); }
+	%T = %D;
 }
 
 $items{"Product"} = $T{"Product"};
@@ -2144,7 +2147,7 @@ elsif($q->param('api')) # API calls
 			$sql2->execute(to_int($q->param('id')));
 			while(my @res2 = $sql2->fetchrow_array())
 			{
-				notify(sanitize_alpha($q->param('user')), "Item assigned to you", "An item has been assigned to you.\n\nItem name: " . $res2[1] . "\nItem type: " . $res2[2] . "\nSerial number: " . $res2[3] . "\nAdditional information: " . $res2[9]);
+				notify(sanitize_alpha($q->param('user')), $D{"Item assigned to you"}, $D{"An item has been assigned to you."} . "\n\n" . $D{"Item name"} . ": " . $res2[1] . "\n" . $D{"Item type"} . ": " . $res2[2] . "\n" . $D{"Serial number"} . ": " . $res2[3] . "\n" . $D{"Additional information"} . ": " . $res2[9]);
 				if($cfg->load('checkout_plugin'))
 				{
 					my $cmd = $cfg->load('checkout_plugin');
@@ -2272,9 +2275,9 @@ elsif($q->param('api')) # API calls
 			$sql->execute($desc, to_int($q->param('id')));
 			foreach my $u (@us)
 			{
-				notify($u, "Ticket (" . to_int($q->param('id')) . ") assigned to you has been modified", "The ticket \"" . $title . "\" has been modified:\n\nModified by: " . $from_user . "\nPriority: " . $priority . "\nStatus: " . $status . "\nResolution: " . $resolution . "\nDescription: " . $desc);
+				notify($u, $D{"Ticket"} . " (" . to_int($q->param('id')) . ") " . $D{"assigned to you has been modified"}, $D{"The ticket"} . " \"" . $title . "\" " . $D{"has been modified"} . ":\n\n" . $D{"Modified by"} . ": " . $from_user . "\n" . $D{"Priority"} . ": " . $priority . "\n" . $D{"Status"} . ": " . $status . "\n" . $D{"Resolution"} . ": " . $resolution . "\n" . $D{"Description"} . ": " . $desc);
 			}
-			notify($creator, "Your ticket (" . to_int($q->param('id')) . ") has been modified", "The ticket \"" . $title . "\" has been modified:\n\nModified by: " . $from_user . "\nPriority: " . $priority . "\nStatus: " . $status . "\nResolution: " . $resolution . "\nDescription: " . $desc);
+			notify($creator, $D{"Your ticket"} . " (" . to_int($q->param('id')) . ") " . $D{"has been modified"}, $D{"The ticket"} . " \"" . $title . "\" " . $D{"has been modified"} . ":\n\n" . $D{"Modified by"} . ": " . $from_user . "\n" . $D{"Priority"} . ": " . $priority . "\n" . $D{"Status"} . ": " . $status . "\n" . $D{"Resolution"} . ": " . $resolution . "\n" . $D{"Description"} . ": " . $desc);
 			print "{\n";
 			print " \"message\": \"Ticket updated.\",\n";
 			print " \"status\": \"OK\"\n";
@@ -2388,7 +2391,7 @@ elsif($q->param('api')) # API calls
 				if($q->param('email'))
 				{ 
 					$sql->execute(sanitize_alpha($q->param('user')), sha1_hex($q->param('password')), sanitize_email($q->param('email')), to_int($cfg->load('default_lvl')), "Never", $confirm); 
-					notify(sanitize_alpha($q->param('user')), $T{"Email confirmation"}, $T{"You are receiving this email because a new user was created with this email address. Please confirm your email by logging into the NodePoint interface, and entering the following confirmation code under Settings: "} . $confirm);
+					notify(sanitize_alpha($q->param('user')), $D{"Email confirmation"}, $D{"You are receiving this email because a new user was created with this email address. Please confirm your email by logging into the NodePoint interface, and entering the following confirmation code under Settings: "} . $confirm);
 					print " \"confirm\": \"" . $confirm . "\",\n";
 				}
 				else { $sql->execute(sanitize_alpha($q->param('user')), sha1_hex($q->param('password')), "", to_int($cfg->load('default_lvl')), "Never", ""); }
@@ -2544,7 +2547,7 @@ elsif($q->param('api')) # API calls
 				$sql->execute(to_int($q->param('product_id')));
 				while(my @res = $sql->fetchrow_array())
 				{
-					notify($res[1], "New ticket created", "A new ticket was created for one of your " . lc($items{"Product"}) . "s:\n\nUser: api\nTitle: " . sanitize_html($q->param('title')) . "\nDescription: " . sanitize_html($q->param('description')));
+					notify($res[1], $D{"New ticket created"}, $D{"A new ticket was created for one of your "} . lc($items{"Product"}) . "s:\n\n" . $D{"User"} . ": api\n" . $D{"Title"} . ": " . sanitize_html($q->param('title')) . "\n" . $D{"Description"} . ": " . sanitize_html($q->param('description')));
 				}
 				if($cfg->load('newticket_plugin'))
 				{
@@ -2901,7 +2904,7 @@ elsif($q->param('api')) # API calls
 			$sql = $db->prepare("SELECT name FROM products WHERE ROWID = ?;");
 			$sql->execute(to_int($q->param('product_id')));
 			while(my @res = $sql->fetchrow_array()) { $prod = $res[0]; }
-			notify(sanitize_alpha($q->param('user')), "New task assigned to you", "A new task has been added for you on " . lc($items{"Product"}) . " \"" . $prod . "\":\n\nTask description: " . sanitize_html($q->param('description')) . "\nDue by: " . sanitize_html($q->param('due')));
+			notify(sanitize_alpha($q->param('user')), $D{"New task assigned to you"}, $D{"A new task has been added for you on "} . lc($items{"Product"}) . " \"" . $prod . "\":\n\nTask description: " . sanitize_html($q->param('description')) . "\nDue by: " . sanitize_html($q->param('due')));
 			print "{\n";
 			print " \"message\": \"Task added.\",\n";
 			print " \"status\": \"OK\"\n";
@@ -5331,9 +5334,9 @@ elsif($q->param('m')) # Modules
 				my @us = split(' ', $res[4]);
 				foreach my $u (@us)
 				{
-					notify($u, "New comment to ticket (" . $res[0] . ") assigned to you", "A new comment was posted to a ticket assigned to you:\n\nUser: " . $logged_user . "\nComment: " . $q->param('comment') . "\nAttachment: " . $filename);
+					notify($u, $D{"New comment to ticket ("} . $res[0] . $D{") assigned to you"}, $D{"A new comment was posted to a ticket assigned to you:"} . "\n\n" . $D{"User"} . ": " . $logged_user . "\n" . $D{"Comment"} . ": " . $q->param('comment') . "\n" . $D{"Attachment"} . ": " . $filename);
 				}
-				notify($res[3], "New comment posted to your ticket (" . $res[0] . ")", "A new comment was posted to your ticket:\n\nUser: " . $logged_user . "\nComment: " . $q->param('comment') . "\nAttachment: " . $filename);
+				notify($res[3], $D{"New comment posted to your ticket ("} . $res[0] . ")", $D{"A new comment was posted to your ticket:"} . "\n\n" . $D{"User"} . ": " . $logged_user . "\n" . $D{"Comment"} . ": " . $q->param('comment') . "\n" . $D{"Attachment"} . ": " . $filename);
 			}			
 			msg("Comment added. Press <a href='./?m=view_ticket&t=" . to_int($q->param('t')) . "'>here</a> to continue.", 3);
 		}
