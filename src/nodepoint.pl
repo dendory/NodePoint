@@ -4000,7 +4000,14 @@ elsif($q->param('m')) # Modules
 		{
 			$sql = $db->prepare("INSERT INTO kb VALUES (?, ?, '', 0, ?, ?, 'Never');");
 			$sql->execute(to_int($q->param('productid')), sanitize_html($q->param('title')), $logged_user, now());
-			msg("New draft article <b>" . sanitize_html($q->param('title')) . "</b> added. Press <a href='./?m=articles'>here</a> to continue.", 3);
+			$sql = $db->prepare("SELECT last_insert_rowid();");
+			$sql->execute();
+			my $lastrowid = 0;
+			while(my @res = $sql->fetchrow_array())
+			{
+				$lastrowid = to_int($res[0]);
+			}
+			msg("New draft article <b>" . sanitize_html($q->param('title')) . "</b> added. Press <a href='./?kb=" . $lastrowid . "'>here</a> to continue.", 3);
 		}
 	}
 	elsif($q->param('m') eq "articles")
@@ -4107,99 +4114,176 @@ elsif($q->param('m')) # Modules
 			}
 			if($vis eq "Public" || ($vis eq "Private" && $logged_user ne "") || ($vis eq "Restricted" && $logged_lvl > 1) || $logged_lvl > 3)
 			{
-				print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>" . $items{"Release"} . "s</h3></div><div class='panel-body'>";
-				if($logged_lvl > 2 && $vis ne "Archived")
+				print "<a name=productdata></a>";
+				if($q->param('tab') eq "tasks")
 				{
-					print "<h4>Add a new " . lc($items{"Release"}) . "</h4><form method='POST' action='.' data-toggle='validator' role='form'>\n";
-					print "<input type='hidden' name='m' value='add_release'><input type='hidden' name='product_id' value='" . to_int($q->param('p')) . "'><div class='row'><div class='col-sm-4'>" . $items{"Release"} . ": <input type='text' class='form-control' name='release_version' required></div><div class='col-sm-6'>Notes or link: <input type='text' name='release_notes' class='form-control' required></div><div class='col-sm-2'><input class='btn btn-primary pull-right' type='submit' value='Add " . lc($items{"Release"}) . "'></div></div></form><hr><h4>Current " . lc($items{"Release"}) . "s</h4>\n";
+					print "<ul class='nav nav-pills nav-tabs'><li role='presentation'><a href='./?m=view_product&p=" . to_int($q->param('p')) . "#productdata'>" . $items{"Release"} . "s</a></li>";
+					if($cfg->load('comp_steps') && $logged_user ne "") { print "<li role='presentation' class='active'><a href='./?m=view_product&tab=tasks&p=" . to_int($q->param('p')) . "#productdata'>Tasks</a></li>"; }
+					if($cfg->load('comp_tickets')) { print "<li role='presentation'><a href='./?m=view_product&tab=tickets&p=" . to_int($q->param('p')) . "#productdata'>Tickets</a></li>"; }
+					if($cfg->load('comp_articles')) { print "<li role='presentation'><a href='./?m=view_product&tab=articles&p=" . to_int($q->param('p')) . "#productdata'>Articles</a></li>"; }
+					if($cfg->load('comp_items') && $logged_user ne "") { print "<li role='presentation'><a href='./?m=view_product&tab=items&p=" . to_int($q->param('p')) . "#productdata'>Items</a></li>"; }
+					print "</ul>\n";
+					print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-body'>";
+					if($logged_lvl >= to_int($cfg->load('tasks_lvl')) && $vis ne "Archived")
+					{
+						print "<form method='POST' action='.' data-toggle='validator' role='form'><input type='hidden' name='product_id' value='" . to_int($q->param('p')) . "'><input type='hidden' name='m' value='add_step'><h4>Add a new task</h4><p><div class='row'><div class='col-sm-12'><input placeholder='Description' class='form-control' name='name' maxlength='200' required></div></div></p><p><div class='row'><div class='col-sm-5'>Assign user:<br><select name='user' class='form-control'>";
+						my $sql = $db->prepare("SELECT name FROM users WHERE level > 0 ORDER BY name;");
+						$sql->execute();
+						while(my @res = $sql->fetchrow_array()) { print "<option>" . $res[0] . "</option>"; }
+						print "</select></div><div class='col-sm-5'>Due by:<br><input type='text' class='form-control datepicker' name='due' placeholder='mm/dd/yyyy' required></div><div class='col-sm-2'><input class='btn btn-primary pull-right' type='submit' value='Add task'></div></div></p></form><hr><h4>Current tasks</h4>\n";
+					}
+					print "<table class='table table-stripped' id='tasks_table'><thead><tr><th>Task</th><th>Assigned to</th><th>Completion</th><th>Due by</th></tr></thead><tbody>";
+					my $sql = $db->prepare("SELECT ROWID,* FROM steps WHERE productid = ?;");
+					$sql->execute(to_int($q->param('p')));
+					my $m = localtime->strftime('%m');
+					my $y = localtime->strftime('%Y');
+					my $d = localtime->strftime('%d');
+					while(my @res = $sql->fetchrow_array())
+					{
+						print "<tr><td>" . $res[2] . "</td><td>" . $res[3] . "</td><td>" . $res[4] . "%</td><td>";
+						my @dueby = split(/\//, $res[5]);
+						if(to_int($res[4]) == 100) { print "<font color='green'>Completed</font>"; }
+						elsif($dueby[2] < $y || ($dueby[2] == $y && $dueby[0] < $m) || ($dueby[2] == $y && $dueby[0] == $m && $dueby[1] < $d)) { print "<font color='red'>Overdue</font>"; }
+						else { print $res[5]; }
+						if($logged_lvl >= to_int($cfg->load('tasks_lvl')) && $vis ne "Archived") { print "<span class='pull-right'><form method='POST' action='.'><input type='hidden' name='product_id' value='" . to_int($q->param('p')) . "'><input type='hidden' name='m' value='delete_step'><input type='hidden' name='step_id' value='" . $res[0] . "'><input class='btn btn-danger pull-right' type='submit' value='X'></form></span>"; }
+						print "</td></tr>";
+					}				
+					print "</tbody></table><script>\$(document).ready(function(){\$('#tasks_table').DataTable({'order':[[3,'desc']],pageLength:" .  to_int($cfg->load('page_len')). ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script></div></div>\n";
 				}
-				print "<table class='table table-striped' id='releases_table'>\n";
-				print "<thead><tr><th>" . $items{"Release"} . "</th><th>User</th><th>Notes</th><th>Date</th></tr></thead><tbody>\n";
-				$sql = $db->prepare("SELECT ROWID,* FROM releases WHERE productid = ?;");
-				$sql->execute(to_int($q->param('p')));
-				while(my @res = $sql->fetchrow_array())
+				elsif($q->param('tab') eq "articles")
 				{
-					print "<tr><td>" . $res[3] . "</td><td>" . $res[2] . "</td><td>";
-					if(lc(substr($res[4], 0, 4)) eq "http") { print "<a href='" . $res[4] . "'>" . $res[4] . "</a>"; }
-					else { print $res[4]; }
-					print "</td><td>" .  $res[5];
-					if($logged_lvl > 2) { print "<span class='pull-right'><form method='GET' action='.'><input type='hidden' name='product_id' value='" . to_int($q->param('p')) . "'><input type='hidden' name='m' value='delete_release'><input type='hidden' name='release_id' value='" . $res[0] . "'><input class='btn btn-danger' type='submit' value='X'></form></span>"; } 
-					print "</td></tr>\n";
-				}
-				print "</tbody></table><script>\$(document).ready(function(){\$('#releases_table').DataTable({'order':[[3,'desc']],pageLength:" .  to_int($cfg->load('page_len')). ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script></div></div>\n";
-			}
-			if($cfg->load('comp_steps') eq "on" && (($vis eq "Restricted" && $logged_lvl > 1) || $logged_lvl > 0))
-			{
-				print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Tasks</h3></div><div class='panel-body'>";
-				if($logged_lvl >= to_int($cfg->load('tasks_lvl')) && $vis ne "Archived")
-				{
-					print "<form method='POST' action='.' data-toggle='validator' role='form'><input type='hidden' name='product_id' value='" . to_int($q->param('p')) . "'><input type='hidden' name='m' value='add_step'><h4>Add a new task</h4><p><div class='row'><div class='col-sm-12'><input placeholder='Description' class='form-control' name='name' maxlength='200' required></div></div></p><p><div class='row'><div class='col-sm-5'>Assign user:<br><select name='user' class='form-control'>";
-					my $sql = $db->prepare("SELECT name FROM users WHERE level > 0 ORDER BY name;");
-					$sql->execute();
-					while(my @res = $sql->fetchrow_array()) { print "<option>" . $res[0] . "</option>"; }
-					print "</select></div><div class='col-sm-5'>Due by:<br><input type='text' class='form-control datepicker' name='due' placeholder='mm/dd/yyyy' required></div><div class='col-sm-2'><input class='btn btn-primary pull-right' type='submit' value='Add task'></div></div></p></form><hr><h4>Current tasks</h4>\n";
-				}
-				print "<table class='table table-stripped' id='tasks_table'><thead><tr><th>Task</th><th>Assigned to</th><th>Completion</th><th>Due by</th></tr></thead><tbody>";
-				my $sql = $db->prepare("SELECT ROWID,* FROM steps WHERE productid = ?;");
-				$sql->execute(to_int($q->param('p')));
-				my $m = localtime->strftime('%m');
-				my $y = localtime->strftime('%Y');
-				my $d = localtime->strftime('%d');
-				while(my @res = $sql->fetchrow_array())
-				{
-					print "<tr><td>" . $res[2] . "</td><td>" . $res[3] . "</td><td>" . $res[4] . "%</td><td>";
-					my @dueby = split(/\//, $res[5]);
-					if(to_int($res[4]) == 100) { print "<font color='green'>Completed</font>"; }
-					elsif($dueby[2] < $y || ($dueby[2] == $y && $dueby[0] < $m) || ($dueby[2] == $y && $dueby[0] == $m && $dueby[1] < $d)) { print "<font color='red'>Overdue</font>"; }
-					else { print $res[5]; }
-					if($logged_lvl >= to_int($cfg->load('tasks_lvl')) && $vis ne "Archived") { print "<span class='pull-right'><form method='POST' action='.'><input type='hidden' name='product_id' value='" . to_int($q->param('p')) . "'><input type='hidden' name='m' value='delete_step'><input type='hidden' name='step_id' value='" . $res[0] . "'><input class='btn btn-danger pull-right' type='submit' value='X'></form></span>"; }
-					print "</td></tr>";
-				}				
-				print "</tbody></table><script>\$(document).ready(function(){\$('#tasks_table').DataTable({'order':[[3,'desc']],pageLength:" .  to_int($cfg->load('page_len')). ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script></div></div>\n";    
-			}
-			if($cfg->load('comp_articles') eq "on" && ($vis eq "Public" || ($vis eq "Private" && $logged_user ne "") || ($vis eq "Restricted" && $logged_lvl > 1) || $logged_lvl > 3))
-			{
-				print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Related articles</h3></div><div class='panel-body'><table class='table table-striped' id='relatedarticles_table'><thead>\n";
-				if($logged_lvl > 3) { print "<tr><th>ID</th><th>Title</th><th>Status</th><th>Last update</th></tr></thead><tbody>"; }
-				else { print "<tr><th>ID</th><th>Title</th><th>Last update</th></tr></thead><tbody>"; }
-				if($logged_lvl > 3) { $sql = $db->prepare("SELECT ROWID,* FROM kb WHERE (productid = ? OR productid = 0);"); }
-				else { $sql = $db->prepare("SELECT ROWID,* FROM kb WHERE published = 1 AND (productid = ? OR productid = 0);"); }
-				$sql->execute(to_int($q->param('p')));
-				my $status;
-				while(my @res = $sql->fetchrow_array())
-				{
-					if(to_int($res[4]) == 0) { $status = "Draft"; }
-					else { $status = "Published"; }			
+					print "<ul class='nav nav-pills nav-tabs'><li role='presentation'><a href='./?m=view_product&p=" . to_int($q->param('p')) . "#productdata'>" . $items{"Release"} . "s</a></li>";
+					if($cfg->load('comp_steps') && $logged_user ne "") { print "<li role='presentation'><a href='./?m=view_product&tab=tasks&p=" . to_int($q->param('p')) . "#productdata'>Tasks</a></li>"; }
+					if($cfg->load('comp_tickets')) { print "<li role='presentation'><a href='./?m=view_product&tab=tickets&p=" . to_int($q->param('p')) . "#productdata'>Tickets</a></li>"; }
+					if($cfg->load('comp_articles')) { print "<li role='presentation' class='active'><a href='./?m=view_product&tab=articles&p=" . to_int($q->param('p')) . "#productdata'>Articles</a></li>"; }
+					if($cfg->load('comp_items') && $logged_user ne "") { print "<li role='presentation'><a href='./?m=view_product&tab=items&p=" . to_int($q->param('p')) . "#productdata'>Items</a></li>"; }
+					print "</ul>\n";
+					print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-body'>";
 					if($logged_lvl > 3)
 					{
-						
-						if($res[7] eq "Never") { print "<tr><td>" . $res[0] . "</td><td><a href='./?kb=" . $res[0] . "'>" . $res[2] . "</a></td><td>" . $status . "</td><td>" . $res[6] . "</td></tr>\n"; }
-						else { print "<tr><td>" . $res[0] . "</td><td><a href='./?kb=" . $res[0] . "'>" . $res[2] . "</a></td><td>" . $status . "</td><td>" . $res[7] . "</td></tr>\n"; }
+						print "<h4>Add a new related article</h4>\n";
+						print "<p><form method='GET' action='.' data-toggle='validator' role='form'><div class='row'><div class='col-sm-8'><input type='hidden' name='m' value='add_article'><input placeholder='Title' class='form-control' type='text' name='title' maxlength='50' required><input type='hidden' value='" . to_int($q->param('p')) . "' name='productid'></div><div class='col-sm-4'><input type='submit' class='btn btn-primary pull-right' value='Add article'></div></div></form></p><hr><h4>Related articles</h4>\n";
 					}
-					else
+					print "<table class='table table-striped' id='relatedarticles_table'><thead>\n";
+					if($logged_lvl > 3) { print "<tr><th>ID</th><th>Title</th><th>Status</th><th>Last update</th></tr></thead><tbody>"; }
+					else { print "<tr><th>ID</th><th>Title</th><th>Last update</th></tr></thead><tbody>"; }
+					if($logged_lvl > 3) { $sql = $db->prepare("SELECT ROWID,* FROM kb WHERE (productid = ? OR productid = 0);"); }
+					else { $sql = $db->prepare("SELECT ROWID,* FROM kb WHERE published = 1 AND (productid = ? OR productid = 0);"); }
+					$sql->execute(to_int($q->param('p')));
+					my $status;
+					while(my @res = $sql->fetchrow_array())
 					{
-						if($res[7] eq "Never") { print "<tr><td>" . $res[0] . "</td><td><a href='./?kb=" . $res[0] . "'>" . $res[2] . "</a></td><td>" . $res[6] . "</td></tr>\n"; }
-						else { print "<tr><td>" . $res[0] . "</td><td><a href='./?kb=" . $res[0] . "'>" . $res[2] . "</a></td><td>" . $res[7] . "</td></tr>\n"; }
-					}			
+						if(to_int($res[4]) == 0) { $status = "Draft"; }
+						else { $status = "Published"; }			
+						if($logged_lvl > 3)
+						{
+							
+							if($res[7] eq "Never") { print "<tr><td>" . $res[0] . "</td><td><a href='./?kb=" . $res[0] . "'>" . $res[2] . "</a></td><td>" . $status . "</td><td>" . $res[6] . "</td></tr>\n"; }
+							else { print "<tr><td>" . $res[0] . "</td><td><a href='./?kb=" . $res[0] . "'>" . $res[2] . "</a></td><td>" . $status . "</td><td>" . $res[7] . "</td></tr>\n"; }
+						}
+						else
+						{
+							if($res[7] eq "Never") { print "<tr><td>" . $res[0] . "</td><td><a href='./?kb=" . $res[0] . "'>" . $res[2] . "</a></td><td>" . $res[6] . "</td></tr>\n"; }
+							else { print "<tr><td>" . $res[0] . "</td><td><a href='./?kb=" . $res[0] . "'>" . $res[2] . "</a></td><td>" . $res[7] . "</td></tr>\n"; }
+						}			
+					}
+					print "</tbody></table><script>\$(document).ready(function(){\$('#relatedarticles_table').DataTable({'order':[[0,'asc']],pageLength:" .  to_int($cfg->load('page_len')). ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script></div></div>\n";
 				}
-				print "</tbody></table><script>\$(document).ready(function(){\$('#relatedarticles_table').DataTable({'order':[[0,'asc']],pageLength:" .  to_int($cfg->load('page_len')). ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script></div></div>\n";
+				elsif($q->param('tab') eq "items")
+				{
+					print "<ul class='nav nav-pills nav-tabs'><li role='presentation'><a href='./?m=view_product&p=" . to_int($q->param('p')) . "#productdata'>" . $items{"Release"} . "s</a></li>";
+					if($cfg->load('comp_steps') && $logged_user ne "") { print "<li role='presentation'><a href='./?m=view_product&tab=tasks&p=" . to_int($q->param('p')) . "#productdata'>Tasks</a></li>"; }
+					if($cfg->load('comp_tickets')) { print "<li role='presentation'><a href='./?m=view_product&tab=tickets&p=" . to_int($q->param('p')) . "#productdata'>Tickets</a></li>"; }
+					if($cfg->load('comp_articles')) { print "<li role='presentation'><a href='./?m=view_product&tab=articles&p=" . to_int($q->param('p')) . "#productdata'>Articles</a></li>"; }
+					if($cfg->load('comp_items') && $logged_user ne "") { print "<li role='presentation' class='active'><a href='./?m=view_product&tab=items&p=" . to_int($q->param('p')) . "#productdata'>Items</a></li>"; }
+					print "</ul>\n";
+					print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-body'>";
+					if($logged_lvl > 3)
+					{
+						print "<h4>Add a new related item</h4>";
+						print "<form method='POST' action='.' data-toggle='validator' role='form'><input type='hidden' name='m' value='items'>\n";
+						print "<p><div class='row'><div class='col-sm-4'>Item type: <select name='type' class='form-control'><option>Desktop</option><option>Laptop</option><option>Server</option><option>Keyboard</option><option>Mouse</option><option>Display</option><option>Phone</option><option>Printer</option><option>Peripheral</option><option>Software</option><option>Furniture</option><option>Tool</option><option>Vehicle</option><option>Other</option></select></div><div class='col-sm-4'>Item name: <input type='text' maxlength='50' class='form-control' name='name' required></div><div class='col-sm-4'>Serial number: <input type='text' maxlength='30' class='form-control' name='serial' required></div></div></p><input type='hidden' name='product_id' value='" . to_int($q->param('p')) . "'><input type='hidden' name='client_id' value='None'>\n";
+						print "<p>Information provided on checkout: <textarea name='info' class='form-control'></textarea></p>";
+						print "<p><input type='submit' name='new_item' class='btn btn-primary pull-right' value='Add item'><label><input type='checkbox' name='approval'> Require approval for checkout</label></p></form><hr>\n";
+						print "<h4>Related items</h4>";
+					}
+					print "<table class='table table-striped' id='relateditems_table'><thead><tr><th>Type</th><th>Name</th><th>Serial</th><th>Status</th></tr></thead><tbody>";
+					$sql = $db->prepare("SELECT ROWID,* FROM items WHERE productid = ?;");
+					$sql->execute(to_int($q->param('p')));
+					while(my @res = $sql->fetchrow_array())
+					{
+						print "<tr><td>" . $res[2] . "</td><td><a href='./?m=items&i=" . $res[0] . "'>" . $res[1] . "</a></td><td>" . $res[3] . "</td><td>";
+						if(to_int($res[7]) == 0) { print "<font color='red'>Unavailable</font>"; }
+						elsif(to_int($res[7]) == 1) { print "<font color='green'>Available</font>"; }
+						elsif(to_int($res[7]) == 2) { print "<font color='orange'>Waiting approval for: " . $res[8] . "</font>"; }
+						else { print "<font color='red'>Checked out by: " . $res[8] . "</font>"; }
+						print "</td></tr>\n";
+					}
+					print "</tbody></table><script>\$(document).ready(function(){\$('#relateditems_table').DataTable({'order':[[0,'asc']],pageLength:" .  to_int($cfg->load('page_len')). ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script></div></div>\n";
+				}
+				elsif($q->param('tab') eq "tickets")
+				{
+					print "<ul class='nav nav-pills nav-tabs'><li role='presentation'><a href='./?m=view_product&p=" . to_int($q->param('p')) . "#productdata'>" . $items{"Release"} . "s</a></li>";
+					if($cfg->load('comp_steps') && $logged_user ne "") { print "<li role='presentation'><a href='./?m=view_product&tab=tasks&p=" . to_int($q->param('p')) . "#productdata'>Tasks</a></li>"; }
+					if($cfg->load('comp_tickets')) { print "<li role='presentation' class='active'><a href='./?m=view_product&tab=tickets&p=" . to_int($q->param('p')) . "#productdata'>Tickets</a></li>"; }
+					if($cfg->load('comp_articles')) { print "<li role='presentation'><a href='./?m=view_product&tab=articles&p=" . to_int($q->param('p')) . "#productdata'>Articles</a></li>"; }
+					if($cfg->load('comp_items') && $logged_user ne "") { print "<li role='presentation'><a href='./?m=view_product&tab=items&p=" . to_int($q->param('p')) . "#productdata'>Items</a></li>"; }
+					print "</ul>\n";
+					print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-body'>";
+					if($logged_lvl > 0  || $cfg->load("guest_tickets") eq "on")
+					{
+						print "<p><form method='POST' action='.'><div class='row'><div class='col-sm-12'><input type='hidden' name='product_id' value='" . to_int($q->param('p')) . "'><input type='hidden' name='m' value='new_ticket'><input class='btn btn-primary' type='submit' value='Add a new related ticket'></div></div></form></p><hr>\n";
+						if($cfg->load("hide_close") eq "on") { print "<h4>Related active tickets</h4>"; }
+						else { print "<h4>Related tickets</h4>"; }
+					}
+					print "<table class='table table-stripped' id='tickets_table'><thead><tr><th>ID</th><th>User</th><th>Title</th><th>Status</th><th>Date</th></tr></thead><tbody>\n";
+					if($cfg->load("hide_close") eq "on") { $sql = $db->prepare("SELECT ROWID,* FROM tickets WHERE productid = ? AND status != 'Closed' ORDER BY ROWID DESC;"); }
+					else { $sql = $db->prepare("SELECT ROWID,* FROM tickets WHERE productid = ? ORDER BY ROWID DESC;"); }
+					$sql->execute(to_int($q->param('p')));
+					while(my @res = $sql->fetchrow_array())
+					{
+						if(($cfg->load("default_vis") eq "Public" || ($cfg->load("default_vis") eq "Private" && $logged_lvl > -1) || ($res[3] eq $logged_user) || $logged_lvl > 1))
+						{ 
+							print "<tr><td><nobr>";
+							if($res[7] eq "High") { print "<img src='icons/high.png' title='High'> "; }
+							elsif($res[7] eq "Low") { print "<img src='icons/low.png' title='Low'> "; }
+							else { print "<img src='icons/normal.png' title='Normal'> "; }
+							print $res[0] . "</nobr></td><td>" . $res[3] . "</td><td><a href='./?m=view_ticket&t=" . $res[0] . "'>" . $res[5] . "</a></td><td>" . $res[8] . "</td><td>" . $res[11] . "</td></tr>\n"; 
+						}
+					}
+					print "</tbody></table><script>\$(document).ready(function(){\$('#tickets_table').DataTable({'order':[[0,'desc']],pageLength:" . to_int($cfg->load('page_len')) . ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script></div></div>\n";
+					print "</div></div>\n";
+				}
+				else
+				{
+					print "<ul class='nav nav-pills nav-tabs'><li role='presentation' class='active'><a href='./?m=view_product&p=" . to_int($q->param('p')) . "#productdata'>" . $items{"Release"} . "s</a></li>";
+					if($cfg->load('comp_steps') && $logged_user ne "") { print "<li role='presentation'><a href='./?m=view_product&tab=tasks&p=" . to_int($q->param('p')) . "#productdata'>Tasks</a></li>"; }
+					if($cfg->load('comp_tickets')) { print "<li role='presentation'><a href='./?m=view_product&tab=tickets&p=" . to_int($q->param('p')) . "#productdata'>Tickets</a></li>"; }
+					if($cfg->load('comp_articles')) { print "<li role='presentation'><a href='./?m=view_product&tab=articles&p=" . to_int($q->param('p')) . "#productdata'>Articles</a></li>"; }
+					if($cfg->load('comp_items') && $logged_user ne "") { print "<li role='presentation'><a href='./?m=view_product&tab=items&p=" . to_int($q->param('p')) . "#productdata'>Items</a></li>"; }
+					print "</ul>\n";
+					print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-body'>\n";
+					if($logged_lvl > 2 && $vis ne "Archived")
+					{
+						print "<h4>Add a new " . lc($items{"Release"}) . "</h4><form method='POST' action='.' data-toggle='validator' role='form'>\n";
+						print "<input type='hidden' name='m' value='add_release'><input type='hidden' name='product_id' value='" . to_int($q->param('p')) . "'><div class='row'><div class='col-sm-4'>" . $items{"Release"} . ": <input type='text' class='form-control' name='release_version' required></div><div class='col-sm-6'>Notes or link: <input type='text' name='release_notes' class='form-control' required></div><div class='col-sm-2'><input class='btn btn-primary pull-right' type='submit' value='Add " . lc($items{"Release"}) . "'></div></div></form><hr><h4>Current " . lc($items{"Release"}) . "s</h4>\n";
+					}
+					print "<table class='table table-striped' id='releases_table'>\n";
+					print "<thead><tr><th>" . $items{"Release"} . "</th><th>User</th><th>Notes</th><th>Date</th></tr></thead><tbody>\n";
+					$sql = $db->prepare("SELECT ROWID,* FROM releases WHERE productid = ?;");
+					$sql->execute(to_int($q->param('p')));
+					while(my @res = $sql->fetchrow_array())
+					{
+						print "<tr><td>" . $res[3] . "</td><td>" . $res[2] . "</td><td>";
+						if(lc(substr($res[4], 0, 4)) eq "http") { print "<a href='" . $res[4] . "'>" . $res[4] . "</a>"; }
+						else { print $res[4]; }
+						print "</td><td>" .  $res[5];
+						if($logged_lvl > 2) { print "<span class='pull-right'><form method='GET' action='.'><input type='hidden' name='product_id' value='" . to_int($q->param('p')) . "'><input type='hidden' name='m' value='delete_release'><input type='hidden' name='release_id' value='" . $res[0] . "'><input class='btn btn-danger' type='submit' value='X'></form></span>"; } 
+						print "</td></tr>\n";
+					}
+					print "</tbody></table><script>\$(document).ready(function(){\$('#releases_table').DataTable({'order':[[3,'desc']],pageLength:" .  to_int($cfg->load('page_len')). ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script></div></div>\n";
+				}
 			}
-		}
-		if($cfg->load('comp_items') eq "on" && ($vis eq "Public" || ($vis eq "Private" && $logged_user ne "") || ($vis eq "Restricted" && $logged_lvl > 1) || $logged_lvl > 3))
-		{
-			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Related items</h3></div><div class='panel-body'><table class='table table-striped' id='relateditems_table'><thead><tr><th>Type</th><th>Name</th><th>Serial</th><th>Status</th></tr></thead><tbody>";
-			$sql = $db->prepare("SELECT ROWID,* FROM items WHERE productid = ?;");
-			$sql->execute(to_int($q->param('p')));
-			while(my @res = $sql->fetchrow_array())
-			{
-				print "<tr><td>" . $res[2] . "</td><td><a href='./?m=items&i=" . $res[0] . "'>" . $res[1] . "</a></td><td>" . $res[3] . "</td><td>";
-				if(to_int($res[7]) == 0) { print "<font color='red'>Unavailable</font>"; }
-				elsif(to_int($res[7]) == 1) { print "<font color='green'>Available</font>"; }
-				elsif(to_int($res[7]) == 2) { print "<font color='orange'>Waiting approval for: " . $res[8] . "</font>"; }
-				else { print "<font color='red'>Checked out by: " . $res[8] . "</font>"; }
-				print "</td></tr>\n";
-			}
-			print "</tbody></table><script>\$(document).ready(function(){\$('#relateditems_table').DataTable({'order':[[0,'asc']],pageLength:" .  to_int($cfg->load('page_len')). ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script></div></div>\n";
 		}
 	}
 	elsif($logged_lvl > 2 && $q->param('m') eq "delete_release")
@@ -5672,7 +5756,7 @@ elsif($q->param('m')) # Modules
 						}
 					}
 				}
-				msg("Ticket successfully added. Press <a href='./?m=tickets'>here</a> to continue.", 3);
+				msg("Ticket successfully added. Press <a href='./?m=view_ticket&t=" . $lastrowid . "'>here</a> to continue.", 3);
 			}
 		}
 		else
@@ -6243,7 +6327,14 @@ elsif($q->param('m')) # Modules
 				{
 					$sql = $db->prepare("INSERT INTO items VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);");
 					$sql->execute(sanitize_html($q->param('name')), sanitize_html($q->param('type')), sanitize_html($q->param('serial')), to_int($q->param('product_id')), to_int($q->param('client_id')), $approval, 1, "", $info);
-					msg("Item added. Press <a href='./?m=items'>here</a> to continue.", 3);
+					$sql = $db->prepare("SELECT last_insert_rowid();");
+					$sql->execute();
+					my $lastrowid = 0;
+					while(my @res = $sql->fetchrow_array())
+					{
+						$lastrowid = to_int($res[0]);
+					}
+					msg("New item added. Press <a href='./?m=items&i=" . $lastrowid . "'>here</a> to continue.", 3);
 				}
 			}
 		}

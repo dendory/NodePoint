@@ -164,6 +164,8 @@ $sql = $db->prepare("SELECT * FROM auto WHERE 0 = 1;") or quit(1);
 $sql = $db->prepare("SELECT * FROM auto_config WHERE 0 = 1;") or quit(1);
 
 # Main loop
+$sql = $db->prepare("DELETE FROM auto;");
+$sql->execute();
 my $runcount = 0;
 $sql = $db->prepare("SELECT * FROM auto_modules WHERE enabled = 1;");
 $sql->execute();
@@ -350,53 +352,56 @@ while(my @res = $sql->fetchrow_array())
 			else
 			{
 				my $ldap = Net::LDAP->new($cfg->load("ad_server")) or logevent($res[0], "Could not connect to AD server.");
-				my $mesg = $ldap->bind($cfg->load("ad_domain") . "\\" . $aduser, password => $adpass);
-				$mesg = $ldap->search(base => $basedn, filter => $searchfilter);
-				if($mesg->code)
+				if($ldap)
 				{
-					logevent($res[0], "LDAP: " . $mesg->error . " [" . $mesg->code . "]");
-				}
-				else
-				{
-					my $rowcount = 0;
-					my $updcount = 0;
-					my $newcount = 0;
-					foreach my $entry ($mesg->entries)
+					my $mesg = $ldap->bind($cfg->load("ad_domain") . "\\" . $aduser, password => $adpass);
+					$mesg = $ldap->search(base => $basedn, filter => $searchfilter);
+					if($mesg->code)
 					{
-						my $name = $entry->get_value('sAMAccountName');
-						my $mail = $entry->get_value('mail');
-						my $existing = 0;
-						$sql2 = $db->prepare("SELECT COUNT(*) FROM users WHERE name = ?;");
-						$sql2->execute(sanitize_alpha($name));
-						while(my @res2 = $sql2->fetchrow_array())
-						{
-							$existing = to_int($res2[0]);
-						}
-						if(lc(sanitize_alpha($name)) eq "guest" || lc(sanitize_alpha($name)) eq "system" || lc(sanitize_alpha($name)) eq "api" || lc(sanitize_alpha($name)) eq lc($cfg->load('admin_name')))
-						{}
-						elsif($existing > 0 && $importemail == 1)
-						{
-							$sql2 = $db->prepare("UPDATE users SET email = ? WHERE name = ?");
-							$sql2->execute(sanitize_email($mail), sanitize_alpha($name));
-							$updcount += 1;
-						}
-						elsif($existing == 0 && $importemail == 1)
-						{
-							$sql2 = $db->prepare("INSERT INTO users VALUES(?, ?, ?, ?, ?, ?);");
-							$sql2->execute(sanitize_alpha($name), "*********", sanitize_email($mail), to_int($cfg->load('default_lvl')), now(), "");
-							$newcount += 1;
-						}
-						elsif($existing == 0 && $importemail == 0)
-						{
-							$sql2 = $db->prepare("INSERT INTO users VALUES(?, ?, ?, ?, ?, ?);");
-							$sql2->execute(sanitize_alpha($name), "*********", "", to_int($cfg->load('default_lvl')), now(), "");
-							$newcount += 1;
-						}
-						$rowcount += 1; 
+						logevent($res[0], "LDAP: " . $mesg->error . " [" . $mesg->code . "]");
 					}
-					$mesg = $ldap->unbind; 
-					$result = "Success";
-					logevent($res[0], "Listed " . $rowcount . " accounts, updated " . $updcount . ", created " . $newcount . ".");
+					else
+					{
+						my $rowcount = 0;
+						my $updcount = 0;
+						my $newcount = 0;
+						foreach my $entry ($mesg->entries)
+						{
+							my $name = $entry->get_value('sAMAccountName');
+							my $mail = $entry->get_value('mail');
+							my $existing = 0;
+							$sql2 = $db->prepare("SELECT COUNT(*) FROM users WHERE name = ?;");
+							$sql2->execute(sanitize_alpha($name));
+							while(my @res2 = $sql2->fetchrow_array())
+							{
+								$existing = to_int($res2[0]);
+							}
+							if(lc(sanitize_alpha($name)) eq "guest" || lc(sanitize_alpha($name)) eq "system" || lc(sanitize_alpha($name)) eq "api" || lc(sanitize_alpha($name)) eq lc($cfg->load('admin_name')))
+							{}
+							elsif($existing > 0 && $importemail == 1)
+							{
+								$sql2 = $db->prepare("UPDATE users SET email = ? WHERE name = ?");
+								$sql2->execute(sanitize_email($mail), sanitize_alpha($name));
+								$updcount += 1;
+							}
+							elsif($existing == 0 && $importemail == 1)
+							{
+								$sql2 = $db->prepare("INSERT INTO users VALUES(?, ?, ?, ?, ?, ?);");
+								$sql2->execute(sanitize_alpha($name), "*********", sanitize_email($mail), to_int($cfg->load('default_lvl')), now(), "");
+								$newcount += 1;
+							}
+							elsif($existing == 0 && $importemail == 0)
+							{
+								$sql2 = $db->prepare("INSERT INTO users VALUES(?, ?, ?, ?, ?, ?);");
+								$sql2->execute(sanitize_alpha($name), "*********", "", to_int($cfg->load('default_lvl')), now(), "");
+								$newcount += 1;
+							}
+							$rowcount += 1; 
+						}
+						$mesg = $ldap->unbind; 
+						$result = "Success";
+						logevent($res[0], "Listed " . $rowcount . " accounts, updated " . $updcount . ", created " . $newcount . ".");
+					}
 				}
 			}
 		}
@@ -426,46 +431,49 @@ while(my @res = $sql->fetchrow_array())
 			else
 			{
 				my $ldap = Net::LDAP->new($cfg->load("ad_server")) or logevent($res[0], "Could not connect to AD server.");
-				my $mesg = $ldap->bind($cfg->load("ad_domain") . "\\" . $aduser, password => $adpass);
-				$mesg = $ldap->search(base => $basedn, filter => $searchfilter);
-				if($mesg->code)
+				if($ldap)
 				{
-					logevent($res[0], "LDAP: " . $mesg->error . " [" . $mesg->code . "]");
-				}
-				else
-				{
-					my $rowcount = 0;
-					my $updcount = 0;
-					my $newcount = 0;
-					foreach my $entry ($mesg->entries)
+					my $mesg = $ldap->bind($cfg->load("ad_domain") . "\\" . $aduser, password => $adpass);
+					$mesg = $ldap->search(base => $basedn, filter => $searchfilter);
+					if($mesg->code)
 					{
-						my $name = $entry->get_value('sAMAccountName');
-						my $serial = $entry->get_value('dNSHostName');
-						my $os = $entry->get_value('operatingSystem');
-						my $existing = "";
-						if($serial ne "" && $name ne "")
-						{
-							$sql2 = $db->prepare("SELECT name FROM items WHERE serial = ?;");
-							$sql2->execute(sanitize_html($serial));
-							while(my @res2 = $sql2->fetchrow_array()) { $existing = $res2[0]; }
-							if($existing eq "")
-							{
-								$sql2 = $db->prepare("INSERT INTO items VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);");
-								$sql2->execute(sanitize_html($name), $type, sanitize_html($serial), 0, 0, $approval, 1, "", sanitize_html($os));
-								$newcount += 1;
-							}
-							elsif($existing ne sanitize_html($name))
-							{
-								$sql2 = $db->prepare("UPDATE items SET name = ? WHERE serial = ?");
-								$sql2->execute(sanitize_html($name), sanitize_html($serial));
-								$updcount += 1;
-							}
-						}
-						$rowcount += 1; 
+						logevent($res[0], "LDAP: " . $mesg->error . " [" . $mesg->code . "]");
 					}
-					$mesg = $ldap->unbind; 
-					$result = "Success";
-					logevent($res[0], "Listed " . $rowcount . " computers, updated " . $updcount . ", created " . $newcount . ".");
+					else
+					{
+						my $rowcount = 0;
+						my $updcount = 0;
+						my $newcount = 0;
+						foreach my $entry ($mesg->entries)
+						{
+							my $name = $entry->get_value('sAMAccountName');
+							my $serial = $entry->get_value('dNSHostName');
+							my $os = $entry->get_value('operatingSystem');
+							my $existing = "";
+							if($serial ne "" && $name ne "")
+							{
+								$sql2 = $db->prepare("SELECT name FROM items WHERE serial = ?;");
+								$sql2->execute(sanitize_html($serial));
+								while(my @res2 = $sql2->fetchrow_array()) { $existing = $res2[0]; }
+								if($existing eq "")
+								{
+									$sql2 = $db->prepare("INSERT INTO items VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);");
+									$sql2->execute(sanitize_html($name), $type, sanitize_html($serial), 0, 0, $approval, 1, "", sanitize_html($os));
+									$newcount += 1;
+								}
+								elsif($existing ne sanitize_html($name))
+								{
+									$sql2 = $db->prepare("UPDATE items SET name = ? WHERE serial = ?");
+									$sql2->execute(sanitize_html($name), sanitize_html($serial));
+									$updcount += 1;
+								}
+							}
+							$rowcount += 1; 
+						}
+						$mesg = $ldap->unbind; 
+						$result = "Success";
+						logevent($res[0], "Listed " . $rowcount . " computers, updated " . $updcount . ", created " . $newcount . ".");
+					}
 				}
 			}
 		}
@@ -822,7 +830,5 @@ while(my @res = $sql->fetchrow_array())
 	}
 }
 # Finish
-$sql = $db->prepare("DELETE FROM auto;");
-$sql->execute();
 $sql = $db->prepare("INSERT INTO auto VALUES (?, 'Ran " . $runcount . " modules at " . now() . ".');");
 $sql->execute(time());
