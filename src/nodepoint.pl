@@ -2904,7 +2904,7 @@ elsif($q->param('api')) # API calls
 			$sql = $db->prepare("SELECT name FROM products WHERE ROWID = ?;");
 			$sql->execute(to_int($q->param('product_id')));
 			while(my @res = $sql->fetchrow_array()) { $prod = $res[0]; }
-			notify(sanitize_alpha($q->param('user')), $D{"New task assigned to you"}, $D{"A new task has been added for you on "} . lc($items{"Product"}) . " \"" . $prod . "\":\n\nTask description: " . sanitize_html($q->param('description')) . "\nDue by: " . sanitize_html($q->param('due')));
+			notify(sanitize_alpha($q->param('user')), $D{"New task assigned to you"}, $D{"A new task has been added for you on "} . lc($items{"Product"}) . " \"" . $prod . "\":\n\n" . $D{"Task description"} . ": " . sanitize_html($q->param('description')) . "\n" . $D{"Due by"} . ": " . sanitize_html($q->param('due')));
 			print "{\n";
 			print " \"message\": \"Task added.\",\n";
 			print " \"status\": \"OK\"\n";
@@ -2956,9 +2956,9 @@ elsif($q->param('api')) # API calls
 				my @us = split(' ', $res[4]);
 				foreach my $u (@us)
 				{
-					notify($u, "New comment to ticket (" . to_int($q->param('id')) . ") assigned to you", "A new comment was posted to a ticket assigned to you:\n\nUser: api\nComment: " . sanitize_html($q->param('comment')));
+					notify($u, $D{"New comment to ticket ("} . to_int($q->param('id')) . $D{") assigned to you"}, $D{"A new comment was posted to a ticket assigned to you:"} . "\n\n" . $D{"User"} . ": api\n" . $D{"Comment"} . ": " . sanitize_html($q->param('comment')));
 				}
-				notify($res[3], "New comment to your ticket (" . to_int($q->param('id')) . ")", "A new comment was posted to your ticket:\n\nUser: api\nComment: " . sanitize_html($q->param('comment')));
+				notify($res[3], $D{"New comment posted to your ticket ("} . to_int($q->param('id')) . ")", $D{"A new comment was posted to your ticket:"} . "\n\n" . $D{"User"} . ": api\n" . $D{"Comment"} . ": " . sanitize_html($q->param('comment')));
 			}
 		}
 	}
@@ -4565,9 +4565,9 @@ elsif($q->param('m')) # Modules
 			$sql->execute($lnk, $resolution, sanitize_alpha($q->param('ticket_status')), sanitize_html($q->param('ticket_title')), sanitize_html($q->param('ticket_desc')) . "\n\n--- " . now() . " ---\nTicket modified by: " . $logged_user . "\n" . $changes, $assigned, sanitize_html($q->param('ticket_releases')), now(), to_int($q->param('t')));
 			foreach my $u (@us)
 			{
-				notify($u, "Ticket (" . to_int($q->param('t')) . ") assigned to you has been modified", "The ticket \"" . $q->param('ticket_title') . "\" has been modified:\n\nModified by: " . $logged_user . "\nPriority: " . $lnk . "\nStatus: " . sanitize_alpha($q->param('ticket_status')) . "\nResolution: " . $resolution . "\nAssigned to: " . $assigned . "\nDescription: " . $q->param('ticket_desc') . "\n\n" . $changes);
+				notify($u, $D{"Ticket"} . " (" . to_int($q->param('t')) . ") " . $D{"assigned to you has been modified"}, $D{"The ticket"} . " \"" . $q->param('ticket_title') . "\" " . $D{"has been modified"} . ":\n\n" . $D{"Modified by"} . ": " . $logged_user . "\n" . $D{"Priority"} . ": " . $lnk . "\n" . $D{"Status"} . ": " . sanitize_alpha($q->param('ticket_status')) . "\n" . $D{"Resolution"} . ": " . $resolution . "\n" . $D{"Assigned to"} . ": " . $assigned . "\n" . $D{"Description"} . ": " . $q->param('ticket_desc') . "\n\n" . $changes);
 			}
-			if($creator) { notify($creator, "Your ticket (" . to_int($q->param('t')) . ") has been modified", "The ticket \"" . $q->param('ticket_title') . "\" has been modified:\n\nModified by: " . $logged_user . "\nPriority: " . $lnk . "\nStatus: " . sanitize_alpha($q->param('ticket_status')) . "\nResolution: " . $resolution . "\nAssigned to: " . $assigned . "\nDescription: " . $q->param('ticket_desc') . "\n\n" . $changes); }
+			if($creator) { notify($creator, $D{"Your ticket"} . " (" . to_int($q->param('t')) . ") " . $D{"has been modified"}, $D{"The ticket"} . " \"" . $q->param('ticket_title') . "\" " . $D{"has been modified"} . ":\n\n" . $D{"Modified by"} . ": " . $logged_user . "\n" . $D{"Priority"} . ": " . $lnk . "\n" . $D{"Status"} . ": " . sanitize_alpha($q->param('ticket_status')) . "\n" . $D{"Resolution"} . ": " . $resolution . "\n" . $D{"Assigned to"} . ": " . $assigned . "\n" . $D{"Description"} . ": " . $q->param('ticket_desc') . "\n\n" . $changes); }
 			msg("Ticket updated. Press <a href='./?m=view_ticket&t=" . to_int($q->param('t')) . "'>here</a> to continue.", 3);
 			if($timespent != 0)
 			{
@@ -4578,7 +4578,7 @@ elsif($q->param('m')) # Modules
 			{
 				$sql = $db->prepare("INSERT INTO escalate VALUES (?, ?);");
 				$sql->execute(to_int($q->param('t')), sanitize_alpha(lc($q->param('notify_user'))));
-				notify(sanitize_alpha($q->param('notify_user')), "Ticket (" . to_int($q->param('t')) . ") requires your attention", "The ticket \"" . $q->param('ticket_title') . "\" has been modified:\n\nModified by: " . $logged_user . "\nPriority: " . $lnk . "\nStatus: " . sanitize_alpha($q->param('ticket_status')) . "\nResolution: " . $resolution . "\nAssigned to: " . $assigned . "\nDescription: " . $q->param('ticket_desc') . "\n\n" . $changes);
+				notify(sanitize_alpha($q->param('notify_user')), $D{"Ticket"} . " (" . to_int($q->param('t')) . ") " . $D{"requires your attention."}, $D{"The ticket"} . " \"" . $q->param('ticket_title') . "\" " . $D{"has been modified"} . ":\n\n" . $D{"Modified by"} . ": " . $logged_user . "\n" . $D{"Priority"} . ": " . $lnk . "\n" . $D{"Status"} . ": " . sanitize_alpha($q->param('ticket_status')) . "\n" . $D{"Resolution"} . ": " . $resolution . "\n" . $D{"Assigned to"} . ": " . $assigned . "\n" . $D{"Description"} . ": " . $q->param('ticket_desc') . "\n\n" . $changes);
 			}
 			if($cfg->load('comp_billing') eq "on")
 			{
@@ -5637,11 +5637,11 @@ elsif($q->param('m')) # Modules
 				$sql->execute(to_int($q->param('product_id')));
 				while(my @res = $sql->fetchrow_array())
 				{
-					notify($res[1], "New ticket created", "A new ticket was created for one of your " . lc($items{"Product"}) . "s:\n\nUser: " . $logged_user . "\nTitle: " . sanitize_html($title) . "\nPriority: " . $lnk . "\nDescription: " . sanitize_html($description));
+					notify($res[1], $D{"New ticket created"}, $D{"A new ticket was created for one of your "} . lc($items{"Product"}) . "s:\n\n" . $D{"User"} . ": " . $logged_user . "\n" . $D{"Title"} . ": " . sanitize_html($title) . "\n" . $D{"Priority"} . ": " . $lnk . "\n" . $D{"Description"} . ": " . sanitize_html($description));
 				}
 				foreach my $assign (split(' ', $assignedto))
 				{
-					notify($assign, "New ticket created", "A new ticket was created for a " . lc($items{"Product"}) . " assigned to you:\n\nUser: " . $logged_user . "\nTitle: " . sanitize_html($title) . "\nPriority: " . $lnk . "\nDescription: " . sanitize_html($description));
+					notify($assign, $D{"New ticket created"}, $D{"A new ticket was created for a "} . lc($items{"Product"}) . $D{" assigned to you:"} . "\n\n" . $D{"User"} . ": " . $logged_user . "\n" . $D{"Title"} . ": " . sanitize_html($title) . "\n" . $D{"Priority"} . ": " . $lnk . "\n" . $D{"Description"} . ": " . sanitize_html($description));
 				}
 				$sql = $db->prepare("SELECT last_insert_rowid();");
 				$sql->execute();
@@ -5927,7 +5927,7 @@ elsif($q->param('m')) # Modules
 					$sql2->execute(sanitize_alpha($q->param('user')));
 					$sql2 = $db->prepare("UPDATE users SET pass = ? WHERE name = ?");
 					$sql2->execute(sha1_hex($newpass), sanitize_alpha($q->param('user')));
-					notify(sanitize_alpha($q->param('user')), "Password reset", "Your password has successfully been reset from the lost password form. If you believe this was done in error, please contact your system administrator.");
+					notify(sanitize_alpha($q->param('user')), $D{"Password reset"}, $D{"Your password has successfully been reset from the lost password form. If you believe this was done in error, please contact your system administrator."});
 					logevent("Password change: " . sanitize_alpha($q->param('user')));
 					$found = 1;
 				}
@@ -5957,7 +5957,7 @@ elsif($q->param('m')) # Modules
 						$sql2->execute(sanitize_alpha($q->param('user')));
 						$sql2 = $db->prepare("INSERT INTO lostpass VALUES (?, ?)");
 						$sql2->execute(sanitize_alpha($q->param('user')), $code);
-						notify(sanitize_alpha($q->param('user')), "Password reset code", "A password reset was initiated from the lost password form for the account " . sanitize_alpha($q->param('user')) . ". To continue with this reset, please enter the following confirmation code:  " . $code);
+						notify(sanitize_alpha($q->param('user')), $D{"Password reset code"}, $D{"A password reset was initiated from the lost password form for the account "} . sanitize_alpha($q->param('user')) . $D{". To continue with this reset, please enter the following confirmation code:  "} . $code);
 						$found = 1; 
 					}
 				}
@@ -6327,13 +6327,13 @@ elsif($q->param('m')) # Modules
 				$sql2->execute(to_int($q->param('i')));
 				while(my @res2 = $sql2->fetchrow_array())
 				{
-					notify($res2[8], "Checkout request denied", "Item name: " . $res2[1] . "\nItem type: " . $res2[2] . "\nSerial number: " . $res2[3]);
+					notify($res2[8], $D{"Checkout request denied"}, $D{"Item name"} . ": " . $res2[1] . "\n" . $D{"Item type"} . ": " . $res2[2] . "\n" . $D{"Serial number"} . ": " . $res2[3]);
 				}
 				$sql2 = $db->prepare("UPDATE items SET user = ?, status = ? WHERE ROWID = ?;");
 				$sql2->execute("", 1, to_int($q->param('i')));
 				$sql2 = $db->prepare("INSERT INTO checkouts VALUES (?, ?, ?, ?);");
 				$sql2->execute(to_int($q->param('i')), $logged_user, "Approval denied", now());
-				msg("Checkout request denied.", 3);
+				msg($T{"Checkout request denied."}, 3);
 			}
 			if($q->param('approve') && $logged_lvl > 3)
 			{
@@ -6346,7 +6346,7 @@ elsif($q->param('m')) # Modules
 				$sql2->execute(to_int($q->param('i')));
 				while(my @res2 = $sql2->fetchrow_array())
 				{
-					notify($res2[8], "Checkout request approved", "Item name: " . $res2[1] . "\nItem type: " . $res2[2] . "\nSerial number: " . $res2[3] . "\nAdditional information: " . $res2[9]);
+					notify($res2[8], $D{"Checkout request approved"}, $D{"Item name"} . ": " . $res2[1] . "\n" . $D{"Item type"} . ": " . $res2[2] . "\n" . $D{"Serial number"} . ": " . $res2[3] . "\n" . $D{"Additional information"} . ": " . $res2[9]);
 					if($cfg->load('checkout_plugin'))
 					{
 						my $cmd = $cfg->load('checkout_plugin');
@@ -6371,7 +6371,7 @@ elsif($q->param('m')) # Modules
 				$sql2->execute(to_int($q->param('i')));
 				while(my @res2 = $sql2->fetchrow_array())
 				{
-					notify(sanitize_alpha($q->param('user')), "Item assigned to you", "An item has been assigned to you.\n\nItem name: " . $res2[1] . "\nItem type: " . $res2[2] . "\nSerial number: " . $res2[3] . "\nAdditional information: " . $res2[9]);
+					notify(sanitize_alpha($q->param('user')), $D{"Item assigned to you"}, $D{"An item has been assigned to you."} . "\n\n" . $D{"Item name"} . ": " . $res2[1] . "\n" . $D{"Item type"} . ": " . $res2[2] . "\n" . $D{"Serial number"} . ": " . $res2[3] . "\n" . $D{"Additional information"} . ": " . $res2[9]);
 					if($cfg->load('checkout_plugin'))
 					{
 						my $cmd = $cfg->load('checkout_plugin');
@@ -6465,12 +6465,12 @@ elsif($q->param('m')) # Modules
 						$sql2 = $db->prepare("INSERT INTO checkouts VALUES (?, ?, ?, ?);");
 						$sql2->execute(to_int($q->param('i')), $logged_user, "Requested", now());
 						msg("Request sent. You will be notified after it is approved or denied.", 3);
-						notify($logged_user, "Item requested", "Your checkout request was sent. You will be notified after it is approved or denied.\n\nItem name: " . $res[1] . "\nItem type: " . $res[2] . "\nSerial number: " . $res[3]);
+						notify($logged_user, $D{"Item requested"}, $D{"Your checkout request was sent. You will be notified after it is approved or denied."} . "\n\n" . $D{"Item name"} . ": " . $res[1] . "\n" . $D{"Item type"} . ": " . $res[2] . "\n" . $D{"Serial number"} . ": " . $res[3]);
 						$sql2 = $db->prepare("SELECT name FROM users WHERE level > 3 AND email != '';");
 						$sql2->execute();
 						while(my @res2 = $sql2->fetchrow_array())
 						{
-							notify($res2[0], "Checkout requested", "A checkout request was submitted by: " . $logged_user . "\n\nItem name: " . $res[1] . "\nItem type: " . $res[2] . "\nSerial number: " . $res[3]);
+							notify($res2[0], $D{"Checkout requested"}, $D{"A checkout request was submitted by: "} . $logged_user . "\n\n" . $D{"Item name"} . ": " . $res[1] . "\n" . $D{"Item type"} . ": " . $res[2] . "\n" . $D{"Serial number"} . ": " . $res[3]);
 						}
 					}
 					else # Checkout
@@ -6480,7 +6480,7 @@ elsif($q->param('m')) # Modules
 						$sql2 = $db->prepare("INSERT INTO checkouts VALUES (?, ?, ?, ?);");
 						$sql2->execute(to_int($q->param('i')), $logged_user, "Checked out", now());
 						msg("Item checked out.", 3);
-						notify($logged_user, "Item checked out", "Item name: " . $res[1] . "\nItem type: " . $res[2] . "\nSerial number: " . $res[3] . "\nAdditional information: " . $res[9]);
+						notify($logged_user, $D{"Item checked out"}, $D{"Item name"} . ": " . $res[1] . "\n" . $D{"Item type"} . ": " . $res[2] . "\n" . $D{"Serial number"} . ": " . $res[3] . "\n" . $D{"Additional information"} . ": " . $res[9]);
 						if($cfg->load('checkout_plugin'))
 						{
 							my $cmd = $cfg->load('checkout_plugin');
@@ -7006,7 +7006,7 @@ elsif(!$cfg->load("ad_server") && $q->param('new_name') && $q->param('new_pass1'
 			if($logged_user eq "") { msg($T{"User <b>"} . sanitize_alpha($q->param('new_name')) . $T{"</b> added. Press <a href='.'>here</a> to go to the login page."}, 3); }
 			else { msg($T{"User <b>"} . sanitize_alpha($q->param('new_name')) . $T{"</b> added. Press <a href='./?m=users'>here</a> to continue."}, 3); }
 			logevent("Add new user: " . sanitize_alpha($q->param('new_name')));
-			notify(sanitize_alpha($q->param('new_name')), $T{"Email confirmation"}, $T{"You are receiving this email because a new user was created with this email address. Please confirm your email by logging into the NodePoint interface, and entering the following confirmation code under Settings: "} . $confirm);
+			notify(sanitize_alpha($q->param('new_name')), $D{"Email confirmation"}, $D{"You are receiving this email because a new user was created with this email address. Please confirm your email by logging into the NodePoint interface, and entering the following confirmation code under Settings: "} . $confirm);
 		}
 		else
 		{
