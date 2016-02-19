@@ -5,74 +5,73 @@
 \contentsline {subsection}{\numberline {1.3}Upgrading}{5}{subsection.1.3}
 \contentsline {subsection}{\numberline {1.4}Uninstalling}{5}{subsection.1.4}
 \contentsline {subsection}{\numberline {1.5}Troubleshooting}{5}{subsection.1.5}
-\contentsline {subsubsection}{\numberline {1.5.1}If setup.bat fails}{5}{subsubsection.1.5.1}
-\contentsline {subsubsection}{\numberline {1.5.2}If you get the error Could not access Registry}{6}{subsubsection.1.5.2}
-\contentsline {subsubsection}{\numberline {1.5.3}If you get the error Could not access database file}{6}{subsubsection.1.5.3}
-\contentsline {subsubsection}{\numberline {1.5.4}If you get the error The page you are requesting cannot be served because of the ISAPI and CGI Restriction list settings on the Web server}{6}{subsubsection.1.5.4}
-\contentsline {subsubsection}{\numberline {1.5.5}If the server tries to download the file instead of executing it}{6}{subsubsection.1.5.5}
-\contentsline {subsubsection}{\numberline {1.5.6}If you forgot your admin password}{7}{subsubsection.1.5.6}
-\contentsline {subsubsection}{\numberline {1.5.7}If automation tasks do not run}{7}{subsubsection.1.5.7}
-\contentsline {subsubsection}{\numberline {1.5.8}If email notifications don't work}{7}{subsubsection.1.5.8}
-\contentsline {subsection}{\numberline {1.6}Best practices}{7}{subsection.1.6}
-\contentsline {subsubsection}{\numberline {1.6.1}Backups}{7}{subsubsection.1.6.1}
-\contentsline {subsubsection}{\numberline {1.6.2}Restores}{8}{subsubsection.1.6.2}
-\contentsline {subsubsection}{\numberline {1.6.3}Data integrity}{8}{subsubsection.1.6.3}
-\contentsline {subsection}{\numberline {1.7}Security concerns}{8}{subsection.1.7}
-\contentsline {subsection}{\numberline {1.8}Support}{9}{subsection.1.8}
-\contentsline {subsection}{\numberline {1.9}Additional customization}{9}{subsection.1.9}
-\contentsline {section}{\numberline {2}Configuration}{10}{section.2}
-\contentsline {subsection}{\numberline {2.1}Initial configuration}{10}{subsection.2.1}
-\contentsline {subsection}{\numberline {2.2}Configuration options}{10}{subsection.2.2}
-\contentsline {section}{\numberline {3}Users and activity}{13}{section.3}
-\contentsline {subsection}{\numberline {3.1}Users management}{13}{subsection.3.1}
-\contentsline {subsection}{\numberline {3.2}Active Directory integration}{14}{subsection.3.2}
-\contentsline {subsection}{\numberline {3.3}Reports}{14}{subsection.3.3}
-\contentsline {section}{\numberline {4}Components}{15}{section.4}
-\contentsline {subsection}{\numberline {4.1}Tickets Management}{15}{subsection.4.1}
-\contentsline {subsubsection}{\numberline {4.1.1}Custom forms}{15}{subsubsection.4.1.1}
-\contentsline {subsubsection}{\numberline {4.1.2}Following and assignment}{16}{subsubsection.4.1.2}
-\contentsline {subsection}{\numberline {4.2}Support Articles}{16}{subsection.4.2}
-\contentsline {subsection}{\numberline {4.3}Time Tracking}{16}{subsection.4.3}
-\contentsline {subsection}{\numberline {4.4}Shoutbox}{16}{subsection.4.4}
-\contentsline {subsection}{\numberline {4.5}Tasks Management}{17}{subsection.4.5}
-\contentsline {subsection}{\numberline {4.6}Clients Directory}{17}{subsection.4.6}
-\contentsline {subsection}{\numberline {4.7}Inventory Control}{18}{subsection.4.7}
-\contentsline {subsection}{\numberline {4.8}Files Management}{19}{subsection.4.8}
-\contentsline {subsection}{\numberline {4.9}Billing}{19}{subsection.4.9}
-\contentsline {subsection}{\numberline {4.10}Automation}{19}{subsection.4.10}
-\contentsline {subsubsection}{\numberline {4.10.1}Backup}{20}{subsubsection.4.10.1}
-\contentsline {subsubsection}{\numberline {4.10.2}Email to Ticket}{20}{subsubsection.4.10.2}
-\contentsline {subsubsection}{\numberline {4.10.3}Bulk export}{20}{subsubsection.4.10.3}
-\contentsline {subsubsection}{\numberline {4.10.4}Users sync}{20}{subsubsection.4.10.4}
-\contentsline {subsubsection}{\numberline {4.10.5}Computers sync}{20}{subsubsection.4.10.5}
-\contentsline {subsubsection}{\numberline {4.10.6}Ticket expiration}{20}{subsubsection.4.10.6}
-\contentsline {subsubsection}{\numberline {4.10.7}Reminder notifications}{20}{subsubsection.4.10.7}
-\contentsline {subsubsection}{\numberline {4.10.8}ServiceNow CMDB}{21}{subsubsection.4.10.8}
-\contentsline {subsubsection}{\numberline {4.10.9}Update MOTD}{21}{subsubsection.4.10.9}
-\contentsline {subsubsection}{\numberline {4.10.10}File expiration}{21}{subsubsection.4.10.10}
-\contentsline {section}{\numberline {5}JSON API}{22}{section.5}
-\contentsline {subsection}{\numberline {5.1}List users}{22}{subsection.5.1}
-\contentsline {subsection}{\numberline {5.2}Add new user}{22}{subsection.5.2}
-\contentsline {subsection}{\numberline {5.3}Verify user password}{22}{subsection.5.3}
-\contentsline {subsection}{\numberline {5.4}Change user password}{22}{subsection.5.4}
-\contentsline {subsection}{\numberline {5.5}List tickets by product}{23}{subsection.5.5}
-\contentsline {subsection}{\numberline {5.6}Show ticket}{23}{subsection.5.6}
-\contentsline {subsection}{\numberline {5.7}Add release}{23}{subsection.5.7}
-\contentsline {subsection}{\numberline {5.8}Add ticket}{23}{subsection.5.8}
-\contentsline {subsection}{\numberline {5.9}Update ticket}{23}{subsection.5.9}
-\contentsline {subsection}{\numberline {5.10}Add comment}{24}{subsection.5.10}
-\contentsline {subsection}{\numberline {5.11}Show time tracking}{24}{subsection.5.11}
-\contentsline {subsection}{\numberline {5.12}Show billing information}{24}{subsection.5.12}
-\contentsline {subsection}{\numberline {5.13}Add task}{24}{subsection.5.13}
-\contentsline {subsection}{\numberline {5.14}List tasks}{25}{subsection.5.14}
-\contentsline {subsection}{\numberline {5.15}Add client}{25}{subsection.5.15}
-\contentsline {subsection}{\numberline {5.16}List clients}{25}{subsection.5.16}
-\contentsline {subsection}{\numberline {5.17}List client events}{25}{subsection.5.17}
-\contentsline {subsection}{\numberline {5.18}Add client event}{25}{subsection.5.18}
-\contentsline {subsection}{\numberline {5.19}Add item}{26}{subsection.5.19}
-\contentsline {subsection}{\numberline {5.20}List items}{26}{subsection.5.20}
-\contentsline {subsection}{\numberline {5.21}Assign item}{26}{subsection.5.21}
-\contentsline {subsection}{\numberline {5.22}Return item}{26}{subsection.5.22}
-\contentsline {subsection}{\numberline {5.23}Update item}{26}{subsection.5.23}
-\contentsline {subsection}{\numberline {5.24}Code example}{27}{subsection.5.24}
-\contentsline {section}{\numberline {6}License}{28}{section.6}
+\contentsline {subsubsection}{\numberline {1.5.1}If you get a 500 server error}{6}{subsubsection.1.5.1}
+\contentsline {subsubsection}{\numberline {1.5.2}You see a list of files in your browser instead of the proper interface}{6}{subsubsection.1.5.2}
+\contentsline {subsubsection}{\numberline {1.5.3}If you get the error Could not access configuration file or initial settings don't seem to save}{6}{subsubsection.1.5.3}
+\contentsline {subsubsection}{\numberline {1.5.4}If you get the error Could not access database}{6}{subsubsection.1.5.4}
+\contentsline {subsubsection}{\numberline {1.5.5}If you forgot your admin password}{6}{subsubsection.1.5.5}
+\contentsline {subsubsection}{\numberline {1.5.6}If automation tasks do not run}{6}{subsubsection.1.5.6}
+\contentsline {subsubsection}{\numberline {1.5.7}If email notifications don't work}{6}{subsubsection.1.5.7}
+\contentsline {subsection}{\numberline {1.6}Best practices}{6}{subsection.1.6}
+\contentsline {subsubsection}{\numberline {1.6.1}Backups}{6}{subsubsection.1.6.1}
+\contentsline {subsubsection}{\numberline {1.6.2}Restores}{7}{subsubsection.1.6.2}
+\contentsline {subsubsection}{\numberline {1.6.3}Data integrity}{7}{subsubsection.1.6.3}
+\contentsline {subsection}{\numberline {1.7}Security concerns}{7}{subsection.1.7}
+\contentsline {subsection}{\numberline {1.8}Support}{8}{subsection.1.8}
+\contentsline {subsection}{\numberline {1.9}Additional customization}{8}{subsection.1.9}
+\contentsline {section}{\numberline {2}Configuration}{9}{section.2}
+\contentsline {subsection}{\numberline {2.1}Initial configuration}{9}{subsection.2.1}
+\contentsline {subsection}{\numberline {2.2}Configuration options}{9}{subsection.2.2}
+\contentsline {section}{\numberline {3}Users and activity}{12}{section.3}
+\contentsline {subsection}{\numberline {3.1}Users management}{12}{subsection.3.1}
+\contentsline {subsection}{\numberline {3.2}Active Directory integration}{13}{subsection.3.2}
+\contentsline {subsection}{\numberline {3.3}Reports}{13}{subsection.3.3}
+\contentsline {section}{\numberline {4}Components}{14}{section.4}
+\contentsline {subsection}{\numberline {4.1}Tickets Management}{14}{subsection.4.1}
+\contentsline {subsubsection}{\numberline {4.1.1}Custom forms}{14}{subsubsection.4.1.1}
+\contentsline {subsubsection}{\numberline {4.1.2}Following and assignment}{15}{subsubsection.4.1.2}
+\contentsline {subsection}{\numberline {4.2}Support Articles}{15}{subsection.4.2}
+\contentsline {subsection}{\numberline {4.3}Time Tracking}{15}{subsection.4.3}
+\contentsline {subsection}{\numberline {4.4}Shoutbox}{15}{subsection.4.4}
+\contentsline {subsection}{\numberline {4.5}Tasks Management}{16}{subsection.4.5}
+\contentsline {subsection}{\numberline {4.6}Clients Directory}{16}{subsection.4.6}
+\contentsline {subsection}{\numberline {4.7}Inventory Control}{17}{subsection.4.7}
+\contentsline {subsection}{\numberline {4.8}Files Management}{18}{subsection.4.8}
+\contentsline {subsection}{\numberline {4.9}Billing}{18}{subsection.4.9}
+\contentsline {subsection}{\numberline {4.10}Automation}{18}{subsection.4.10}
+\contentsline {subsubsection}{\numberline {4.10.1}Backup}{19}{subsubsection.4.10.1}
+\contentsline {subsubsection}{\numberline {4.10.2}Email to Ticket}{19}{subsubsection.4.10.2}
+\contentsline {subsubsection}{\numberline {4.10.3}Bulk export}{19}{subsubsection.4.10.3}
+\contentsline {subsubsection}{\numberline {4.10.4}Users sync}{19}{subsubsection.4.10.4}
+\contentsline {subsubsection}{\numberline {4.10.5}Computers sync}{19}{subsubsection.4.10.5}
+\contentsline {subsubsection}{\numberline {4.10.6}Ticket expiration}{19}{subsubsection.4.10.6}
+\contentsline {subsubsection}{\numberline {4.10.7}Reminder notifications}{19}{subsubsection.4.10.7}
+\contentsline {subsubsection}{\numberline {4.10.8}ServiceNow CMDB}{20}{subsubsection.4.10.8}
+\contentsline {subsubsection}{\numberline {4.10.9}Update MOTD}{20}{subsubsection.4.10.9}
+\contentsline {subsubsection}{\numberline {4.10.10}File expiration}{20}{subsubsection.4.10.10}
+\contentsline {section}{\numberline {5}JSON API}{21}{section.5}
+\contentsline {subsection}{\numberline {5.1}List users}{21}{subsection.5.1}
+\contentsline {subsection}{\numberline {5.2}Add new user}{21}{subsection.5.2}
+\contentsline {subsection}{\numberline {5.3}Verify user password}{21}{subsection.5.3}
+\contentsline {subsection}{\numberline {5.4}Change user password}{21}{subsection.5.4}
+\contentsline {subsection}{\numberline {5.5}List tickets by product}{22}{subsection.5.5}
+\contentsline {subsection}{\numberline {5.6}Show ticket}{22}{subsection.5.6}
+\contentsline {subsection}{\numberline {5.7}Add release}{22}{subsection.5.7}
+\contentsline {subsection}{\numberline {5.8}Add ticket}{22}{subsection.5.8}
+\contentsline {subsection}{\numberline {5.9}Update ticket}{22}{subsection.5.9}
+\contentsline {subsection}{\numberline {5.10}Add comment}{23}{subsection.5.10}
+\contentsline {subsection}{\numberline {5.11}Show time tracking}{23}{subsection.5.11}
+\contentsline {subsection}{\numberline {5.12}Show billing information}{23}{subsection.5.12}
+\contentsline {subsection}{\numberline {5.13}Add task}{23}{subsection.5.13}
+\contentsline {subsection}{\numberline {5.14}List tasks}{24}{subsection.5.14}
+\contentsline {subsection}{\numberline {5.15}Add client}{24}{subsection.5.15}
+\contentsline {subsection}{\numberline {5.16}List clients}{24}{subsection.5.16}
+\contentsline {subsection}{\numberline {5.17}List client events}{24}{subsection.5.17}
+\contentsline {subsection}{\numberline {5.18}Add client event}{24}{subsection.5.18}
+\contentsline {subsection}{\numberline {5.19}Add item}{25}{subsection.5.19}
+\contentsline {subsection}{\numberline {5.20}List items}{25}{subsection.5.20}
+\contentsline {subsection}{\numberline {5.21}Assign item}{25}{subsection.5.21}
+\contentsline {subsection}{\numberline {5.22}Return item}{25}{subsection.5.22}
+\contentsline {subsection}{\numberline {5.23}Update item}{25}{subsection.5.23}
+\contentsline {subsection}{\numberline {5.24}Code example}{26}{subsection.5.24}
+\contentsline {section}{\numberline {6}License}{27}{section.6}

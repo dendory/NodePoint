@@ -11,7 +11,7 @@
 % Conditional compilation for Windows and Linux
 \usepackage{ifthen}
 \newboolean{Windows}
-\setboolean{Windows}{true} % change to false for Linux
+\setboolean{Windows}{false} % change to false for Linux
 \ifthenelse{\boolean{Windows}}
 {\def\NodePointManual{NodePoint IT System - Windows version 1.6.1}}
 {\def\NodePointManual{NodePoint IT System - Linux version 1.6.1}}
