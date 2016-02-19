@@ -11,7 +11,7 @@ use strict;
 use Config::Win32;
 use Digest::SHA qw(sha1_hex);
 use DBI;
-use CGI;
+use CGI '-utf8';;
 use Net::SMTP;
 use Mail::RFC822::Address qw(valid);
 use Data::GUID;
@@ -23,6 +23,7 @@ use Time::HiRes qw(time);
 use Time::Piece;
 use Text::Markdown 'markdown';
 use Crypt::RC4;
+use utf8;
 
 my ($cfg, $db, $sql, $cn, $cp, $cgs, $last_login, $perf);
 my $logged_user = "";
@@ -42,11 +43,11 @@ sub headers
 	my ($page) = @_;
 	if($cn && $cp || $cgs)
 	{
-		if($cn && $cp && $cgs) { print $q->header(-type => "text/html", -cookie => [$cn, $cp, $cgs]); }
-		elsif($cgs) { print $q->header(-type => "text/html", -cookie => [$cgs]); }
-		else { print $q->header(-type => "text/html", -cookie => [$cn, $cp]); }
+		if($cn && $cp && $cgs) { print $q->header(-charset => 'UTF-8', -type => "text/html", -cookie => [$cn, $cp, $cgs]); }
+		elsif($cgs) { print $q->header(-charset => 'UTF-8', -type => "text/html", -cookie => [$cgs]); }
+		else { print $q->header(-charset => 'UTF-8', -type => "text/html", -cookie => [$cn, $cp]); }
 	}
-	else { print $q->header(-type => "text/html"); }
+	else { print $q->header(-charset => 'UTF-8', -type => "text/html"); }
 	print "<!DOCTYPE html>\n";
 	print "<html>\n";
 	print " <head>\n";
@@ -917,7 +918,9 @@ sub notify
 						$smtp->data();
 						$smtp->datasend("From: " . $cfg->load('smtp_from') . "\n");
 						$smtp->datasend("To: " . $res[2] . "\n");
-						$smtp->datasend("Subject: " . $cfg->load('site_name') . " - " . $title . "\n\n");
+						$smtp->datasend("Subject: " . $cfg->load('site_name') . " - " . $title . "\n");
+						$smtp->datasend("Content-Transfer-Encoding: 8bit\n");
+						$smtp->datasend("Content-type: text/plain; charset=UTF-8\n\n");
 						$smtp->datasend($mesg . "\n\nThis is an automated message from " . $cfg->load('site_name') . ". To disable notifications, log into your account and remove the email under Settings.\n");
 						$smtp->datasend();
 						$smtp->quit;
@@ -1465,7 +1468,7 @@ elsif(!$cfg->load("db_address") || !$cfg->load("site_name")) # first use
 elsif($q->param('api')) # API calls
 {
 	$logged_user = "api";
-	print $q->header(-type => "text/plain");
+	print $q->header(-charset => 'UTF-8', -type => "text/plain");
 	if($q->param('api') eq "show_ticket")
 	{
 		if(!$q->param('id'))
@@ -3013,7 +3016,7 @@ elsif($q->param('m')) # Modules
 				}
 			}
 			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Change your email</h3></div><div class='panel-body'>\n";
-			print "<div class='form-group'><p><form method='POST' action='.' data-toggle='validator' role='form'><input type='hidden' name='m' value='change_email'><div class='row'><div class='col-sm-6'>To change your notification email address, enter a new address here. Leave empty to disable notifications:</div><div class='col-sm-6'><input type='email' name='new_email' class='form-control' data-error='Must be a valid email.' placeholder='Email address' maxlength='99' value='" . $email . "'></div></div></p><div class='help-block with-errors'></div></div><input class='btn btn-primary pull-right' type='submit' value='Change email'></form></div></div>";
+			print "<div class='form-group'><p><form method='POST' action='.' data-toggle='validator' role='form'><input type='hidden' name='m' value='change_email'><div class='row'><div class='col-sm-6'>To change your notification email address, enter a new address here. Leave empty to disable notifications:</div><div class='col-sm-6'><input type='email' name='new_email' class='form-control' data-error='Must be a valid email.' placeholder='Email address' maxlength='99' value=\"" . $email . "\"></div></div></p><div class='help-block with-errors'></div></div><input class='btn btn-primary pull-right' type='submit' value='Change email'></form></div></div>";
 			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Change your password</h3></div><div class='panel-body'>\n";
 			if($cfg->load("ad_server")) { print "<p>Password management is synchronized with Active Directory.</p>"; }
 			elsif($logged_user eq "demo") { print "<p>The demo account cannot change its password.</p>"; }
@@ -3634,7 +3637,7 @@ elsif($q->param('m')) # Modules
 			if($logged_lvl >= to_int($cfg->load('events_lvl')))
 			{ 
 				print "<form method='POST' action='.'><input type='hidden' name='m' value='view_client'><input type='hidden' name='c' value='" . to_int($q->param('c')) . "'><input type='hidden' name='update_event' value='" . to_int($q->param('e')) . "'>";
-				print "<p><div class='row'><div class='col-sm-12'>Event type: <b>" . $res[2] . "</b></div></div><div class='row'><div class='col-sm-12'>Event summary: <input type='text' class='form-control' name='event_summary' value='" . $res[3] . "'>";
+				print "<p><div class='row'><div class='col-sm-12'>Event type: <b>" . $res[2] . "</b></div></div><div class='row'><div class='col-sm-12'>Event summary: <input type='text' class='form-control' name='event_summary' value=\"" . $res[3] . "\">";
 			}
 			else
 			{
@@ -3701,7 +3704,7 @@ elsif($q->param('m')) # Modules
 			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>" . $res[0] . "<span class='pull-right'>Last modified: <i>" . $res[4] . "</i></span></h3></div><div class='panel-body'>";
 			if($logged_lvl > 4 && $q->param('edit'))
 			{
-				print "<form method='POST' action='.'><input type='hidden' name='m' value='save_client'><input type='hidden' name='c' value='" . to_int($q->param('c')) . "'><p><div class='row'><div class='col-sm-6'><input type='text' class='form-control' name='contact' placeholder='Contact' maxlength='99' value='" . $res[2] . "'></div><div class='col-sm-6'><select class='form-control' name='status'><option";
+				print "<form method='POST' action='.'><input type='hidden' name='m' value='save_client'><input type='hidden' name='c' value='" . to_int($q->param('c')) . "'><p><div class='row'><div class='col-sm-6'><input type='text' class='form-control' name='contact' placeholder='Contact' maxlength='99' value=\"" . $res[2] . "\"></div><div class='col-sm-6'><select class='form-control' name='status'><option";
 				if($res[1] eq "Prospect") { print " selected"; }
 				print ">Prospect</option><option";
 				if($res[1] eq "Contact") { print " selected"; }
@@ -3752,11 +3755,11 @@ elsif($q->param('m')) # Modules
 				print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Billing</h3></div><div class='panel-body'>";
 				if($logged_lvl > 4)
 				{
-					print "<form method='POST' action='.'><input type='hidden' name='m' value='view_client'><input type='hidden' name='c' value='" . to_int($q->param('c')) . "'><input type='hidden' name='set_defaults' value='" . $res[0] . "'><div class='row'><div class='col-sm-3'>Type: <select class='form-control' name='type'><option value='0'";
+					print "<form method='POST' action='.'><input type='hidden' name='m' value='view_client'><input type='hidden' name='c' value='" . to_int($q->param('c')) . "'><input type='hidden' name='set_defaults' value=\"" . $res[0] . "\"><div class='row'><div class='col-sm-3'>Type: <select class='form-control' name='type'><option value='0'";
 					if($type == 0) { print " selected"; }
 					print ">Fixed</option><option value='1'";
 					if($type == 1) { print " selected"; }
-					print ">Hourly</option></select></div><div class='col-sm-3'>Cost: <input type='number' class='form-control' name='cost' value='" . to_float($cost) . "'></div><div class='col-sm-3'>Currency: <input type='text' maxlength='4' class='form-control' name='currency' value='" . $currency . "'></div><div class='col-sm-3'><span class='pull-right'><input type='submit' value='Set' class='btn btn-primary'></span></div></div></form>";
+					print ">Hourly</option></select></div><div class='col-sm-3'>Cost: <input type='number' class='form-control' name='cost' value='" . to_float($cost) . "'></div><div class='col-sm-3'>Currency: <input type='text' maxlength='4' class='form-control' name='currency' value=\"" . $currency . "\"></div><div class='col-sm-3'><span class='pull-right'><input type='submit' value='Set' class='btn btn-primary'></span></div></div></form>";
 				}
 				else
 				{
@@ -4069,7 +4072,7 @@ elsif($q->param('m')) # Modules
 			{
 				print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>" . $items{"Product"} . " information</h3></div><div class='panel-body'>\n";
 				if($logged_lvl > 3 && $q->param('edit')) { print "<form method='POST' action='.' enctype='multipart/form-data'><input type='hidden' name='m' value='edit_product'><input type='hidden' name='product_id' value='" . to_int($q->param('p')) . "'>\n"; }
-				if($logged_lvl > 3 && $q->param('edit')) { print "<p><div class='row'><div class='col-sm-6'>" . $items{"Product"} . " name: <input class='form-control' type='text' name='product_name' value='" . $res[1] . "'></div><div class='col-sm-6'>" . $items{"Model"} . ": <input class='form-control' type='text' name='product_model' value='" . $res[2] . "'></div></div></p>\n"; }
+				if($logged_lvl > 3 && $q->param('edit')) { print "<p><div class='row'><div class='col-sm-6'>" . $items{"Product"} . " name: <input class='form-control' type='text' name='product_name' value=\"" . $res[1] . "\"></div><div class='col-sm-6'>" . $items{"Model"} . ": <input class='form-control' type='text' name='product_model' value=\"" . $res[2] . "\"></div></div></p>\n"; }
 				else { print "<p><div class='row'><div class='col-sm-6'>Product name: <b>" . $res[1] . "</b></div><div class='col-sm-6'>" . $items{"Model"} . ": <b>" . $res[2] . "</b></div></div></p>\n"; }
 				print "<p><div class='row'><div class='col-sm-6'>Created on: <b>" . $res[6] . "</b></div><div class='col-sm-6'>Last modified on: <b>" . $res[7] . "</b></div></div></p>\n";
 				if($logged_lvl > 3 && $q->param('edit'))
@@ -4145,7 +4148,7 @@ elsif($q->param('m')) # Modules
 						if(to_int($res[4]) == 100) { print "<font color='green'>Completed</font>"; }
 						elsif($dueby[2] < $y || ($dueby[2] == $y && $dueby[0] < $m) || ($dueby[2] == $y && $dueby[0] == $m && $dueby[1] < $d)) { print "<font color='red'>Overdue</font>"; }
 						else { print $res[5]; }
-						if($logged_lvl >= to_int($cfg->load('tasks_lvl')) && $vis ne "Archived") { print "<span class='pull-right'><form method='POST' action='.'><input type='hidden' name='product_id' value='" . to_int($q->param('p')) . "'><input type='hidden' name='m' value='delete_step'><input type='hidden' name='step_id' value='" . $res[0] . "'><input class='btn btn-danger pull-right' type='submit' value='X'></form></span>"; }
+						if($logged_lvl >= to_int($cfg->load('tasks_lvl')) && $vis ne "Archived") { print "<span class='pull-right'><form method='POST' action='.'><input type='hidden' name='product_id' value='" . to_int($q->param('p')) . "'><input type='hidden' name='m' value='delete_step'><input type='hidden' name='step_id' value=\"" . $res[0] . "\"><input class='btn btn-danger pull-right' type='submit' value='X'></form></span>"; }
 						print "</td></tr>";
 					}				
 					print "</tbody></table><script>\$(document).ready(function(){\$('#tasks_table').DataTable({'order':[[3,'desc']],pageLength:" .  to_int($cfg->load('page_len')). ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script></div></div>\n";
@@ -4278,7 +4281,7 @@ elsif($q->param('m')) # Modules
 						if(lc(substr($res[4], 0, 4)) eq "http") { print "<a href='" . $res[4] . "'>" . $res[4] . "</a>"; }
 						else { print $res[4]; }
 						print "</td><td>" .  $res[5];
-						if($logged_lvl > 2) { print "<span class='pull-right'><form method='GET' action='.'><input type='hidden' name='product_id' value='" . to_int($q->param('p')) . "'><input type='hidden' name='m' value='delete_release'><input type='hidden' name='release_id' value='" . $res[0] . "'><input class='btn btn-danger' type='submit' value='X'></form></span>"; } 
+						if($logged_lvl > 2) { print "<span class='pull-right'><form method='GET' action='.'><input type='hidden' name='product_id' value='" . to_int($q->param('p')) . "'><input type='hidden' name='m' value='delete_release'><input type='hidden' name='release_id' value=\"" . $res[0] . "\"><input class='btn btn-danger' type='submit' value='X'></form></span>"; } 
 						print "</td></tr>\n";
 					}
 					print "</tbody></table><script>\$(document).ready(function(){\$('#releases_table').DataTable({'order':[[3,'desc']],pageLength:" .  to_int($cfg->load('page_len')). ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script></div></div>\n";
@@ -4732,7 +4735,7 @@ elsif($q->param('m')) # Modules
 						if($res2[1] eq 'folder') { $folder = $res2[2]; }
 						if($res2[1] eq 'type') { $type = $res2[2]; }
 					}
-					print "<p><div class='row'><div class='col-sm-4'>Backup folder:</div><div class='col-sm-8'><input class='form-control' type='text' name='folder' value='" . $folder . "'></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>Backup folder:</div><div class='col-sm-8'><input class='form-control' type='text' name='folder' value=\"" . $folder . "\"></div></div></p>";
 					print "<p><div class='row'><div class='col-sm-4'>Archive type:</div><div class='col-sm-8'><select class='form-control' name='type'><option>Time stamped</option><option";
 					if($type eq "Overwrite") { print " selected"; }
 					print ">Overwrite</option></select></div></div></p>";
@@ -4748,7 +4751,7 @@ elsif($q->param('m')) # Modules
 						if($res2[1] eq 'filename') { $filename = $res2[2]; }
 						if($res2[1] eq 'table') { $table = $res2[2]; }
 					}
-					print "<p><div class='row'><div class='col-sm-4'>Export file:</div><div class='col-sm-8'><input class='form-control' type='text' name='filename' value='" . $filename . "'></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>Export file:</div><div class='col-sm-8'><input class='form-control' type='text' name='filename' value=\"" . $filename . "\"></div></div></p>";
 					print "<p><div class='row'><div class='col-sm-4'>Table to export:</div><div class='col-sm-8'><select class='form-control' name='table'><option>Tickets</option><option";
 					if($table eq "Items") { print " selected"; }
 					print ">Items</option><option";
@@ -4768,7 +4771,7 @@ elsif($q->param('m')) # Modules
 					{
 						if($res2[1] eq 'filename') { $filename = $res2[2]; }
 					}
-					print "<p><div class='row'><div class='col-sm-4'>Text file:</div><div class='col-sm-8'><input class='form-control' type='text' name='filename' value='" . $filename . "'></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>Text file:</div><div class='col-sm-8'><input class='form-control' type='text' name='filename' value=\"" . $filename . "\"></div></div></p>";
 				}
 				elsif($res[0] eq "Users sync")
 				{
@@ -4787,10 +4790,10 @@ elsif($q->param('m')) # Modules
 						if($res2[1] eq 'adpass') { $adpass = RC4($cfg->load("api_write"), decode_base64($res2[2])); }
 						if($res2[1] eq 'importemail') { $importemail = to_int($res2[2]); }
 					}
-					print "<p><div class='row'><div class='col-sm-4'>Base DN:</div><div class='col-sm-8'><input class='form-control' type='text' name='basedn' value='" . $basedn . "'></div></div></p>";
-					print "<p><div class='row'><div class='col-sm-4'>Filter:</div><div class='col-sm-8'><input class='form-control' type='text' name='searchfilter' value='" . $searchfilter . "'></div></div></p>";
-					print "<p><div class='row'><div class='col-sm-4'>Username:</div><div class='col-sm-8'><input class='form-control' type='text' name='aduser' value='" . $aduser . "'></div></div></p>";
-					print "<p><div class='row'><div class='col-sm-4'>Password:</div><div class='col-sm-8'><input class='form-control' type='password' name='adpass' value='" . $adpass . "'></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>Base DN:</div><div class='col-sm-8'><input class='form-control' type='text' name='basedn' value=\"" . $basedn . "\"></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>Filter:</div><div class='col-sm-8'><input class='form-control' type='text' name='searchfilter' value=\"" . $searchfilter . "\"></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>Username:</div><div class='col-sm-8'><input class='form-control' type='text' name='aduser' value=\"" . $aduser . "\"></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>Password:</div><div class='col-sm-8'><input class='form-control' type='password' name='adpass' value=\"" . $adpass . "\"></div></div></p>";
 					print "<p><div class='row'><div class='col-sm-4'>Import email addresses:</div><div class='col-sm-8'><select class='form-control' name='importemail'><option";
 					if($importemail == 1) { print " selected"; }
 					print ">Yes</option><option";
@@ -4822,10 +4825,10 @@ elsif($q->param('m')) # Modules
 						if($res2[1] eq 'imappass') { $imappass = RC4($cfg->load("api_write"), decode_base64($res2[2])); }
 						if($res2[1] eq 'imapserver') { $imapserver = $res2[2]; }
 					}
-					print "<p><div class='row'><div class='col-sm-4'>IMAP Server:</div><div class='col-sm-8'><input class='form-control' type='text' name='imapserver' value='" . $imapserver . "'></div></div></p>";
-					print "<p><div class='row'><div class='col-sm-4'>IMAP Port:</div><div class='col-sm-8'><input class='form-control' type='number' name='imapport' value='" . $imapport . "'></div></div></p>";
-					print "<p><div class='row'><div class='col-sm-4'>Username:</div><div class='col-sm-8'><input class='form-control' type='text' name='imapuser' value='" . $imapuser . "'></div></div></p>";
-					print "<p><div class='row'><div class='col-sm-4'>Password:</div><div class='col-sm-8'><input class='form-control' type='password' name='imappass' value='" . $imappass . "'></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>IMAP Server:</div><div class='col-sm-8'><input class='form-control' type='text' name='imapserver' value=\"" . $imapserver . "\"></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>IMAP Port:</div><div class='col-sm-8'><input class='form-control' type='number' name='imapport' value=\"" . $imapport . "\"></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>Username:</div><div class='col-sm-8'><input class='form-control' type='text' name='imapuser' value=\"" . $imapuser . "\"></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>Password:</div><div class='col-sm-8'><input class='form-control' type='password' name='imappass' value=\"" . $imappass . "\"></div></div></p>";
 					print "<p><div class='row'><div class='col-sm-4'>Use SSL:</div><div class='col-sm-8'><select class='form-control' name='imapssl'><option";
 					if($imapssl == 1) { print " selected"; }
 					print ">Yes</option><option";
@@ -4836,8 +4839,8 @@ elsif($q->param('m')) # Modules
 					print ">Yes</option><option";
 					if($deleteemail == 0) { print " selected"; }
 					print ">No</option></select></div></div></p>";
-					print "<p><div class='row'><div class='col-sm-4'>" . $items{"Product"} . " ID:</div><div class='col-sm-8'><input class='form-control' type='number' name='productid' value='" . $productid . "'></div></div></p>";
-					print "<p><div class='row'><div class='col-sm-4'>" . $items{"Release"} . ":</div><div class='col-sm-8'><input class='form-control' type='text' name='releaseid' value='" . $releaseid . "'></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>" . $items{"Product"} . " ID:</div><div class='col-sm-8'><input class='form-control' type='number' name='productid' value=\"" . $productid . "\"></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>" . $items{"Release"} . ":</div><div class='col-sm-8'><input class='form-control' type='text' name='releaseid' value=\"" . $releaseid . "\"></div></div></p>";
 					print "<p><div class='row'><div class='col-sm-4'>Priority:</div><div class='col-sm-8'><select class='form-control' name='priority'><option";
 					if($priority eq "High") { print " selected"; }
 					print ">High</option><option";
@@ -4865,10 +4868,10 @@ elsif($q->param('m')) # Modules
 						if($res2[1] eq 'adpass') { $adpass = RC4($cfg->load("api_write"), decode_base64($res2[2])); }
 						if($res2[1] eq 'approval') { $approval = to_int($res2[2]); }
 					}
-					print "<p><div class='row'><div class='col-sm-4'>Base DN:</div><div class='col-sm-8'><input class='form-control' type='text' name='basedn' value='" . $basedn . "'></div></div></p>";
-					print "<p><div class='row'><div class='col-sm-4'>Filter:</div><div class='col-sm-8'><input class='form-control' type='text' name='searchfilter' value='" . $searchfilter . "'></div></div></p>";
-					print "<p><div class='row'><div class='col-sm-4'>Username:</div><div class='col-sm-8'><input class='form-control' type='text' name='aduser' value='" . $aduser . "'></div></div></p>";
-					print "<p><div class='row'><div class='col-sm-4'>Password:</div><div class='col-sm-8'><input class='form-control' type='password' name='adpass' value='" . $adpass . "'></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>Base DN:</div><div class='col-sm-8'><input class='form-control' type='text' name='basedn' value=\"" . $basedn . "\"></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>Filter:</div><div class='col-sm-8'><input class='form-control' type='text' name='searchfilter' value=\"" . $searchfilter . "\"></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>Username:</div><div class='col-sm-8'><input class='form-control' type='text' name='aduser' value=\"" . $aduser . "\"></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>Password:</div><div class='col-sm-8'><input class='form-control' type='password' name='adpass' value=\"" . $adpass . "\"></div></div></p>";
 					print "<p><div class='row'><div class='col-sm-4'>Require checkout approval:</div><div class='col-sm-8'><select class='form-control' name='approval'><option";
 					if($approval == 1) { print " selected"; }
 					print ">Yes</option><option";
@@ -4972,10 +4975,10 @@ elsif($q->param('m')) # Modules
 						if($res2[1] eq 'cmdbpass') { $cmdbpass = RC4($cfg->load("api_write"), decode_base64($res2[2])); }
 						if($res2[1] eq 'approval') { $approval = to_int($res2[2]); }
 					}
-					print "<p><div class='row'><div class='col-sm-4'>ServiceNow URL:</div><div class='col-sm-8'><input class='form-control' type='text' name='cmdburl' value='" . $cmdburl . "'></div></div></p>";
-					print "<p><div class='row'><div class='col-sm-4'>ServiceNow CMDB table:</div><div class='col-sm-8'><input class='form-control' type='text' name='cmdbtable' value='" . $cmdbtable . "'></div></div></p>";
-					print "<p><div class='row'><div class='col-sm-4'>Username:</div><div class='col-sm-8'><input class='form-control' type='text' name='cmdbuser' value='" . $cmdbuser . "'></div></div></p>";
-					print "<p><div class='row'><div class='col-sm-4'>Password:</div><div class='col-sm-8'><input class='form-control' type='password' name='cmdbpass' value='" . $cmdbpass . "'></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>ServiceNow URL:</div><div class='col-sm-8'><input class='form-control' type='text' name='cmdburl' value=\"" . $cmdburl . "\"></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>ServiceNow CMDB table:</div><div class='col-sm-8'><input class='form-control' type='text' name='cmdbtable' value=\"" . $cmdbtable . "\"></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>Username:</div><div class='col-sm-8'><input class='form-control' type='text' name='cmdbuser' value=\"" . $cmdbuser . "\"></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>Password:</div><div class='col-sm-8'><input class='form-control' type='password' name='cmdbpass' value=\"" . $cmdbpass . "\"></div></div></p>";
 					print "<p><div class='row'><div class='col-sm-4'>Require checkout approval:</div><div class='col-sm-8'><select class='form-control' name='approval'><option";
 					if($approval == 1) { print " selected"; }
 					print ">Yes</option><option";
@@ -5008,9 +5011,9 @@ elsif($q->param('m')) # Modules
 					print ">Tool</option><option";
 					if($type eq "Other") { print " selected"; }
 					print ">Other</option></select></div></div></p>";
-					print "<p><div class='row'><div class='col-sm-4'>Mapping for 'name':</div><div class='col-sm-8'><input class='form-control' type='text' name='mapname' value='" . $mapname . "'></div></div></p>";
-					print "<p><div class='row'><div class='col-sm-4'>Mapping for 'serial':</div><div class='col-sm-8'><input class='form-control' type='text' name='mapserial' value='" . $mapserial . "'></div></div></p>";
-					print "<p><div class='row'><div class='col-sm-4'>Mapping for 'info':</div><div class='col-sm-8'><input class='form-control' type='text' name='mapinfo' value='" . $mapinfo . "'></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>Mapping for 'name':</div><div class='col-sm-8'><input class='form-control' type='text' name='mapname' value=\"" . $mapname . "\"></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>Mapping for 'serial':</div><div class='col-sm-8'><input class='form-control' type='text' name='mapserial' value=\"" . $mapserial . "\"></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>Mapping for 'info':</div><div class='col-sm-8'><input class='form-control' type='text' name='mapinfo' value=\"" . $mapinfo . "\"></div></div></p>";
 				}
 				print "<p><input type='hidden' name='m' value='auto'><input type='hidden' name='save' value='" . sanitize_html($q->param('config')) . "'><input class='btn btn-primary pull-right' type='submit' value='Save'></p>";
 				print "</form></div></div>\n";
@@ -5303,7 +5306,7 @@ elsif($q->param('m')) # Modules
 			my $sql2 = $db->prepare("SELECT COUNT(*) FROM file_access WHERE file = ?;");
 			$sql2->execute($res[1]);
 			while(my @res2 = $sql2->fetchrow_array()) { $accesscount = to_int($res2[0]); }
-			print "<tr><td>" . $res[2] . "</td><td>" . to_int($res[4]) . "</td><td>" . $res[0] . "</td><td>" . $res[3] . "</td><td>" . $accesscount . "</td><td><a href='./?file=" . $res[1] . "'>" . $res[1] . "</a><span class='pull-right'><form method='POST' action='.'><input type='hidden' name='m' value='files'><input type='hidden' name='delete_file' value='" . $res[1] . "'><input class='btn btn-danger pull-right' type='submit' value='X'></form></span></td></tr>\n";
+			print "<tr><td>" . $res[2] . "</td><td>" . to_int($res[4]) . "</td><td>" . $res[0] . "</td><td>" . $res[3] . "</td><td>" . $accesscount . "</td><td><a href='./?file=" . $res[1] . "'>" . $res[1] . "</a><span class='pull-right'><form method='POST' action='.'><input type='hidden' name='m' value='files'><input type='hidden' name='delete_file' value=\"" . $res[1] . "\"><input class='btn btn-danger pull-right' type='submit' value='X'></form></span></td></tr>\n";
 		}
 		print "</tbody></table><script>\$(document).ready(function(){\$('#files_table').DataTable({'order':[[0,'asc']],pageLength:" . to_int($cfg->load('page_len')) . ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script>\n";
 		print "</div></div>\n";
@@ -5481,11 +5484,11 @@ elsif($q->param('m')) # Modules
 					if($res[8] eq "Resolved") { print " selected"; }
 					print ">Resolved</option><option";
 					if($res[8] eq "Closed") { print " selected"; }
-					print ">Closed</option></select></div><div class='col-sm-6'>Resolution: <input type='text' name='ticket_resolution' class='form-control' value='" . $res[9] . "'></div></div></p>\n"; 
+					print ">Closed</option></select></div><div class='col-sm-6'>Resolution: <input type='text' name='ticket_resolution' class='form-control' value=\"" . $res[9] . "\"></div></div></p>\n"; 
 				}
 				else {print "<p><div class='row'><div class='col-sm-6'>Status: <b>" . $res[8] . "</b></div><div class='col-sm-6'>Resolution: <b>" . $res[9] . "</b></div></div></p>\n"; }
 				print "<p><div class='row'><div class='col-sm-6'>" . $items{"Release"} . "s: ";
-				if($logged_lvl > 2 && $q->param('edit')) { print "<input type='text' class='form-control' name='ticket_releases' value='" . $res[2] . "'>"; }
+				if($logged_lvl > 2 && $q->param('edit')) { print "<input type='text' class='form-control' name='ticket_releases' value=\"" . $res[2] . "\">"; }
 				else { print "<b>" . $res[2] . "</b>"; }
 				print "</div><div class='col-sm-6'>";
 				if($logged_lvl > 2 && $q->param('edit'))
@@ -5503,7 +5506,7 @@ elsif($q->param('m')) # Modules
 					else { print "<img src='icons/normal.png'> Normal"; }
 					print "</b></div></div></p>\n";
 				}
-				if($logged_lvl > 2 && $q->param('edit')) { print "<p>Title: <input type='text' class='form-control' name='ticket_title' maxlength='50' value='" . $res[5] . "'></p>"; }
+				if($logged_lvl > 2 && $q->param('edit')) { print "<p>Title: <input type='text' class='form-control' name='ticket_title' maxlength='50' value=\"" . $res[5] . "\"></p>"; }
 				else
 				{ 
 					print ""; 
@@ -6954,7 +6957,7 @@ elsif($q->param('kb') && $cfg->load('comp_articles') eq "on")
 			if($logged_lvl > 3 && $q->param('edit'))
 			{
 				print "<form method='POST' action='.'><input type='hidden' name='m' value='save_article'><input type='hidden' name='id' value='" . to_int($q->param('kb')) . "'>\n";
-				print "<p><div class='row'><div class='col-sm-6'>Title: <input type='text' maxlength='50' class='form-control' name='title' value='" . $res[2] . "'></div><div class='col-sm-6'>\n";
+				print "<p><div class='row'><div class='col-sm-6'>Title: <input type='text' maxlength='50' class='form-control' name='title' value=\"" . $res[2] . "\"></div><div class='col-sm-6'>\n";
 				if(to_int($res[4]) == 0) { print "Article status: <select name='published' class='form-control'><option value='0' selected>Draft</option><option value='1'>Published</option></select>\n"; }
 				else { print "Article status: <select name='published' class='form-control'><option value='0'>Draft</option><option value='1' selected>Published</option></select>\n"; }
 				print "</div></div></p><p><div class='row'><div class='col-sm-6'>Applies to: <select class='form-control' name='productid'>";
