@@ -30,7 +30,7 @@ my ($cfg, $db, $sql, $cn, $cp, $cgs, $last_login, $perf);
 my $logged_user = "";
 my $logged_lvl = -1;
 my $q = new CGI;
-my $VERSION = "1.6.1";
+my $VERSION = "1.7.0";
 my @itemtypes = ("None");
 my %items = ("Product", "Product", "Release", "Release", "Model", "SKU/Model");
 my @themes = ("primary", "default", "success", "info", "warning", "danger");

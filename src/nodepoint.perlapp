@@ -23,12 +23,12 @@ Verbose: 0
 Version-Comments: 
 Version-CompanyName: 
 Version-FileDescription: NodePoint Ticket System
-Version-FileVersion: 1.6.1
+Version-FileVersion: 1.7.0
 Version-InternalName: nodepoint
 Version-LegalCopyright: (C) 2014-2016 Patrick Lambert
 Version-LegalTrademarks: 
 Version-OriginalFilename: nodepoint
 Version-ProductName: NodePoint
-Version-ProductVersion: 1.6.1
+Version-ProductVersion: 1.7.0
 Warnings: 0
 Xclude: 0
