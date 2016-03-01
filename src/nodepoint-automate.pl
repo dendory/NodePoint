@@ -19,6 +19,8 @@ use File::Basename qw(dirname);
 use File::Copy;
 use Archive::Zip;
 use Net::LDAP;
+use Net::LDAP::Control::Paged;
+use Net::LDAP::Constant qw( LDAP_CONTROL_PAGED );
 use Net::SMTP;
 use Crypt::RC4;
 use Net::IMAP::Simple;
@@ -338,6 +340,8 @@ while(my @res = $sql->fetchrow_array())
 			my $basedn = "";
 			my $searchfilter = "";
 			my $importemail = 0;
+			my $page = Net::LDAP::Control::Paged->new(size => 999);
+			my $cookie;
 			my $sql2 = $db->prepare("SELECT * FROM auto_config WHERE module = 'Users sync';");
 			$sql2->execute();
 			while(my @res2 = $sql2->fetchrow_array())
@@ -354,57 +358,67 @@ while(my @res = $sql->fetchrow_array())
 			}
 			else
 			{
+				my $rowcount = 0;
+				my $updcount = 0;
+				my $newcount = 0;
 				my $ldap = Net::LDAP->new($cfg->load("ad_server")) or logevent($res[0], "Could not connect to AD server.");
 				if($ldap)
 				{
 					my $mesg = $ldap->bind($cfg->load("ad_domain") . "\\" . $aduser, password => $adpass);
-					$mesg = $ldap->search(base => $basedn, filter => $searchfilter);
-					if($mesg->code)
+					$sql2 = $db->prepare("BEGIN");
+					$sql2->execute();
+					while(1) 
 					{
-						logevent($res[0], "LDAP: " . $mesg->error . " [" . $mesg->code . "]");
-					}
-					else
-					{
-						my $rowcount = 0;
-						my $updcount = 0;
-						my $newcount = 0;
-						foreach my $entry ($mesg->entries)
+						$mesg = $ldap->search(base => $basedn, filter => $searchfilter, control => [$page]);
+						if($mesg->code)
 						{
-							my $name = $entry->get_value('sAMAccountName');
-							my $mail = $entry->get_value('mail');
-							my $existing = 0;
-							$sql2 = $db->prepare("SELECT COUNT(*) FROM users WHERE name = ?;");
-							$sql2->execute(sanitize_alpha($name));
-							while(my @res2 = $sql2->fetchrow_array())
-							{
-								$existing = to_int($res2[0]);
-							}
-							if(lc(sanitize_alpha($name)) eq "guest" || lc(sanitize_alpha($name)) eq "system" || lc(sanitize_alpha($name)) eq "api" || lc(sanitize_alpha($name)) eq lc($cfg->load('admin_name')))
-							{}
-							elsif($existing > 0 && $importemail == 1)
-							{
-								$sql2 = $db->prepare("UPDATE users SET email = ? WHERE name = ?");
-								$sql2->execute(sanitize_email($mail), sanitize_alpha($name));
-								$updcount += 1;
-							}
-							elsif($existing == 0 && $importemail == 1)
-							{
-								$sql2 = $db->prepare("INSERT INTO users VALUES(?, ?, ?, ?, ?, ?);");
-								$sql2->execute(sanitize_alpha($name), "*********", sanitize_email($mail), to_int($cfg->load('default_lvl')), now(), "");
-								$newcount += 1;
-							}
-							elsif($existing == 0 && $importemail == 0)
-							{
-								$sql2 = $db->prepare("INSERT INTO users VALUES(?, ?, ?, ?, ?, ?);");
-								$sql2->execute(sanitize_alpha($name), "*********", "", to_int($cfg->load('default_lvl')), now(), "");
-								$newcount += 1;
-							}
-							$rowcount += 1; 
+							logevent($res[0], "LDAP: " . $mesg->error . " [" . $mesg->code . "]");
 						}
-						$mesg = $ldap->unbind; 
-						$result = "Success";
-						logevent($res[0], "Listed " . $rowcount . " accounts, updated " . $updcount . ", created " . $newcount . ".");
+						else
+						{
+							while (my $entry = $mesg->pop_entry())
+							{
+								my $name = $entry->get_value('sAMAccountName');
+								my $mail = $entry->get_value('mail');
+								my $existing = 0;
+								$sql2 = $db->prepare("SELECT COUNT(*) FROM users WHERE name = ?;");
+								$sql2->execute(sanitize_alpha($name));
+								while(my @res2 = $sql2->fetchrow_array())
+								{
+									$existing = to_int($res2[0]);
+								}
+								if(lc(sanitize_alpha($name)) eq "guest" || lc(sanitize_alpha($name)) eq "system" || lc(sanitize_alpha($name)) eq "api" || lc(sanitize_alpha($name)) eq lc($cfg->load('admin_name')))
+								{}
+								elsif($existing > 0 && $importemail == 1)
+								{
+									$sql2 = $db->prepare("UPDATE users SET email = ? WHERE name = ?");
+									$sql2->execute(sanitize_email($mail), sanitize_alpha($name));
+									$updcount += 1;
+								}
+								elsif($existing == 0 && $importemail == 1)
+								{
+									$sql2 = $db->prepare("INSERT INTO users VALUES(?, ?, ?, ?, ?, ?);");
+									$sql2->execute(sanitize_alpha($name), "*********", sanitize_email($mail), to_int($cfg->load('default_lvl')), now(), "");
+									$newcount += 1;
+								}
+								elsif($existing == 0 && $importemail == 0)
+								{
+									$sql2 = $db->prepare("INSERT INTO users VALUES(?, ?, ?, ?, ?, ?);");
+									$sql2->execute(sanitize_alpha($name), "*********", "", to_int($cfg->load('default_lvl')), now(), "");
+									$newcount += 1;
+								}
+								$rowcount += 1; 
+							}
+						}
+						my ($resp) = $mesg->control(LDAP_CONTROL_PAGED) or last;
+						$cookie = $resp->cookie or last;
+						$page->cookie($cookie);
 					}
+					$sql2 = $db->prepare("END");
+					$sql2->execute();
+					$mesg = $ldap->unbind; 
+					$result = "Success";
+					logevent($res[0], "Listed " . $rowcount . " accounts, updated " . $updcount . ", created " . $newcount . ".");
 				}
 			}
 		}
@@ -416,6 +430,8 @@ while(my @res = $sql->fetchrow_array())
 			my $basedn = "";
 			my $approval = 0;
 			my $searchfilter = "";
+			my $page = Net::LDAP::Control::Paged->new(size => 999);
+			my $cookie;
 			my $sql2 = $db->prepare("SELECT * FROM auto_config WHERE module = 'Computers sync';");
 			$sql2->execute();
 			while(my @res2 = $sql2->fetchrow_array())
@@ -433,50 +449,61 @@ while(my @res = $sql->fetchrow_array())
 			}
 			else
 			{
+				my $rowcount = 0;
+				my $updcount = 0;
+				my $newcount = 0;
 				my $ldap = Net::LDAP->new($cfg->load("ad_server")) or logevent($res[0], "Could not connect to AD server.");
 				if($ldap)
 				{
 					my $mesg = $ldap->bind($cfg->load("ad_domain") . "\\" . $aduser, password => $adpass);
-					$mesg = $ldap->search(base => $basedn, filter => $searchfilter);
-					if($mesg->code)
+					$sql2 = $db->prepare("BEGIN");
+					$sql2->execute();
+					while(1) 
 					{
-						logevent($res[0], "LDAP: " . $mesg->error . " [" . $mesg->code . "]");
-					}
-					else
-					{
-						my $rowcount = 0;
-						my $updcount = 0;
-						my $newcount = 0;
-						foreach my $entry ($mesg->entries)
+
+						$mesg = $ldap->search(base => $basedn, filter => $searchfilter, control => [$page]);
+						if($mesg->code)
 						{
-							my $name = $entry->get_value('sAMAccountName');
-							my $serial = $entry->get_value('dNSHostName');
-							my $os = $entry->get_value('operatingSystem');
-							my $existing = "";
-							if($serial ne "" && $name ne "")
-							{
-								$sql2 = $db->prepare("SELECT name FROM items WHERE serial = ?;");
-								$sql2->execute(sanitize_html($serial));
-								while(my @res2 = $sql2->fetchrow_array()) { $existing = $res2[0]; }
-								if($existing eq "")
-								{
-									$sql2 = $db->prepare("INSERT INTO items VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);");
-									$sql2->execute(sanitize_html($name), $type, sanitize_html($serial), 0, 0, $approval, 1, "", sanitize_html($os));
-									$newcount += 1;
-								}
-								elsif($existing ne sanitize_html($name))
-								{
-									$sql2 = $db->prepare("UPDATE items SET name = ? WHERE serial = ?");
-									$sql2->execute(sanitize_html($name), sanitize_html($serial));
-									$updcount += 1;
-								}
-							}
-							$rowcount += 1; 
+							logevent($res[0], "LDAP: " . $mesg->error . " [" . $mesg->code . "]");
 						}
-						$mesg = $ldap->unbind; 
-						$result = "Success";
-						logevent($res[0], "Listed " . $rowcount . " computers, updated " . $updcount . ", created " . $newcount . ".");
+						else
+						{
+							while (my $entry = $mesg->pop_entry())
+							{
+								my $name = $entry->get_value('sAMAccountName');
+								my $serial = $entry->get_value('dNSHostName');
+								my $os = $entry->get_value('operatingSystem');
+								my $existing = "";
+								if($serial ne "" && $name ne "")
+								{
+									$sql2 = $db->prepare("SELECT name FROM items WHERE serial = ?;");
+									$sql2->execute(sanitize_html($serial));
+									while(my @res2 = $sql2->fetchrow_array()) { $existing = $res2[0]; }
+									if($existing eq "")
+									{
+										$sql2 = $db->prepare("INSERT INTO items VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);");
+										$sql2->execute(sanitize_html($name), $type, sanitize_html($serial), 0, 0, $approval, 1, "", sanitize_html($os));
+										$newcount += 1;
+									}
+									elsif($existing ne sanitize_html($name))
+									{
+										$sql2 = $db->prepare("UPDATE items SET name = ? WHERE serial = ?");
+										$sql2->execute(sanitize_html($name), sanitize_html($serial));
+										$updcount += 1;
+									}
+								}
+								$rowcount += 1; 
+							}
+						}
+						my ($resp) = $mesg->control(LDAP_CONTROL_PAGED) or last;
+						$cookie = $resp->cookie or last;
+						$page->cookie($cookie);
 					}
+					$sql2 = $db->prepare("END");
+					$sql2->execute();
+					$mesg = $ldap->unbind; 
+					$result = "Success";
+					logevent($res[0], "Listed " . $rowcount . " computers, updated " . $updcount . ", created " . $newcount . ".");
 				}
 			}
 		}
@@ -525,6 +552,8 @@ while(my @res = $sql->fetchrow_array())
 				} or logevent($res[0], "Could not connect to SOAP endpoint: " . $url . " [" . $soap->transport->status . "]");
 				if($som)
 				{
+					$sql2 = $db->prepare("BEGIN");
+					$sql2->execute();
 					my @data;
 					eval { @data = @{$som->body->{getRecordsResponse}->{getRecordsResult}} } or logevent($res[0], "Invalid or empty response from server.");
 					foreach my $rec (@data)
@@ -550,6 +579,8 @@ while(my @res = $sql->fetchrow_array())
 							}
 						}
 					}
+					$sql2 = $db->prepare("END");
+					$sql2->execute();
 					$result = "Success";
 					logevent($res[0], "Listed " . $rowcount . " items, updated " . $updcount . ", created " . $crtcount . ".");
 				}
@@ -829,7 +860,6 @@ while(my @res = $sql->fetchrow_array())
 		else { logevent($res[0], "Not implemented."); }
 		$sql2 = $db->prepare("UPDATE auto_modules SET lastrun = ?, timestamp = ?, result = ? WHERE name = ?;");
 		$sql2->execute(now(), time(), $result, $res[0]);
-
 	}
 }
 # Finish
