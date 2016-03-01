@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-# NodePoint - (C) 2015 Patrick Lambert - http://nodepoint.ca
+# NodePoint - (C) 2014-2016 Patrick Lambert - http://nodepoint.ca
 # Provided under the MIT License
 #
 # To use on Windows: Change all 'Linux' for 'Win32' in this file.
@@ -131,7 +131,8 @@ sub notify
 					$smtp->datasend("Subject: " . $cfg->load('site_name') . " - " . $title . "\n");
 					$smtp->datasend("Content-Transfer-Encoding: 8bit\n");
 					$smtp->datasend("Content-type: text/plain; charset=UTF-8\n\n");
-					$smtp->datasend($mesg . "\n\nThis is an automated message from " . $cfg->load('site_name') . ". To disable notifications, log into your account and remove the email under Settings.\n");
+					if($cfg->load('email_sig')) { $smtp->datasend($mesg . "\n\n" . $cfg->load('email_sig') . "\n"); }
+					else { $smtp->datasend($mesg . "\n\nThis is an automated message from " . $cfg->load('site_name') . ". To disable notifications, log into your account and remove the email under Settings.\n"); }
 					$smtp->datasend();
 					$smtp->quit;
 				}

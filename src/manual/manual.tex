@@ -11,10 +11,10 @@
 % Conditional compilation for Windows and Linux
 \usepackage{ifthen}
 \newboolean{Windows}
-\setboolean{Windows}{false} % change to false for Linux
+\setboolean{Windows}{true} % change to false for Linux
 \ifthenelse{\boolean{Windows}}
-{\def\NodePointManual{NodePoint IT System - Windows version 1.6.1}}
-{\def\NodePointManual{NodePoint IT System - Linux version 1.6.1}}
+{\def\NodePointManual{NodePoint IT System - Windows version 1.6.2}}
+{\def\NodePointManual{NodePoint IT System - Linux version 1.6.2}}
 
 % Margins and paper type
 \geometry{a4paper, right=1.5cm, left=1.5cm, top=2cm, bottom=1.5cm}
@@ -316,6 +316,7 @@ These are the configuration options for NodePoint. They have to be defined durin
 \item \textbf{Admin password:} The password for the administrator.
 \item \textbf{Site name:} The name shown at the top left of the interface.
 \item \textbf{Public notice:} This notice is shown on every page. Leave empty to remove the notice.
+\item \textbf{Email notifications signature:} Replace the default signature at the bottom of all notification emails with this text.
 \item \textbf{Bootstrap template:} This is a CSS file used by NodePoint. It should be a valid Bootstrap template, or could contain extra CSS elements you wish to use. The default file is \texttt{default.css} and contains a few such elements.
 \item \textbf{Interface theme color:} The color of panels in the interface.
 \item \textbf{Favicon:} This is the icon shown by web browsers in the URL bar.

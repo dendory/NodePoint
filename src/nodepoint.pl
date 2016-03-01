@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-# NodePoint - (C) 2015 Patrick Lambert - http://nodepoint.ca
+# NodePoint - (C) 2014-2016 Patrick Lambert - http://nodepoint.ca
 # Provided under the MIT License
 #
 # To use on Windows: Change all 'Linux' for 'Win32' in this file.
@@ -646,6 +646,7 @@ sub save_config
 	if($q->param("admin_pass")) { $cfg->save("admin_pass", sha1_hex($q->param('admin_pass'))); }
 	$cfg->save("site_name", sanitize_html($q->param('site_name')));
 	$cfg->save("motd", sanitize_html($q->param('motd')));
+	$cfg->save("email_sig", sanitize_html($q->param('email_sig')));
 	$cfg->save("css_template", sanitize_html($q->param('css_template')));
 	$cfg->save("favicon", sanitize_html($q->param('favicon')));
 	$cfg->save("logo", sanitize_html($q->param('logo')));
@@ -921,7 +922,8 @@ sub notify
 						$smtp->datasend("Subject: " . $cfg->load('site_name') . " - " . $title . "\n");
 						$smtp->datasend("Content-Transfer-Encoding: 8bit\n");
 						$smtp->datasend("Content-type: text/plain; charset=UTF-8\n\n");
-						$smtp->datasend($mesg . "\n\nThis is an automated message from " . $cfg->load('site_name') . ". To disable notifications, log into your account and remove the email under Settings.\n");
+						if($cfg->load('email_sig')) { $smtp->datasend($mesg . "\n\n" . $cfg->load('email_sig') . "\n"); }
+						else { $smtp->datasend($mesg . "\n\nThis is an automated message from " . $cfg->load('site_name') . ". To disable notifications, log into your account and remove the email under Settings.\n"); }
 						$smtp->datasend();
 						$smtp->quit;
 					}
@@ -3034,6 +3036,7 @@ elsif($q->param('m')) # Modules
 			print "<tr><td style='width:50%'>Upload folder</td><td><input class='form-control' type='text' name='upload_folder' value=\"" . $cfg->load("upload_folder") . "\"></td></tr>\n";
 			print "<tr><td style='width:50%'>Site name</td><td><input class='form-control' type='text' name='site_name' value=\"" . $cfg->load("site_name") . "\"></td></tr>\n";
 			print "<tr><td style='width:50%'>Public notice</td><td><input class='form-control' type='text' name='motd' value=\"" . $cfg->load("motd") . "\"></td></tr>\n";
+			print "<tr><td style='width:50%'>Email notifications signature</td><td><input class='form-control' type='text' name='email_sig' value=\"" . $cfg->load("email_sig") . "\"></td></tr>\n";
 			print "<tr><td style='width:50%'>Bootstrap template</td><td><input class='form-control' type='text' name='css_template' value=\"" . $cfg->load("css_template") . "\"></td></tr>\n";
 			print "<tr><td style='width:50%'>Interface theme color</td><td><select class='form-control' name='theme_color'><option value='0'";
 			if($cfg->load("theme_color") eq "0") { print " selected"; }
