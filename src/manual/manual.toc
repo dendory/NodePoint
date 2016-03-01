@@ -30,7 +30,7 @@
 \contentsline {section}{\numberline {4}Components}{15}{section.4}
 \contentsline {subsection}{\numberline {4.1}Tickets Management}{15}{subsection.4.1}
 \contentsline {subsubsection}{\numberline {4.1.1}Custom forms}{15}{subsubsection.4.1.1}
-\contentsline {subsubsection}{\numberline {4.1.2}Following and assignment}{16}{subsubsection.4.1.2}
+\contentsline {subsubsection}{\numberline {4.1.2}Favorites and assignment}{16}{subsubsection.4.1.2}
 \contentsline {subsection}{\numberline {4.2}Support Articles}{16}{subsection.4.2}
 \contentsline {subsection}{\numberline {4.3}Time Tracking}{16}{subsection.4.3}
 \contentsline {subsection}{\numberline {4.4}Shoutbox}{16}{subsection.4.4}

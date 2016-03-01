@@ -1052,7 +1052,7 @@ sub home
 		while(my @res = $sql->fetchrow_array())	{ $count2 = to_int($res[0]); }
 		if($count2 > 0)
 		{
-			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Tickets you follow</h3></div><div class='panel-body'><table class='table table-striped' id='home2_table'>\n";
+			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Favorite tickets</h3></div><div class='panel-body'><table class='table table-striped' id='home2_table'>\n";
 			print "<thead><tr><th>ID</th><th>" . $items{"Product"} . "</th><th>Title</th><th>Status</th><th>Last modified</th></tr></thead><tbody>\n";
 			$sql = $db->prepare("SELECT ROWID,* FROM tickets WHERE status != 'Closed' ORDER BY ROWID DESC;");
 			$sql->execute();
@@ -1188,7 +1188,7 @@ sub home
 		while(my @res = $sql->fetchrow_array())	{ $count5 = to_int($res[0]); }
 		if($count5 > 0)
 		{
-			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Subscribed articles</h3></div><div class='panel-body'><table class='table table-striped' id='home5_table'>\n";
+			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Favorite articles</h3></div><div class='panel-body'><table class='table table-striped' id='home5_table'>\n";
 			print "<thead><tr><th>ID</th><th>Title</th><th>Last modified</th></tr></thead><tbody>\n";
 			$sql = $db->prepare("SELECT articleid FROM subscribe WHERE user = ?");
 			$sql->execute($logged_user);
@@ -5579,8 +5579,8 @@ elsif($q->param('m')) # Modules
 				}
 				if($logged_user ne "")
 				{
-					if($res[10] =~ /\b\Q$logged_user\E\b/) { print "<form action='.' method='POST' style='display:inline'><input type='hidden' name='m' value='unfollow_ticket'><input type='hidden' name='t' value='" . to_int($q->param('t')) . "'><input class='btn btn-primary' type='submit' value='Unfollow ticket'></form>"; }
-					else { print "<form action='.' method='POST' style='display:inline'><input type='hidden' name='m' value='follow_ticket'><input type='hidden' name='t' value='" . to_int($q->param('t')) . "'><input class='btn btn-primary' type='submit' value='Follow ticket'></form>"; }
+					if($res[10] =~ /\b\Q$logged_user\E\b/) { print "<form action='.' method='POST' style='display:inline'><input type='hidden' name='m' value='unfollow_ticket'><input type='hidden' name='t' value='" . to_int($q->param('t')) . "'><input class='btn btn-primary' type='submit' value='Remove favorite'></form>"; }
+					else { print "<form action='.' method='POST' style='display:inline'><input type='hidden' name='m' value='follow_ticket'><input type='hidden' name='t' value='" . to_int($q->param('t')) . "'><input class='btn btn-primary' type='submit' value='Add favorite'></form>"; }
 				}
 				if($logged_user eq $cfg->load("admin_name") && $q->param('edit')) { print "<span class='pull-right'><form method='GET' action='.'><input type='hidden' name='m' value='confirm_delete'><input type='hidden' name='ticketid' value='" . to_int($q->param('t')) . "'><input type='submit' class='btn btn-danger' value='Permanently delete this ticket'></form></span>"; }
 				print "</div></div>\n";
@@ -6995,8 +6995,8 @@ elsif($q->param('kb') && $cfg->load('comp_articles') eq "on")
 				$sql2->execute($logged_user, to_int($q->param('kb')));
 				my $found = 0;
 				while(my @res2 = $sql2->fetchrow_array()) { $found = 1;}
-				if($found == 1) { print "<form method='GET' action='.'><input type='hidden' name='m' value='unsubscribe'><input type='hidden' name='articleid' value='" . to_int($q->param('kb')) . "'><input class='btn btn-primary' type='submit' value='Unsubscribe'></form>"; }
-				else { print "<form method='GET' action='.'><input type='hidden' name='m' value='subscribe'><input type='hidden' name='articleid' value='" . to_int($q->param('kb')) . "'><input class='btn btn-primary' type='submit' value='Subscribe'></form>"; }
+				if($found == 1) { print "<form method='GET' action='.'><input type='hidden' name='m' value='unsubscribe'><input type='hidden' name='articleid' value='" . to_int($q->param('kb')) . "'><input class='btn btn-primary' type='submit' value='Remove favorite'></form>"; }
+				else { print "<form method='GET' action='.'><input type='hidden' name='m' value='subscribe'><input type='hidden' name='articleid' value='" . to_int($q->param('kb')) . "'><input class='btn btn-primary' type='submit' value='Add favorite'></form>"; }
 			}
 			print "</div></div>";
 			if($cfg->load('comp_tickets') eq "on" && $logged_user ne "")
