@@ -362,6 +362,7 @@ while(my @res = $sql->fetchrow_array())
 				my $rowcount = 0;
 				my $updcount = 0;
 				my $newcount = 0;
+				my $gah = 0;
 				my $ldap = Net::LDAP->new($cfg->load("ad_server")) or logevent($res[0], "Could not connect to AD server.");
 				if($ldap)
 				{
@@ -374,6 +375,7 @@ while(my @res = $sql->fetchrow_array())
 						if($mesg->code)
 						{
 							logevent($res[0], "LDAP: " . $mesg->error . " [" . $mesg->code . "]");
+							$gah = 1;
 						}
 						else
 						{
@@ -417,9 +419,12 @@ while(my @res = $sql->fetchrow_array())
 					}
 					$sql2 = $db->prepare("END");
 					$sql2->execute();
-					$mesg = $ldap->unbind; 
-					$result = "Success";
-					logevent($res[0], "Listed " . $rowcount . " accounts, updated " . $updcount . ", created " . $newcount . ".");
+					$mesg = $ldap->unbind;
+					if($gah == 0)
+					{
+						$result = "Success";
+						logevent($res[0], "Listed " . $rowcount . " accounts, updated " . $updcount . ", created " . $newcount . ".");
+					}
 				}
 			}
 		}
@@ -453,6 +458,7 @@ while(my @res = $sql->fetchrow_array())
 				my $rowcount = 0;
 				my $updcount = 0;
 				my $newcount = 0;
+				my $gah = 0;
 				my $ldap = Net::LDAP->new($cfg->load("ad_server")) or logevent($res[0], "Could not connect to AD server.");
 				if($ldap)
 				{
@@ -466,6 +472,7 @@ while(my @res = $sql->fetchrow_array())
 						if($mesg->code)
 						{
 							logevent($res[0], "LDAP: " . $mesg->error . " [" . $mesg->code . "]");
+							$gah = 1;
 						}
 						else
 						{
@@ -503,8 +510,11 @@ while(my @res = $sql->fetchrow_array())
 					$sql2 = $db->prepare("END");
 					$sql2->execute();
 					$mesg = $ldap->unbind; 
-					$result = "Success";
-					logevent($res[0], "Listed " . $rowcount . " computers, updated " . $updcount . ", created " . $newcount . ".");
+					if($gah == 0)
+					{
+						$result = "Success";
+						logevent($res[0], "Listed " . $rowcount . " computers, updated " . $updcount . ", created " . $newcount . ".");
+					}
 				}
 			}
 		}
