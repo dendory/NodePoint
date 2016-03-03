@@ -611,6 +611,8 @@ sub db_check
 		$sql->execute();
 		$sql = $db->prepare("INSERT INTO auto_modules VALUES ('Update MOTD', 0, 'Never', 0, '', \"This module will dynamically update the MOTD from a text file.\", 0);");
 		$sql->execute();
+		$sql = $db->prepare("INSERT INTO auto_modules VALUES ('Log export', 0, 'Never', 0, '', \"This module will export the system log, access log and automation log to a CSV file, and optionally clear the logs afterward.\", 0);");
+		$sql->execute();
 	};
 	$sql->finish();
 	$sql = $db->prepare("SELECT * FROM auto_log WHERE 0 = 1;") or do
@@ -4765,6 +4767,24 @@ elsif($q->param('m')) # Modules
 					if($table eq "Tasks") { print " selected"; }
 					print ">Tasks</option></select></div></div></p>";
 				}
+				elsif($res[0] eq "Log export")
+				{
+					my $filename = "log.csv";
+					my $remlog = 0;
+					my $sql2 = $db->prepare("SELECT * FROM auto_config WHERE module = 'Log export';");
+					$sql2->execute();
+					while(my @res2 = $sql2->fetchrow_array())
+					{
+						if($res2[1] eq 'filename') { $filename = $res2[2]; }
+						if($res2[1] eq 'remlog') { $remlog = to_int($res2[2]); }
+					}
+					print "<p><div class='row'><div class='col-sm-4'>Export file:</div><div class='col-sm-8'><input class='form-control' type='text' name='filename' value=\"" . $filename . "\"></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>Delete logs afterward:</div><div class='col-sm-8'><select class='form-control' name='remlog'><option";
+					if($remlog == 1) { print " selected"; }
+					print ">Yes</option><option";
+					if($remlog == 0) { print " selected"; }
+					print ">No</option></select></div></div></p>";
+				}
 				elsif($res[0] eq "Update MOTD")
 				{
 					my $filename = "motd.txt";
@@ -5065,6 +5085,16 @@ elsif($q->param('m')) # Modules
 					$sql->execute(sanitize_html($q->param('filename')));
 					$sql = $db->prepare("INSERT INTO auto_config VALUES ('Bulk export', 'table', ?);");
 					$sql->execute(sanitize_html($q->param('table')));
+				}
+				elsif($q->param('save') eq "Log export")
+				{
+					$sql = $db->prepare("DELETE FROM auto_config WHERE module = 'Log export';");
+					$sql->execute();
+					$sql = $db->prepare("INSERT INTO auto_config VALUES ('Log export', 'filename', ?);");
+					$sql->execute(sanitize_html($q->param('filename')));
+					$sql = $db->prepare("INSERT INTO auto_config VALUES ('Log export', 'remlog', ?);");
+					if($q->param('remlog') eq "Yes") { $sql->execute(1); }
+					else { $sql->execute(0); }
 				}
 				elsif($q->param('save') eq "Update MOTD")
 				{

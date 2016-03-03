@@ -232,6 +232,7 @@ while(my @res = $sql->fetchrow_array())
 		{
 			my $filename = "";
 			my $table = "Tickets";
+			my $noerr = 1;
 			my $sql2 = $db->prepare("SELECT * FROM auto_config WHERE module = 'Bulk export';");
 			$sql2->execute();
 			while(my @res2 = $sql2->fetchrow_array())
@@ -246,65 +247,126 @@ while(my @res = $sql->fetchrow_array())
 			else
 			{
 				my $rowcount = 0;
-				open(my $OUTFILE, ">", $filename) or logevent($res[0], "Error writing content to export file.");
-				if($table eq "Tickets")
+				open(my $OUTFILE, ">", $filename) or do { logevent($res[0], "Error writing content to export file."); $noerr = 0; };
+				if($noerr == 1)
 				{
-					print $OUTFILE "\"title\",\"product_id\",\"release_id\",\"created_by\",\"assigned_to\",\"priority\",\"status\",\"resolution\",\"created\",\"modified\"\n";
-					$sql2 = $db->prepare("SELECT * FROM tickets;");
+					if($table eq "Tickets")
+					{
+						print $OUTFILE "\"title\",\"product_id\",\"release_id\",\"created_by\",\"assigned_to\",\"priority\",\"status\",\"resolution\",\"created\",\"modified\"\n";
+						$sql2 = $db->prepare("SELECT * FROM tickets;");
+						$sql2->execute();
+						while(my @res2 = $sql2->fetchrow_array())
+						{
+							$rowcount += 1;
+							print $OUTFILE "\"" . $res2[4] . "\",\"" . $res2[0] . "\",\"" .  $res2[1] . "\",\"" .  $res2[2] . "\",\"" .  $res2[3] . "\",\"" .  $res2[6] . "\",\"" .  $res2[7] . "\",\"" .  $res2[8] . "\",\"" .  $res2[10] . "\",\"" .  $res2[11] . "\"\n";  
+						}
+					}
+					elsif($table eq "Items")
+					{
+						print $OUTFILE "\"name\",\"type\",\"serial\",\"product_id\",\"client_id\",\"approval\",\"status\",\"user\"\n";
+						$sql2 = $db->prepare("SELECT * FROM items;");
+						$sql2->execute();
+						while(my @res2 = $sql2->fetchrow_array())
+						{
+							$rowcount += 1;
+							print $OUTFILE "\"" . $res2[0] . "\",\"" . $res2[1] . "\",\"" .  $res2[2] . "\",\"" .  $res2[3] . "\",\"" .  $res2[4] . "\",\"" .  $res2[5] . "\",\"" .  $res2[6] . "\",\"" .  $res2[7] . "\"\n";  
+						}
+					}
+					elsif($table eq "Tasks")
+					{
+						print $OUTFILE "\"product_id\",\"name\",\"user\",\"completion\",\"due\"\n";
+						$sql2 = $db->prepare("SELECT * FROM steps;");
+						$sql2->execute();
+						while(my @res2 = $sql2->fetchrow_array())
+						{
+							$rowcount += 1;
+							print $OUTFILE "\"" . $res2[0] . "\",\"" . $res2[1] . "\",\"" .  $res2[2] . "\",\"" .  $res2[3] . "\",\"" .  $res2[4] . "\"\n";  
+						}
+					}
+					elsif($table eq "Clients")
+					{
+						print $OUTFILE "\"name\",\"status\",\"contact\"\n";
+						$sql2 = $db->prepare("SELECT * FROM clients;");
+						$sql2->execute();
+						while(my @res2 = $sql2->fetchrow_array())
+						{
+							$rowcount += 1;
+							print $OUTFILE "\"" . $res2[0] . "\",\"" . $res2[1] . "\",\"" .  $res2[2] . "\"\n";  
+						}
+					}
+					elsif($table eq "Users")
+					{
+						print $OUTFILE "\"name\",\"email\",\"level\",\"last_login\"\n";
+						$sql2 = $db->prepare("SELECT * FROM users;");
+						$sql2->execute();
+						while(my @res2 = $sql2->fetchrow_array())
+						{
+							$rowcount += 1;
+							print $OUTFILE "\"" . $res2[0] . "\",\"" . $res2[2] . "\",\"" .  $res2[3] . "\",\"" .  $res2[4] . "\"\n";  
+						}
+					}
+					close($OUTFILE);
+					$result = "Success";
+					logevent($res[0], "Exported " . $rowcount . " rows.");
+				}
+			}
+		}
+		elsif($res[0] eq 'Log export')
+		{
+			my $filename = "";
+			my $remlog = 0;
+			my $noerr = 1;
+			my $sql2 = $db->prepare("SELECT * FROM auto_config WHERE module = 'Log export';");
+			$sql2->execute();
+			while(my @res2 = $sql2->fetchrow_array())
+			{
+				if($res2[1] eq 'filename') { $filename = $res2[2]; }
+				if($res2[1] eq 'remlog') { $remlog = to_int($res2[2]); }
+			}
+			if($filename eq "")
+			{
+				logevent($res[0], "Missing filename configuration value.");
+			}
+			else
+			{
+				my $rowcount = 0;
+				open(my $OUTFILE, ">", $filename) or do { logevent($res[0], "Error writing content to export file."); $noerr = 0; };
+				if($noerr == 1)
+				{
+					$sql2 = $db->prepare("SELECT * FROM log;");
 					$sql2->execute();
 					while(my @res2 = $sql2->fetchrow_array())
 					{
 						$rowcount += 1;
-						print $OUTFILE "\"" . $res2[4] . "\",\"" . $res2[0] . "\",\"" .  $res2[1] . "\",\"" .  $res2[2] . "\",\"" .  $res2[3] . "\",\"" .  $res2[6] . "\",\"" .  $res2[7] . "\",\"" .  $res2[8] . "\",\"" .  $res2[10] . "\",\"" .  $res2[11] . "\"\n";  
+						print $OUTFILE "\"" . $res2[0] . "\",\"" . $res2[1] . "\",\"" .  $res2[2] . "\",\"" .  $res2[3] . "\"\n";  
 					}
-				}
-				elsif($table eq "Items")
-				{
-					print $OUTFILE "\"name\",\"type\",\"serial\",\"product_id\",\"client_id\",\"approval\",\"status\",\"user\"\n";
-					$sql2 = $db->prepare("SELECT * FROM items;");
+					$sql2 = $db->prepare("SELECT * FROM file_access;");
 					$sql2->execute();
 					while(my @res2 = $sql2->fetchrow_array())
 					{
 						$rowcount += 1;
-						print $OUTFILE "\"" . $res2[0] . "\",\"" . $res2[1] . "\",\"" .  $res2[2] . "\",\"" .  $res2[3] . "\",\"" .  $res2[4] . "\",\"" .  $res2[5] . "\",\"" .  $res2[6] . "\",\"" .  $res2[7] . "\"\n";  
+						print $OUTFILE "\"" . $res2[0] . "\",\"\",\"File access: " .  $res2[1] . "\",\"" .  $res2[2] . "\"\n";  
 					}
-				}
-				elsif($table eq "Tasks")
-				{
-					print $OUTFILE "\"product_id\",\"name\",\"user\",\"completion\",\"due\"\n";
-					$sql2 = $db->prepare("SELECT * FROM steps;");
+					$sql2 = $db->prepare("SELECT * FROM auto_log;");
 					$sql2->execute();
 					while(my @res2 = $sql2->fetchrow_array())
 					{
 						$rowcount += 1;
-						print $OUTFILE "\"" . $res2[0] . "\",\"" . $res2[1] . "\",\"" .  $res2[2] . "\",\"" .  $res2[3] . "\",\"" .  $res2[4] . "\"\n";  
+						print $OUTFILE "\"Automation\", \"" . $res2[0] . "\",\"" .  $res2[1] . "\",\"" .  $res2[2] . "\"\n";  
 					}
-				}
-				elsif($table eq "Clients")
-				{
-					print $OUTFILE "\"name\",\"status\",\"contact\"\n";
-					$sql2 = $db->prepare("SELECT * FROM clients;");
-					$sql2->execute();
-					while(my @res2 = $sql2->fetchrow_array())
+					close($OUTFILE);
+					if($remlog == 1)
 					{
-						$rowcount += 1;
-						print $OUTFILE "\"" . $res2[0] . "\",\"" . $res2[1] . "\",\"" .  $res2[2] . "\"\n";  
+						$sql2 = $db->prepare("DELETE FROM log;");
+						$sql2->execute();
+						$sql2 = $db->prepare("DELETE FROM auto_log;");
+						$sql2->execute();
+						$sql2 = $db->prepare("DELETE FROM file_access;");
+						$sql2->execute();
 					}
+					$result = "Success";
+					logevent($res[0], "Exported " . $rowcount . " rows.");
 				}
-				elsif($table eq "Users")
-				{
-					print $OUTFILE "\"name\",\"email\",\"level\",\"last_login\"\n";
-					$sql2 = $db->prepare("SELECT * FROM users;");
-					$sql2->execute();
-					while(my @res2 = $sql2->fetchrow_array())
-					{
-						$rowcount += 1;
-						print $OUTFILE "\"" . $res2[0] . "\",\"" . $res2[2] . "\",\"" .  $res2[3] . "\",\"" .  $res2[4] . "\"\n";  
-					}
-				}
-				close($OUTFILE);
-				$result = "Success";
-				logevent($res[0], "Exported " . $rowcount . " rows.");
 			}
 		}
 		elsif($res[0] eq 'Update MOTD')
