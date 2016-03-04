@@ -2263,6 +2263,78 @@ elsif($q->param('api')) # API calls
 			print "}\n";
 		}
 	}
+	elsif($q->param('api') eq "assign_ticket")
+	{
+		if(!$q->param('id'))
+		{
+			print "{\n";
+			print " \"message\": \"Missing 'id' argument.\",\n";
+			print " \"status\": \"ERR_MISSING_ARGUMENT\"\n";
+			print "}\n";
+		}
+		elsif(!$q->param('key'))
+		{
+			print "{\n";
+			print " \"message\": \"Missing 'key' argument.\",\n";
+			print " \"status\": \"ERR_MISSING_ARGUMENT\"\n";
+			print "}\n";
+		}
+		elsif($q->param('key') ne $cfg->load('api_write'))
+		{
+			print "{\n";
+			print " \"message\": \"Invalid 'key' value.\",\n";
+			print " \"status\": \"ERR_INVALID_KEY\"\n";
+			print "}\n";
+		}
+		elsif(lc($cfg->load('api_imp')) ne "on" && $q->param('from_user'))
+		{
+			print "{\n";
+			print " \"message\": \"User impersonation is not on.\",\n";
+			print " \"status\": \"ERR_INVALID_ARGUMENT\"\n";
+			print "}\n";		
+		}
+		elsif(!$q->param('user'))
+		{
+			print "{\n";
+			print " \"message\": \"Missing 'user' value.\",\n";
+			print " \"status\": \"ERR_INVALID_ARGUMENT\"\n";
+			print "}\n";		
+		}
+		else
+		{
+			my $from_user = "api";
+			my $newassign = "";
+			my $desc = "";
+			my @us = ();
+			my $creator = "";
+			my $title = "";
+			if(lc($cfg->load('api_imp')) eq "on" && $q->param('from_user')) { $from_user = sanitize_alpha($q->param('from_user')); }
+			$sql = $db->prepare("SELECT assignedto,description,createdby,title FROM tickets WHERE ROWID = ?;");
+			$sql->execute(to_int($q->param('id')));
+			while(my @res = $sql->fetchrow_array())
+			{
+				$newassign = $res[0] . " " . sanitize_alpha($q->param('user'));
+				$desc = $res[1] . "\n\n--- " . now() . " ---\nTicket modified by: " . $from_user . "\nAssigned to: " . $res[0] . " => " . $newassign;
+				@us = split(' ', $res[0]);
+				$creator = $res[2];
+				$title = $res[3];
+			}
+			if($desc ne "")
+			{
+				$sql = $db->prepare("UPDATE tickets SET assignedto = ?, description = ?, modified = ? WHERE ROWID = ?;");
+				$sql->execute($newassign, $desc, now(), to_int($q->param('id')));
+				foreach my $u (@us)
+				{
+					notify($u, "Ticket (" . to_int($q->param('id')) . ") assigned to you has been modified", "The ticket \"" . $title . "\" has been modified:" . $desc);
+				}
+				notify($creator, "Your ticket (" . to_int($q->param('id')) . ") has been modified", "The ticket \"" . $title . "\" has been modified:" . $desc);
+			}
+			print "{\n";
+			print " \"message\": \"Ticket updated.\",\n";
+			print " \"status\": \"OK\"\n";
+			print "}\n";
+		}
+	}
 	elsif($q->param('api') eq "return_item")
 	{
 		if(!$q->param('id'))

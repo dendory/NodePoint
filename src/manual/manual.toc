@@ -62,19 +62,20 @@
 \contentsline {subsection}{\numberline {5.7}Add release}{23}{subsection.5.7}
 \contentsline {subsection}{\numberline {5.8}Add ticket}{23}{subsection.5.8}
 \contentsline {subsection}{\numberline {5.9}Update ticket}{23}{subsection.5.9}
-\contentsline {subsection}{\numberline {5.10}Add comment}{24}{subsection.5.10}
-\contentsline {subsection}{\numberline {5.11}Show time tracking}{24}{subsection.5.11}
-\contentsline {subsection}{\numberline {5.12}Show billing information}{24}{subsection.5.12}
-\contentsline {subsection}{\numberline {5.13}Add task}{24}{subsection.5.13}
-\contentsline {subsection}{\numberline {5.14}List tasks}{25}{subsection.5.14}
-\contentsline {subsection}{\numberline {5.15}Add client}{25}{subsection.5.15}
-\contentsline {subsection}{\numberline {5.16}List clients}{25}{subsection.5.16}
-\contentsline {subsection}{\numberline {5.17}List client events}{25}{subsection.5.17}
-\contentsline {subsection}{\numberline {5.18}Add client event}{25}{subsection.5.18}
-\contentsline {subsection}{\numberline {5.19}Add item}{26}{subsection.5.19}
-\contentsline {subsection}{\numberline {5.20}List items}{26}{subsection.5.20}
-\contentsline {subsection}{\numberline {5.21}Assign item}{26}{subsection.5.21}
-\contentsline {subsection}{\numberline {5.22}Return item}{26}{subsection.5.22}
-\contentsline {subsection}{\numberline {5.23}Update item}{26}{subsection.5.23}
-\contentsline {subsection}{\numberline {5.24}Code example}{27}{subsection.5.24}
+\contentsline {subsection}{\numberline {5.10}Assign ticket}{24}{subsection.5.10}
+\contentsline {subsection}{\numberline {5.11}Add comment}{24}{subsection.5.11}
+\contentsline {subsection}{\numberline {5.12}Show time tracking}{24}{subsection.5.12}
+\contentsline {subsection}{\numberline {5.13}Show billing information}{24}{subsection.5.13}
+\contentsline {subsection}{\numberline {5.14}Add task}{25}{subsection.5.14}
+\contentsline {subsection}{\numberline {5.15}List tasks}{25}{subsection.5.15}
+\contentsline {subsection}{\numberline {5.16}Add client}{25}{subsection.5.16}
+\contentsline {subsection}{\numberline {5.17}List clients}{25}{subsection.5.17}
+\contentsline {subsection}{\numberline {5.18}List client events}{25}{subsection.5.18}
+\contentsline {subsection}{\numberline {5.19}Add client event}{26}{subsection.5.19}
+\contentsline {subsection}{\numberline {5.20}Add item}{26}{subsection.5.20}
+\contentsline {subsection}{\numberline {5.21}List items}{26}{subsection.5.21}
+\contentsline {subsection}{\numberline {5.22}Assign item}{26}{subsection.5.22}
+\contentsline {subsection}{\numberline {5.23}Return item}{27}{subsection.5.23}
+\contentsline {subsection}{\numberline {5.24}Update item}{27}{subsection.5.24}
+\contentsline {subsection}{\numberline {5.25}Code example}{27}{subsection.5.25}
 \contentsline {section}{\numberline {6}License}{28}{section.6}
