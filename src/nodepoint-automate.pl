@@ -92,6 +92,22 @@ sub sanitize_email
 	else { return ""; }
 }
 
+sub csvsplit 
+{
+	my $line = shift;
+	my $sep = (shift or ',');
+	return () unless $line;
+	my @cells;
+	$line =~ s/\r?\n$//;
+	my $re = qr/(?:^|$sep)(?:"([^"]*)"|([^$sep]*))/;
+	while($line =~ /$re/g) 
+	{
+		my $value = defined $1 ? $1 : $2;
+		push @cells, (defined $value ? $value : '');
+	}
+	return @cells;
+}
+
 # Send email
 sub notify
 {
@@ -498,6 +514,7 @@ while(my @res = $sql->fetchrow_array())
 			my $basedn = "";
 			my $approval = 0;
 			my $searchfilter = "";
+			my $mapinfo = "operatingSystem";
 			my $page = Net::LDAP::Control::Paged->new(size => 999);
 			my $cookie;
 			my $sql2 = $db->prepare("SELECT * FROM auto_config WHERE module = 'Computers sync';");
@@ -505,6 +522,7 @@ while(my @res = $sql->fetchrow_array())
 			while(my @res2 = $sql2->fetchrow_array())
 			{
 				if($res2[1] eq 'basedn') { $basedn = $res2[2]; }
+				if($res2[1] eq 'mapinfo') { $mapinfo = $res2[2]; }
 				if($res2[1] eq 'type') { $type = $res2[2]; }
 				if($res2[1] eq 'searchfilter') { $searchfilter = $res2[2]; }
 				if($res2[1] eq 'aduser') { $aduser = $res2[2]; }
@@ -542,23 +560,24 @@ while(my @res = $sql->fetchrow_array())
 							{
 								my $name = $entry->get_value('sAMAccountName');
 								my $serial = $entry->get_value('dNSHostName');
-								my $os = $entry->get_value('operatingSystem');
-								my $existing = "";
+								my $os = $entry->get_value($mapinfo);
+								my $existingname = "";
+								my $existinginfo = "";
 								if($serial ne "" && $name ne "")
 								{
-									$sql2 = $db->prepare("SELECT name FROM items WHERE serial = ?;");
+									$sql2 = $db->prepare("SELECT name,info FROM items WHERE serial = ?;");
 									$sql2->execute(sanitize_html($serial));
-									while(my @res2 = $sql2->fetchrow_array()) { $existing = $res2[0]; }
-									if($existing eq "")
+									while(my @res2 = $sql2->fetchrow_array()) { $existingname = $res2[0]; $existinginfo = $res2[1]; }
+									if($existingname eq "")
 									{
 										$sql2 = $db->prepare("INSERT INTO items VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);");
 										$sql2->execute(sanitize_html($name), $type, sanitize_html($serial), 0, 0, $approval, 1, "", sanitize_html($os));
 										$newcount += 1;
 									}
-									elsif($existing ne sanitize_html($name))
+									elsif($existingname ne sanitize_html($name) || $existinginfo ne sanitize_html($os))
 									{
-										$sql2 = $db->prepare("UPDATE items SET name = ? WHERE serial = ?");
-										$sql2->execute(sanitize_html($name), sanitize_html($serial));
+										$sql2 = $db->prepare("UPDATE items SET name = ?, info = ? WHERE serial = ?");
+										$sql2->execute(sanitize_html($name), sanitize_html($os), sanitize_html($serial));
 										$updcount += 1;
 									}
 								}
@@ -578,6 +597,71 @@ while(my @res = $sql->fetchrow_array())
 						logevent($res[0], "Listed " . $rowcount . " computers, updated " . $updcount . ", created " . $newcount . ".");
 					}
 				}
+			}
+		}
+		elsif($res[0] eq 'CSV inventory')
+		{
+			my $type = "";
+			my $filename = "";
+			my $mapname = 0;
+			my $mapserial = 1;
+			my $mapinfo = 2;
+			my $approval = 0;
+			my $sql2 = $db->prepare("SELECT * FROM auto_config WHERE module = 'CSV inventory';");
+			$sql2->execute();
+			while(my @res2 = $sql2->fetchrow_array())
+			{
+				if($res2[1] eq 'type') { $type = $res2[2]; }
+				if($res2[1] eq 'filename') { $filename = $res2[2]; }
+				if($res2[1] eq 'mapname') { $mapname = to_int($res2[2]); }
+				if($res2[1] eq 'mapserial') { $mapserial = to_int($res2[2]); }
+				if($res2[1] eq 'mapinfo') { $mapinfo = to_int($res2[2]); }
+				if($res2[1] eq 'approval') { $approval = to_int($res2[2]); }
+			}
+			if($filename eq "")
+			{
+				logevent($res[0], "Missing filename configuration value.");
+			}
+			else
+			{
+				my $rowcount = 0;
+				my $updcount = 0;
+				my $newcount = 0;
+				if(open(my $F, $filename))
+				{
+					$sql2 = $db->prepare("BEGIN");
+					$sql2->execute();
+					while(my $line = <$F>)
+					{
+						my @cells = csvsplit($line);
+						my $existingname = "";
+						my $existinginfo = "";
+						$rowcount += 1;
+						if($cells[$mapserial] ne "" && $cells[$mapname] ne "")
+						{
+							$sql2 = $db->prepare("SELECT name,info FROM items WHERE serial = ?;");
+							$sql2->execute(sanitize_html($cells[$mapserial]));
+							while(my @res2 = $sql2->fetchrow_array()) { $existingname = $res2[0]; $existinginfo = $res2[1]; }
+							if($existingname eq "")
+							{
+								$sql2 = $db->prepare("INSERT INTO items VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);");
+								$sql2->execute(sanitize_html($cells[$mapname]), $type, sanitize_html($cells[$mapserial]), 0, 0, $approval, 1, "", sanitize_html($cells[$mapinfo]));
+								$newcount += 1;
+							}
+							elsif($existingname ne sanitize_html($cells[$mapname]) || $existinginfo ne sanitize_html($cells[$mapinfo]))
+							{
+								$sql2 = $db->prepare("UPDATE items SET name = ?, info = ? WHERE serial = ?");
+								$sql2->execute(sanitize_html($cells[$mapname]), sanitize_html($cells[$mapinfo]), sanitize_html($cells[$mapserial]));
+								$updcount += 1;
+							}
+						}
+					}
+					$sql2 = $db->prepare("END");
+					$sql2->execute();
+					$result = "Success";
+					logevent($res[0], "Listed " . $rowcount . " items, updated " . $updcount . ", created " . $newcount . ".");
+				}
+				else { logevent($res[0], "Error reading file."); }
 			}
 		}
 		elsif($res[0] eq 'ServiceNow CMDB')
@@ -634,20 +718,21 @@ while(my @res = $sql->fetchrow_array())
 						$rowcount += 1;
 						if($rec->{$mapserial} ne "" && $rec->{$mapname} ne "")
 						{
-							$sql2 = $db->prepare("SELECT name FROM items WHERE serial = ?;");
+							$sql2 = $db->prepare("SELECT name,info FROM items WHERE serial = ?;");
 							$sql2->execute(sanitize_html($rec->{$mapserial}));
-							my $existing = "";
-							while(my @res2 = $sql2->fetchrow_array()) { $existing = $res2[0]; }
-							if($existing eq "")
+							my $existingname = "";
+							my $existinginfo = "";
+							while(my @res2 = $sql2->fetchrow_array()) { $existingname = $res2[0]; $existinginfo = $res2[1]; }
+							if($existingname eq "")
 							{
 								$sql2 = $db->prepare("INSERT INTO items VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);");
 								$sql2->execute(sanitize_html($rec->{$mapname}), sanitize_alpha($type), sanitize_html($rec->{$mapserial}), 0, 0, $approval, 1, "", sanitize_html($rec->{$mapinfo}));
 								$crtcount += 1;
 							}
-							elsif($existing ne sanitize_html($rec->{$mapname}))
+							elsif($existingname ne sanitize_html($rec->{$mapname}) || $existinginfo ne sanitize_html($rec->{$mapinfo}))
 							{
-								$sql2 = $db->prepare("UPDATE items SET name = ? WHERE serial = ?");
-								$sql2->execute(sanitize_html($rec->{$mapname}), sanitize_html($rec->{$mapserial}));
+								$sql2 = $db->prepare("UPDATE items SET name = ?, info = ? WHERE serial = ?");
+								$sql2->execute(sanitize_html($rec->{$mapname}), sanitize_html($rec->{$mapinfo}), sanitize_html($rec->{$mapserial}));
 								$updcount += 1;
 							}
 						}
