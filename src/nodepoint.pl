@@ -155,7 +155,7 @@ sub navbar
 			print "  <li class='dropdown'><a href='#' class='dropdown-toggle' data-toggle='dropdown' role='button' aria-haspopup='true' aria-expanded='false'>Tools <span class='caret'></span></a><ul class='dropdown-menu'>\n";
 			print "   <li><a href='./?m=settings'>Settings</a></li>\n";
 			if($logged_lvl >= to_int($cfg->load("report_lvl"))) { print "   <li><a href='./?m=stats'>Statistics</a></li>\n"; }
-			if($logged_lvl >= to_int($cfg->load("upload_lvl")) && $cfg->load('comp_files') eq "on") { print "   <li><a href='./?m=files'>Files</a></li>\n"; }
+			if($cfg->load('comp_files') eq "on") { print "   <li><a href='./?m=files'>Files</a></li>\n"; }
 			if($logged_lvl >= to_int($cfg->load("auto_lvl")) && $cfg->load('comp_auto') eq "on") { print "   <li><a href='./?m=auto'>Automation</a></li>\n"; }
 			if($logged_lvl >= to_int($cfg->load("customs_lvl")) && $cfg->load('comp_tickets') eq "on")	{ print "   <li><a href='./?m=customforms'>Custom forms</a></li>\n"; }
 			if($logged_lvl >= to_int($cfg->load("summary_lvl"))) { print "   <li><a href='./?m=users'>Users management</a></li>\n"; }
@@ -173,7 +173,7 @@ sub navbar
 			print "  <li class='dropdown'><a href='#' class='dropdown-toggle' data-toggle='dropdown' role='button' aria-haspopup='true' aria-expanded='false'>Tools <span class='caret'></span></a><ul class='dropdown-menu'>\n";
 			print "   <li><a href='./?m=settings'>Settings</a></li>\n";
 			if($logged_lvl >= to_int($cfg->load("report_lvl"))) { print "   <li><a href='./?m=stats'>Statistics</a></li>\n"; }
-			if($logged_lvl >= to_int($cfg->load("upload_lvl")) && $cfg->load('comp_files') eq "on") { print "   <li><a href='./?m=files'>Files</a></li>\n"; }
+			if($cfg->load('comp_files') eq "on") { print "   <li><a href='./?m=files'>Files</a></li>\n"; }
 			if($logged_lvl >= to_int($cfg->load("auto_lvl")) && $cfg->load('comp_auto') eq "on") { print "   <li><a href='./?m=auto'>Automation</a></li>\n"; }
 			if($logged_lvl >= to_int($cfg->load("customs_lvl")) && $cfg->load('comp_tickets') eq "on")	{ print "   <li><a href='./?m=customforms'>Custom forms</a></li>\n"; }
 			if($logged_lvl >= to_int($cfg->load("summary_lvl"))) { print "   <li><a href='./?m=users'>Users management</a></li>\n"; }
@@ -191,7 +191,7 @@ sub navbar
 			print "  <li class='dropdown active'><a href='#' class='dropdown-toggle' data-toggle='dropdown' role='button' aria-haspopup='true' aria-expanded='false'>Tools <span class='caret'></span></a><ul class='dropdown-menu'>\n";
 			print "   <li><a href='./?m=settings'>Settings</a></li>\n";
 			if($logged_lvl >= to_int($cfg->load("report_lvl"))) { print "   <li><a href='./?m=stats'>Statistics</a></li>\n"; }
-			if($logged_lvl >= to_int($cfg->load("upload_lvl")) && $cfg->load('comp_files') eq "on") { print "   <li><a href='./?m=files'>Files</a></li>\n"; }
+			if($cfg->load('comp_files') eq "on") { print "   <li><a href='./?m=files'>Files</a></li>\n"; }
 			if($logged_lvl >= to_int($cfg->load("auto_lvl")) && $cfg->load('comp_auto') eq "on") { print "   <li><a href='./?m=auto'>Automation</a></li>\n"; }
 			if($logged_lvl >= to_int($cfg->load("customs_lvl")) && $cfg->load('comp_tickets') eq "on")	{ print "   <li><a href='./?m=customforms'>Custom forms</a></li>\n"; }
 			if($logged_lvl >= to_int($cfg->load("summary_lvl"))) { print "   <li><a href='./?m=users'>Users management</a></li>\n"; }
@@ -209,7 +209,7 @@ sub navbar
 			print "  <li class='dropdown'><a href='#' class='dropdown-toggle' data-toggle='dropdown' role='button' aria-haspopup='true' aria-expanded='false'>Tools <span class='caret'></span></a><ul class='dropdown-menu'>\n";
 			print "   <li><a href='./?m=settings'>Settings</a></li>\n";
 			if($logged_lvl >= to_int($cfg->load("report_lvl"))) { print "   <li><a href='./?m=stats'>Statistics</a></li>\n"; }
-			if($logged_lvl >= to_int($cfg->load("upload_lvl")) && $cfg->load('comp_files') eq "on") { print "   <li><a href='./?m=files'>Files</a></li>\n"; }
+			if($cfg->load('comp_files') eq "on") { print "   <li><a href='./?m=files'>Files</a></li>\n"; }
 			if($logged_lvl >= to_int($cfg->load("auto_lvl")) && $cfg->load('comp_auto') eq "on") { print "   <li><a href='./?m=auto'>Automation</a></li>\n"; }
 			if($logged_lvl >= to_int($cfg->load("customs_lvl")) && $cfg->load('comp_tickets') eq "on")	{ print "   <li><a href='./?m=customforms'>Custom forms</a></li>\n"; }
 			if($logged_lvl >= to_int($cfg->load("summary_lvl"))) { print "   <li><a href='./?m=users'>Users management</a></li>\n"; }
@@ -227,7 +227,7 @@ sub navbar
 			print "  <li class='dropdown'><a href='#' class='dropdown-toggle' data-toggle='dropdown' role='button' aria-haspopup='true' aria-expanded='false'>Tools <span class='caret'></span></a><ul class='dropdown-menu'>\n";
 			print "   <li><a href='./?m=settings'>Settings</a></li>\n";
 			if($logged_lvl >= to_int($cfg->load("report_lvl"))) { print "   <li><a href='./?m=stats'>Statistics</a></li>\n"; }
-			if($logged_lvl >= to_int($cfg->load("upload_lvl")) && $cfg->load('comp_files') eq "on") { print "   <li><a href='./?m=files'>Files</a></li>\n"; }
+			if($cfg->load('comp_files') eq "on") { print "   <li><a href='./?m=files'>Files</a></li>\n"; }
 			if($logged_lvl >= to_int($cfg->load("auto_lvl")) && $cfg->load('comp_auto') eq "on") { print "   <li><a href='./?m=auto'>Automation</a></li>\n"; }
 			if($logged_lvl >= to_int($cfg->load("customs_lvl")) && $cfg->load('comp_tickets') eq "on")	{ print "   <li><a href='./?m=customforms'>Custom forms</a></li>\n"; }
 			if($logged_lvl >= to_int($cfg->load("summary_lvl"))) { print "   <li><a href='./?m=users'>Users management</a></li>\n"; }
@@ -245,7 +245,7 @@ sub navbar
 			print "  <li class='dropdown'><a href='#' class='dropdown-toggle' data-toggle='dropdown' role='button' aria-haspopup='true' aria-expanded='false'>Tools <span class='caret'></span></a><ul class='dropdown-menu'>\n";
 			print "   <li><a href='./?m=settings'>Settings</a></li>\n";
 			if($logged_lvl >= to_int($cfg->load("report_lvl"))) { print "   <li><a href='./?m=stats'>Statistics</a></li>\n"; }
-			if($logged_lvl >= to_int($cfg->load("upload_lvl")) && $cfg->load('comp_files') eq "on") { print "   <li><a href='./?m=files'>Files</a></li>\n"; }
+			if($cfg->load('comp_files') eq "on") { print "   <li><a href='./?m=files'>Files</a></li>\n"; }
 			if($logged_lvl >= to_int($cfg->load("auto_lvl")) && $cfg->load('comp_auto') eq "on") { print "   <li><a href='./?m=auto'>Automation</a></li>\n"; }
 			if($logged_lvl >= to_int($cfg->load("customs_lvl")) && $cfg->load('comp_tickets') eq "on")	{ print "   <li><a href='./?m=customforms'>Custom forms</a></li>\n"; }
 			if($logged_lvl >= to_int($cfg->load("summary_lvl"))) { print "   <li><a href='./?m=users'>Users management</a></li>\n"; }
@@ -263,7 +263,7 @@ sub navbar
 			print "  <li class='dropdown'><a href='#' class='dropdown-toggle' data-toggle='dropdown' role='button' aria-haspopup='true' aria-expanded='false'>Tools <span class='caret'></span></a><ul class='dropdown-menu'>\n";
 			print "   <li><a href='./?m=settings'>Settings</a></li>\n";
 			if($logged_lvl >= to_int($cfg->load("report_lvl"))) { print "   <li><a href='./?m=stats'>Statistics</a></li>\n"; }
-			if($logged_lvl >= to_int($cfg->load("upload_lvl")) && $cfg->load('comp_files') eq "on") { print "   <li><a href='./?m=files'>Files</a></li>\n"; }
+			if($cfg->load('comp_files') eq "on") { print "   <li><a href='./?m=files'>Files</a></li>\n"; }
 			if($logged_lvl >= to_int($cfg->load("auto_lvl")) && $cfg->load('comp_auto') eq "on") { print "   <li><a href='./?m=auto'>Automation</a></li>\n"; }
 			if($logged_lvl >= to_int($cfg->load("customs_lvl")) && $cfg->load('comp_tickets') eq "on")	{ print "   <li><a href='./?m=customforms'>Custom forms</a></li>\n"; }
 			if($logged_lvl >= to_int($cfg->load("summary_lvl"))) { print "   <li><a href='./?m=users'>Users management</a></li>\n"; }
@@ -5431,12 +5431,12 @@ elsif($q->param('m')) # Modules
 			print "</tbody></table><script>\$(document).ready(function(){\$('#autolog_table').DataTable({'order':[[2,'desc']],pageLength:" . to_int($cfg->load('page_len')) . ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script></div></div>\n";
 		}
 	}
-	elsif($q->param('m') eq "files" && $cfg->load('comp_files') eq "on" && $logged_lvl >= to_int($cfg->load('upload_lvl')))
+	elsif($q->param('m') eq "files" && $cfg->load('comp_files') eq "on")
 	{
 		my $filedata = "";
 		my $filename = "";
 		headers("Files");
-		if($q->param('delete_file'))
+		if($q->param('delete_file') && $logged_lvl >= to_int($cfg->load('upload_lvl')))
 		{
 			$filedata = sanitize_alpha($q->param('delete_file'));
 			if(length($filedata) == 36)
@@ -5449,7 +5449,7 @@ elsif($q->param('m')) # Modules
 				msg("File <b>" . $filedata . "</b> removed.", 3);				
 			}
 		}
-		if($q->param('attach_file'))
+		if($q->param('attach_file') && $logged_lvl >= to_int($cfg->load('upload_lvl')))
 		{
 			eval
 			{
@@ -5486,9 +5486,12 @@ elsif($q->param('m')) # Modules
 				msg("File uploading to <b>" . $cfg->load('upload_folder') . $cfg->sep . $filedata . "</b> failed.", 0); 
 			}
 		}
-		print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Add a new file</h3></div><div class='panel-body'>\n";
-		print "<form method='POST' action='.' enctype='multipart/form-data'><input type='hidden' name='m' value='files'><p>Add new file: <input type='file' name='attach_file'><input class='btn btn-primary pull-right' type='submit' value='Upload'></p></form>\n";
-		print "</div></div>\n";
+		if($logged_lvl >= to_int($cfg->load('upload_lvl')))
+		{
+			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Add a new file</h3></div><div class='panel-body'>\n";
+			print "<form method='POST' action='.' enctype='multipart/form-data'><input type='hidden' name='m' value='files'><p>Add new file: <input type='file' name='attach_file'><input class='btn btn-primary pull-right' type='submit' value='Upload'></p></form>\n";
+			print "</div></div>\n";
+		}
 		print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Available files</h3></div><div class='panel-body'>\n";
 		$sql = $db->prepare("SELECT * FROM files;");
 		$sql->execute();
@@ -5499,7 +5502,9 @@ elsif($q->param('m')) # Modules
 			my $sql2 = $db->prepare("SELECT COUNT(*) FROM file_access WHERE file = ?;");
 			$sql2->execute($res[1]);
 			while(my @res2 = $sql2->fetchrow_array()) { $accesscount = to_int($res2[0]); }
-			print "<tr><td>" . $res[2] . "</td><td>" . to_int($res[4]) . "</td><td>" . $res[0] . "</td><td>" . $res[3] . "</td><td>" . $accesscount . "</td><td><a href='./?file=" . $res[1] . "'>" . $res[1] . "</a><span class='pull-right'><form method='POST' action='.'><input type='hidden' name='m' value='files'><input type='hidden' name='delete_file' value=\"" . $res[1] . "\"><input class='btn btn-danger pull-right' type='submit' value='X'></form></span></td></tr>\n";
+			print "<tr><td>" . $res[2] . "</td><td>" . to_int($res[4]) . "</td><td>" . $res[0] . "</td><td>" . $res[3] . "</td><td>" . $accesscount . "</td><td><a href='./?file=" . $res[1] . "'>" . $res[1] . "</a>";
+			if($logged_lvl >= to_int($cfg->load('upload_lvl'))) { print "<span class='pull-right'><form method='POST' action='.'><input type='hidden' name='m' value='files'><input type='hidden' name='delete_file' value=\"" . $res[1] . "\"><input class='btn btn-danger pull-right' type='submit' value='X'></form></span>"; }
+			print "</td></tr>\n";
 		}
 		print "</tbody></table><script>\$(document).ready(function(){\$('#files_table').DataTable({'order':[[0,'asc']],pageLength:" . to_int($cfg->load('page_len')) . ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script>\n";
 		print "</div></div>\n";
