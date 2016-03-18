@@ -8,7 +8,7 @@
 #
 
 use strict;
-use Config::Linux;
+use Config::Win32;
 use Digest::SHA qw(sha1_hex);
 use DBI;
 use CGI '-utf8';;
@@ -29,7 +29,7 @@ my ($cfg, $db, $sql, $cn, $cp, $cgs, $last_login, $perf);
 my $logged_user = "";
 my $logged_lvl = -1;
 my $q = new CGI;
-my $VERSION = "1.6.2";
+my $VERSION = "1.6.3";
 my %items = ("Product", "Product", "Release", "Release", "Model", "SKU/Model");
 my @itemtypes = ("None");
 my @themes = ("primary", "default", "success", "info", "warning", "danger");
@@ -656,6 +656,7 @@ sub save_config
 	$cfg->save("logo", sanitize_html($q->param('logo')));
 	$cfg->save("default_vis", $q->param('default_vis'));
 	$cfg->save("hide_close", $q->param('hide_close'));
+	$cfg->save("article_html", $q->param('article_html'));
 	$cfg->save("default_lvl", to_int($q->param('default_lvl')));
 	$cfg->save("tasks_lvl", to_int($q->param('tasks_lvl')));
 	$cfg->save("summary_lvl", to_int($q->param('summary_lvl')));
@@ -1242,11 +1243,11 @@ sub home
 # Connect to config
 eval
 {
-	$cfg = Config::Linux->new("NodePoint", "settings");
+	$cfg = Config::Win32->new("NodePoint", "settings");
 };
 if(!defined($cfg)) # Can't even use headers() if this fails.
 {
-	print "Content-type: text/html\n\nError: Could not access " . Config::Linux->type . ". Please ensure NodePoint has the proper permissions.";
+	print "Content-type: text/html\n\nError: Could not access " . Config::Win32->type . ". Please ensure NodePoint has the proper permissions.";
 	exit(0);
 };
 
@@ -1339,7 +1340,7 @@ if(to_int($cfg->load("max_size")) < 1) { $cfg->save("max_size", 999000); }
 if($q->param('site_name') && $q->param('db_address') && $logged_user ne "" && $logged_user eq $cfg->load('admin_name')) # Save config by admin
 {
 	headers("Settings");
-	if($q->param('site_name') && $q->param('db_address') && $q->param('admin_name') && defined($q->param('default_lvl')) && $q->param('default_vis') && $q->param('hide_close') && $q->param('api_write') && defined($q->param('theme_color')) &&  $q->param('api_imp') && $q->param('api_read') && $q->param('comp_tickets') && $q->param('comp_articles') && $q->param('comp_time') && $q->param('comp_shoutbox') && $q->param('comp_billing') && $q->param('comp_clients') && $q->param('comp_items') && $q->param('comp_files') && $q->param('comp_auto') && $q->param('comp_steps')) # All required values have been filled out
+	if($q->param('site_name') && $q->param('db_address') && $q->param('admin_name') && defined($q->param('default_lvl')) && $q->param('default_vis') && $q->param('hide_close') && $q->param('article_html') && $q->param('api_write') && defined($q->param('theme_color')) &&  $q->param('api_imp') && $q->param('api_read') && $q->param('comp_tickets') && $q->param('comp_articles') && $q->param('comp_time') && $q->param('comp_shoutbox') && $q->param('comp_billing') && $q->param('comp_clients') && $q->param('comp_items') && $q->param('comp_files') && $q->param('comp_auto') && $q->param('comp_steps')) # All required values have been filled out
 	{
 		# Test database settings
 		$db = DBI->connect("dbi:SQLite:dbname=" . $q->param('db_address'), '', '', { RaiseError => 0, PrintError => 0 }) or do { msg("Could not verify database settings. Please hit back and try again.<br><br>" . $DBI::errstr, 0); exit(0); };
@@ -1355,6 +1356,7 @@ if($q->param('site_name') && $q->param('db_address') && $logged_user ne "" && $l
 		if(!defined($q->param('default_lvl'))) { $text .= "<span class='label label-danger'>New users access level</span> "; }
 		if(!$q->param('default_vis')) { $text .= "<span class='label label-danger'>Ticket visibility</span> "; }
 		if(!$q->param('hide_close')) { $text .= "<span class='label label-danger'>Hide closed tickets</span> "; }
+		if(!$q->param('article_html')) { $text .= "<span class='label label-danger'>Allow HTML in articles</span> "; }
 		if(!$q->param('api_read')) { $text .= "<span class='label label-danger'>API read key</span> "; }
 		if(!$q->param('api_write')) { $text .= "<span class='label label-danger'>API write key</span> "; }
 		if(!$q->param('api_imp')) { $text .= "<span class='label label-danger'>Allow user impersonation</span> "; }
@@ -3141,6 +3143,10 @@ elsif($q->param('m')) # Modules
 			if($cfg->load("hide_close") eq "on") { print "<option selected>on</option><option>off</option>"; }
 			else { print "<option>on</option><option selected>off</option>"; }
 			print "</select></td></tr>\n";
+			print "<tr><td style='width:50%'>Allow HTML in articles</td><td><select class='form-control' name='article_html'>";
+			if($cfg->load("article_html") eq "on") { print "<option selected>on</option><option>off</option>"; }
+			else { print "<option>on</option><option selected>off</option>"; }
+			print "</select></td></tr>\n";
 			print "</table><h4>Security</h4><table class='table table-striped'>";
 			print "<tr><td style='width:50%'>Admin name</td><td><input class='form-control' type='text' name='admin_name' value=\"" .  $cfg->load("admin_name") . "\" readonly></td></tr>\n";
 			print "<tr><td style='width:50%'>Admin password</td><td><input class='form-control' type='password' name='admin_pass' value=''></td></tr>\n";
@@ -4067,7 +4073,8 @@ elsif($q->param('m')) # Modules
 		else
 		{
 			$sql = $db->prepare("UPDATE kb SET title = ?, article = ?, published = ?, modified = ?, productid = ? WHERE ROWID = ?;");
-			$sql->execute(sanitize_html($q->param('title')), sanitize_html($q->param('article')), to_int($q->param('published')), now(), to_int($q->param('productid')), to_int($q->param('id')));
+			if($cfg->load("article_html") eq "on") { $sql->execute(sanitize_html($q->param('title')), $q->param('article'), to_int($q->param('published')), now(), to_int($q->param('productid')), to_int($q->param('id'))); }
+			else { $sql->execute(sanitize_html($q->param('title')), sanitize_html($q->param('article')), to_int($q->param('published')), now(), to_int($q->param('productid')), to_int($q->param('id'))); }
 			msg("Article <b>" . to_int($q->param('id')) . "</b> saved. Press <a href='./?m=articles'>here</a> to continue.", 3);
 		}		
 	}

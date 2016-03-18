@@ -13,8 +13,8 @@
 \newboolean{Windows}
 \setboolean{Windows}{false} % change to false for Linux
 \ifthenelse{\boolean{Windows}}
-{\def\NodePointManual{NodePoint IT System - Windows version 1.6.2}}
-{\def\NodePointManual{NodePoint IT System - Linux version 1.6.2}}
+{\def\NodePointManual{NodePoint IT System - Windows version 1.6.3}}
+{\def\NodePointManual{NodePoint IT System - Linux version 1.6.3}}
 
 % Margins and paper type
 \geometry{a4paper, right=1.5cm, left=1.5cm, top=2cm, bottom=1.5cm}
@@ -323,6 +323,7 @@ These are the configuration options for NodePoint. They have to be defined durin
 \item \textbf{Main page logo:} Image file shown on the login page.
 \item \textbf{Ticket visibility:} When set to \textit{Public}, all tickets will be visible by logged in and guest users. When set to \textit{Private}, people need to log in to view tickets. \textit{Restricted} prevents people without at least the Restricted View access level from viewing others' tickets. This is a good choice for IT/Helpdesk systems.
 \item \textbf{Hide closed tickets:}  Do not show closed tickets on the Tickets page. This is mostly for performance and does not hide them from reports or prevents users from manually entering a closed ticket number.
+\item \textbf{Allow HTML in articles:} Do not escape quotes and tags from articles.
 \item \textbf{Allow registrations:} Allow guest users to register a new account. If set to no, the only way to add new accounts is if a user with Users Management access adds one.
 \item \textbf{Allow guest tickets:} Allow guest users to file tickets.
 \item \textbf{Maximum file upload:} Maximum file size for uploads to project images, ticket comments and the File Management component.
