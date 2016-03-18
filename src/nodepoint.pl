@@ -567,6 +567,12 @@ sub db_check
 		$sql->execute();
 	};
 	$sql->finish();
+	$sql = $db->prepare("SELECT * FROM files_product WHERE 0 = 1;") or do
+	{
+		$sql = $db->prepare("CREATE TABLE files_product (productid INT, file TEXT);");
+		$sql->execute();
+	};
+	$sql->finish();
 	$sql = $db->prepare("SELECT * FROM file_access WHERE 0 = 1;") or do
 	{
 		$sql = $db->prepare("CREATE TABLE file_access (ip TEXT, file TEXT, time TEXT);");
@@ -4211,6 +4217,7 @@ elsif($q->param('m')) # Modules
 					if($cfg->load('comp_tickets')) { print "<li role='presentation'><a href='./?m=view_product&tab=tickets&p=" . to_int($q->param('p')) . "#productdata'>Tickets</a></li>"; }
 					if($cfg->load('comp_articles')) { print "<li role='presentation'><a href='./?m=view_product&tab=articles&p=" . to_int($q->param('p')) . "#productdata'>Articles</a></li>"; }
 					if($cfg->load('comp_items') && $logged_user ne "") { print "<li role='presentation'><a href='./?m=view_product&tab=items&p=" . to_int($q->param('p')) . "#productdata'>Items</a></li>"; }
+					if($cfg->load('comp_files') && $logged_user ne "") { print "<li role='presentation'><a href='./?m=view_product&tab=files&p=" . to_int($q->param('p')) . "#productdata'>Files</a></li>"; }
 					print "</ul>\n";
 					print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-body'>";
 					if($logged_lvl >= to_int($cfg->load('tasks_lvl')) && $vis ne "Archived")
@@ -4246,12 +4253,13 @@ elsif($q->param('m')) # Modules
 					if($cfg->load('comp_tickets')) { print "<li role='presentation'><a href='./?m=view_product&tab=tickets&p=" . to_int($q->param('p')) . "#productdata'>Tickets</a></li>"; }
 					if($cfg->load('comp_articles')) { print "<li role='presentation' class='active'><a href='./?m=view_product&tab=articles&p=" . to_int($q->param('p')) . "#productdata'>Articles</a></li>"; }
 					if($cfg->load('comp_items') && $logged_user ne "") { print "<li role='presentation'><a href='./?m=view_product&tab=items&p=" . to_int($q->param('p')) . "#productdata'>Items</a></li>"; }
+					if($cfg->load('comp_files') && $logged_user ne "") { print "<li role='presentation'><a href='./?m=view_product&tab=files&p=" . to_int($q->param('p')) . "#productdata'>Files</a></li>"; }
 					print "</ul>\n";
 					print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-body'>";
 					if($logged_lvl > 3)
 					{
-						print "<h4>Add a new related article</h4>\n";
-						print "<p><form method='GET' action='.' data-toggle='validator' role='form'><div class='row'><div class='col-sm-8'><input type='hidden' name='m' value='add_article'><input placeholder='Title' class='form-control' type='text' name='title' maxlength='50' required><input type='hidden' value='" . to_int($q->param('p')) . "' name='productid'></div><div class='col-sm-4'><input type='submit' class='btn btn-primary pull-right' value='Add article'></div></div></form></p><hr><h4>Related articles</h4>\n";
+						print "<h4>Add a new " . lc($items{"Product"}) . " article</h4>\n";
+						print "<p><form method='GET' action='.' data-toggle='validator' role='form'><div class='row'><div class='col-sm-8'><input type='hidden' name='m' value='add_article'><input placeholder='Title' class='form-control' type='text' name='title' maxlength='50' required><input type='hidden' value='" . to_int($q->param('p')) . "' name='productid'></div><div class='col-sm-4'><input type='submit' class='btn btn-primary pull-right' value='Add article'></div></div></form></p><hr><h4>" . $items{"Product"} . " articles</h4>\n";
 					}
 					print "<table class='table table-striped' id='relatedarticles_table'><thead>\n";
 					if($logged_lvl > 3) { print "<tr><th>ID</th><th>Title</th><th>Status</th><th>Last update</th></tr></thead><tbody>"; }
@@ -4285,16 +4293,17 @@ elsif($q->param('m')) # Modules
 					if($cfg->load('comp_tickets')) { print "<li role='presentation'><a href='./?m=view_product&tab=tickets&p=" . to_int($q->param('p')) . "#productdata'>Tickets</a></li>"; }
 					if($cfg->load('comp_articles')) { print "<li role='presentation'><a href='./?m=view_product&tab=articles&p=" . to_int($q->param('p')) . "#productdata'>Articles</a></li>"; }
 					if($cfg->load('comp_items') && $logged_user ne "") { print "<li role='presentation' class='active'><a href='./?m=view_product&tab=items&p=" . to_int($q->param('p')) . "#productdata'>Items</a></li>"; }
+					if($cfg->load('comp_files') && $logged_user ne "") { print "<li role='presentation'><a href='./?m=view_product&tab=files&p=" . to_int($q->param('p')) . "#productdata'>Files</a></li>"; }
 					print "</ul>\n";
 					print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-body'>";
 					if($logged_lvl > 3)
 					{
-						print "<h4>Add a new related item</h4>";
+						print "<h4>Add a new " . lc($items{"Product"}) . " item</h4>";
 						print "<form method='POST' action='.' data-toggle='validator' role='form'><input type='hidden' name='m' value='items'>\n";
 						print "<p><div class='row'><div class='col-sm-4'>Item type: <select name='type' class='form-control'><option>Desktop</option><option>Laptop</option><option>Server</option><option>Keyboard</option><option>Mouse</option><option>Display</option><option>Phone</option><option>Printer</option><option>Peripheral</option><option>Software</option><option>Furniture</option><option>Tool</option><option>Vehicle</option><option>Other</option></select></div><div class='col-sm-4'>Item name: <input type='text' maxlength='50' class='form-control' name='name' required></div><div class='col-sm-4'>Serial number: <input type='text' maxlength='30' class='form-control' name='serial' required></div></div></p><input type='hidden' name='product_id' value='" . to_int($q->param('p')) . "'><input type='hidden' name='client_id' value='None'>\n";
 						print "<p>Information provided on checkout: <textarea name='info' class='form-control'></textarea></p>";
 						print "<p><input type='submit' name='new_item' class='btn btn-primary pull-right' value='Add item'><label><input type='checkbox' name='approval'> Require approval for checkout</label></p></form><hr>\n";
-						print "<h4>Related items</h4>";
+						print "<h4>" . $items{"Product"} . " items</h4>";
 					}
 					print "<table class='table table-striped' id='relateditems_table'><thead><tr><th>Type</th><th>Name</th><th>Serial</th><th>Status</th></tr></thead><tbody>";
 					$sql = $db->prepare("SELECT ROWID,* FROM items WHERE productid = ?;");
@@ -4317,13 +4326,14 @@ elsif($q->param('m')) # Modules
 					if($cfg->load('comp_tickets')) { print "<li role='presentation' class='active'><a href='./?m=view_product&tab=tickets&p=" . to_int($q->param('p')) . "#productdata'>Tickets</a></li>"; }
 					if($cfg->load('comp_articles')) { print "<li role='presentation'><a href='./?m=view_product&tab=articles&p=" . to_int($q->param('p')) . "#productdata'>Articles</a></li>"; }
 					if($cfg->load('comp_items') && $logged_user ne "") { print "<li role='presentation'><a href='./?m=view_product&tab=items&p=" . to_int($q->param('p')) . "#productdata'>Items</a></li>"; }
+					if($cfg->load('comp_files') && $logged_user ne "") { print "<li role='presentation'><a href='./?m=view_product&tab=files&p=" . to_int($q->param('p')) . "#productdata'>Files</a></li>"; }
 					print "</ul>\n";
 					print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-body'>";
 					if($logged_lvl > 0  || $cfg->load("guest_tickets") eq "on")
 					{
-						print "<p><form method='POST' action='.'><div class='row'><div class='col-sm-12'><input type='hidden' name='product_id' value='" . to_int($q->param('p')) . "'><input type='hidden' name='m' value='new_ticket'><input class='btn btn-primary' type='submit' value='Add a new related ticket'></div></div></form></p><hr>\n";
-						if($cfg->load("hide_close") eq "on") { print "<h4>Related active tickets</h4>"; }
-						else { print "<h4>Related tickets</h4>"; }
+						print "<p><form method='POST' action='.'><div class='row'><div class='col-sm-12'><input type='hidden' name='product_id' value='" . to_int($q->param('p')) . "'><input type='hidden' name='m' value='new_ticket'><input class='btn btn-primary' type='submit' value='Add a new " . lc($items{"Product"}) . " ticket'></div></div></form></p><hr>\n";
+						if($cfg->load("hide_close") eq "on") { print "<h4>Active " . lc($items{"Product"}) . " tickets</h4>"; }
+						else { print "<h4>" . $items{"Product"} . " tickets</h4>"; }
 					}
 					print "<table class='table table-stripped' id='tickets_table'><thead><tr><th>ID</th><th>User</th><th>Title</th><th>Status</th><th>Date</th></tr></thead><tbody>\n";
 					if($cfg->load("hide_close") eq "on") { $sql = $db->prepare("SELECT ROWID,* FROM tickets WHERE productid = ? AND status != 'Closed' ORDER BY ROWID DESC;"); }
@@ -4343,6 +4353,94 @@ elsif($q->param('m')) # Modules
 					print "</tbody></table><script>\$(document).ready(function(){\$('#tickets_table').DataTable({'order':[[0,'desc']],pageLength:" . to_int($cfg->load('page_len')) . ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script></div></div>\n";
 					print "</div></div>\n";
 				}
+				elsif($q->param('tab') eq "files" && $cfg->load('comp_files') eq "on")
+				{
+					print "<ul class='nav nav-pills nav-tabs'><li role='presentation'><a href='./?m=view_product&p=" . to_int($q->param('p')) . "#productdata'>" . $items{"Release"} . "s</a></li>";
+					if($cfg->load('comp_steps') && $logged_user ne "") { print "<li role='presentation'><a href='./?m=view_product&tab=tasks&p=" . to_int($q->param('p')) . "#productdata'>Tasks</a></li>"; }
+					if($cfg->load('comp_tickets')) { print "<li role='presentation'><a href='./?m=view_product&tab=tickets&p=" . to_int($q->param('p')) . "#productdata'>Tickets</a></li>"; }
+					if($cfg->load('comp_articles')) { print "<li role='presentation'><a href='./?m=view_product&tab=articles&p=" . to_int($q->param('p')) . "#productdata'>Articles</a></li>"; }
+					if($cfg->load('comp_items') && $logged_user ne "") { print "<li role='presentation'><a href='./?m=view_product&tab=items&p=" . to_int($q->param('p')) . "#productdata'>Items</a></li>"; }
+					if($cfg->load('comp_files') && $logged_user ne "") { print "<li role='presentation' class='active'><a href='./?m=view_product&tab=files&p=" . to_int($q->param('p')) . "#productdata'>Files</a></li>"; }
+					print "</ul>\n";
+					print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-body'>\n";
+					my $filedata = "";
+					my $filename = "";
+					if($q->param('delete_file') && $logged_lvl >= to_int($cfg->load('upload_lvl')))
+					{
+						$filedata = sanitize_alpha($q->param('delete_file'));
+						if(length($filedata) == 36)
+						{
+							open(my $OUTFILE, ">", $cfg->load('upload_folder') . $cfg->sep . $filedata) or die $@;
+							print $OUTFILE "This file is no longer available.";
+							close($OUTFILE);
+							$sql = $db->prepare("DELETE FROM files WHERE file = ?;");
+							$sql->execute($filedata);
+							$sql = $db->prepare("DELETE FROM files_product WHERE file = ?;");
+							$sql->execute($filedata);
+							msg("File <b>" . $filedata . "</b> removed.", 3);				
+						}
+					}
+					if($q->param('attach_file') && $logged_lvl >= to_int($cfg->load('upload_lvl')))
+					{
+						eval
+						{
+							my $lightweight_fh = $q->upload('attach_file');
+							if(defined $lightweight_fh)
+							{
+								my $tmpfilename = $q->tmpFileName($lightweight_fh);
+								my $file_size = (-s $tmpfilename);
+								if($file_size > to_int($cfg->load('max_size')))
+								{
+									msg("File size is larger than accepted value.", 0);
+								}
+								else
+								{
+									my $io_handle = $lightweight_fh->handle;
+									binmode($io_handle);
+									my ($buffer, $bytesread);
+									$filedata = Data::GUID->new;
+									$filename = substr(sanitize_html($q->param('attach_file')), 0, 40);
+									open(my $OUTFILE, ">", $cfg->load('upload_folder') . $cfg->sep . $filedata) or die $@;
+									while($bytesread = $io_handle->read($buffer,1024))
+									{
+										print $OUTFILE $buffer;
+									}
+									close($OUTFILE);
+									$sql = $db->prepare("INSERT INTO files VALUES (?, ?, ?, ?, ?);");
+									$sql->execute($logged_user, $filedata, $filename, now(), to_int($file_size));
+									$sql = $db->prepare("INSERT INTO files_product VALUES (?, ?);");
+									$sql->execute(to_int($q->param('p')), $filedata);
+									msg("File <b>" . $filedata . "</b> uploaded.", 3);				
+								}
+							}
+						};
+						if($@)
+						{
+							msg("File uploading to <b>" . $cfg->load('upload_folder') . $cfg->sep . $filedata . "</b> failed.", 0); 
+						}
+					}
+					if($logged_lvl >= to_int($cfg->load('upload_lvl')))
+					{
+						print "<h4>Add a new " . lc($items{"Product"}) . " file</h4>\n";
+						print "<form method='POST' action='.' enctype='multipart/form-data'><input type='hidden' name='m' value='view_product'><input type='hidden' name='tab' value='files'><input type='hidden' name='p' value='" . to_int($q->param('p')) . "'><p>Add new file: <input type='file' name='attach_file'><input class='btn btn-primary pull-right' type='submit' value='Upload'></p></form>\n";
+						print "<br><hr><h4>" . $items{"Product"} . " files</h4>\n";
+					}
+					$sql = $db->prepare("SELECT files.* FROM files INNER JOIN files_product ON files.file = files_product.file WHERE files_product.productid = ?;");
+					$sql->execute(to_int($q->param('p')));
+					print "<table class='table table-striped' id='files_table'><thead><tr><th>File name</th><th>File size</th><th>Uploaded by</th><th>Date</th><th>Hits</th><th>Download link</th></tr></thead><tbody>\n";
+					while(my @res = $sql->fetchrow_array())
+					{
+						my $accesscount = 0;
+						my $sql2 = $db->prepare("SELECT COUNT(*) FROM file_access WHERE file = ?;");
+						$sql2->execute($res[1]);
+						while(my @res2 = $sql2->fetchrow_array()) { $accesscount = to_int($res2[0]); }
+						print "<tr><td>" . $res[2] . "</td><td>" . to_int($res[4]) . "</td><td>" . $res[0] . "</td><td>" . $res[3] . "</td><td>" . $accesscount . "</td><td><a href='./?file=" . $res[1] . "'>" . $res[1] . "</a>";
+						if($logged_lvl >= to_int($cfg->load('upload_lvl'))) { print "<span class='pull-right'><form method='POST' action='.'><input type='hidden' name='m' value='view_product'><input type='hidden' name='tab' value='files'><input type='hidden' name='p' value='" . to_int($q->param('p')) . "'><input type='hidden' name='delete_file' value=\"" . $res[1] . "\"><input class='btn btn-danger pull-right' type='submit' value='X'></form></span>"; }
+						print "</td></tr>\n";
+					}
+					print "</tbody></table><script>\$(document).ready(function(){\$('#files_table').DataTable({'order':[[0,'asc']],pageLength:" . to_int($cfg->load('page_len')) . ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script>\n";
+					print "</div></div>\n";
+				}
 				else
 				{
 					print "<ul class='nav nav-pills nav-tabs'><li role='presentation' class='active'><a href='./?m=view_product&p=" . to_int($q->param('p')) . "#productdata'>" . $items{"Release"} . "s</a></li>";
@@ -4350,6 +4448,7 @@ elsif($q->param('m')) # Modules
 					if($cfg->load('comp_tickets')) { print "<li role='presentation'><a href='./?m=view_product&tab=tickets&p=" . to_int($q->param('p')) . "#productdata'>Tickets</a></li>"; }
 					if($cfg->load('comp_articles')) { print "<li role='presentation'><a href='./?m=view_product&tab=articles&p=" . to_int($q->param('p')) . "#productdata'>Articles</a></li>"; }
 					if($cfg->load('comp_items') && $logged_user ne "") { print "<li role='presentation'><a href='./?m=view_product&tab=items&p=" . to_int($q->param('p')) . "#productdata'>Items</a></li>"; }
+					if($cfg->load('comp_files') && $logged_user ne "") { print "<li role='presentation'><a href='./?m=view_product&tab=files&p=" . to_int($q->param('p')) . "#productdata'>Files</a></li>"; }
 					print "</ul>\n";
 					print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-body'>\n";
 					if($logged_lvl > 2 && $vis ne "Archived")
@@ -5445,6 +5544,8 @@ elsif($q->param('m')) # Modules
 				print $OUTFILE "This file is no longer available.";
 				close($OUTFILE);
 				$sql = $db->prepare("DELETE FROM files WHERE file = ?;");
+				$sql->execute($filedata);
+				$sql = $db->prepare("DELETE FROM files_product WHERE file = ?;");
 				$sql->execute($filedata);
 				msg("File <b>" . $filedata . "</b> removed.", 3);				
 			}
