@@ -13,8 +13,8 @@
 \newboolean{Windows}
 \setboolean{Windows}{true} % change to false for Linux
 \ifthenelse{\boolean{Windows}}
-{\def\NodePointManual{NodePoint IT System - Windows version 1.6.3}}
-{\def\NodePointManual{NodePoint IT System - Linux version 1.6.3}}
+{\def\NodePointManual{NodePoint IT System - Windows version 1.6.4}}
+{\def\NodePointManual{NodePoint IT System - Linux version 1.6.4}}
 
 % Margins and paper type
 \geometry{a4paper, right=1.5cm, left=1.5cm, top=2cm, bottom=1.5cm}
@@ -321,6 +321,7 @@ These are the configuration options for NodePoint. They have to be defined durin
 \item \textbf{Interface theme color:} The color of panels in the interface.
 \item \textbf{Favicon:} This is the icon shown by web browsers in the URL bar.
 \item \textbf{Main page logo:} Image file shown on the login page.
+\item \textbf{Pinned article:} Article ID that will be pinned to the home page of all users when they log in.
 \item \textbf{Ticket visibility:} When set to \textit{Public}, all tickets will be visible by logged in and guest users. When set to \textit{Private}, people need to log in to view tickets. \textit{Restricted} prevents people without at least the Restricted View access level from viewing others' tickets. This is a good choice for IT/Helpdesk systems.
 \item \textbf{Hide closed tickets:}  Do not show closed tickets on the Tickets page. This is mostly for performance and does not hide them from reports or prevents users from manually entering a closed ticket number.
 \item \textbf{Allow HTML in articles:} Do not escape quotes and tags from articles.
@@ -330,7 +331,7 @@ These are the configuration options for NodePoint. They have to be defined durin
 \item \textbf{Number of row per page:} Number of rows to show per page on tables.
 \item \textbf{Session expiry time:} Number of hours before a user session is invalidated.
 \item \textbf{API read key:} Used for some API operations.
-\item \textbf{API write key:} Used for some API operations.
+\item \textbf{API write key:} Used for some API operations. Also used to encrypt sensitive data inside the product.
 \item \textbf{Allow user impersonation:} Allows API calls to specify a \textit{from\_user} parameter when creating a ticket.
 \item \textbf{SMTP server:} The hostname for email notifications. Leave empty to disable email notifications.
 \item \textbf{SMTP port:} The port number for SMTP connections, defaults to 25.
@@ -350,6 +351,8 @@ These are the configuration options for NodePoint. They have to be defined durin
 \item \textbf{Can view client details:} The minimum access level to view details about clients, including billing information.
 \item \textbf{Can add client events:} Users of this level can add and edit events.
 \item \textbf{Can configure automation:} Users of this level can configure automation modules.
+\item \textbf{Can add secrets:} Users of this level can add project secrets if the proper component is turned on.
+\item \textbf{Can view secrets:} Users of this level can view project secrets if the proper component is turned on.
 \item \textbf{Authentication plugin:} Use an external script or application to authenticate users. This can be used instead of the built-in users management or Active Directory integration if you have some other process to authenticate users. It must return 0 for success, 1 for failure. The following variables can be used: \textit{\%user\%} and \textit{\%pass\%}. For example: \texttt{python auth.py -userid \%user\% -passwd \%pass\%}
 \item \textbf{Notifications plugin:} Call an application or script when a notification is sent. You can use the following variables here: \textit{\%user\%}, \textit{\%title\%} and \textit{\%message\%}. For example: \texttt{echo \%message\% >> ..\textbackslash \%user\%.log}
 \item \textbf{Checkout plugin:} Call an application or script when an inventory item is checked out or approved. You can use the following variables here: \textit{\%user\%} and \textit{\%serial\%}. For example: \texttt{python add\_license.py -item \%serial\% -user \%user\%}
@@ -557,6 +560,11 @@ This module will export the system log, access log and automation log to a CSV f
 
 \subsubsection{CSV inventory}
 This module will import items from a CSV file. You must specify the file name and the column mappings.
+
+\subsection{Secrets Vault}
+The Secrets Vault is a component that allows users assigned to a project to store secrets (credentials, phone numbers, anything that should be restricted) on a project basis. This will add a tab to any project page where users of a specific level can add secrets, and others can view them. Accessing secrets is logged in the system log for auditing purposes.
+
+Both the level to add and to view secrets are configured in the product base configuration. They also need to be auto-assigned to that particular project to be able to add or view secrets. The secrets are encrypted inside of the database using the API Write key. Changing that key will make the data irretrievable.
 
 \clearpage
 \section{JSON API}

@@ -444,7 +444,9 @@ while(my @res = $sql->fetchrow_array())
 				my $ldap = Net::LDAP->new($cfg->load("ad_server")) or logevent($res[0], "Could not connect to AD server.");
 				if($ldap)
 				{
-					my $mesg = $ldap->bind($cfg->load("ad_domain") . "\\" . $aduser, password => $adpass);
+					my $mesg;
+					if($aduser ne "" && $adpass ne "") { $mesg = $ldap->bind($cfg->load("ad_domain") . "\\" . $aduser, password => $adpass); }
+					else { $mesg = $ldap->bind; }
 					$sql2 = $db->prepare("BEGIN");
 					$sql2->execute();
 					while(1) 
@@ -459,7 +461,7 @@ while(my @res = $sql->fetchrow_array())
 						{
 							while (my $entry = $mesg->pop_entry())
 							{
-								my $name = $entry->get_value('sAMAccountName');
+								my $name = $entry->get_value('cn');
 								my $mail = $entry->get_value('mail');
 								my $existing = 0;
 								$sql2 = $db->prepare("SELECT COUNT(*) FROM users WHERE name = ?;");
@@ -479,13 +481,13 @@ while(my @res = $sql->fetchrow_array())
 								elsif($existing == 0 && $importemail == 1)
 								{
 									$sql2 = $db->prepare("INSERT INTO users VALUES(?, ?, ?, ?, ?, ?);");
-									$sql2->execute(sanitize_alpha($name), "*********", sanitize_email($mail), to_int($cfg->load('default_lvl')), now(), "");
+									$sql2->execute(sanitize_alpha($name), "*********", sanitize_email($mail), to_int($cfg->load('default_lvl')), "Never", "");
 									$newcount += 1;
 								}
 								elsif($existing == 0 && $importemail == 0)
 								{
 									$sql2 = $db->prepare("INSERT INTO users VALUES(?, ?, ?, ?, ?, ?);");
-									$sql2->execute(sanitize_alpha($name), "*********", "", to_int($cfg->load('default_lvl')), now(), "");
+									$sql2->execute(sanitize_alpha($name), "*********", "", to_int($cfg->load('default_lvl')), "Never", "");
 									$newcount += 1;
 								}
 								$rowcount += 1; 
@@ -542,7 +544,9 @@ while(my @res = $sql->fetchrow_array())
 				my $ldap = Net::LDAP->new($cfg->load("ad_server")) or logevent($res[0], "Could not connect to AD server.");
 				if($ldap)
 				{
-					my $mesg = $ldap->bind($cfg->load("ad_domain") . "\\" . $aduser, password => $adpass);
+					my $mesg;
+					if($aduser ne "" && $adpass ne "") { $mesg = $ldap->bind($cfg->load("ad_domain") . "\\" . $aduser, password => $adpass); }
+					else { $mesg = $ldap->bind; }
 					$sql2 = $db->prepare("BEGIN");
 					$sql2->execute();
 					while(1) 
@@ -558,7 +562,7 @@ while(my @res = $sql->fetchrow_array())
 						{
 							while (my $entry = $mesg->pop_entry())
 							{
-								my $name = $entry->get_value('sAMAccountName');
+								my $name = $entry->get_value('cn');
 								my $serial = $entry->get_value('dNSHostName');
 								my $os = $entry->get_value($mapinfo);
 								my $existingname = "";
