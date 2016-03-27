@@ -657,6 +657,7 @@ sub logevent
 # Basic configuration
 sub save_config
 {
+	$cfg->save("enc_key", sanitize_html($q->param('enc_key')));
 	$cfg->save("db_address", sanitize_html($q->param('db_address')));
 	$cfg->save("admin_name", sanitize_alpha($q->param('admin_name')));
 	if($q->param("admin_pass")) { $cfg->save("admin_pass", sha1_hex($q->param('admin_pass'))); }
@@ -691,7 +692,7 @@ sub save_config
 	$cfg->save("smtp_from", sanitize_html($q->param('smtp_from')));
 	$cfg->save("smtp_user", sanitize_html($q->param('smtp_user')));
 	$cfg->save("api_write", sanitize_html($q->param('api_write')));
-	$cfg->save("smtp_pass", encode_base64(RC4($cfg->load("api_write"), $q->param('smtp_pass'))));
+	$cfg->save("smtp_pass", encode_base64(RC4($cfg->load("enc_key"), $q->param('smtp_pass'))));
 	$cfg->save("api_read", sanitize_html($q->param('api_read')));
 	$cfg->save("api_imp", $q->param('api_imp'));
 	$cfg->save("theme_color", $q->param('theme_color'));
@@ -933,7 +934,7 @@ sub notify
 				eval
 				{
 					my $smtp = Net::SMTP->new($cfg->load('smtp_server'), Port => to_int($cfg->load('smtp_port')), Timeout => 5);
-					if($cfg->load('smtp_user') && $cfg->load('smtp_pass')) { $smtp->auth($cfg->load('smtp_user'), RC4($cfg->load("api_write"), decode_base64($cfg->load('smtp_pass')))); }
+					if($cfg->load('smtp_user') && $cfg->load('smtp_pass')) { $smtp->auth($cfg->load('smtp_user'), RC4($cfg->load("enc_key"), decode_base64($cfg->load('smtp_pass')))); }
 					$smtp->mail($cfg->load('smtp_from'));
 					if($smtp->to($res[2]))
 					{
@@ -1371,6 +1372,7 @@ if(to_int($cfg->load("view_secrets")) < 1 || to_int($cfg->load("view_secrets")) 
 if(to_int($cfg->load("page_len")) < 1) { $cfg->save("page_len", 50); }
 if(to_int($cfg->load("session_expiry")) < 1) { $cfg->save("session_expiry", 12); }
 if(to_int($cfg->load("max_size")) < 1) { $cfg->save("max_size", 999000); }
+if(!$cfg->load("enc_key")) { $cfg->save("enc_key", $cfg->load("api_write")); }
 
 # Main loop
 if($q->param('site_name') && $q->param('db_address') && $logged_user ne "" && $logged_user eq $cfg->load('admin_name')) # Save config by admin
@@ -1394,7 +1396,8 @@ if($q->param('site_name') && $q->param('db_address') && $logged_user ne "" && $l
 		if(!$q->param('hide_close')) { $text .= "<span class='label label-danger'>Hide closed tickets</span> "; }
 		if(!$q->param('article_html')) { $text .= "<span class='label label-danger'>Allow HTML in articles</span> "; }
 		if(!$q->param('api_read')) { $text .= "<span class='label label-danger'>API read key</span> "; }
-		if(!$q->param('api_write')) { $text .= "<span class='label label-danger'>API write/encryption key</span> "; }
+		if(!$q->param('api_write')) { $text .= "<span class='label label-danger'>API write key</span> "; }
+		if(!$q->param('enc_key')) { $text .= "<span class='label label-danger'>Encryption key</span> "; }
 		if(!$q->param('api_imp')) { $text .= "<span class='label label-danger'>Allow user impersonation</span> "; }
 		if(!defined($q->param('theme_color'))) { $text .= "<span class='label label-danger'>Interface theme color</span> "; }
 		if(!$q->param('comp_tickets')) { $text .= "<span class='label label-danger'>Component: Tickets management</span> "; }
@@ -1436,7 +1439,8 @@ elsif(!$cfg->load("db_address") || !$cfg->load("site_name")) # first use
 			if(!$q->param('default_vis')) { $text .= "<span class='label label-danger'>Ticket visibility</span> "; }
 			if(!$q->param('hide_close')) { $text .= "<span class='label label-danger'>Hide closed tickets</span> "; }
 			if(!$q->param('api_read')) { $text .= "<span class='label label-danger'>API read key</span> "; }
-			if(!$q->param('api_write')) { $text .= "<span class='label label-danger'>API write/encryption key</span> "; }
+			if(!$q->param('api_write')) { $text .= "<span class='label label-danger'>API write key</span> "; }
+			if(!$q->param('enc_key')) { $text .= "<span class='label label-danger'>Encryption key</span> "; }
 			$text .= " Please go back and try again.";
 			msg($text, 0);
 		}
@@ -1464,7 +1468,9 @@ elsif(!$cfg->load("db_address") || !$cfg->load("site_name")) # first use
 				my $key = join'', map +(0..9,'a'..'z','A'..'Z')[rand(10+26*2)], 1..32;
 				print "<p><div class='row'><div class='col-sm-4'>API read key:</div><div class='col-sm-4'><input type='text' style='width:300px' name='api_read' value='" . $key . "'></div></div></p>\n";
 				$key = join'', map +(0..9,'a'..'z','A'..'Z')[rand(10+26*2)], 1..32;
-				print "<p><div class='row'><div class='col-sm-4'>/encryption key:</div><div class='col-sm-4'><input type='text' style='width:300px' name='api_write' value='" . $key . "'></div></div></p>\n";
+				print "<p><div class='row'><div class='col-sm-4'>API write key:</div><div class='col-sm-4'><input type='text' style='width:300px' name='api_write' value='" . $key . "'></div></div></p>\n";
+				$key = join'', map +(0..9,'a'..'z','A'..'Z')[rand(10+26*2)], 1..32;
+				print "<p><div class='row'><div class='col-sm-4'>Encryption key:</div><div class='col-sm-4'><input type='text' style='width:300px' name='enc_key' value='" . $key . "'></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Allow user impersonation:</div><div class='col-sm-4'><input type='checkbox' name='api_imp'></div></div></p>\n";
 				print "<p>API keys can be used by external applications to read and write tickets using the JSON API.</p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>SMTP server:</div><div class='col-sm-4'><input type='text' style='width:300px' name='smtp_server' value=''></div></div></p>\n";
@@ -3191,6 +3197,7 @@ elsif($q->param('m')) # Modules
 			print "</table><h4>Security</h4><table class='table table-striped'>";
 			print "<tr><td style='width:50%'>Admin name</td><td><input class='form-control' type='text' name='admin_name' value=\"" .  $cfg->load("admin_name") . "\" readonly></td></tr>\n";
 			print "<tr><td style='width:50%'>Admin password</td><td><input class='form-control' type='password' name='admin_pass' value=''></td></tr>\n";
+			print "<tr><td style='width:50%'>Encryption key</td><td><input class='form-control' type='text' name='enc_key' value=\"" . $cfg->load("enc_key") . "\" readonly></td></tr>\n";
 			print "<tr><td style='width:50%'>Allow guest tickets</td><td><select class='form-control' name='guest_tickets'>";
 			if($cfg->load("guest_tickets") eq "on") { print "<option selected>on</option><option>off</option>"; }
 			else { print "<option>on</option><option selected>off</option>"; }
@@ -3208,7 +3215,7 @@ elsif($q->param('m')) # Modules
 			print "<tr><td style='width:50%'>Maximum file upload size (in bytes)</td><td><input class='form-control' type='text' name='max_size' value=\"" . $cfg->load("max_size") . "\"></td></tr>\n";
 			print "</table><h4>API access</h4><table class='table table-striped'>";
 			print "<tr><td style='width:50%'>API read key</td><td><input class='form-control' type='text' name='api_read' value=\"" . $cfg->load("api_read") . "\"></td></tr>\n";
-			print "<tr><td style='width:50%'>API write/encryption key</td><td><input class='form-control' type='text' name='api_write' value=\"" . $cfg->load("api_write") . "\"></td></tr>\n";
+			print "<tr><td style='width:50%'>API write key</td><td><input class='form-control' type='text' name='api_write' value=\"" . $cfg->load("api_write") . "\"></td></tr>\n";
 			print "<tr><td style='width:50%'>Allow user impersonation</td><td><select class='form-control' name='api_imp'>";
 			if($cfg->load("api_imp") eq "on") { print "<option selected>on</option><option>off</option>"; }
 			else { print "<option>on</option><option selected>off</option>"; }
@@ -3220,7 +3227,7 @@ elsif($q->param('m')) # Modules
 			print "<tr><td style='width:50%'>SMTP server</td><td><input class='form-control' type='text' name='smtp_server' value=\"" . $cfg->load("smtp_server") . "\"></td></tr>\n";
 			print "<tr><td style='width:50%'>SMTP port</td><td><input class='form-control' type='text' name='smtp_port' value=\"" . $cfg->load("smtp_port") . "\"></td></tr>\n";
 			print "<tr><td style='width:50%'>SMTP username</td><td><input class='form-control' type='text' name='smtp_user' value=\"" . $cfg->load("smtp_user") . "\"></td></tr>\n";
-			print "<tr><td style='width:50%'>SMTP password</td><td><input class='form-control' type='password' name='smtp_pass' value=\"" . RC4($cfg->load("api_write"), decode_base64($cfg->load("smtp_pass"))) . "\"></td></tr>\n";
+			print "<tr><td style='width:50%'>SMTP password</td><td><input class='form-control' type='password' name='smtp_pass' value=\"" . RC4($cfg->load("enc_key"), decode_base64($cfg->load("smtp_pass"))) . "\"></td></tr>\n";
 			print "<tr><td style='width:50%'>Support email</td><td><input class='form-control' type='text' name='smtp_from' value=\"" . $cfg->load("smtp_from") . "\"></td></tr>\n";
 			print "</table><h4>Access levels</h4><table class='table table-striped'>";
 			print "<tr><td style='width:50%'>New users access level</td><td><input class='form-control' type='text' name='default_lvl' value=\"" . to_int($cfg->load("default_lvl")) . "\"></td></tr>\n";
@@ -3302,7 +3309,7 @@ elsif($q->param('m')) # Modules
 			print "<tr><td><a href='./?m=summary&u=" . $res[0] . "'>" . $res[0] . "</a></td><td>" . $res[2] . "</td><td>" . $res[3] . "</td><td>" . $res[4] . "</td></tr>\n";
 		}
 		print "</tbody></table><script>\$(document).ready(function(){\$('#users_table').DataTable({'order':[[0,'asc']],pageLength:" . to_int($cfg->load('page_len')) . ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script>\n";
-		if(!$cfg->load('ad_server'))
+		if(!$cfg->load('ad_server') && $logged_lvl > 4)
 		{
 			print "<div class='form-group'><h4>Add a new user:</h4><form method='POST' action='.' data-toggle='validator' role='form'>\n";
 			print "<p><div class='row'><div class='col-sm-6'><input type='text' name='new_name' placeholder='User name' class='form-control' maxlength='20' required></div><div class='col-sm-6'><input type='email' name='new_email' placeholder='Email address (optional)' class='form-control'></div></div></p><p><div class='row'><div class='col-sm-6'><input type='password' name='new_pass1' data-minlength='6' id='new_pass1' class='form-control' placeholder='Password' required></div><div class='col-sm-6'><input type='password' name='new_pass2' id='inputPasswordConfirm' data-match='#new_pass1' data-match-error='Passwords do not match.' placeholder='Confirm password' class='form-control' required></div></div></p><div class='help-block with-errors'></div><input class='btn btn-primary pull-right' type='submit' value='Add user'></form></div>\n";
@@ -4326,7 +4333,7 @@ elsif($q->param('m')) # Modules
 						$sql->execute(to_int($q->param('secret')));
 						while(my @res = $sql->fetchrow_array())
 						{
-							msg($res[0] . " / " . RC4($cfg->load("api_write"), decode_base64($res[1])), 2);
+							msg($res[0] . " / " . RC4($cfg->load("enc_key"), decode_base64($res[1])), 2);
 							logevent("View secret: " . $items{"Product"} . ": " . to_int($q->param('p')) . ", Account: " . $res[0]);
 						}
 					}
@@ -4346,7 +4353,7 @@ elsif($q->param('m')) # Modules
 						my $note = "";
 						if($q->param('note')) { $note = sanitize_html($q->param('note')); }
 						$sql = $db->prepare("INSERT INTO secrets VALUES (?, ?, ?, ?, ?, ?);");
-						$sql->execute(to_int($q->param('p')), $logged_user, $note, sanitize_html($q->param('account')), encode_base64(RC4($cfg->load("api_write"), $q->param('secret'))), now());
+						$sql->execute(to_int($q->param('p')), $logged_user, $note, sanitize_html($q->param('account')), encode_base64(RC4($cfg->load("enc_key"), $q->param('secret'))), now());
 						msg("Secret added.", 3);
 						logevent("New secret: " . $items{"Product"} . ": " . to_int($q->param('p')) . ", Account: " . sanitize_html($q->param('account')));
 					}
@@ -5127,7 +5134,7 @@ elsif($q->param('m')) # Modules
 						if($res2[1] eq 'basedn') { $basedn = $res2[2]; }
 						if($res2[1] eq 'searchfilter') { $searchfilter = $res2[2]; }
 						if($res2[1] eq 'aduser') { $aduser = $res2[2]; }
-						if($res2[1] eq 'adpass') { $adpass = RC4($cfg->load("api_write"), decode_base64($res2[2])); }
+						if($res2[1] eq 'adpass') { $adpass = RC4($cfg->load("enc_key"), decode_base64($res2[2])); }
 						if($res2[1] eq 'importemail') { $importemail = to_int($res2[2]); }
 					}
 					print "<p><div class='row'><div class='col-sm-4'>Base DN:</div><div class='col-sm-8'><input class='form-control' type='text' name='basedn' value=\"" . $basedn . "\"></div></div></p>";
@@ -5162,7 +5169,7 @@ elsif($q->param('m')) # Modules
 						if($res2[1] eq 'deleteemail') { $deleteemail = to_int($res2[2]); }
 						if($res2[1] eq 'imapssl') { $imapssl = to_int($res2[2]); }
 						if($res2[1] eq 'imapuser') { $imapuser = $res2[2]; }
-						if($res2[1] eq 'imappass') { $imappass = RC4($cfg->load("api_write"), decode_base64($res2[2])); }
+						if($res2[1] eq 'imappass') { $imappass = RC4($cfg->load("enc_key"), decode_base64($res2[2])); }
 						if($res2[1] eq 'imapserver') { $imapserver = $res2[2]; }
 					}
 					print "<p><div class='row'><div class='col-sm-4'>IMAP Server:</div><div class='col-sm-8'><input class='form-control' type='text' name='imapserver' value=\"" . $imapserver . "\"></div></div></p>";
@@ -5207,7 +5214,7 @@ elsif($q->param('m')) # Modules
 						if($res2[1] eq 'mapinfo') { $mapinfo = $res2[2]; }
 						if($res2[1] eq 'searchfilter') { $searchfilter = $res2[2]; }
 						if($res2[1] eq 'aduser') { $aduser = $res2[2]; }
-						if($res2[1] eq 'adpass') { $adpass = RC4($cfg->load("api_write"), decode_base64($res2[2])); }
+						if($res2[1] eq 'adpass') { $adpass = RC4($cfg->load("enc_key"), decode_base64($res2[2])); }
 						if($res2[1] eq 'approval') { $approval = to_int($res2[2]); }
 					}
 					print "<p><div class='row'><div class='col-sm-4'>Base DN:</div><div class='col-sm-8'><input class='form-control' type='text' name='basedn' value=\"" . $basedn . "\"></div></div></p>";
@@ -5315,7 +5322,7 @@ elsif($q->param('m')) # Modules
 						if($res2[1] eq 'mapserial') { $mapserial = $res2[2]; }
 						if($res2[1] eq 'mapinfo') { $mapinfo = $res2[2]; }
 						if($res2[1] eq 'cmdbuser') { $cmdbuser = $res2[2]; }
-						if($res2[1] eq 'cmdbpass') { $cmdbpass = RC4($cfg->load("api_write"), decode_base64($res2[2])); }
+						if($res2[1] eq 'cmdbpass') { $cmdbpass = RC4($cfg->load("enc_key"), decode_base64($res2[2])); }
 						if($res2[1] eq 'approval') { $approval = to_int($res2[2]); }
 					}
 					print "<p><div class='row'><div class='col-sm-4'>ServiceNow URL:</div><div class='col-sm-8'><input class='form-control' type='text' name='cmdburl' value=\"" . $cmdburl . "\"></div></div></p>";
@@ -5490,7 +5497,7 @@ elsif($q->param('m')) # Modules
 					$sql = $db->prepare("INSERT INTO auto_config VALUES ('Users sync', 'aduser', ?);");
 					$sql->execute(sanitize_html($q->param('aduser')));
 					$sql = $db->prepare("INSERT INTO auto_config VALUES ('Users sync', 'adpass', ?);");
-					$sql->execute(encode_base64(RC4($cfg->load("api_write"), $q->param('adpass'))));
+					$sql->execute(encode_base64(RC4($cfg->load("enc_key"), $q->param('adpass'))));
 					$sql = $db->prepare("INSERT INTO auto_config VALUES ('Users sync', 'importemail', ?);");
 					if($q->param('importemail') eq "Yes") { $sql->execute(1); }
 					else { $sql->execute(0); }
@@ -5510,7 +5517,7 @@ elsif($q->param('m')) # Modules
 					$sql = $db->prepare("INSERT INTO auto_config VALUES ('Computers sync', 'mapinfo', ?);");
 					$sql->execute(sanitize_html($q->param('mapinfo')));
 					$sql = $db->prepare("INSERT INTO auto_config VALUES ('Computers sync', 'adpass', ?);");
-					$sql->execute(encode_base64(RC4($cfg->load("api_write"), $q->param('adpass'))));
+					$sql->execute(encode_base64(RC4($cfg->load("enc_key"), $q->param('adpass'))));
 					$sql = $db->prepare("INSERT INTO auto_config VALUES ('Computers sync', 'approval', ?);");
 					if($q->param('approval') eq "Yes") { $sql->execute(1); }
 					else { $sql->execute(0); }
@@ -5534,7 +5541,7 @@ elsif($q->param('m')) # Modules
 					$sql = $db->prepare("INSERT INTO auto_config VALUES ('ServiceNow CMDB', 'type', ?);");
 					$sql->execute(sanitize_html($q->param('type')));
 					$sql = $db->prepare("INSERT INTO auto_config VALUES ('ServiceNow CMDB', 'cmdbpass', ?);");
-					$sql->execute(encode_base64(RC4($cfg->load("api_write"), $q->param('cmdbpass'))));
+					$sql->execute(encode_base64(RC4($cfg->load("enc_key"), $q->param('cmdbpass'))));
 					$sql = $db->prepare("INSERT INTO auto_config VALUES ('ServiceNow CMDB', 'approval', ?);");
 					if($q->param('approval') eq "Yes") { $sql->execute(1); }
 					else { $sql->execute(0); }
@@ -5574,7 +5581,7 @@ elsif($q->param('m')) # Modules
 					$sql = $db->prepare("INSERT INTO auto_config VALUES ('Email to Ticket', 'imapuser', ?);");
 					$sql->execute(sanitize_html($q->param('imapuser')));
 					$sql = $db->prepare("INSERT INTO auto_config VALUES ('Email to Ticket', 'imappass', ?);");
-					$sql->execute(encode_base64(RC4($cfg->load("api_write"), $q->param('imappass'))));
+					$sql->execute(encode_base64(RC4($cfg->load("enc_key"), $q->param('imappass'))));
 					$sql = $db->prepare("INSERT INTO auto_config VALUES ('Email to Ticket', 'imapssl', ?);");
 					if($q->param('imapssl') eq "Yes") { $sql->execute(1); }
 					else { $sql->execute(0); }

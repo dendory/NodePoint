@@ -245,7 +245,7 @@ NodePoint is likely to hold data you may not want to lose. The product stores in
 
 \begin{itemize}
 \item The administrator password.
-\item The API read and write keys.
+\item The API read, write and encryption keys.
 \item Information for your SMTP and Active Directory servers.
 \item Any other changes made such as default access levels, database location etc.
 \end{itemize}
@@ -265,7 +265,7 @@ Data stored in the \texttt{nodepoint.db} file is stored in SQL format, using ver
 This does mean that you can access the data directly using a SQLite client. This however is highly discouraged without first contacting us for support. Doing the \textit{vacuum} operation for example will corrupt your data.
 
 \subsection{Security concerns}
-By default, data stored in the database is accessible from anyone with login access to the server. As such, only administrators should be given physical access to the server used. User passwords are stored in a hashed format, both for the administrator and regular users. Administrative passwords for SMTP and automation tasks are stored in RC4 encrypted using the API Write key.
+By default, data stored in the database is accessible from anyone with login access to the server. As such, only administrators should be given physical access to the server used. User passwords are stored in a hashed format, both for the administrator and regular users. Administrative passwords for SMTP and automation tasks are stored in RC4 encrypted using the encryption key.
 
 Using SSL is highly recommended and does not impact the operation of NodePoint at all. Simply add an encryption certificate to your web server and access the product normally.
 
@@ -331,7 +331,8 @@ These are the configuration options for NodePoint. They have to be defined durin
 \item \textbf{Number of row per page:} Number of rows to show per page on tables.
 \item \textbf{Session expiry time:} Number of hours before a user session is invalidated.
 \item \textbf{API read key:} Used for some API operations.
-\item \textbf{API write key:} Used for some API operations. Also used to encrypt sensitive data inside the product.
+\item \textbf{API write key:} Used for some API operations.
+\item \textbf{Encryption key:} Used to encrypt some configuration values along with secrets.
 \item \textbf{Allow user impersonation:} Allows API calls to specify a \textit{from\_user} parameter when creating a ticket.
 \item \textbf{SMTP server:} The hostname for email notifications. Leave empty to disable email notifications.
 \item \textbf{SMTP port:} The port number for SMTP connections, defaults to 25.
@@ -564,7 +565,7 @@ This module will import items from a CSV file. You must specify the file name an
 \subsection{Secrets Vault}
 The Secrets Vault is a component that allows users assigned to a project to store secrets (credentials, phone numbers, anything that should be restricted) on a project basis. This will add a tab to any project page where users of a specific level can add secrets, and others can view them. Accessing secrets is logged in the system log for auditing purposes.
 
-Both the level to add and to view secrets are configured in the product base configuration. They also need to be auto-assigned to that particular project to be able to add or view secrets. The secrets are encrypted inside of the database using the API Write key. Changing that key will make the data irretrievable.
+Both the level to add and to view secrets are configured in the product base configuration. Users also need to be auto-assigned to that particular project to be able to add or view secrets. The secrets are encrypted inside of the database using the encryption key. Changing that key will make the data irretrievable.
 
 \clearpage
 \section{JSON API}
