@@ -52,6 +52,7 @@
 \contentsline {subsubsection}{\numberline {4.10.10}File expiration}{21}{subsubsection.4.10.10}
 \contentsline {subsubsection}{\numberline {4.10.11}Log export}{21}{subsubsection.4.10.11}
 \contentsline {subsubsection}{\numberline {4.10.12}CSV inventory}{21}{subsubsection.4.10.12}
+\contentsline {subsubsection}{\numberline {4.10.13}CSV projects}{21}{subsubsection.4.10.13}
 \contentsline {subsection}{\numberline {4.11}Secrets Vault}{21}{subsection.4.11}
 \contentsline {section}{\numberline {5}JSON API}{22}{section.5}
 \contentsline {subsection}{\numberline {5.1}List users}{22}{subsection.5.1}

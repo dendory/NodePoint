@@ -621,6 +621,8 @@ sub db_check
 		$sql->execute();
 		$sql = $db->prepare("INSERT INTO auto_modules VALUES ('CSV inventory', 0, 'Never', 0, '', \"This module will import items from a CSV file. You must specify the file name and the column mappings.\", 0);");
 		$sql->execute();
+		$sql = $db->prepare("INSERT INTO auto_modules VALUES ('CSV projects', 0, 'Never', 0, '', \"This module fetches projects, releases and auto-assignments from a CSV file. You must specific column mappings and whether current assignments should be overwritten. The CSV should contain one line per release. Assignments must be comma separated usernames. Non-existent projects or releases will be created.\", 0);");
+		$sql->execute();
 	};
 	$sql->finish();
 	$sql = $db->prepare("SELECT * FROM auto_log WHERE 0 = 1;") or do
@@ -1384,7 +1386,7 @@ if($q->param('site_name') && $q->param('db_address') && $logged_user ne "" && $l
 		$db = DBI->connect("dbi:SQLite:dbname=" . $q->param('db_address'), '', '', { RaiseError => 0, PrintError => 0 }) or do { msg("Could not verify database settings. Please hit back and try again.<br><br>" . $DBI::errstr, 0); exit(0); };
 		db_check();
 		save_config();
-		msg("Settings updated. Press <a href='./?m=settings'>here</a> to continue.", 3);
+		msg("<meta http-equiv='REFRESH' content='1;url=./?m=settings'>Settings updated.", 3);
 		logevent("Settings updated");
 	}
 	else
@@ -3553,7 +3555,7 @@ elsif($q->param('m')) # Modules
 	{
 		headers("System log");
 		print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>System log</h3></div><div class='panel-body'>\n";
-		print "<form style='display:inline' method='POST' action='.'><input type='hidden' name='m' value='clear_log'><input class='btn btn-danger pull-right' type='submit' value='Clear log'><br></form><a name='log'></a><p>Filter log by events:<br><a href='./?m=log'>All</a> | <a href='./?m=log&filter_log=Failed'>Failed logins</a> | <a href='./?m=log&filter_log=Success'>Successful logins</a> | <a href='./?m=log&filter_log=level'>Level changes</a> | <a href='./?m=log&filter_log=password'>Password changes</a> | <a href='./?m=log&filter_log=new'>New users</a> | <a href='./?m=log&filter_log=setting'>Settings updated</a> | <a href='./?m=log&filter_log=notification'>Email notifications</a> | <a href='./?m=log&filter_log=LDAP:'>Active Directory</a> | <a href='./?m=log&filter_log=deleted:'>Deletes</a> | <a href='./?m=log&filter_log=secret:'>Secrets</a></p>\n";
+		print "<form style='display:inline' method='POST' action='.'><input type='hidden' name='m' value='clear_log'><input class='btn btn-danger pull-right' type='submit' onclick='return confirm(\"Are you sure?\");' value='Clear log'><br></form><a name='log'></a><p>Filter log by events:<br><a href='./?m=log'>All</a> | <a href='./?m=log&filter_log=Failed'>Failed logins</a> | <a href='./?m=log&filter_log=Success'>Successful logins</a> | <a href='./?m=log&filter_log=level'>Level changes</a> | <a href='./?m=log&filter_log=password'>Password changes</a> | <a href='./?m=log&filter_log=new'>New users</a> | <a href='./?m=log&filter_log=setting'>Settings updated</a> | <a href='./?m=log&filter_log=notification'>Email notifications</a> | <a href='./?m=log&filter_log=LDAP:'>Active Directory</a> | <a href='./?m=log&filter_log=deleted:'>Deletes</a> | <a href='./?m=log&filter_log=secret:'>Secrets</a></p>\n";
 		print "<table class='table table-stripped' id='log_table'><thead><tr><th>IP address</th><th>User</th><th>Event</th><th>Time</th></tr></thead><tbody>\n";
 		if($q->param("filter_log"))
 		{
@@ -3602,7 +3604,7 @@ elsif($q->param('m')) # Modules
 		{
 			$sql = $db->prepare("DELETE FROM clients WHERE ROWID = ?;");
 			$sql->execute(to_int($q->param('c')));
-			msg("Client removed. Press <a href='./?m=clients'>here</a> to continue.", 3);		
+			msg("<meta http-equiv='REFRESH' content='1;url=./?m=clients'>Client removed.", 3);		
 		}
 		elsif(!$q->param('contact') || !$q->param('status'))
 		{
@@ -3618,7 +3620,7 @@ elsif($q->param('m')) # Modules
 			if($q->param('notes')) { $notes = sanitize_html($q->param('notes')); }
 			$sql = $db->prepare("UPDATE clients SET status = ?, contact = ?, notes = ?, modified = ? WHERE ROWID = ?;");
 			$sql->execute(sanitize_html($q->param('status')), sanitize_html($q->param('contact')), $notes, now(), to_int($q->param('c')));
-			msg("Client updated. Press <a href='./?m=view_client&c=" . to_int($q->param('c')) . "'>here</a> to continue.", 3);
+			msg("<meta http-equiv='REFRESH' content='1;url=./?m=view_client&c=" . to_int($q->param('c')) . "'>Client updated.", 3);
 		}
 	}
 	elsif($q->param('m') eq "summary" && $q->param('u') && $logged_lvl >= to_int($cfg->load('summary_lvl')))
@@ -3973,7 +3975,7 @@ elsif($q->param('m')) # Modules
 			if($q->param('notes')) { $notes = sanitize_html($q->param('notes')); }
 			$sql = $db->prepare("INSERT INTO clients VALUES (?, ?, ?, ?, ?);");
 			$sql->execute(sanitize_html($q->param('name')), sanitize_html($q->param('status')), sanitize_html($q->param('contact')), $notes, now());
-			msg("Client added. Press <a href='./?m=clients'>here</a> to continue.", 3);
+			msg("<meta http-equiv='REFRESH' content='1;url=./?m=clients'>Client added.", 3);
 		}
 	}
 	elsif($q->param('m') eq "clear_log" && $logged_lvl > 5)
@@ -4053,7 +4055,7 @@ elsif($q->param('m')) # Modules
 					$sql->execute($logged_user);
 					$sql = $db->prepare("UPDATE users SET email = '" . sanitize_email($q->param('new_email')) . "' WHERE name = ?;");
 					$sql->execute($logged_user);
-					msg("Email address updated. Press <a href='.'>here</a> to continue.", 3);
+					msg("<meta http-equiv='REFRESH' content='1;url=.'>Email address updated.", 3);
 					notify($logged_user, "Email confirmation", "You are receiving this email because a user was created with this email address. Please confirm your email by logging into the NodePoint interface, and entering the following confirmation code under Settings: " . $confirm);
 					last;
 				}
@@ -4129,7 +4131,7 @@ elsif($q->param('m')) # Modules
 			$sql = $db->prepare("UPDATE kb SET title = ?, article = ?, published = ?, modified = ?, productid = ? WHERE ROWID = ?;");
 			if($cfg->load("article_html") eq "on") { $sql->execute(sanitize_html($q->param('title')), $q->param('article'), to_int($q->param('published')), now(), to_int($q->param('productid')), to_int($q->param('id'))); }
 			else { $sql->execute(sanitize_html($q->param('title')), sanitize_html($q->param('article')), to_int($q->param('published')), now(), to_int($q->param('productid')), to_int($q->param('id'))); }
-			msg("Article <b>" . to_int($q->param('id')) . "</b> saved. Press <a href='./?m=articles'>here</a> to continue.", 3);
+			msg("<meta http-equiv='REFRESH' content='1;url=./?m=articles'>Article <b>" . to_int($q->param('id')) . "</b> saved.", 3);
 		}		
 	}
 	elsif($q->param('m') eq "add_article" && $logged_lvl > 3 && defined($q->param('productid')) && defined($q->param('title')))
@@ -4150,7 +4152,7 @@ elsif($q->param('m')) # Modules
 			{
 				$lastrowid = to_int($res[0]);
 			}
-			msg("New draft article <b>" . sanitize_html($q->param('title')) . "</b> added. Press <a href='./?kb=" . $lastrowid . "'>here</a> to continue.", 3);
+			msg("<meta http-equiv='REFRESH' content='1;url=./?kb=" . $lastrowid . "'>New draft article <b>" . sanitize_html($q->param('title')) . "</b> added.", 3);
 		}
 	}
 	elsif($q->param('m') eq "articles")
@@ -4621,7 +4623,7 @@ elsif($q->param('m')) # Modules
 		{
 			$sql = $db->prepare("DELETE FROM releases WHERE productid = ? AND ROWID = ?;");
 			$sql->execute(to_int($q->param('product_id')), to_int($q->param('release_id')));
-			msg($items{"Release"} . " deleted from " . lc($items{"Product"}) . " <b>" . to_int($q->param('product_id')) . "</b>. Press <a href='./?m=view_product&p=" . to_int($q->param('product_id')) . "'>here</a> to continue.", 3);
+			msg("<meta http-equiv='REFRESH' content='1;url=./?m=view_product&p=" . to_int($q->param('product_id')) . "'>" . $items{"Release"} . " deleted from " . lc($items{"Product"}) . " <b>" . to_int($q->param('product_id')) . "</b>.", 3);
 		}	
 	}
 	elsif($logged_lvl >= to_int($cfg->load('tasks_lvl')) && $q->param('m') eq "add_step")
@@ -4650,7 +4652,7 @@ elsif($q->param('m')) # Modules
 			$sql->execute(to_int($q->param('product_id')));
 			while(my @res = $sql->fetchrow_array()) { $prod = $res[0]; }
 			notify(sanitize_alpha($q->param('user')), "New task assigned to you", "A new task has been added for you on " . lc($items{"Product"}) . " \"" . $prod . "\":\n\nTask description: " . sanitize_html($q->param('name')) . "\nDue by: " . sanitize_html($q->param('due')));
-			msg("Task added. Press <a href='./?m=view_product&p=" . to_int($q->param('product_id')) . "'>here</a> to continue.", 3);
+			msg("<meta http-equiv='REFRESH' content='1;url=./?m=view_product&p=" . to_int($q->param('product_id')) . "'>Task added.", 3);
 		}
 	}
 	elsif($logged_lvl >= to_int($cfg->load('tasks_lvl')) && $q->param('m') eq "delete_step" && $q->param('step_id'))
@@ -4658,7 +4660,7 @@ elsif($q->param('m')) # Modules
 		headers($items{"Product"} . "s");
 		$sql = $db->prepare("DELETE FROM steps WHERE ROWID = ?;");
 		$sql->execute(to_int($q->param('step_id')));
-		msg("Task removed. Press <a href='./?m=view_product&p=" . to_int($q->param('product_id')) . "'>here</a> to continue.", 3);
+		msg("<meta http-equiv='REFRESH' content='1;url=./?m=view_product&p=" . to_int($q->param('product_id')) . "'>Task removed.", 3);
 	}
 	elsif($logged_lvl > 2 && $q->param('m') eq "add_release")
 	{
@@ -4693,7 +4695,7 @@ elsif($q->param('m')) # Modules
 			{
 				$sql = $db->prepare("INSERT INTO releases VALUES (?, ?, ?, ?, ?);");
 				$sql->execute(to_int($q->param('product_id')), $logged_user, sanitize_html($q->param('release_version')), sanitize_html($q->param('release_notes')), now());
-				msg($items{"Release"} . " added. Press <a href='./?m=view_product&p=" . to_int($q->param('product_id')) . "'>here</a> to continue.", 3);
+				msg("<meta http-equiv='REFRESH' content='1;url=./?m=view_product&p=" . to_int($q->param('product_id')) . "'>" . $items{"Release"} . " added.", 3);
 			}
 		}
 	}
@@ -4777,7 +4779,7 @@ elsif($q->param('m')) # Modules
 					$sql = $db->prepare("INSERT INTO releases VALUES (?, ?, ?, ?, ?);");
 					$sql->execute($rowid, $logged_user, $release, "Initial release", now());
 				}
-				msg($items{"Product"} . " <b>" . sanitize_html($q->param('product_name')) . "</b> added. Press <a href='./?m=products'>here</a> to continue.", 3);
+				msg("<meta http-equiv='REFRESH' content='1;url=./?m=products'>" . $items{"Product"} . " <b>" . sanitize_html($q->param('product_name')) . "</b> added.", 3);
 			}
 		}
 		else
@@ -4863,7 +4865,7 @@ elsif($q->param('m')) # Modules
 					$sql->execute(to_int($q->param('product_id')), sanitize_alpha($q->param('rem_auto_assign')));					
 					notify(sanitize_alpha($q->param('rem_auto_assign')), "Unassigned from " . lc($items{"Product"}), "You have been removed from auto assignment on " . lc($items{"Product"}) . " " . to_int($q->param('product_id')). ".");
 				}
-				msg($items{"Product"} . " <b>" . sanitize_html($q->param('product_name')) . "</b> updated. Press <a href='./?m=view_product&p=" . to_int($q->param('product_id')) . "'>here</a> to continue.", 3);
+				msg("<meta http-equiv='REFRESH' content='1;url=./?m=view_product&p=" . to_int($q->param('product_id')) . "'>" . $items{"Product"} . " <b>" . sanitize_html($q->param('product_name')) . "</b> updated.", 3);
 			}
 		}
 		else
@@ -4947,7 +4949,7 @@ elsif($q->param('m')) # Modules
 				notify($u, "Ticket (" . to_int($q->param('t')) . ") assigned to you has been modified", "The ticket \"" . $q->param('ticket_title') . "\" has been modified:\n\nModified by: " . $logged_user . "\nPriority: " . $lnk . "\nStatus: " . sanitize_alpha($q->param('ticket_status')) . "\nResolution: " . $resolution . "\nAssigned to: " . $assigned . "\nDescription: " . $q->param('ticket_desc') . "\n\n" . $changes);
 			}
 			if($creator) { notify($creator, "Your ticket (" . to_int($q->param('t')) . ") has been modified", "The ticket \"" . $q->param('ticket_title') . "\" has been modified:\n\nModified by: " . $logged_user . "\nPriority: " . $lnk . "\nStatus: " . sanitize_alpha($q->param('ticket_status')) . "\nResolution: " . $resolution . "\nAssigned to: " . $assigned . "\nDescription: " . $q->param('ticket_desc') . "\n\n" . $changes); }
-			msg("Ticket updated. Press <a href='./?m=view_ticket&t=" . to_int($q->param('t')) . "'>here</a> to continue.", 3);
+			msg("<meta http-equiv='REFRESH' content='1;url=./?m=view_ticket&t=" . to_int($q->param('t')) . "'>Ticket updated.", 3);
 			if($timespent != 0)
 			{
 				$sql = $db->prepare("INSERT INTO timetracking VALUES (?, ?, ?, ?);");
@@ -5015,13 +5017,13 @@ elsif($q->param('m')) # Modules
 		{
 			$sql = $db->prepare("DELETE FROM comments WHERE ROWID = ?;");
 			$sql->execute(to_int($q->param('c')));
-			msg("Comment deleted. Press <a href='./?m=tickets'>here</a> to continue.", 3);
+			msg("<meta http-equiv='REFRESH' content='1;url=./?m=tickets'>Comment deleted.", 3);
 		}
 		elsif($q->param('comment') && length($q->param('comment')) < 9999)
 		{
 			$sql = $db->prepare("UPDATE comments SET comment = ?, modified = ? WHERE ROWID = ? AND name = ?;");
 			$sql->execute(sanitize_html($q->param('comment')), now(), to_int($q->param('c')), $logged_user);
-			msg("Comment updated. Press <a href='./?m=tickets'>here</a> to continue.", 3);
+			msg("<meta http-equiv='REFRESH' content='1;url=./?m=tickets'>Comment updated.", 3);
 		}
 		else
 		{
@@ -5108,6 +5110,49 @@ elsif($q->param('m')) # Modules
 					print ">Yes</option><option";
 					if($remlog == 0) { print " selected"; }
 					print ">No</option></select></div></div></p>";
+				}
+				elsif($res[0] eq "CSV projects")
+				{
+					my $filename = "projects.csv";
+					my $productvis = "Public";
+					my $ovrassign = 0;
+					my $mapname = 0;
+					my $mapgoal = 1;
+					my $mapdesc = 2;
+					my $maprel = 3;
+					my $mapnote = 4;
+					my $mapassign = 5;
+					my $sql2 = $db->prepare("SELECT * FROM auto_config WHERE module = 'CSV projects';");
+					$sql2->execute();
+					while(my @res2 = $sql2->fetchrow_array())
+					{
+						if($res2[1] eq 'filename') { $filename = $res2[2]; }
+						if($res2[1] eq 'productvis') { $productvis = $res2[2]; }
+						if($res2[1] eq 'ovrassign') { $ovrassign = to_int($res2[2]); }
+						if($res2[1] eq 'mapname') { $mapname = to_int($res2[2]); }
+						if($res2[1] eq 'mapgoal') { $mapgoal = to_int($res2[2]); }
+						if($res2[1] eq 'mapdesc') { $mapdesc = to_int($res2[2]); }
+						if($res2[1] eq 'maprel') { $maprel = to_int($res2[2]); }
+						if($res2[1] eq 'mapnote') { $mapnote = to_int($res2[2]); }
+						if($res2[1] eq 'mapassign') { $mapassign = to_int($res2[2]); }
+					}
+					print "<p><div class='row'><div class='col-sm-4'>File name:</div><div class='col-sm-8'><input class='form-control' type='text' name='filename' value=\"" . $filename . "\"></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>Create new " . lc($items{"Product"}) . "s as:</div><div class='col-sm-8'><select class='form-control' name='productvis'><option>Public</option><option";
+					if($productvis eq "Private") { print " selected"; }
+					print ">Private</option><option";
+					if($productvis eq "Restricted") { print " selected"; }
+					print ">Restricted</option></select></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>Overwrite current assignments:</div><div class='col-sm-8'><select class='form-control' name='ovrassign'><option";
+					if($ovrassign == 1) { print " selected"; }
+					print ">Yes</option><option";
+					if($ovrassign == 0) { print " selected"; }
+					print ">No</option></select></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>Column mapping for '" . lc($items{"Product"}) . " name':</div><div class='col-sm-8'><input class='form-control' type='text' name='mapname' value=\"" . $mapname . "\"></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>Column mapping for '" . lc($items{"Product"}) . " " . lc($items{"Model"}) . "':</div><div class='col-sm-8'><input class='form-control' type='text' name='mapgoal' value=\"" . $mapgoal . "\"></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>Column mapping for '" . lc($items{"Product"}) . " description':</div><div class='col-sm-8'><input class='form-control' type='text' name='mapdesc' value=\"" . $mapdesc . "\"></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>Column mapping for '" . lc($items{"Release"}) . " name':</div><div class='col-sm-8'><input class='form-control' type='text' name='maprel' value=\"" . $maprel . "\"></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>Column mapping for '" . lc($items{"Release"}) . " note':</div><div class='col-sm-8'><input class='form-control' type='text' name='mapnote' value=\"" . $mapnote . "\"></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>Column mapping for 'auto-assignment':</div><div class='col-sm-8'><input class='form-control' type='text' name='mapassign' value=\"" . $mapassign . "\"></div></div></p>";
 				}
 				elsif($res[0] eq "Update MOTD")
 				{
@@ -5437,7 +5482,7 @@ elsif($q->param('m')) # Modules
 			{
 				$sql = $db->prepare("DROP TABLE auto_modules;");
 				$sql->execute();
-				msg("<meta http-equiv='REFRESH' content='0;url=./?m=auto'>Please wait for this page to reload...", 3);
+				msg("<meta http-equiv='REFRESH' content='1;url=./?m=auto'>Modules reset.", 3);
 				quit(0);
 			}
 			if($q->param('clear_log') && $logged_lvl > 5)
@@ -5564,6 +5609,30 @@ elsif($q->param('m')) # Modules
 					if($q->param('approval') eq "Yes") { $sql->execute(1); }
 					else { $sql->execute(0); }
 				}
+				elsif($q->param('save') eq "CSV projects")
+				{
+					$sql = $db->prepare("DELETE FROM auto_config WHERE module = 'CSV projects';");
+					$sql->execute();
+					$sql = $db->prepare("INSERT INTO auto_config VALUES ('CSV projects', 'filename', ?);");
+					$sql->execute(sanitize_html($q->param('filename')));
+					$sql = $db->prepare("INSERT INTO auto_config VALUES ('CSV projects', 'productvis', ?);");
+					$sql->execute(sanitize_alpha($q->param('productvis')));
+					$sql = $db->prepare("INSERT INTO auto_config VALUES ('CSV projects', 'mapname', ?);");
+					$sql->execute(to_int($q->param('mapname')));
+					$sql = $db->prepare("INSERT INTO auto_config VALUES ('CSV projects', 'mapdesc', ?);");
+					$sql->execute(to_int($q->param('mapdesc')));
+					$sql = $db->prepare("INSERT INTO auto_config VALUES ('CSV projects', 'mapgoal', ?);");
+					$sql->execute(to_int($q->param('mapgoal')));
+					$sql = $db->prepare("INSERT INTO auto_config VALUES ('CSV projects', 'maprel', ?);");
+					$sql->execute(to_int($q->param('maprel')));
+					$sql = $db->prepare("INSERT INTO auto_config VALUES ('CSV projects', 'mapnote', ?);");
+					$sql->execute(to_int($q->param('mapnote')));
+					$sql = $db->prepare("INSERT INTO auto_config VALUES ('CSV projects', 'mapassign', ?);");
+					$sql->execute(to_int($q->param('mapassign')));
+					$sql = $db->prepare("INSERT INTO auto_config VALUES ('CSV projects', 'ovrassign', ?);");
+					if($q->param('ovrassign') eq "Yes") { $sql->execute(1); }
+					else { $sql->execute(0); }
+				}
 				elsif($q->param('save') eq "Email to Ticket")
 				{
 					$sql = $db->prepare("DELETE FROM auto_config WHERE module = 'Email to Ticket';");
@@ -5657,7 +5726,7 @@ elsif($q->param('m')) # Modules
 			if($logged_lvl > 5) { print "<input class='btn btn-danger pull-right' type='submit' name='clear_all' value='Reset modules'>"; }
 			print "</form></p></div></div>\n";
 			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Automation log</h3></div><div class='panel-body'>\n";
-			if($logged_lvl > 5) { print "<form style='display:inline' method='POST' action='./?m=auto'><input type='hidden' name='m' value='auto'><input type='hidden' name='clear_log' value='1'><input class='btn btn-danger pull-right' type='submit' value='Clear log'><br></form>"; }
+			if($logged_lvl > 5) { print "<form style='display:inline' method='POST' action='./?m=auto'><input type='hidden' name='m' value='auto'><input type='hidden' name='clear_log' value='1'><input class='btn btn-danger pull-right' onclick='return confirm(\"Are you sure?\");' type='submit' value='Clear log'><br></form>"; }
 			$sql = $db->prepare("SELECT * FROM auto;");
 			$sql->execute();
 			while(my @res = $sql->fetchrow_array())
@@ -5763,7 +5832,7 @@ elsif($q->param('m')) # Modules
 			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Access log</h3></div><div class='panel-body'>\n";
 			$sql = $db->prepare("SELECT * FROM file_access;");
 			$sql->execute();
-			print "<form style='display:inline' method='POST' action='./?m=files'><input type='hidden' name='m' value='files'><input type='hidden' name='clear_log' value='1'><input class='btn btn-danger pull-right' type='submit' value='Clear log'><br></form>";
+			print "<form style='display:inline' method='POST' action='./?m=files'><input type='hidden' name='m' value='files'><input type='hidden' name='clear_log' value='1'><input class='btn btn-danger pull-right' type='submit' onclick='return confirm(\"Are you sure?\");' value='Clear log'><br></form>";
 			print "<table class='table table-striped' id='files_log'><thead><tr><th>IP address</th><th>File ID</th><th>Date</th></tr></thead><tbody>\n";
 			while(my @res = $sql->fetchrow_array())
 			{
@@ -5830,7 +5899,7 @@ elsif($q->param('m')) # Modules
 				}
 				notify($res[3], "New comment posted to your ticket (" . $res[0] . ")", "A new comment was posted to your ticket:\n\nUser: " . $logged_user . "\nComment: " . $q->param('comment') . "\nAttachment: " . $filename);
 			}			
-			msg("Comment added. Press <a href='./?m=view_ticket&t=" . to_int($q->param('t')) . "'>here</a> to continue.", 3);
+			msg("<meta http-equiv='REFRESH' content='1;url=./?m=view_ticket&t=" . to_int($q->param('t')) . "'>Comment added.", 3);
 		}
 		else
 		{
@@ -6202,7 +6271,7 @@ elsif($q->param('m')) # Modules
 						}
 					}
 				}
-				msg("Ticket successfully added. Press <a href='./?m=view_ticket&t=" . $lastrowid . "'>here</a> to continue.", 3);
+				msg("<meta http-equiv='REFRESH' content='1;url=./?m=view_ticket&t=" . $lastrowid . "'>Ticket successfully added.", 3);
 			}
 		}
 		else
@@ -6780,7 +6849,7 @@ elsif($q->param('m')) # Modules
 					{
 						$lastrowid = to_int($res[0]);
 					}
-					msg("New item added. Press <a href='./?m=items&i=" . $lastrowid . "'>here</a> to continue.", 3);
+					msg("<meta http-equiv='REFRESH' content='1;url=./?m=items&i=" . $lastrowid . "'>New item added.", 3);
 				}
 			}
 		}
@@ -6933,7 +7002,7 @@ elsif($q->param('m')) # Modules
 				$sql2->execute(to_int($q->param('i')));
 				$sql2 = $db->prepare("DELETE FROM checkouts WHERE itemid = ?;");
 				$sql2->execute(to_int($q->param('i')));
-				msg("Item removed. Press <a href='./?m=items'>here</a> to continue.", 3);
+				msg("<meta http-equiv='REFRESH' content='1;url=./?m=items'>Item removed.", 3);
 			}
 			if($q->param('available') && $logged_lvl > 3)
 			{
@@ -6949,7 +7018,7 @@ elsif($q->param('m')) # Modules
 				$sql2->execute("", 1, to_int($q->param('i')));
 				$sql2 = $db->prepare("INSERT INTO checkouts VALUES (?, ?, ?, ?);");
 				$sql2->execute(to_int($q->param('i')), $logged_user, "Returned", now());
-				msg("Item returned. Press <a href='./?m=items'>here</a> to continue.", 3);
+				msg("<meta http-equiv='REFRESH' content='1;url=./?m=items'>Item returned.", 3);
 			}
 			if($q->param('checkout') && $logged_lvl > 0)
 			{
@@ -7262,7 +7331,7 @@ elsif(($q->param('create_form') || $q->param('edit_form') || $q->param('save_for
 					$sql->execute(to_int($q->param('save_form')));				
 				}
 			}
-			msg("Custom form saved. Press <a href='./?m=customforms'>here</a> to continue.", 3);
+			msg("<meta http-equiv='REFRESH' content='1;url=./?m=customforms'>Custom form saved.", 3);
 		}
 		else
 		{
@@ -7503,7 +7572,7 @@ elsif(!$cfg->load("ad_server") && $q->param('new_name') && $q->param('new_pass1'
 			if($q->param('new_email')) { $sql->execute(sanitize_alpha($q->param('new_name')), sha1_hex($q->param('new_pass1')), sanitize_email($q->param('new_email')), to_int($cfg->load('default_lvl')), "Never", $confirm); }
 			else { $sql->execute(sanitize_alpha($q->param('new_name')), sha1_hex($q->param('new_pass1')), "", to_int($cfg->load('default_lvl')), "Never", $confirm); }
 			if($logged_user eq "") { msg("User <b>" . sanitize_alpha($q->param('new_name')) . "</b> added. Press <a href='.'>here</a> to go to the login page.", 3); }
-			else { msg("User <b>" . sanitize_alpha($q->param('new_name')) . "</b> added. Press <a href='./?m=users'>here</a> to continue.", 3); }
+			else { msg("<meta http-equiv='REFRESH' content='1;url=./?m=users'>User <b>" . sanitize_alpha($q->param('new_name')) . "</b> added.", 3); }
 			logevent("Add new user: " . sanitize_alpha($q->param('new_name')));
 			notify(sanitize_alpha($q->param('new_name')), "Email confirmation", "You are receiving this email because a new user was created with this email address. Please confirm your email by logging into the NodePoint interface, and entering the following confirmation code under Settings: " . $confirm);
 		}

@@ -668,6 +668,110 @@ while(my @res = $sql->fetchrow_array())
 				else { logevent($res[0], "Error reading file."); }
 			}
 		}
+		elsif($res[0] eq 'CSV projects')
+		{
+			my $filename = "";
+			my $productvis = "Public";
+			my $ovrassign = 0;
+			my $mapname = 0;
+			my $mapgoal = 1;
+			my $mapdesc = 2;
+			my $maprel = 3;
+			my $mapnote = 4;
+			my $mapassign = 5;
+			my $sql2 = $db->prepare("SELECT * FROM auto_config WHERE module = 'CSV projects';");
+			$sql2->execute();
+			while(my @res2 = $sql2->fetchrow_array())
+			{
+				if($res2[1] eq 'filename') { $filename = $res2[2]; }
+				if($res2[1] eq 'productvis') { $productvis = $res2[2]; }
+				if($res2[1] eq 'ovrassign') { $ovrassign = to_int($res2[2]); }
+				if($res2[1] eq 'mapname') { $mapname = to_int($res2[2]); }
+				if($res2[1] eq 'mapgoal') { $mapgoal = to_int($res2[2]); }
+				if($res2[1] eq 'mapdesc') { $mapdesc = to_int($res2[2]); }
+				if($res2[1] eq 'maprel') { $maprel = to_int($res2[2]); }
+				if($res2[1] eq 'mapnote') { $mapnote = to_int($res2[2]); }
+				if($res2[1] eq 'mapassign') { $mapassign = to_int($res2[2]); }
+			}
+			if($filename eq "")
+			{
+				logevent($res[0], "Missing filename configuration value.");
+			}
+			else
+			{
+				my $rowcount = 0;
+				my $updcount = 0;
+				my $newcount = 0;
+				my $newrelcount = 0;
+				my $seenproducts;
+				if(open(my $F, $filename))
+				{
+					$sql2 = $db->prepare("BEGIN");
+					$sql2->execute();
+					while(my $line = <$F>)
+					{
+						my @cells = csvsplit($line);
+						$rowcount += 1;
+						if($cells[$mapname] ne "")
+						{
+							my $productid = -1;
+							$sql2 = $db->prepare("SELECT ROWID FROM products WHERE name = ?;");
+							$sql2->execute(sanitize_html($cells[$mapname]));
+							while(my @res2 = $sql2->fetchrow_array()) { $productid = to_int($res2[0]); }
+							if($productid == -1)
+							{
+								$sql2 = $db->prepare("INSERT INTO products VALUES (?, ?, ?, ?, ?, ?, ?);");
+								$sql2->execute(sanitize_html($cells[$mapname]), sanitize_html($cells[$mapgoal]), sanitize_html($cells[$mapdesc]), "", $productvis, now(), "Never");
+								$sql2 = $db->prepare("SELECT last_insert_rowid();");
+								$sql2->execute();
+								while(my @res2 = $sql2->fetchrow_array()) { $productid = to_int($res2[0]); }
+								$newcount += 1;
+							}
+							else
+							{
+								$sql2 = $db->prepare("UPDATE products SET model = ?, description = ?, modified = ? WHERE ROWID = ?");
+								$sql2->execute(sanitize_html($cells[$mapgoal]), sanitize_html($cells[$mapdesc]), now(), $productid);								
+							}
+							if($ovrassign == 1 && index($seenproducts, ' ' . $productid . ' ') == -1)
+							{
+								$sql2 = $db->prepare("DELETE FROM autoassign WHERE productid = ?;");
+								$sql2->execute($productid);
+							}
+							$seenproducts .= " " . $productid . " ";
+							my @us = csvsplit($cells[$mapassign]);
+							foreach my $u (@us)
+							{
+								$sql2 = $db->prepare("DELETE FROM autoassign WHERE productid = ? AND user = ?;");
+								$sql2->execute($productid, $u);
+								$sql2 = $db->prepare("INSERT INTO autoassign VALUES (?, ?);");
+								$sql2->execute($productid, $u);
+								$updcount += 1;
+							}
+							my $releaseid = -1;
+							$sql2 = $db->prepare("SELECT ROWID FROM releases WHERE version = ? AND productid = ?;");
+							$sql2->execute(sanitize_html($cells[$maprel]), $productid);
+							while(my @res2 = $sql2->fetchrow_array()) { $releaseid = to_int($res2[0]); }
+							if($releaseid == -1)
+							{
+								$sql2 = $db->prepare("INSERT INTO releases VALUES (?, ?, ?, ?, ?);");
+								$sql2->execute($productid, "System", sanitize_html($cells[$maprel]), sanitize_html($cells[$mapnote]), now());
+								$newrelcount += 1;
+							}
+							else
+							{
+								$sql2 = $db->prepare("UPDATE releases SET notes = ? WHERE ROWID = ?");
+								$sql2->execute(sanitize_html($cells[$mapnote]), $releaseid);								
+							}
+						}
+					}
+					$sql2 = $db->prepare("END");
+					$sql2->execute();
+					$result = "Success";
+					logevent($res[0], "Listed " . $rowcount . " items, updated " . $updcount . " assignments, created " . $newcount . " projects, " . $newrelcount . " releases.");
+				}
+				else { logevent($res[0], "Error reading file."); }
+			}
+		}
 		elsif($res[0] eq 'ServiceNow CMDB')
 		{
 			my $type = "";

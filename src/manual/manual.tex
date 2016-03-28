@@ -562,6 +562,9 @@ This module will export the system log, access log and automation log to a CSV f
 \subsubsection{CSV inventory}
 This module will import items from a CSV file. You must specify the file name and the column mappings.
 
+\subsubsection{CSV projects}
+This module fetches projects, releases and auto-assignments from a CSV file. You must specific column mappings and whether current assignments should be overwritten. The CSV should contain one line per release. Assignments must be comma separated usernames. Non-existent projects or releases will be created.
+
 \subsection{Secrets Vault}
 The Secrets Vault is a component that allows users assigned to a project to store secrets (credentials, phone numbers, anything that should be restricted) on a project basis. This will add a tab to any project page where users of a specific level can add secrets, and others can view them. Accessing secrets is logged in the system log for auditing purposes.
 
