@@ -337,7 +337,7 @@ sub login
 {
 	print "<center><div class='row'>";
 	if($cfg->load("logo") ne "") { print "<p><img style='max-width:99%' src=\"" . $cfg->load("logo") . "\"></p>"; }
-	if(!$cfg->load('allow_registrations') || $cfg->load('allow_registrations') eq 'off' || $cfg->load('ad_server'))
+	if(!$cfg->load('allow_registrations') || $cfg->load('allow_registrations') eq 'off' || $cfg->load('ad_domain'))
 	{
 		print "<div class='col-sm-3'>&nbsp;</div>\n";
 	}
@@ -348,10 +348,10 @@ sub login
 	print "<p><input type='password' name='pass' placeholder='Password' class='form-control' required></p>\n";
 	print "<div class='help-block with-errors'></div></div>";
 	print "<p><input class='btn btn-primary' type='submit' value='Login'></p></form>\n";
-	if($cfg->load('allow_registrations') && $cfg->load('allow_registrations') ne 'off' && !$cfg->load('ad_server'))
+	if($cfg->load('allow_registrations') && $cfg->load('allow_registrations') ne 'off' && !$cfg->load('ad_domain'))
 	{
 		print "</div><div class='col-sm-6'><h3>Register a new account</h3><form data-toggle='validator' role='form' method='POST' action='.'><div class='form-group'>\n";
-		print "<p><input type='text' name='new_name' placeholder='User name' class='form-control' data-error='User name must be between 2 and 20 letters or numbers.' data-minlength='2' maxlength='20' required></p>\n";
+		print "<p><input type='text' name='new_name' placeholder='User name' class='form-control' data-error='User name must be between 3 and 50 letters or numbers.' data-minlength='3' maxlength='50' required></p>\n";
 		print "<p><input type='password' name='new_pass1' placeholder='Password' data-minlength='6' class='form-control' id='new_pass1' required></p>\n";
 		print "<p><input type='password' name='new_pass2' class='form-control' id='inputPasswordConfirm' data-match='#new_pass1' data-match-error='Passwords do not match.' placeholder='Confirm' required></p>\n";
 		print "<p><input type='email' name='new_email' placeholder='Email (optional)' class='form-control' data-error='Must be a valid email.' maxlength='99'></p>\n";
@@ -359,7 +359,7 @@ sub login
 		print "<p><input class='btn btn-primary' type='submit' value='Register'></p></form>\n";
 	}
 	print "</div></div>";
-	if($cfg->load("smtp_server") && !$cfg->load("ad_server") && !$cfg->load("auth_plugin"))
+	if($cfg->load("smtp_server") && !$cfg->load("ad_domain") && !$cfg->load("auth_plugin"))
 	{
 		print "<p style='font-size:12px'><a href='./?m=lostpass'>Forgot your password?</a></p>";
 	}
@@ -384,7 +384,7 @@ sub sanitize_alpha
 	my ($text) = @_;
 	if($text)
 	{
-		$text =~ s/[^A-Za-z0-9\.\-\_]//g;
+		$text =~ s/[^A-Za-z0-9\.\-\_\@]//g;
 		return $text;
 	}
 	else { return ""; }
@@ -2104,7 +2104,7 @@ elsif($q->param('api')) # API calls
 			print " \"status\": \"ERR_INVALID_KEY\"\n";
 			print "}\n";
 		}
-		elsif($cfg->load("ad_server"))
+		elsif($cfg->load("ad_domain"))
 		{
 			print "{\n";
 			print " \"message\": \"Passwords are synchronized with Active Directory.\",\n";
@@ -2427,10 +2427,10 @@ elsif($q->param('api')) # API calls
 			print " \"status\": \"ERR_MISSING_ARGUMENT\"\n";
 			print "}\n";
 		}
-		elsif(length(sanitize_alpha($q->param('user'))) < 3 || length(sanitize_alpha($q->param('user'))) > 20)
+		elsif(length(sanitize_alpha($q->param('user'))) < 3 || length(sanitize_alpha($q->param('user'))) > 50)
 		{
 			print "{\n";
-			print " \"message\": \"Bad length for 'user' argument (between 3 and 20 characters).\",\n";
+			print " \"message\": \"Bad length for 'user' argument (between 3 and 50 characters).\",\n";
 			print " \"status\": \"ERR_ARGUMENT_LENGTH\"\n";
 			print "}\n";
 		}
@@ -2462,7 +2462,7 @@ elsif($q->param('api')) # API calls
 			print " \"status\": \"ERR_INVALID_KEY\"\n";
 			print "}\n";
 		}
-		elsif($cfg->load("ad_server"))
+		elsif($cfg->load("ad_domain"))
 		{
 			print "{\n";
 			print " \"message\": \"Users are synchronized with Active Directory.\",\n";
@@ -3144,7 +3144,7 @@ elsif($q->param('m')) # Modules
 			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Change your email</h3></div><div class='panel-body'>\n";
 			print "<div class='form-group'><p><form method='POST' action='.' data-toggle='validator' role='form'><input type='hidden' name='m' value='change_email'><div class='row'><div class='col-sm-6'>To change your notification email address, enter a new address here. Leave empty to disable notifications:</div><div class='col-sm-6'><input type='email' name='new_email' class='form-control' data-error='Must be a valid email.' placeholder='Email address' maxlength='99' value=\"" . $email . "\"></div></div></p><div class='help-block with-errors'></div></div><input class='btn btn-primary pull-right' type='submit' value='Change email'></form></div></div>";
 			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Change your password</h3></div><div class='panel-body'>\n";
-			if($cfg->load("ad_server")) { print "<p>Password management is synchronized with Active Directory.</p>"; }
+			if($cfg->load("ad_domain")) { print "<p>Password management is synchronized with Active Directory.</p>"; }
 			elsif($cfg->load("auth_plugin")) { print "<p>Password management is handled by a plugin.</p>"; }
 			elsif($logged_user eq "demo") { print "<p>The demo account cannot change its password.</p>"; }
 			else
@@ -3311,10 +3311,10 @@ elsif($q->param('m')) # Modules
 			print "<tr><td><a href='./?m=summary&u=" . $res[0] . "'>" . $res[0] . "</a></td><td>" . $res[2] . "</td><td>" . $res[3] . "</td><td>" . $res[4] . "</td></tr>\n";
 		}
 		print "</tbody></table><script>\$(document).ready(function(){\$('#users_table').DataTable({'order':[[0,'asc']],pageLength:" . to_int($cfg->load('page_len')) . ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script>\n";
-		if(!$cfg->load('ad_server') && $logged_lvl > 4)
+		if(!$cfg->load('ad_domain') && $logged_lvl > 4)
 		{
 			print "<div class='form-group'><h4>Add a new user:</h4><form method='POST' action='.' data-toggle='validator' role='form'>\n";
-			print "<p><div class='row'><div class='col-sm-6'><input type='text' name='new_name' placeholder='User name' class='form-control' maxlength='20' required></div><div class='col-sm-6'><input type='email' name='new_email' placeholder='Email address (optional)' class='form-control'></div></div></p><p><div class='row'><div class='col-sm-6'><input type='password' name='new_pass1' data-minlength='6' id='new_pass1' class='form-control' placeholder='Password' required></div><div class='col-sm-6'><input type='password' name='new_pass2' id='inputPasswordConfirm' data-match='#new_pass1' data-match-error='Passwords do not match.' placeholder='Confirm password' class='form-control' required></div></div></p><div class='help-block with-errors'></div><input class='btn btn-primary pull-right' type='submit' value='Add user'></form></div>\n";
+			print "<p><div class='row'><div class='col-sm-6'><input type='text' name='new_name' placeholder='User name' class='form-control' maxlength='50' required></div><div class='col-sm-6'><input type='email' name='new_email' placeholder='Email address (optional)' class='form-control'></div></div></p><p><div class='row'><div class='col-sm-6'><input type='password' name='new_pass1' data-minlength='6' id='new_pass1' class='form-control' placeholder='Password' required></div><div class='col-sm-6'><input type='password' name='new_pass2' id='inputPasswordConfirm' data-match='#new_pass1' data-match-error='Passwords do not match.' placeholder='Confirm password' class='form-control' required></div></div></p><div class='help-block with-errors'></div><input class='btn btn-primary pull-right' type='submit' value='Add user'></form></div>\n";
 		}
 		print "</div></div>\n";
 	}
@@ -5169,6 +5169,7 @@ elsif($q->param('m')) # Modules
 				{
 					my $aduser = "Administrator";
 					my $adpass = "";
+					my $mapname = "sAMAccountName";
 					my $searchfilter = "(&(objectCategory=person)(objectClass=user))";
 					my $basedn = "CN=Users,DC=" . $cfg->load("ad_domain") . ",DC=com";
 					my $importemail = 0;
@@ -5177,6 +5178,7 @@ elsif($q->param('m')) # Modules
 					while(my @res2 = $sql2->fetchrow_array())
 					{
 						if($res2[1] eq 'basedn') { $basedn = $res2[2]; }
+						if($res2[1] eq 'mapname') { $mapname = $res2[2]; }
 						if($res2[1] eq 'searchfilter') { $searchfilter = $res2[2]; }
 						if($res2[1] eq 'aduser') { $aduser = $res2[2]; }
 						if($res2[1] eq 'adpass') { $adpass = RC4($cfg->load("enc_key"), decode_base64($res2[2])); }
@@ -5186,6 +5188,11 @@ elsif($q->param('m')) # Modules
 					print "<p><div class='row'><div class='col-sm-4'>Filter:</div><div class='col-sm-8'><input class='form-control' type='text' name='searchfilter' value=\"" . $searchfilter . "\"></div></div></p>";
 					print "<p><div class='row'><div class='col-sm-4'>Username:</div><div class='col-sm-8'><input class='form-control' type='text' name='aduser' value=\"" . $aduser . "\"></div></div></p>";
 					print "<p><div class='row'><div class='col-sm-4'>Password:</div><div class='col-sm-8'><input class='form-control' type='password' name='adpass' value=\"" . $adpass . "\"></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>Mapping for 'username':</div><div class='col-sm-8'><select class='form-control' name='mapname'><option>sAMAccountName</option><option";
+					if($mapname eq "cn") { print " selected"; }
+					print ">cn</option><option";
+					if($mapname eq "userPrincipalName") { print " selected"; }
+					print ">userPrincipalName</option></select></div></div></p>";
 					print "<p><div class='row'><div class='col-sm-4'>Import email addresses:</div><div class='col-sm-8'><select class='form-control' name='importemail'><option";
 					if($importemail == 1) { print " selected"; }
 					print ">Yes</option><option";
@@ -5541,6 +5548,8 @@ elsif($q->param('m')) # Modules
 					$sql->execute(sanitize_html($q->param('searchfilter')));
 					$sql = $db->prepare("INSERT INTO auto_config VALUES ('Users sync', 'aduser', ?);");
 					$sql->execute(sanitize_html($q->param('aduser')));
+					$sql = $db->prepare("INSERT INTO auto_config VALUES ('Users sync', 'mapname', ?);");
+					$sql->execute(sanitize_alpha($q->param('mapname')));
 					$sql = $db->prepare("INSERT INTO auto_config VALUES ('Users sync', 'adpass', ?);");
 					$sql->execute(encode_base64(RC4($cfg->load("enc_key"), $q->param('adpass'))));
 					$sql = $db->prepare("INSERT INTO auto_config VALUES ('Users sync', 'importemail', ?);");
@@ -6473,7 +6482,7 @@ elsif($q->param('m')) # Modules
 	elsif($q->param('m') eq "lostpass") # Lost password component.. only available if email notifications are on and AD integration off
 	{
 		headers("Password reset");
-		if($cfg->load("smtp_server") && !$cfg->load("ad_server"))
+		if($cfg->load("smtp_server") && !$cfg->load("ad_domain"))
 		{
 			if($q->param('user') && $q->param('code')) # Step 3
 			{
@@ -7541,7 +7550,7 @@ elsif($q->param('kb') && $cfg->load('comp_articles') eq "on")
 	}
 	footers();
 }
-elsif(!$cfg->load("ad_server") && $q->param('new_name') && $q->param('new_pass1') && $q->param('new_pass2') && ($logged_lvl > 4 || $cfg->load('allow_registrations'))) # Process registration
+elsif(!$cfg->load("ad_domain") && $q->param('new_name') && $q->param('new_pass1') && $q->param('new_pass2') && ($logged_lvl > 4 || $cfg->load('allow_registrations'))) # Process registration
 {
 	headers("Registration");
 	if($q->param('new_pass1') ne $q->param('new_pass2'))
@@ -7552,9 +7561,9 @@ elsif(!$cfg->load("ad_server") && $q->param('new_name') && $q->param('new_pass1'
 	{
 		msg("This user name is reserved. Please go back and try again.", 0);
 	}
-	elsif(length(sanitize_alpha($q->param('new_name'))) < 3 || length(sanitize_alpha($q->param('new_name'))) > 20 || ($q->param('new_email') && length(sanitize_alpha($q->param('new_email'))) > 99) || length($q->param('new_pass1')) < 6)
+	elsif(length(sanitize_alpha($q->param('new_name'))) < 3 || length(sanitize_alpha($q->param('new_name'))) > 50 || ($q->param('new_email') && length(sanitize_alpha($q->param('new_email'))) > 99) || length($q->param('new_pass1')) < 6)
 	{
-		msg("User names should be between 3 and 20 characters, passwords should be at least 6 characters, emails less than 99 characters. Please go back and try again.", 0);
+		msg("User names should be between 3 and 50 characters, passwords should be at least 6 characters, emails less than 99 characters. Please go back and try again.", 0);
 	}
 	else
 	{

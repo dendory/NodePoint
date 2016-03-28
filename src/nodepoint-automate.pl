@@ -75,7 +75,7 @@ sub sanitize_alpha
 	my ($text) = @_;
 	if($text)
 	{
-		$text =~ s/[^A-Za-z0-9\.\-\_]//g;
+		$text =~ s/[^A-Za-z0-9\.\-\_\@]//g;
 		return $text;
 	}
 	else { return ""; }
@@ -418,6 +418,7 @@ while(my @res = $sql->fetchrow_array())
 			my $adpass = "";
 			my $basedn = "";
 			my $searchfilter = "";
+			my $mapname = "sAMAccountName";
 			my $importemail = 0;
 			my $page = Net::LDAP::Control::Paged->new(size => 999);
 			my $cookie;
@@ -426,6 +427,7 @@ while(my @res = $sql->fetchrow_array())
 			while(my @res2 = $sql2->fetchrow_array())
 			{
 				if($res2[1] eq 'basedn') { $basedn = $res2[2]; }
+				if($res2[1] eq 'mapname') { $mapname = $res2[2]; }
 				if($res2[1] eq 'searchfilter') { $searchfilter = $res2[2]; }
 				if($res2[1] eq 'aduser') { $aduser = $res2[2]; }
 				if($res2[1] eq 'adpass') { $adpass = RC4($cfg->load("enc_key"), decode_base64($res2[2])); }
@@ -461,7 +463,7 @@ while(my @res = $sql->fetchrow_array())
 						{
 							while (my $entry = $mesg->pop_entry())
 							{
-								my $name = $entry->get_value('cn');
+								my $name = $entry->get_value($mapname);
 								my $mail = $entry->get_value('mail');
 								my $existing = 0;
 								$sql2 = $db->prepare("SELECT COUNT(*) FROM users WHERE name = ?;");
