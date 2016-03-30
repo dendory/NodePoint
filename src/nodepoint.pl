@@ -8,7 +8,7 @@
 #
 
 use strict;
-use Config::Win32;
+use Config::Linux;
 use Digest::SHA qw(sha1_hex);
 use DBI;
 use CGI '-utf8';;
@@ -501,6 +501,12 @@ sub db_check
 		$sql->execute();
 	};
 	$sql->finish();
+	$sql = $db->prepare("SELECT * FROM steps_log WHERE 0 = 1;") or do
+	{
+		$sql = $db->prepare("CREATE TABLE steps_log (productid INT, user TEXT, event TEXT, date TEXT);");
+		$sql->execute();
+	};
+	$sql->finish();
 	$sql = $db->prepare("SELECT * FROM clients WHERE 0 = 1;") or do
 	{
 		$sql = $db->prepare("CREATE TABLE clients (name TEXT, status TEXT, contact TEXT, notes TEXT, modified TEXT);");
@@ -640,6 +646,12 @@ sub db_check
 	$sql = $db->prepare("SELECT * FROM secrets WHERE 0 = 1;") or do
 	{
 		$sql = $db->prepare("CREATE TABLE secrets (productid INT, user TEXT, note TEXT, account TEXT, secret TEXT, time TEXT);");
+		$sql->execute();
+	};
+	$sql->finish();
+	$sql = $db->prepare("SELECT * FROM secrets_log WHERE 0 = 1;") or do
+	{
+		$sql = $db->prepare("CREATE TABLE secrets_log (productid INT, user TEXT, account TEXT, event TEXT, time TEXT);");
 		$sql->execute();
 	};
 	$sql->finish();
@@ -1160,7 +1172,15 @@ sub home
 					system($cmd);
 				}
 			}
+			my $p = 0;
+			my $stepname = "";
+			$sql = $db->prepare("SELECT productid,name FROM steps WHERE ROWID = ?;");
+			$sql->execute(to_int($q->param('set_step')));
+			while(my @res = $sql->fetchrow_array()) { $p = to_int($res[0]); $stepname = $res[1]; }
+			$sql = $db->prepare("INSERT INTO steps_log VALUES (?, ?, ?, ?)");
+			$sql->execute($p, $logged_user, "Set completion rate to <i>" . to_int($q->param('completion')) . "%</i> on task <i>" . $stepname . "</i>", now());
 		}
+
 		$sql = $db->prepare("SELECT COUNT(*) FROM steps WHERE user = ? AND completion < 100");
 		$sql->execute($logged_user);
 		my $count4 = 0;
@@ -1275,11 +1295,11 @@ sub home
 # Connect to config
 eval
 {
-	$cfg = Config::Win32->new("NodePoint", "settings");
+	$cfg = Config::Linux->new("NodePoint", "settings");
 };
 if(!defined($cfg)) # Can't even use headers() if this fails.
 {
-	print "Content-type: text/html\n\nError: Could not access " . Config::Win32->type . ". Please ensure NodePoint has the proper permissions.";
+	print "Content-type: text/html\n\nError: Could not access " . Config::Linux->type . ". Please ensure NodePoint has the proper permissions.";
 	exit(0);
 };
 
@@ -4283,30 +4303,35 @@ elsif($q->param('m')) # Modules
 				print "<a name=productdata></a>";
 				my $isassigned = 0;
 				if($logged_user eq $cfg->load("admin_name")) { $isassigned = 1; }
-				my $sql = $db->prepare("SELECT * FROM autoassign WHERE productid = ? AND user = ?;");
+				$sql = $db->prepare("SELECT * FROM autoassign WHERE productid = ? AND user = ?;");
 				$sql->execute(to_int($q->param('p')), $logged_user);
 				while(my @res = $sql->fetchrow_array()) { $isassigned = 1; }
 				if($q->param('tab') eq "tasks")
 				{
 					print "<ul class='nav nav-pills nav-tabs'><li role='presentation'><a href='./?m=view_product&p=" . to_int($q->param('p')) . "#productdata'>" . $items{"Release"} . "s</a></li>";
 					if($cfg->load('comp_steps') eq "on" && $logged_user ne "") { print "<li role='presentation' class='active'><a href='./?m=view_product&tab=tasks&p=" . to_int($q->param('p')) . "#productdata'>Tasks</a></li>"; }
+					if($cfg->load('comp_secrets') eq "on" && $logged_user ne "") { print "<li role='presentation'><a href='./?m=view_product&tab=secrets&p=" . to_int($q->param('p')) . "#productdata'>Secrets</a></li>"; }
 					if($cfg->load('comp_tickets') eq "on") { print "<li role='presentation'><a href='./?m=view_product&tab=tickets&p=" . to_int($q->param('p')) . "#productdata'>Tickets</a></li>"; }
 					if($cfg->load('comp_articles') eq "on") { print "<li role='presentation'><a href='./?m=view_product&tab=articles&p=" . to_int($q->param('p')) . "#productdata'>Articles</a></li>"; }
 					if($cfg->load('comp_items') eq "on" && $logged_user ne "") { print "<li role='presentation'><a href='./?m=view_product&tab=items&p=" . to_int($q->param('p')) . "#productdata'>Items</a></li>"; }
 					if($cfg->load('comp_files') eq "on" && $logged_user ne "") { print "<li role='presentation'><a href='./?m=view_product&tab=files&p=" . to_int($q->param('p')) . "#productdata'>Files</a></li>"; }
-					if($cfg->load('comp_secrets') eq "on" && $logged_user ne "") { print "<li role='presentation'><a href='./?m=view_product&tab=secrets&p=" . to_int($q->param('p')) . "#productdata'>Secrets</a></li>"; }
 					print "</ul>\n";
 					print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-body'>";
+					if($q->param('clear_log') && $logged_lvl > 5)
+					{
+						$sql = $db->prepare("DELETE FROM steps_log WHERE productid = ?;");
+						$sql->execute(to_int($q->param('p')));
+					}
 					if($logged_lvl >= to_int($cfg->load('tasks_lvl')) && $vis ne "Archived" && ($isassigned == 1 || $cfg->load('need_assign') ne "on"))
 					{
 						print "<form method='POST' action='.' data-toggle='validator' role='form'><input type='hidden' name='product_id' value='" . to_int($q->param('p')) . "'><input type='hidden' name='m' value='add_step'><h4>Add a new task</h4><p><div class='row'><div class='col-sm-12'><input placeholder='Description' class='form-control' name='name' maxlength='200' required></div></div></p><p><div class='row'><div class='col-sm-5'>Assign user:<br><select name='user' class='form-control'>";
-						my $sql = $db->prepare("SELECT name FROM users WHERE level > 0 ORDER BY name;");
+						$sql = $db->prepare("SELECT name FROM users WHERE level > 0 ORDER BY name;");
 						$sql->execute();
 						while(my @res = $sql->fetchrow_array()) { print "<option>" . $res[0] . "</option>"; }
 						print "</select></div><div class='col-sm-5'>Due by:<br><input type='text' class='form-control datepicker' name='due' placeholder='mm/dd/yyyy' required></div><div class='col-sm-2'><input class='btn btn-primary pull-right' type='submit' value='Add task'></div></div></p></form><hr><h4>Current tasks</h4>\n";
 					}
 					print "<table class='table table-stripped' id='tasks_table'><thead><tr><th>Task</th><th>Assigned to</th><th>Completion</th><th>Due by</th></tr></thead><tbody>";
-					my $sql = $db->prepare("SELECT ROWID,* FROM steps WHERE productid = ?;");
+					$sql = $db->prepare("SELECT ROWID,* FROM steps WHERE productid = ?;");
 					$sql->execute(to_int($q->param('p')));
 					my $m = localtime->strftime('%m');
 					my $y = localtime->strftime('%Y');
@@ -4321,39 +4346,60 @@ elsif($q->param('m')) # Modules
 						if($logged_lvl >= to_int($cfg->load('tasks_lvl')) && $vis ne "Archived") { print "<span class='pull-right'><form method='POST' action='.'><input type='hidden' name='product_id' value='" . to_int($q->param('p')) . "'><input type='hidden' name='m' value='delete_step'><input type='hidden' name='step_id' value=\"" . $res[0] . "\"><input class='btn btn-danger pull-right' type='submit' onclick='return confirm(\"Really remove this task?\");' value='X'></form></span>"; }
 						print "</td></tr>";
 					}				
-					print "</tbody></table><script>\$(document).ready(function(){\$('#tasks_table').DataTable({'order':[[3,'desc']],pageLength:" .  to_int($cfg->load('page_len')). ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script></div></div>\n";
+					print "</tbody></table><script>\$(document).ready(function(){\$('#tasks_table').DataTable({'order':[[3,'desc']],pageLength:" .  to_int($cfg->load('page_len')). ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script>";
+					if($logged_lvl > 3 && ($isassigned == 1 || $cfg->load('need_assign') ne "on"))
+					{
+						print "<hr><h4>Completion log</h4>";
+						if($logged_lvl > 5) { print "<p><form style='display:inline' method='POST' action='./?m=auto'><input type='hidden' name='m' value='view_product'><input type='hidden' name='tab' value='tasks'><input type='hidden' name='p' value='" . to_int($q->param('p')) . "'><input class='btn btn-danger pull-right' name='clear_log' onclick='return confirm(\"Are you sure?\");' type='submit' value='Clear log'><br></form></p>"; }
+						print "<table class='table table-stripped' id='steps_log_table'><thead><tr><th>User</th><th>Event</th><th>Date</tr></thead><tbody>";
+						$sql = $db->prepare("SELECT * FROM steps_log WHERE productid = ?;");
+						$sql->execute(to_int($q->param('p')));
+						while(my @res = $sql->fetchrow_array())
+						{
+							print "<tr><td>" . $res[1] . "</td><td>" . $res[2] . "</td><td>" . $res[3] . "</td></tr>";
+						}
+						print "</tbody></table><script>\$(document).ready(function(){\$('#steps_log_table').DataTable({'order':[[2,'desc']],pageLength:" .  to_int($cfg->load('page_len')). ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script>";
+					}
+					print "</div></div>\n";
 				}
 				elsif($q->param('tab') eq "secrets")
 				{
 					print "<ul class='nav nav-pills nav-tabs'><li role='presentation'><a href='./?m=view_product&p=" . to_int($q->param('p')) . "#productdata'>" . $items{"Release"} . "s</a></li>";
 					if($cfg->load('comp_steps') eq "on" && $logged_user ne "") { print "<li role='presentation'><a href='./?m=view_product&tab=tasks&p=" . to_int($q->param('p')) . "#productdata'>Tasks</a></li>"; }
+					if($cfg->load('comp_secrets') eq "on" && $logged_user ne "") { print "<li role='presentation' class='active'><a href='./?m=view_product&tab=secrets&p=" . to_int($q->param('p')) . "#productdata'>Secrets</a></li>"; }
 					if($cfg->load('comp_tickets') eq "on") { print "<li role='presentation'><a href='./?m=view_product&tab=tickets&p=" . to_int($q->param('p')) . "#productdata'>Tickets</a></li>"; }
 					if($cfg->load('comp_articles') eq "on") { print "<li role='presentation'><a href='./?m=view_product&tab=articles&p=" . to_int($q->param('p')) . "#productdata'>Articles</a></li>"; }
 					if($cfg->load('comp_items') eq "on" && $logged_user ne "") { print "<li role='presentation'><a href='./?m=view_product&tab=items&p=" . to_int($q->param('p')) . "#productdata'>Items</a></li>"; }
 					if($cfg->load('comp_files') eq "on" && $logged_user ne "") { print "<li role='presentation'><a href='./?m=view_product&tab=files&p=" . to_int($q->param('p')) . "#productdata'>Files</a></li>"; }
-					if($cfg->load('comp_secrets') eq "on" && $logged_user ne "") { print "<li role='presentation' class='active'><a href='./?m=view_product&tab=secrets&p=" . to_int($q->param('p')) . "#productdata'>Secrets</a></li>"; }
 					print "</ul>\n";
 					print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-body'>";
+					if($q->param('clear_log') && $logged_lvl > 5)
+					{
+						$sql = $db->prepare("DELETE FROM secrets_log WHERE productid = ?;");
+						$sql->execute(to_int($q->param('p')));
+					}
 					if($q->param('view_secret') && $q->param('secret') && $logged_lvl >= to_int($cfg->load('view_secrets')) && ($isassigned == 1 || $cfg->load('need_assign') ne "on"))
 					{
-						my $sql = $db->prepare("SELECT account,secret FROM secrets WHERE ROWID = ?;");
+						$sql = $db->prepare("SELECT account,secret FROM secrets WHERE ROWID = ?;");
 						$sql->execute(to_int($q->param('secret')));
 						while(my @res = $sql->fetchrow_array())
 						{
 							msg($res[0] . " / " . RC4($cfg->load("enc_key"), decode_base64($res[1])), 2);
-							logevent("View secret: " . $items{"Product"} . ": " . to_int($q->param('p')) . ", Account: " . $res[0]);
+							my $sql2 = $db->prepare("INSERT INTO secrets_log VALUES (?, ?, ?, ?, ?)");
+							$sql2->execute(to_int($q->param('p')), $logged_user, $res[0], "Viewed secret", now());
 						}
 					}
 					if($q->param('delete_secret') && $q->param('secret') && $logged_lvl >= to_int($cfg->load('add_secrets')) && ($isassigned == 1 || $cfg->load('need_assign') ne "on"))
 					{
 						my $account = "Unknown";
-						my $sql = $db->prepare("SELECT account FROM secrets WHERE ROWID = ?;");
+						$sql = $db->prepare("SELECT account FROM secrets WHERE ROWID = ?;");
 						$sql->execute(to_int($q->param('secret')));
 						while(my @res = $sql->fetchrow_array()) { $account = $res[0]; }
 						$sql = $db->prepare("DELETE FROM secrets WHERE ROWID = ?");
 						$sql->execute(to_int($q->param('secret')));
 						msg("Secret removed.", 3);
-						logevent("Deleted secret: " . $items{"Product"} . ": " . to_int($q->param('p')) . ", Account: " . $account);
+						$sql = $db->prepare("INSERT INTO secrets_log VALUES (?, ?, ?, ?, ?)");
+						$sql->execute(to_int($q->param('p')), $logged_user, $account, "Deleted secret", now());
 					}
 					if($q->param('add_secret') && $q->param('account') && $q->param('secret') && $logged_lvl >= to_int($cfg->load('add_secrets')) && ($isassigned == 1 || $cfg->load('need_assign') ne "on"))
 					{
@@ -4362,14 +4408,15 @@ elsif($q->param('m')) # Modules
 						$sql = $db->prepare("INSERT INTO secrets VALUES (?, ?, ?, ?, ?, ?);");
 						$sql->execute(to_int($q->param('p')), $logged_user, $note, sanitize_html($q->param('account')), encode_base64(RC4($cfg->load("enc_key"), $q->param('secret'))), now());
 						msg("Secret added.", 3);
-						logevent("New secret: " . $items{"Product"} . ": " . to_int($q->param('p')) . ", Account: " . sanitize_html($q->param('account')));
+						$sql = $db->prepare("INSERT INTO secrets_log VALUES (?, ?, ?, ?, ?)");
+						$sql->execute(to_int($q->param('p')), $logged_user, sanitize_html($q->param('account')), "Added secret", now());
 					}
 					if($logged_lvl >= to_int($cfg->load('add_secrets')) && ($isassigned == 1 || $cfg->load('need_assign') ne "on"))
 					{
 						print "<form method='POST' action='.' data-toggle='validator' role='form'><input type='hidden' name='m' value='view_product'><input type='hidden' name='tab' value='secrets'><input type='hidden' name='p' value='" . to_int($q->param('p')) . "'><h4>Add a new secret</h4><p><div class='row'><div class='col-sm-6'><input placeholder='Account name' class='form-control' name='account' maxlength='30' required></div><div class='col-sm-6'><input placeholder='Secret' class='form-control' name='secret' maxlength='200' required></div></div></p><p><div class='row'><div class='col-sm-12'><input placeholder='Note' class='form-control' name='note' maxlength='200'></div></div></p><p><input class='btn btn-primary pull-right' type='submit' name='add_secret' value='Add secret'></p></form><br><hr><h4>Known secrets</h4>\n";
 					}
 					print "<table class='table table-stripped' id='secrets_table'><thead><tr><th>Account</th><th>Note</th><th>Added by</th><th>Date</tr></thead><tbody>";
-					my $sql = $db->prepare("SELECT ROWID,* FROM secrets WHERE productid = ?;");
+					$sql = $db->prepare("SELECT ROWID,* FROM secrets WHERE productid = ?;");
 					$sql->execute(to_int($q->param('p')));
 					while(my @res = $sql->fetchrow_array())
 					{
@@ -4378,17 +4425,31 @@ elsif($q->param('m')) # Modules
 						if($logged_lvl >= to_int($cfg->load('add_secrets')) && ($isassigned == 1 || $cfg->load('need_assign') ne "on")) { print " <input class='btn btn-danger' name='delete_secret' type='submit' onclick='return confirm(\"Really remove this secret?\");' value='X'>"; }
 						print "</form></nobr></span></td></tr>";
 					}				
-					print "</tbody></table><script>\$(document).ready(function(){\$('#secrets_table').DataTable({'order':[[0,'asc']],pageLength:" .  to_int($cfg->load('page_len')). ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script></div></div>\n";
+					print "</tbody></table><script>\$(document).ready(function(){\$('#secrets_table').DataTable({'order':[[0,'asc']],pageLength:" .  to_int($cfg->load('page_len')). ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script>";
+					if($logged_lvl > 3 && ($isassigned == 1 || $cfg->load('need_assign') ne "on"))
+					{
+						print "<hr><h4>Transaction log</h4>";
+						if($logged_lvl > 5) { print "<p><form style='display:inline' method='POST' action='./?m=auto'><input type='hidden' name='m' value='view_product'><input type='hidden' name='tab' value='secrets'><input type='hidden' name='p' value='" . to_int($q->param('p')) . "'><input class='btn btn-danger pull-right' name='clear_log' onclick='return confirm(\"Are you sure?\");' type='submit' value='Clear log'><br></form></p>"; }
+						print "<table class='table table-stripped' id='secrets_log_table'><thead><tr><th>User</th><th>Account</th><th>Event</th><th>Date</tr></thead><tbody>";
+						$sql = $db->prepare("SELECT * FROM secrets_log WHERE productid = ?;");
+						$sql->execute(to_int($q->param('p')));
+						while(my @res = $sql->fetchrow_array())
+						{
+							print "<tr><td>" . $res[1] . "</td><td>" . $res[2] . "</td><td>" . $res[3] . "</td><td>" . $res[4] . "</td></tr>";
+						}
+						print "</tbody></table><script>\$(document).ready(function(){\$('#secrets_log_table').DataTable({'order':[[3,'desc']],pageLength:" .  to_int($cfg->load('page_len')). ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script>";
+					}					
+					print "</div></div>\n";
 				}
 				elsif($q->param('tab') eq "articles")
 				{
 					print "<ul class='nav nav-pills nav-tabs'><li role='presentation'><a href='./?m=view_product&p=" . to_int($q->param('p')) . "#productdata'>" . $items{"Release"} . "s</a></li>";
 					if($cfg->load('comp_steps') eq "on" && $logged_user ne "") { print "<li role='presentation'><a href='./?m=view_product&tab=tasks&p=" . to_int($q->param('p')) . "#productdata'>Tasks</a></li>"; }
+					if($cfg->load('comp_secrets') eq "on" && $logged_user ne "") { print "<li role='presentation'><a href='./?m=view_product&tab=secrets&p=" . to_int($q->param('p')) . "#productdata'>Secrets</a></li>"; }
 					if($cfg->load('comp_tickets') eq "on") { print "<li role='presentation'><a href='./?m=view_product&tab=tickets&p=" . to_int($q->param('p')) . "#productdata'>Tickets</a></li>"; }
 					if($cfg->load('comp_articles') eq "on") { print "<li role='presentation' class='active'><a href='./?m=view_product&tab=articles&p=" . to_int($q->param('p')) . "#productdata'>Articles</a></li>"; }
 					if($cfg->load('comp_items') eq "on" && $logged_user ne "") { print "<li role='presentation'><a href='./?m=view_product&tab=items&p=" . to_int($q->param('p')) . "#productdata'>Items</a></li>"; }
 					if($cfg->load('comp_files') eq "on" && $logged_user ne "") { print "<li role='presentation'><a href='./?m=view_product&tab=files&p=" . to_int($q->param('p')) . "#productdata'>Files</a></li>"; }
-					if($cfg->load('comp_secrets') eq "on" && $logged_user ne "") { print "<li role='presentation'><a href='./?m=view_product&tab=secrets&p=" . to_int($q->param('p')) . "#productdata'>Secrets</a></li>"; }
 					print "</ul>\n";
 					print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-body'>";
 					if($logged_lvl > 3)
@@ -4425,11 +4486,11 @@ elsif($q->param('m')) # Modules
 				{
 					print "<ul class='nav nav-pills nav-tabs'><li role='presentation'><a href='./?m=view_product&p=" . to_int($q->param('p')) . "#productdata'>" . $items{"Release"} . "s</a></li>";
 					if($cfg->load('comp_steps') eq "on" && $logged_user ne "") { print "<li role='presentation'><a href='./?m=view_product&tab=tasks&p=" . to_int($q->param('p')) . "#productdata'>Tasks</a></li>"; }
+					if($cfg->load('comp_secrets') eq "on" && $logged_user ne "") { print "<li role='presentation'><a href='./?m=view_product&tab=secrets&p=" . to_int($q->param('p')) . "#productdata'>Secrets</a></li>"; }
 					if($cfg->load('comp_tickets') eq "on") { print "<li role='presentation'><a href='./?m=view_product&tab=tickets&p=" . to_int($q->param('p')) . "#productdata'>Tickets</a></li>"; }
 					if($cfg->load('comp_articles') eq "on") { print "<li role='presentation'><a href='./?m=view_product&tab=articles&p=" . to_int($q->param('p')) . "#productdata'>Articles</a></li>"; }
 					if($cfg->load('comp_items') eq "on" && $logged_user ne "") { print "<li role='presentation' class='active'><a href='./?m=view_product&tab=items&p=" . to_int($q->param('p')) . "#productdata'>Items</a></li>"; }
 					if($cfg->load('comp_files') eq "on" && $logged_user ne "") { print "<li role='presentation'><a href='./?m=view_product&tab=files&p=" . to_int($q->param('p')) . "#productdata'>Files</a></li>"; }
-					if($cfg->load('comp_secrets') eq "on" && $logged_user ne "") { print "<li role='presentation'><a href='./?m=view_product&tab=secrets&p=" . to_int($q->param('p')) . "#productdata'>Secrets</a></li>"; }
 					print "</ul>\n";
 					print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-body'>";
 					if($logged_lvl > 3)
@@ -4459,11 +4520,11 @@ elsif($q->param('m')) # Modules
 				{
 					print "<ul class='nav nav-pills nav-tabs'><li role='presentation'><a href='./?m=view_product&p=" . to_int($q->param('p')) . "#productdata'>" . $items{"Release"} . "s</a></li>";
 					if($cfg->load('comp_steps') eq "on" && $logged_user ne "") { print "<li role='presentation'><a href='./?m=view_product&tab=tasks&p=" . to_int($q->param('p')) . "#productdata'>Tasks</a></li>"; }
+					if($cfg->load('comp_secrets') eq "on" && $logged_user ne "") { print "<li role='presentation'><a href='./?m=view_product&tab=secrets&p=" . to_int($q->param('p')) . "#productdata'>Secrets</a></li>"; }
 					if($cfg->load('comp_tickets') eq "on") { print "<li role='presentation' class='active'><a href='./?m=view_product&tab=tickets&p=" . to_int($q->param('p')) . "#productdata'>Tickets</a></li>"; }
 					if($cfg->load('comp_articles') eq "on") { print "<li role='presentation'><a href='./?m=view_product&tab=articles&p=" . to_int($q->param('p')) . "#productdata'>Articles</a></li>"; }
 					if($cfg->load('comp_items') eq "on" && $logged_user ne "") { print "<li role='presentation'><a href='./?m=view_product&tab=items&p=" . to_int($q->param('p')) . "#productdata'>Items</a></li>"; }
 					if($cfg->load('comp_files') eq "on" && $logged_user ne "") { print "<li role='presentation'><a href='./?m=view_product&tab=files&p=" . to_int($q->param('p')) . "#productdata'>Files</a></li>"; }
-					if($cfg->load('comp_secrets') eq "on" && $logged_user ne "") { print "<li role='presentation'><a href='./?m=view_product&tab=secrets&p=" . to_int($q->param('p')) . "#productdata'>Secrets</a></li>"; }
 					print "</ul>\n";
 					print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-body'>";
 					if($logged_lvl > 0  || $cfg->load("guest_tickets") eq "on")
@@ -4494,11 +4555,11 @@ elsif($q->param('m')) # Modules
 				{
 					print "<ul class='nav nav-pills nav-tabs'><li role='presentation'><a href='./?m=view_product&p=" . to_int($q->param('p')) . "#productdata'>" . $items{"Release"} . "s</a></li>";
 					if($cfg->load('comp_steps') eq "on" && $logged_user ne "") { print "<li role='presentation'><a href='./?m=view_product&tab=tasks&p=" . to_int($q->param('p')) . "#productdata'>Tasks</a></li>"; }
+					if($cfg->load('comp_secrets') eq "on" && $logged_user ne "") { print "<li role='presentation'><a href='./?m=view_product&tab=secrets&p=" . to_int($q->param('p')) . "#productdata'>Secrets</a></li>"; }
 					if($cfg->load('comp_tickets') eq "on") { print "<li role='presentation'><a href='./?m=view_product&tab=tickets&p=" . to_int($q->param('p')) . "#productdata'>Tickets</a></li>"; }
 					if($cfg->load('comp_articles') eq "on") { print "<li role='presentation'><a href='./?m=view_product&tab=articles&p=" . to_int($q->param('p')) . "#productdata'>Articles</a></li>"; }
 					if($cfg->load('comp_items') eq "on" && $logged_user ne "") { print "<li role='presentation'><a href='./?m=view_product&tab=items&p=" . to_int($q->param('p')) . "#productdata'>Items</a></li>"; }
 					if($cfg->load('comp_files') eq "on" && $logged_user ne "") { print "<li role='presentation' class='active'><a href='./?m=view_product&tab=files&p=" . to_int($q->param('p')) . "#productdata'>Files</a></li>"; }
-					if($cfg->load('comp_secrets') eq "on" && $logged_user ne "") { print "<li role='presentation'><a href='./?m=view_product&tab=secrets&p=" . to_int($q->param('p')) . "#productdata'>Secrets</a></li>"; }
 					print "</ul>\n";
 					print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-body'>\n";
 					my $filedata = "";
@@ -4583,11 +4644,11 @@ elsif($q->param('m')) # Modules
 				{
 					print "<ul class='nav nav-pills nav-tabs'><li role='presentation' class='active'><a href='./?m=view_product&p=" . to_int($q->param('p')) . "#productdata'>" . $items{"Release"} . "s</a></li>";
 					if($cfg->load('comp_steps') eq "on" && $logged_user ne "") { print "<li role='presentation'><a href='./?m=view_product&tab=tasks&p=" . to_int($q->param('p')) . "#productdata'>Tasks</a></li>"; }
+					if($cfg->load('comp_secrets') eq "on" && $logged_user ne "") { print "<li role='presentation'><a href='./?m=view_product&tab=secrets&p=" . to_int($q->param('p')) . "#productdata'>Secrets</a></li>"; }
 					if($cfg->load('comp_tickets') eq "on") { print "<li role='presentation'><a href='./?m=view_product&tab=tickets&p=" . to_int($q->param('p')) . "#productdata'>Tickets</a></li>"; }
 					if($cfg->load('comp_articles') eq "on") { print "<li role='presentation'><a href='./?m=view_product&tab=articles&p=" . to_int($q->param('p')) . "#productdata'>Articles</a></li>"; }
 					if($cfg->load('comp_items') eq "on" && $logged_user ne "") { print "<li role='presentation'><a href='./?m=view_product&tab=items&p=" . to_int($q->param('p')) . "#productdata'>Items</a></li>"; }
 					if($cfg->load('comp_files') eq "on" && $logged_user ne "") { print "<li role='presentation'><a href='./?m=view_product&tab=files&p=" . to_int($q->param('p')) . "#productdata'>Files</a></li>"; }
-					if($cfg->load('comp_secrets') eq "on" && $logged_user ne "") { print "<li role='presentation'><a href='./?m=view_product&tab=secrets&p=" . to_int($q->param('p')) . "#productdata'>Secrets</a></li>"; }
 					print "</ul>\n";
 					print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-body'>\n";
 					if($logged_lvl > 2 && $vis ne "Archived" && ($isassigned == 1 || $cfg->load('need_assign') ne "on"))
@@ -4657,15 +4718,24 @@ elsif($q->param('m')) # Modules
 			$sql->execute(to_int($q->param('product_id')));
 			while(my @res = $sql->fetchrow_array()) { $prod = $res[0]; }
 			notify(sanitize_alpha($q->param('user')), "New task assigned to you", "A new task has been added for you on " . lc($items{"Product"}) . " \"" . $prod . "\":\n\nTask description: " . sanitize_html($q->param('name')) . "\nDue by: " . sanitize_html($q->param('due')));
-			msg("<meta http-equiv='REFRESH' content='1;url=./?m=view_product&p=" . to_int($q->param('product_id')) . "'>Task added.", 3);
+			$sql = $db->prepare("INSERT INTO steps_log VALUES (?, ?, ?, ?)");
+			$sql->execute(to_int($q->param('product_id')), $logged_user, "Added new task <i>" . sanitize_html($q->param('name')) . "</i> to user <i>" . sanitize_alpha($q->param('user')) . "</i> due by <i>" . sanitize_html($q->param('due')) . "</i>", now());
+			msg("<meta http-equiv='REFRESH' content='1;url=./?m=view_product&tab=tasks&p=" . to_int($q->param('product_id')) . "'>Task added.", 3);
 		}
 	}
 	elsif($logged_lvl >= to_int($cfg->load('tasks_lvl')) && $q->param('m') eq "delete_step" && $q->param('step_id'))
 	{
 		headers($items{"Product"} . "s");
+		my $p = 0;
+		my $stepname = "";
+		$sql = $db->prepare("SELECT productid,name FROM steps WHERE ROWID = ?;");
+		$sql->execute(to_int($q->param('step_id')));
+		while(my @res = $sql->fetchrow_array()) { $p = to_int($res[0]); $stepname = $res[1]; }
 		$sql = $db->prepare("DELETE FROM steps WHERE ROWID = ?;");
 		$sql->execute(to_int($q->param('step_id')));
-		msg("<meta http-equiv='REFRESH' content='1;url=./?m=view_product&p=" . to_int($q->param('product_id')) . "'>Task removed.", 3);
+		$sql = $db->prepare("INSERT INTO steps_log VALUES (?, ?, ?, ?)");
+		$sql->execute($p, $logged_user, "Deleted task <i>" . $stepname . "</i>", now());
+		msg("<meta http-equiv='REFRESH' content='1;url=./?m=view_product&tab=tasks&p=" . to_int($q->param('product_id')) . "'>Task removed.", 3);
 	}
 	elsif($logged_lvl > 2 && $q->param('m') eq "add_release")
 	{
