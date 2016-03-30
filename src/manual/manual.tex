@@ -11,7 +11,7 @@
 % Conditional compilation for Windows and Linux
 \usepackage{ifthen}
 \newboolean{Windows}
-\setboolean{Windows}{true} % change to false for Linux
+\setboolean{Windows}{false} % change to false for Linux
 \ifthenelse{\boolean{Windows}}
 {\def\NodePointManual{NodePoint IT System - Windows version 1.6.4}}
 {\def\NodePointManual{NodePoint IT System - Linux version 1.6.4}}
@@ -142,10 +142,8 @@ Follow these steps to complete a new installation:
 }
 {
 \begin{enumerate}
-\item Download NodePoint from \url{http://nodepoint.ca} and unzip the folder where you want files to live, for example \texttt{\textasciitilde/nodepoint}.
-\item Make sure \texttt{www/nodepoint.cgi} can be executed by the web server, and it has write access to\\ \texttt{../nodepoint.cfg}, \texttt{../db} and \texttt{../uploads}. This is done by default using the included \texttt{.htaccess} file but may require some modifications to your server's default configuration file.
-\item Map a virtual host in your \texttt{httpd.conf}, or link the \texttt{www} folder, for example: \texttt{ln -s /var/www/nodepoint \textasciitilde/nodepoint/www} (paths may differ based on your Linux distribution).
-\item Add the Automation task to your crontab: \texttt{*/5 * * * * /path/to/nodepoint/www/nodepoint-automate}
+\item Download NodePoint from \url{http://nodepoint.ca} and untar the folder: \texttt{tar xvf nodepoint.tar}
+\item Run \texttt{./setup.sh} as root, from the folder you just extracted. This will copy the files to the proper location, add some Apache configuration options, and setup the Automation schedule. Optionally, you may need to edit your Apache configuration or setup a virtual host.
 \item Access the site from \textit{localhost} (e.g. \texttt{http://localhost/nodepoint}) and complete the first time configuration (see below).
 \end{enumerate}
 }
