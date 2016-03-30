@@ -328,6 +328,7 @@ These are the configuration options for NodePoint. They have to be defined durin
 \item \textbf{Allow registrations:} Allow guest users to register a new account. If set to no, the only way to add new accounts is if a user with Users Management access adds one.
 \item \textbf{Allow guest tickets:} Allow guest users to file tickets.
 \item \textbf{Maximum file upload:} Maximum file size for uploads to project images, ticket comments and the File Management component.
+\item \textbf{Must be assigned to project:} Project specific functions like adding releases, adding tasks, adding, deleting or viewing secrets or uploading files are only available to users auto-assigned to the project.
 \item \textbf{Number of row per page:} Number of rows to show per page on tables.
 \item \textbf{Session expiry time:} Number of hours before a user session is invalidated.
 \item \textbf{API read key:} Used for some API operations.
@@ -360,7 +361,7 @@ These are the configuration options for NodePoint. They have to be defined durin
 \item \textbf{Task completion plugin:} Call an application or script when a user completes (100\%) a task assigned to them. Variables allowed are: \textit{\%user\%}, \textit{\%task\%}, \textit{\%product\%} and \textit{\%due\%}. For example: \texttt{echo \%user\% completed task \%task\% due on \%due\% >> tasks.log}
 \item \textbf{New tickets plugin:} You can call a script or application when a ticket is created. The available variables are \%ticket\%, \%user\%, \%title\%, \%description\%, \%product\% and \%release\%. For example: \texttt{curl --data 'ticketid=\%ticket\%\&user=\%user\%' https://hr.company.com/track.cgi}
 \item \textbf{Ticket resolution plugin:} You can call a script or application every time a ticket is updated, along with the \%user\% who made the change, the new \%status\% of the \%ticket\%, the billable \%client\% and the \%resolution\%. Example: \texttt{echo \%ticket\%,\%user\%,\%status\%,\%resolution\%,\%client\% >> tickets.csv}
-\item \textbf{Components:} Activate components that you require. This does not remove their functionality, only hiding them from the interface.\\\\See chapter 4 for information about components.
+\item \textbf{Components}: Turn component on or off. See chapter 4 for information about components.
 \end{itemize}
 
 \clearpage
@@ -476,7 +477,7 @@ The tasks management component can be used to manage products or projects, creat
 \includegraphics{projectmanagement.jpg}
 \end{figure}
 
-New tasks created will send an email notification to the user assigned to the task, and all tasks will show on the user's home page. There, users can modify the completion rate for each item. Completed and overdue tasks will also be highlighted.
+If \textit{Must be assigned to project} is on, users also need to be auto-assigned to that particular project to add tasks. New tasks created will send an email notification to the user assigned to the task, and all tasks will show on the user's home page. There, users can modify the completion rate for each item. Completed and overdue tasks will also be highlighted.
 
 \subsection{Clients Directory}
 The clients directory can be used to keep track of clients or contacts from the \textbf{Clients} page. New clients can be added along with specific information such as email, phone number or notes by users of access level 5, details seen by users of level 2 (configurable) and higher. The following statuses can be assigned to clients:
@@ -513,6 +514,8 @@ NodePoint provides a files upload feature for things like project images and fil
 \end{figure}
 
 Note that the files uploaded here, along with those attached to projects or tickets, must be below the configured maximum file size value. Also, only users with an access level above the one configured in the initial settings will be able to upload files. The files themselves will be available to anyone with the link.
+
+Files can also be uploaded on a project specific basis on the project page, and will show up both under \textit{Tools} and that project's page.  If \textit{Must be assigned to project} is on, users also need to be auto-assigned to that particular project to upload files.
 
 \subsection{Billing}
 The Billing component allows you to assign tickets to clients with either a fixed rate or an hourly rate. As such, this component requires the Tickets Management and Clients Directory components to be enabled. For hourly rates, the Time Tracking component must also be enabled.
@@ -568,7 +571,7 @@ This module fetches projects, releases and auto-assignments from a CSV file. You
 \subsection{Secrets Vault}
 The Secrets Vault is a component that allows users assigned to a project to store secrets (credentials, phone numbers, anything that should be restricted) on a project basis. This will add a tab to any project page where users of a specific level can add secrets, and others can view them. Accessing secrets is logged in the system log for auditing purposes.
 
-Both the level to add and to view secrets are configured in the product base configuration. Users also need to be auto-assigned to that particular project to be able to add or view secrets. The secrets are encrypted inside of the database using the encryption key. Changing that key will make the data irretrievable.
+Both the level to add and to view secrets are configured in the product base configuration. If \textit{Must be assigned to project} is on, users also need to be auto-assigned to that particular project to be able to add or view secrets. The secrets are encrypted inside of the database using the encryption key. Changing that key will make the data irretrievable.
 
 \clearpage
 \section{JSON API}

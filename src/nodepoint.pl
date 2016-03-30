@@ -8,7 +8,7 @@
 #
 
 use strict;
-use Config::Linux;
+use Config::Win32;
 use Digest::SHA qw(sha1_hex);
 use DBI;
 use CGI '-utf8';;
@@ -688,6 +688,7 @@ sub save_config
 	$cfg->save("events_lvl", to_int($q->param('events_lvl')));
 	$cfg->save("report_lvl", to_int($q->param('report_lvl')));
 	$cfg->save("allow_registrations", $q->param('allow_registrations'));
+	$cfg->save("need_assign", $q->param('need_assign'));
 	$cfg->save("guest_tickets", $q->param('guest_tickets'));
 	$cfg->save("smtp_server", sanitize_html($q->param('smtp_server')));
 	$cfg->save("smtp_port", to_int($q->param('smtp_port')));
@@ -1274,11 +1275,11 @@ sub home
 # Connect to config
 eval
 {
-	$cfg = Config::Linux->new("NodePoint", "settings");
+	$cfg = Config::Win32->new("NodePoint", "settings");
 };
 if(!defined($cfg)) # Can't even use headers() if this fails.
 {
-	print "Content-type: text/html\n\nError: Could not access " . Config::Linux->type . ". Please ensure NodePoint has the proper permissions.";
+	print "Content-type: text/html\n\nError: Could not access " . Config::Win32->type . ". Please ensure NodePoint has the proper permissions.";
 	exit(0);
 };
 
@@ -3215,6 +3216,10 @@ elsif($q->param('m')) # Modules
 			print "</select></td></tr>\n";
 			print "<tr><td style='width:50%'>Session expiry time (in hours)</td><td><input class='form-control' type='text' name='session_expiry' value=\"" . $cfg->load("session_expiry") . "\"></td></tr>\n";
 			print "<tr><td style='width:50%'>Maximum file upload size (in bytes)</td><td><input class='form-control' type='text' name='max_size' value=\"" . $cfg->load("max_size") . "\"></td></tr>\n";
+			print "<tr><td style='width:50%'>Must be assigned to " . lc($items{"Product"}) . "</td><td><select class='form-control' name='need_assign'>";
+			if($cfg->load("need_assign") eq "on") { print "<option selected>on</option><option>off</option>"; }
+			else { print "<option>on</option><option selected>off</option>"; }
+			print "</select></td></tr>\n";
 			print "</table><h4>API access</h4><table class='table table-striped'>";
 			print "<tr><td style='width:50%'>API read key</td><td><input class='form-control' type='text' name='api_read' value=\"" . $cfg->load("api_read") . "\"></td></tr>\n";
 			print "<tr><td style='width:50%'>API write key</td><td><input class='form-control' type='text' name='api_write' value=\"" . $cfg->load("api_write") . "\"></td></tr>\n";
@@ -4276,6 +4281,11 @@ elsif($q->param('m')) # Modules
 			if($vis eq "Public" || ($vis eq "Private" && $logged_user ne "") || ($vis eq "Restricted" && $logged_lvl > 1) || $logged_lvl > 3)
 			{
 				print "<a name=productdata></a>";
+				my $isassigned = 0;
+				if($logged_user eq $cfg->load("admin_name")) { $isassigned = 1; }
+				my $sql = $db->prepare("SELECT * FROM autoassign WHERE productid = ? AND user = ?;");
+				$sql->execute(to_int($q->param('p')), $logged_user);
+				while(my @res = $sql->fetchrow_array()) { $isassigned = 1; }
 				if($q->param('tab') eq "tasks")
 				{
 					print "<ul class='nav nav-pills nav-tabs'><li role='presentation'><a href='./?m=view_product&p=" . to_int($q->param('p')) . "#productdata'>" . $items{"Release"} . "s</a></li>";
@@ -4287,7 +4297,7 @@ elsif($q->param('m')) # Modules
 					if($cfg->load('comp_secrets') eq "on" && $logged_user ne "") { print "<li role='presentation'><a href='./?m=view_product&tab=secrets&p=" . to_int($q->param('p')) . "#productdata'>Secrets</a></li>"; }
 					print "</ul>\n";
 					print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-body'>";
-					if($logged_lvl >= to_int($cfg->load('tasks_lvl')) && $vis ne "Archived")
+					if($logged_lvl >= to_int($cfg->load('tasks_lvl')) && $vis ne "Archived" && ($isassigned == 1 || $cfg->load('need_assign') ne "on"))
 					{
 						print "<form method='POST' action='.' data-toggle='validator' role='form'><input type='hidden' name='product_id' value='" . to_int($q->param('p')) . "'><input type='hidden' name='m' value='add_step'><h4>Add a new task</h4><p><div class='row'><div class='col-sm-12'><input placeholder='Description' class='form-control' name='name' maxlength='200' required></div></div></p><p><div class='row'><div class='col-sm-5'>Assign user:<br><select name='user' class='form-control'>";
 						my $sql = $db->prepare("SELECT name FROM users WHERE level > 0 ORDER BY name;");
@@ -4315,11 +4325,6 @@ elsif($q->param('m')) # Modules
 				}
 				elsif($q->param('tab') eq "secrets")
 				{
-					my $isassigned = 0;
-					if($logged_user eq $cfg->load("admin_name")) { $isassigned = 1; }
-					my $sql = $db->prepare("SELECT * FROM autoassign WHERE productid = ? AND user = ?;");
-					$sql->execute(to_int($q->param('p')), $logged_user);
-					while(my @res = $sql->fetchrow_array()) { $isassigned = 1; }
 					print "<ul class='nav nav-pills nav-tabs'><li role='presentation'><a href='./?m=view_product&p=" . to_int($q->param('p')) . "#productdata'>" . $items{"Release"} . "s</a></li>";
 					if($cfg->load('comp_steps') eq "on" && $logged_user ne "") { print "<li role='presentation'><a href='./?m=view_product&tab=tasks&p=" . to_int($q->param('p')) . "#productdata'>Tasks</a></li>"; }
 					if($cfg->load('comp_tickets') eq "on") { print "<li role='presentation'><a href='./?m=view_product&tab=tickets&p=" . to_int($q->param('p')) . "#productdata'>Tickets</a></li>"; }
@@ -4329,7 +4334,7 @@ elsif($q->param('m')) # Modules
 					if($cfg->load('comp_secrets') eq "on" && $logged_user ne "") { print "<li role='presentation' class='active'><a href='./?m=view_product&tab=secrets&p=" . to_int($q->param('p')) . "#productdata'>Secrets</a></li>"; }
 					print "</ul>\n";
 					print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-body'>";
-					if($q->param('view_secret') && $q->param('secret') && $logged_lvl >= to_int($cfg->load('view_secrets')) && $isassigned == 1)
+					if($q->param('view_secret') && $q->param('secret') && $logged_lvl >= to_int($cfg->load('view_secrets')) && ($isassigned == 1 || $cfg->load('need_assign') ne "on"))
 					{
 						my $sql = $db->prepare("SELECT account,secret FROM secrets WHERE ROWID = ?;");
 						$sql->execute(to_int($q->param('secret')));
@@ -4339,7 +4344,7 @@ elsif($q->param('m')) # Modules
 							logevent("View secret: " . $items{"Product"} . ": " . to_int($q->param('p')) . ", Account: " . $res[0]);
 						}
 					}
-					if($q->param('delete_secret') && $q->param('secret') && $logged_lvl >= to_int($cfg->load('add_secrets')) && $isassigned == 1)
+					if($q->param('delete_secret') && $q->param('secret') && $logged_lvl >= to_int($cfg->load('add_secrets')) && ($isassigned == 1 || $cfg->load('need_assign') ne "on"))
 					{
 						my $account = "Unknown";
 						my $sql = $db->prepare("SELECT account FROM secrets WHERE ROWID = ?;");
@@ -4350,7 +4355,7 @@ elsif($q->param('m')) # Modules
 						msg("Secret removed.", 3);
 						logevent("Deleted secret: " . $items{"Product"} . ": " . to_int($q->param('p')) . ", Account: " . $account);
 					}
-					if($q->param('add_secret') && $q->param('account') && $q->param('secret') && $logged_lvl >= to_int($cfg->load('add_secrets')) && $isassigned == 1)
+					if($q->param('add_secret') && $q->param('account') && $q->param('secret') && $logged_lvl >= to_int($cfg->load('add_secrets')) && ($isassigned == 1 || $cfg->load('need_assign') ne "on"))
 					{
 						my $note = "";
 						if($q->param('note')) { $note = sanitize_html($q->param('note')); }
@@ -4359,7 +4364,7 @@ elsif($q->param('m')) # Modules
 						msg("Secret added.", 3);
 						logevent("New secret: " . $items{"Product"} . ": " . to_int($q->param('p')) . ", Account: " . sanitize_html($q->param('account')));
 					}
-					if($logged_lvl >= to_int($cfg->load('add_secrets')) && $isassigned == 1)
+					if($logged_lvl >= to_int($cfg->load('add_secrets')) && ($isassigned == 1 || $cfg->load('need_assign') ne "on"))
 					{
 						print "<form method='POST' action='.' data-toggle='validator' role='form'><input type='hidden' name='m' value='view_product'><input type='hidden' name='tab' value='secrets'><input type='hidden' name='p' value='" . to_int($q->param('p')) . "'><h4>Add a new secret</h4><p><div class='row'><div class='col-sm-6'><input placeholder='Account name' class='form-control' name='account' maxlength='30' required></div><div class='col-sm-6'><input placeholder='Secret' class='form-control' name='secret' maxlength='200' required></div></div></p><p><div class='row'><div class='col-sm-12'><input placeholder='Note' class='form-control' name='note' maxlength='200'></div></div></p><p><input class='btn btn-primary pull-right' type='submit' name='add_secret' value='Add secret'></p></form><br><hr><h4>Known secrets</h4>\n";
 					}
@@ -4369,8 +4374,8 @@ elsif($q->param('m')) # Modules
 					while(my @res = $sql->fetchrow_array())
 					{
 						print "<tr><td>" . $res[4] . "</td><td>" . $res[3] . "</td><td>" . $res[2] . "</td><td>" . $res[6] . "<span class='pull-right'><form method='POST' action='.'><input type='hidden' name='m' value='view_product'><input type='hidden' name='tab' value='secrets'><input type='hidden' name='p' value='" . to_int($q->param('p')) . "'><input type='hidden' name='secret' value=\"" . $res[0] . "\">";
-						if($logged_lvl >= to_int($cfg->load('view_secrets')) && $isassigned == 1) { print "<input class='btn btn-primary' name='view_secret' type='submit' value='View'>"; }
-						if($logged_lvl >= to_int($cfg->load('add_secrets')) && $isassigned == 1) { print " <input class='btn btn-danger' name='delete_secret' type='submit' onclick='return confirm(\"Really remove this secret?\");' value='X'>"; }
+						if($logged_lvl >= to_int($cfg->load('view_secrets')) && ($isassigned == 1 || $cfg->load('need_assign') ne "on")) { print "<input class='btn btn-primary' name='view_secret' type='submit' value='View'>"; }
+						if($logged_lvl >= to_int($cfg->load('add_secrets')) && ($isassigned == 1 || $cfg->load('need_assign') ne "on")) { print " <input class='btn btn-danger' name='delete_secret' type='submit' onclick='return confirm(\"Really remove this secret?\");' value='X'>"; }
 						print "</form></nobr></span></td></tr>";
 					}				
 					print "</tbody></table><script>\$(document).ready(function(){\$('#secrets_table').DataTable({'order':[[0,'asc']],pageLength:" .  to_int($cfg->load('page_len')). ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script></div></div>\n";
@@ -4552,7 +4557,7 @@ elsif($q->param('m')) # Modules
 							msg("File uploading to <b>" . $cfg->load('upload_folder') . $cfg->sep . $filedata . "</b> failed.", 0); 
 						}
 					}
-					if($logged_lvl >= to_int($cfg->load('upload_lvl')))
+					if($logged_lvl >= to_int($cfg->load('upload_lvl')) && ($isassigned == 1 || $cfg->load('need_assign') ne "on"))
 					{
 						print "<h4>Add a new " . lc($items{"Product"}) . " file</h4>\n";
 						print "<form method='POST' action='.' enctype='multipart/form-data'><input type='hidden' name='m' value='view_product'><input type='hidden' name='tab' value='files'><input type='hidden' name='p' value='" . to_int($q->param('p')) . "'><p>Add new file: <input type='file' name='attach_file'><input class='btn btn-primary pull-right' type='submit' value='Upload'></p></form>\n";
@@ -4585,7 +4590,7 @@ elsif($q->param('m')) # Modules
 					if($cfg->load('comp_secrets') eq "on" && $logged_user ne "") { print "<li role='presentation'><a href='./?m=view_product&tab=secrets&p=" . to_int($q->param('p')) . "#productdata'>Secrets</a></li>"; }
 					print "</ul>\n";
 					print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-body'>\n";
-					if($logged_lvl > 2 && $vis ne "Archived")
+					if($logged_lvl > 2 && $vis ne "Archived" && ($isassigned == 1 || $cfg->load('need_assign') ne "on"))
 					{
 						print "<h4>Add a new " . lc($items{"Release"}) . "</h4><form method='POST' action='.' data-toggle='validator' role='form'>\n";
 						print "<input type='hidden' name='m' value='add_release'><input type='hidden' name='product_id' value='" . to_int($q->param('p')) . "'><div class='row'><div class='col-sm-4'>" . $items{"Release"} . ": <input type='text' class='form-control' name='release_version' required></div><div class='col-sm-6'>Notes or link: <input type='text' name='release_notes' class='form-control' required></div><div class='col-sm-2'><input class='btn btn-primary pull-right' type='submit' value='Add " . lc($items{"Release"}) . "'></div></div></form><hr><h4>Current " . lc($items{"Release"}) . "s</h4>\n";
