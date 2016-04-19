@@ -1586,6 +1586,8 @@ elsif($q->param('api')) # API calls
 				print " \"created_by\": \"" . $res[3] . "\",\n";
 				print " \"assigned_to\": \"" . $res[4] . "\",\n";
 				print " \"title\": \"" . $res[5] . "\",\n";
+				$res[6] =~ s/\r//g;
+				$res[6] =~ s/\n/\\n/g;
 				print " \"description\": \"" . $res[6] . "\",\n";
 				print " \"priority\": \"" . $res[7] . "\",\n";
 				print " \"status\": \"" . $res[8] . "\",\n";
@@ -1604,6 +1606,8 @@ elsif($q->param('api')) # API calls
 					print "  {\n";
 					print "   \"id\": \"" . $res2[0] . "\",\n";
 					print "   \"name\": \"" . $res2[2] . "\",\n";
+					$res2[3] =~ s/\r//g;
+					$res2[3] =~ s/\n/\\n/g;
 					print "   \"comment\": \"" . $res2[3] . "\",\n";
 					print "   \"created_on\": \"" . $res2[4] . "\",\n";
 					print "   \"modified_on\": \"" . $res2[5] . "\"\n";
@@ -1662,6 +1666,77 @@ elsif($q->param('api')) # API calls
 				print "   \"product_id\": \"" . $res[1] . "\",\n";
 				print "   \"release_id\": \"" . $res[2] . "\",\n";
 				print "   \"title\": \"" . $res[5] . "\"\n";
+				print "  }";
+			}
+			print "\n ]\n";
+			print "}\n";
+		}
+	}
+	elsif($q->param('api') eq "list_products")
+	{
+		if(!$q->param('key'))
+		{
+			print "{\n";
+			print " \"message\": \"Missing 'key' argument.\",\n";
+			print " \"status\": \"ERR_MISSING_ARGUMENT\"\n";
+			print "}\n";
+		}
+		elsif($q->param('key') ne $cfg->load('api_read'))
+		{
+			print "{\n";
+			print " \"message\": \"Invalid 'key' value.\",\n";
+			print " \"status\": \"ERR_INVALID_KEY\"\n";
+			print "}\n";
+		}
+		else
+		{
+			print "{\n";
+			print " \"message\": \"Products list.\",\n";
+			print " \"status\": \"OK\",\n";
+			print " \"products\": [\n";
+			my $found = 0;
+			$sql = $db->prepare("SELECT ROWID,* FROM products;");
+			$sql->execute();
+			while(my @res = $sql->fetchrow_array())
+			{
+				if($found) { print ",\n"; }
+				$found = 1;
+				print "  {\n";
+				print "   \"id\": \"" . $res[0] . "\",\n";
+				print "   \"name\": \"" . $res[1] . "\",\n";
+				print "   \"model\": \"" . $res[2] . "\",\n";
+				$res[3] =~ s/\r//g;
+				$res[3] =~ s/\n/\\n/g;
+				print "   \"description\": \"" . $res[3] . "\",\n";
+				print "   \"visibility\": \"" . $res[5] . "\",\n";
+				print "   \"created\": \"" . $res[6] . "\",\n";
+				print "   \"modified\": \"" . $res[7] . "\",\n";
+				print "   \"auto_assign\": [\n";
+				my $sql2 = $db->prepare("SELECT user FROM autoassign WHERE productid = ?;");
+				$sql2->execute(to_int($res[0]));
+				my $found2 = 0;
+				while(my @res2 = $sql2->fetchrow_array())
+				{
+					if($found2) { print ",\n"; }
+					$found2 = 1;
+					print "    { \"user\": \"" . $res2[0] . "\" }";					
+				}
+				print "\n   ],\n";
+				print "   \"releases\": [\n";
+				my $sql2 = $db->prepare("SELECT releasedby,version,notes FROM releases WHERE productid = ?;");
+				$sql2->execute(to_int($res[0]));
+				my $found2 = 0;
+				while(my @res2 = $sql2->fetchrow_array())
+				{
+					if($found2) { print ",\n"; }
+					$found2 = 1;
+					print "    {\n";
+					print "      \"user\": \"" . $res2[0] . "\",\n";					
+					print "      \"version\": \"" . $res2[1] . "\",\n";					
+					print "      \"note\": \"" . $res2[2] . "\"\n";
+					print "    }";
+				}
+				print "\n   ]\n";
 				print "  }";
 			}
 			print "\n ]\n";
