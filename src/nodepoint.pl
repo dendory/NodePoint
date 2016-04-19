@@ -6739,8 +6739,8 @@ elsif($q->param('m')) # Modules
 		}
 		elsif(to_int($q->param('report')) == 18)
 		{
-			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Item expiration dates</h3></div><div class='panel-body'><table class='table table-striped' id='report_table'><thead><tr><th>Item</th><th>Date</th></tr></thead><tbody>";
-			$sql = $db->prepare("SELECT date,itemid FROM item_expiration;");
+			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Item expiration dates</h3></div><div class='panel-body'><table class='table table-striped' id='report_table'><thead><tr><th>Serial number</th><th>Date</th></tr></thead><tbody>";
+			$sql = $db->prepare("SELECT item_expiration.date,items.serial FROM items INNER JOIN item_expiration ON items.ROWID = item_expiration.itemid;");
 		}
 		elsif(to_int($q->param('report')) == 19)
 		{
