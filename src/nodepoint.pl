@@ -8,7 +8,7 @@
 #
 
 use strict;
-use Config::Linux;
+use Config::Win32;
 use Digest::SHA qw(sha1_hex);
 use DBI;
 use CGI '-utf8';;
@@ -29,7 +29,7 @@ my ($cfg, $db, $sql, $cn, $cp, $cgs, $last_login, $perf);
 my $logged_user = "";
 my $logged_lvl = -1;
 my $q = new CGI;
-my $VERSION = "1.6.4";
+my $VERSION = "1.6.5";
 my %items = ("Product", "Product", "Release", "Release", "Model", "SKU/Model");
 my @itemtypes = ("None");
 my @themes = ("primary", "default", "success", "info", "warning", "danger");
@@ -683,6 +683,7 @@ sub save_config
 	$cfg->save("logo", sanitize_html($q->param('logo')));
 	$cfg->save("default_vis", $q->param('default_vis'));
 	$cfg->save("hide_close", $q->param('hide_close'));
+	$cfg->save("disable_gs", $q->param('disable_gs'));
 	$cfg->save("article_html", $q->param('article_html'));
 	$cfg->save("default_lvl", to_int($q->param('default_lvl')));
 	$cfg->save("tasks_lvl", to_int($q->param('tasks_lvl')));
@@ -1008,7 +1009,7 @@ sub home
 		while(my @res = $sql->fetchrow_array()) { msg("<span class='pull-right'><a href='./?delete_notify=" . $res[0] . "'>Clear</a></span>Ticket <a href='./?m=view_ticket&t=" . $res[0] . "'>" . $res[0] . "</a> requires your attention.", 2); }
 	}
 
-	if(!$q->cookie('np_gs'))
+	if(!$q->cookie('np_gs') && $cfg->load('disable_gs') ne "on")
 	{
 		print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Getting started</h3></div><div class='panel-body'>\n";
 		print "<p>Use the <b>" . $items{"Product"} . "s</b> tab to browse available " . lc($items{"Product"}) . "s along with their " . lc($items{"Release"}) . "s. You can view basic information about them and see their description.";
@@ -1295,11 +1296,11 @@ sub home
 # Connect to config
 eval
 {
-	$cfg = Config::Linux->new("NodePoint", "settings");
+	$cfg = Config::Win32->new("NodePoint", "settings");
 };
 if(!defined($cfg)) # Can't even use headers() if this fails.
 {
-	print "Content-type: text/html\n\nError: Could not access " . Config::Linux->type . ". Please ensure NodePoint has the proper permissions.";
+	print "Content-type: text/html\n\nError: Could not access " . Config::Win32->type . ". Please ensure NodePoint has the proper permissions.";
 	exit(0);
 };
 
@@ -1417,6 +1418,7 @@ if($q->param('site_name') && $q->param('db_address') && $logged_user ne "" && $l
 		if(!defined($q->param('default_lvl'))) { $text .= "<span class='label label-danger'>New users access level</span> "; }
 		if(!$q->param('default_vis')) { $text .= "<span class='label label-danger'>Ticket visibility</span> "; }
 		if(!$q->param('hide_close')) { $text .= "<span class='label label-danger'>Hide closed tickets</span> "; }
+		if(!$q->param('disable_gs')) { $text .= "<span class='label label-danger'>Disable Getting Started screen</span> "; }
 		if(!$q->param('article_html')) { $text .= "<span class='label label-danger'>Allow HTML in articles</span> "; }
 		if(!$q->param('api_read')) { $text .= "<span class='label label-danger'>API read key</span> "; }
 		if(!$q->param('api_write')) { $text .= "<span class='label label-danger'>API write key</span> "; }
@@ -3211,6 +3213,10 @@ elsif($q->param('m')) # Modules
 			print "<tr><td style='width:50%'>Number of rows per page</td><td><input class='form-control' type='text' name='page_len' value=\"" . $cfg->load("page_len") . "\"></td></tr>\n";
 			print "<tr><td style='width:50%'>Hide closed tickets</td><td><select class='form-control' name='hide_close'>";
 			if($cfg->load("hide_close") eq "on") { print "<option selected>on</option><option>off</option>"; }
+			else { print "<option>on</option><option selected>off</option>"; }
+			print "</select></td></tr>\n";
+			print "<tr><td style='width:50%'>Disable Getting Started screen</td><td><select class='form-control' name='disable_gs'>";
+			if($cfg->load("disable_gs") eq "on") { print "<option selected>on</option><option>off</option>"; }
 			else { print "<option>on</option><option selected>off</option>"; }
 			print "</select></td></tr>\n";
 			print "<tr><td style='width:50%'>Allow HTML in articles</td><td><select class='form-control' name='article_html'>";
