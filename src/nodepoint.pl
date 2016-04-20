@@ -270,13 +270,13 @@ sub navbar
 			if($logged_lvl > 5) { print "   <li><a href='./?m=log'>System log</a></li>\n"; }
 			print "  <li role='separator' class='divider'></li><li><a href='./?m=logout'>Logout</a></li></ul></li>\n";
 		}
-		if($cfg->load('comp_tickets') eq "on") 
-		{ 
-			print "   <form class='navbar-form navbar-right' method='GET' action='./'>";
+		if($logged_lvl > 0 && ($cfg->load('comp_tickets') eq "on" || $cfg->load('comp_articles') eq "on" || $cfg->load('comp_items') eq "on" || $cfg->load('comp_clients') eq "on")) 
+		{
+			print "   <form class='navbar-form navbar-right' method='GET' action='./' data-toggle='validator' role='form'>";
 			print "    <div class='form-group'>";
-			print "     <input type='number' placeholder='Ticket ID' style='-moz-appearance:textfield;-webkit-appearance:none;' name='t' class='form-control'><input type='hidden' name='m' value='view_ticket'>";
+			print "     <input type='text' placeholder='Search query' style='-moz-appearance:textfield;-webkit-appearance:none;' name='q' class='form-control' data-minlength='2' maxlength='20' required><input type='hidden' name='m' value='search'>";
 			print "    </div>";
-			print "    <button type='submit' class='btn btn-primary'>Open</button>";
+			print "    <button type='submit' class='btn btn-primary'>Go</button>";
 			print "   </form>";
 		}
 	}
@@ -6268,6 +6268,113 @@ elsif($q->param('m')) # Modules
 				}
 			}
 		}
+	}
+	elsif($q->param('m') eq "search" && $logged_lvl > 0 && $q->param('q'))
+	{
+		headers("Search");
+		my @products;
+		$sql = $db->prepare("SELECT ROWID,* FROM products;");
+		$sql->execute();
+		while(my @res = $sql->fetchrow_array()) { $products[$res[0]] = $res[1]; }
+		print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Search results for: <i>" . sanitize_html($q->param('q')) . "</i></h3></div><div class='panel-body'>\n";
+		if($cfg->load("comp_tickets") eq "on" && (($cfg->load('default_vis') eq "Restricted" && $logged_lvl > 1) || ($cfg->load('default_vis') eq "Private" && $logged_lvl > -1) || $cfg->load('default_vis') eq "Public"))
+		{
+			print "<h4>Tickets</h4>";
+			print "<table class='table table-stripped' id='search1'><thead><tr><th>ID</th><th>User</th><th>" . $items{"Product"} . "</th><th>Title</th><th>Status</th><th>Date</th></tr></thead><tbody>\n";
+			if($cfg->load("hide_close") eq "on") { $sql = $db->prepare("SELECT ROWID,* FROM tickets WHERE status != 'Closed' ORDER BY ROWID DESC;"); }
+			else { $sql = $db->prepare("SELECT ROWID,* FROM tickets ORDER BY ROWID DESC;"); }
+			$sql->execute();
+			while(my @res = $sql->fetchrow_array())
+			{
+				if($res[0] == to_int($q->param('q')) || index($res[5], sanitize_html($q->param('q'))) != -1 || index($res[6], sanitize_html($q->param('q'))) != -1)
+				{ 
+					print "<tr><td><nobr>";
+					if($res[7] eq "High") { print "<img src='icons/high.png' title='High'> "; }
+					elsif($res[7] eq "Low") { print "<img src='icons/low.png' title='Low'> "; }
+					else { print "<img src='icons/normal.png' title='Normal'> "; }
+					print $res[0] . "</nobr></td><td>" . $res[3] . "</td><td>" . $products[$res[1]] . "</td><td><a href='./?m=view_ticket&t=" . $res[0] . "'>" . $res[5] . "</a></td><td>" . $res[8] . "</td><td>" . $res[11] . "</td></tr>\n"; 
+				}
+			}
+			print "</tbody></table><script>\$(document).ready(function(){\$('#search1').DataTable({'order':[[0,'desc']],pageLength:10,dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script><br>\n";
+		}
+		if($cfg->load("comp_articles") eq "on")
+		{
+			print "<h4>Support articles</h4>";
+			print "<table class='table table-striped' id='search2'><thead><tr><th>ID</th><th>" . $items{"Product"} . "</th><th>Title</th><th>Last update</th></tr></thead><tbody>\n";
+			if($logged_lvl > 3) { $sql = $db->prepare("SELECT ROWID,* FROM kb;"); }
+			else { $sql = $db->prepare("SELECT ROWID,* FROM kb WHERE published = 1;"); }
+			$sql->execute();
+			my $product = "";
+			while(my @res = $sql->fetchrow_array())
+			{
+				if($res[0] == to_int($q->param('q')) || index($res[2], sanitize_html($q->param('q'))) != -1 || index($res[3], sanitize_html($q->param('q'))) != -1)
+				{
+					if(to_int($res[1]) == 0) { $product = "All"; }
+					elsif(!$products[$res[1]]) { $product = "All"; }
+					else { $product = $products[$res[1]]; }
+					if($res[7] eq "Never") { print "<tr><td>" . $res[0] . "</td><td>" . $product . "</td><td><a href='./?kb=" . $res[0] . "'>" . $res[2] . "</a></td><td>" . $res[6] . "</td></tr>\n"; }
+					else { print "<tr><td>" . $res[0] . "</td><td>" . $product . "</td><td><a href='./?kb=" . $res[0] . "'>" . $res[2] . "</a></td><td>" . $res[7] . "</td></tr>\n"; }
+				}
+			}
+			print "</tbody></table><script>\$(document).ready(function(){\$('#search2').DataTable({'order':[[2,'asc']],pageLength:10,dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script><br>\n";
+		}
+		if($cfg->load("comp_items") eq "on")
+		{
+			my $expired = 0;
+			my $expdate = "";
+			my $m = localtime->strftime('%m');
+			my $y = localtime->strftime('%Y');
+			my $d = localtime->strftime('%d');
+			print "<h4>Inventory items</h4>";
+			print "<table class='table table-striped' id='search3'><thead><tr><th>Type</th><th>Name</th><th>Serial</th><th>Status</th></tr></thead><tbody>\n";
+			$sql = $db->prepare("SELECT ROWID,* FROM items;"); 
+			$sql->execute();
+			while(my @res = $sql->fetchrow_array())
+			{
+				if($res[0] == to_int($q->param('q')) || index($res[1], sanitize_html($q->param('q'))) != -1 || index($res[3], sanitize_html($q->param('q'))) != -1)
+				{
+					my $sql3 = $db->prepare("SELECT date FROM item_expiration WHERE itemid = ?;");
+					$sql3->execute(to_int($res[0]));
+					while(my @res3 = $sql3->fetchrow_array())
+					{
+						my @expby = split(/\//, $res3[0]);
+						if($expby[2] < $y || ($expby[2] == $y && $expby[0] < $m) || ($expby[2] == $y && $expby[0] == $m && $expby[1] < $d)) { $expired = 1; }
+					}
+					print "<tr><td>" . $res[2] . "</td><td><a href='./?m=items&i=" . $res[0] . "'>" . $res[1] . "</a></td><td>" . $res[3] . "</td><td>";
+					if(to_int($res[7]) == 0) { print "<font color='red'>Unavailable</font>"; }
+					elsif(to_int($res[7]) == 1) 
+					{
+						if($expired == 1) { print "<font color='purple'>Expired</font>"; }
+						else { print "<font color='green'>Available</font>"; } 
+					}
+					elsif(to_int($res[7]) == 2) { print "<font color='orange'>Waiting approval for: " . $res[8] . "</font>"; }
+					else { print "<font color='red'>Checked out by: " . $res[8] . "</font>"; }
+					print "</td></tr>\n";
+					$expired = 0;
+				}
+			}
+			print "</tbody></table><script>\$(document).ready(function(){\$('#search3').DataTable({'order':[[0,'asc']],pageLength:10,dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script><br>\n";
+		}
+		if($cfg->load("comp_clients") eq "on")
+		{
+			print "<h4>Clients directory</h4>";
+			print "<table class='table table-stripped' id='search4'><thead><tr><th>ID</th><th>Name</th><th>Contact</th><th>Status</th></tr></thead><tbody>\n";
+			$sql = $db->prepare("SELECT ROWID,* FROM clients;");
+			$sql->execute();
+			while(my @res = $sql->fetchrow_array())
+			{
+				if($res[0] == to_int($q->param('q')) || index($res[1], sanitize_html($q->param('q'))) != -1 || index($res[3], sanitize_html($q->param('q'))) != -1 || index($res[4], sanitize_html($q->param('q'))) != -1)
+				{
+					print "<tr><td>" . $res[0] . "</td><td>";
+					if($logged_lvl >= to_int($cfg->load('client_lvl'))) { print "<a href='./?m=view_client&c=" . $res[0] . "'>"; }
+					print $res[1];
+					if($logged_lvl >= to_int($cfg->load('client_lvl'))) { print "</a>"; }
+					print "</td><td>" . $res[3] . "</td><td>" . $res[2] . "</td></tr>";
+				}
+			}		
+			print "</tbody></table><script>\$(document).ready(function(){\$('#search4').DataTable({'order':[[0,'asc']],pageLength:10,dom:'Bfrtip',buttons:['copy','csv','excel','pdf','print']});});</script>";
+		}
+		print "</div></div>\n";
 	}
 	elsif($q->param('m') eq "add_ticket" && ($logged_lvl > 0 || $cfg->load("guest_tickets") eq "on") && $q->param('product_id'))
 	{
