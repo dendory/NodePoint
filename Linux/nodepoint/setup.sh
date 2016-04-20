@@ -9,7 +9,7 @@ echo "This script will copy NodePoint files, set permissions, and add Apache con
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 # Get default values
-read -p "Installation folder [/usr/share]: " installdir
+read -p "Software folder [/usr/share]: " installdir
 installdir=${installdir:-/usr/share}
 read -p "Apache document root [/var/www/html]: " wwwroot
 wwwroot=${wwwroot:-/var/www/html}
@@ -33,7 +33,7 @@ chmod 755 $installdir/nodepoint/www/nodepoint-automate
 # Add Apache config
 echo "* Adding Apache config..."
 ln -s $installdir/nodepoint/www $wwwroot/nodepoint
-echo "<Directory /nodepoint>" >> $conf
+echo "<Directory />" >> $conf
 echo " AllowOverride All" >> $conf
 echo " Options FollowSymLinks" >> $conf
 echo " Require all granted" >> $conf
@@ -43,8 +43,10 @@ systemctl restart httpd
 # Adding automation schedule
 echo "* Adding automations schedule..."
 crontab -l > /tmp/mycron
-echo "*/5 * * * * $installdir/nodepoint/www/nodepoint-automate" >> /tmp/mycron
-crontab /tmp/mycron
+if grep -q nodepoint-automate /tmp/mycron; then
+	echo "*/5 * * * * $installdir/nodepoint/www/nodepoint-automate" >> /tmp/mycron
+	crontab /tmp/mycron
+fi
 rm -f /tmp/mycron
 
 # Done

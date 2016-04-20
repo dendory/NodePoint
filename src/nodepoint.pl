@@ -5246,6 +5246,8 @@ elsif($q->param('m')) # Modules
 					print ">Clients</option><option";
 					if($table eq "Users") { print " selected"; }
 					print ">Users</option><option";
+					if($table eq "Secrets") { print " selected"; }
+					print ">Secrets</option><option";
 					if($table eq "Tasks") { print " selected"; }
 					print ">Tasks</option></select></div></div></p>";
 				}

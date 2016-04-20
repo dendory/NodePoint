@@ -299,6 +299,18 @@ while(my @res = $sql->fetchrow_array())
 							print $OUTFILE "\"" . $res2[0] . "\",\"" . $res2[1] . "\",\"" .  $res2[2] . "\",\"" .  $res2[3] . "\",\"" .  $res2[4] . "\"\n";  
 						}
 					}
+					elsif($table eq "Secrets")
+					{
+						print $OUTFILE "\"product_id\",\"user\",\"account\",\"encrypted_secret\",\"note\"\n";
+						$sql2 = $db->prepare("SELECT * FROM secrets;");
+						$sql2->execute();
+						while(my @res2 = $sql2->fetchrow_array())
+						{
+							$rowcount += 1;
+							$res2[4] =~ s/\n//g;
+							print $OUTFILE "\"" . $res2[0] . "\",\"" . $res2[1] . "\",\"" .  $res2[3] . "\",\"" . $res2[4] . "\",\"" .  $res2[2] . "\"\n";  
+						}
+					}
 					elsif($table eq "Clients")
 					{
 						print $OUTFILE "\"name\",\"status\",\"contact\"\n";
