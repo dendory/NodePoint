@@ -4398,6 +4398,39 @@ elsif($q->param('m')) # Modules
 					if($cfg->load('comp_files') eq "on" && $logged_user ne "") { print "<li role='presentation'><a href='./?m=view_product&tab=files&p=" . to_int($q->param('p')) . "#productdata'>Files</a></li>"; }
 					print "</ul>\n";
 					print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-body'>";
+					if($logged_lvl >= to_int($cfg->load('tasks_lvl')) && $q->param('add_step') && $q->param('name') && $q->param('user') && $q->param('due'))
+					{
+						if($q->param('due') !~ m/[0-9]{2}\/[0-9]{2}\/[0-9]{4}/)
+						{
+							msg("Due date must be in the format: mm/dd/yyyy.", 0);
+						}
+						else
+						{
+							$sql = $db->prepare("INSERT INTO steps VALUES (?, ?, ?, ?, ?);");
+							$sql->execute(to_int($q->param('p')), sanitize_html($q->param('name')), sanitize_alpha($q->param('user')), 0, sanitize_html($q->param('due')));
+							my $prod = "";
+							$sql = $db->prepare("SELECT name FROM products WHERE ROWID = ?;");
+							$sql->execute(to_int($q->param('p')));
+							while(my @res = $sql->fetchrow_array()) { $prod = $res[0]; }
+							notify(sanitize_alpha($q->param('user')), "New task assigned to you", "A new task has been added for you on " . lc($items{"Product"}) . " \"" . $prod . "\":\n\nTask description: " . sanitize_html($q->param('name')) . "\nDue by: " . sanitize_html($q->param('due')));
+							$sql = $db->prepare("INSERT INTO steps_log VALUES (?, ?, ?, ?)");
+							$sql->execute(to_int($q->param('p')), $logged_user, "Added new task <i>" . sanitize_html($q->param('name')) . "</i> to user <i>" . sanitize_alpha($q->param('user')) . "</i> due by <i>" . sanitize_html($q->param('due')) . "</i>", now());
+							msg("Task added.", 3);
+						}
+					}
+					if($logged_lvl >= to_int($cfg->load('tasks_lvl')) && $q->param("delete_step"))
+					{
+						my $p = 0;
+						my $stepname = "";
+						$sql = $db->prepare("SELECT productid,name FROM steps WHERE ROWID = ?;");
+						$sql->execute(to_int($q->param('delete_step')));
+						while(my @res = $sql->fetchrow_array()) { $p = to_int($res[0]); $stepname = $res[1]; }
+						$sql = $db->prepare("DELETE FROM steps WHERE ROWID = ?;");
+						$sql->execute(to_int($q->param('delete_step')));
+						$sql = $db->prepare("INSERT INTO steps_log VALUES (?, ?, ?, ?)");
+						$sql->execute($p, $logged_user, "Deleted task <i>" . $stepname . "</i>", now());
+						msg("Task removed.", 3);
+					}
 					if($q->param('clear_log') && $logged_lvl > 5)
 					{
 						$sql = $db->prepare("DELETE FROM steps_log WHERE productid = ?;");
@@ -4405,11 +4438,11 @@ elsif($q->param('m')) # Modules
 					}
 					if($logged_lvl >= to_int($cfg->load('tasks_lvl')) && $vis ne "Archived" && ($isassigned == 1 || $cfg->load('need_assign') ne "on"))
 					{
-						print "<form method='POST' action='.' data-toggle='validator' role='form'><input type='hidden' name='product_id' value='" . to_int($q->param('p')) . "'><input type='hidden' name='m' value='add_step'><h4>Add a new task</h4><p><div class='row'><div class='col-sm-12'><input placeholder='Description' class='form-control' name='name' maxlength='200' required></div></div></p><p><div class='row'><div class='col-sm-5'>Assign user:<br><select name='user' class='form-control'>";
+						print "<form method='POST' action='.' data-toggle='validator' role='form'><input type='hidden' name='p' value='" . to_int($q->param('p')) . "'><input type='hidden' name='m' value='view_product'><input type='hidden' name='tab' value='tasks'><h4>Add a new task</h4><p><div class='row'><div class='col-sm-12'><input placeholder='Description' class='form-control' name='name' maxlength='200' required></div></div></p><p><div class='row'><div class='col-sm-5'>Assign user:<br><select name='user' class='form-control'>";
 						$sql = $db->prepare("SELECT name FROM users WHERE level > 0 ORDER BY name;");
 						$sql->execute();
 						while(my @res = $sql->fetchrow_array()) { print "<option>" . $res[0] . "</option>"; }
-						print "</select></div><div class='col-sm-5'>Due by:<br><input type='text' class='form-control datepicker' name='due' placeholder='mm/dd/yyyy' required></div><div class='col-sm-2'><input class='btn btn-primary pull-right' type='submit' value='Add task'></div></div></p></form><hr><h4>Current tasks</h4>\n";
+						print "</select></div><div class='col-sm-5'>Due by:<br><input type='text' class='form-control datepicker' name='due' placeholder='mm/dd/yyyy' required></div><div class='col-sm-2'><input class='btn btn-primary pull-right' name='add_step' type='submit' value='Add task'></div></div></p></form><hr><h4>Current tasks</h4>\n";
 					}
 					print "<table class='table table-stripped' id='tasks_table'><thead><tr><th>Task</th><th>Assigned to</th><th>Completion</th><th>Due by</th></tr></thead><tbody>";
 					$sql = $db->prepare("SELECT ROWID,* FROM steps WHERE productid = ?;");
@@ -4424,7 +4457,7 @@ elsif($q->param('m')) # Modules
 						if(to_int($res[4]) == 100) { print "<font color='green'>Completed</font>"; }
 						elsif($dueby[2] < $y || ($dueby[2] == $y && $dueby[0] < $m) || ($dueby[2] == $y && $dueby[0] == $m && $dueby[1] < $d)) { print "<font color='red'>Overdue</font>"; }
 						else { print $res[5]; }
-						if($logged_lvl >= to_int($cfg->load('tasks_lvl')) && $vis ne "Archived") { print "<span class='pull-right'><form method='POST' action='.'><input type='hidden' name='product_id' value='" . to_int($q->param('p')) . "'><input type='hidden' name='m' value='delete_step'><input type='hidden' name='step_id' value=\"" . $res[0] . "\"><input class='btn btn-danger pull-right' type='submit' onclick='return confirm(\"Really remove this task?\");' value='X'></form></span>"; }
+						if($logged_lvl >= to_int($cfg->load('tasks_lvl')) && $vis ne "Archived") { print "<span class='pull-right'><form method='POST' action='.'><input type='hidden' name='m' value='view_product'><input type='hidden' name='tab' value='tasks'><input type='hidden' name='p' value='" . to_int($q->param('p')) . "'><input type='hidden' name='m' value='delete_step'><input type='hidden' name='delete_step' value=\"" . $res[0] . "\"><input class='btn btn-danger pull-right' type='submit' onclick='return confirm(\"Really remove this task?\");' value='X'></form></span>"; }
 						print "</td></tr>";
 					}				
 					print "</tbody></table><script>\$(document).ready(function(){\$('#tasks_table').DataTable({'order':[[3,'desc']],pageLength:" .  to_int($cfg->load('page_len')). ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script>";
@@ -4732,10 +4765,43 @@ elsif($q->param('m')) # Modules
 					if($cfg->load('comp_files') eq "on" && $logged_user ne "") { print "<li role='presentation'><a href='./?m=view_product&tab=files&p=" . to_int($q->param('p')) . "#productdata'>Files</a></li>"; }
 					print "</ul>\n";
 					print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-body'>\n";
+					if($logged_lvl > 2 && $q->param("delete_release"))
+					{
+						$sql = $db->prepare("DELETE FROM releases WHERE productid = ? AND ROWID = ?;");
+						$sql->execute(to_int($q->param('p')), to_int($q->param('delete_release')));
+						msg($items{"Release"} . " removed.", 3);
+					}
+					if($logged_lvl > 2 && $q->param("add_release") && $q->param('release_version') && $q->param('release_notes'))
+					{
+						if(length(sanitize_html($q->param('release_version'))) > 50 || length(sanitize_html($q->param('release_notes'))) > 999)
+						{
+							msg("Version should be less than 50 characters, notes should be less than 1,000 characters. Please go back and try again.", 0);
+						}
+						else
+						{
+							$sql = $db->prepare("SELECT * FROM releases WHERE productid = ?;");
+							$sql->execute(to_int($q->param('p')));
+							my $found;
+							while(my @res = $sql->fetchrow_array())
+							{
+								if(lc($res[2]) eq lc(sanitize_html($q->param('release_version')))) { $found = 1; }
+							}
+							if($found)
+							{
+								msg("This " . lc($items{"Release"}) . " already exists.", 0);
+							}
+							else
+							{
+								$sql = $db->prepare("INSERT INTO releases VALUES (?, ?, ?, ?, ?);");
+								$sql->execute(to_int($q->param('p')), $logged_user, sanitize_html($q->param('release_version')), sanitize_html($q->param('release_notes')), now());
+								msg($items{"Release"} . " added.", 3);
+							}
+						}
+					}
 					if($logged_lvl > 2 && $vis ne "Archived" && ($isassigned == 1 || $cfg->load('need_assign') ne "on"))
 					{
 						print "<h4>Add a new " . lc($items{"Release"}) . "</h4><form method='POST' action='.' data-toggle='validator' role='form'>\n";
-						print "<input type='hidden' name='m' value='add_release'><input type='hidden' name='product_id' value='" . to_int($q->param('p')) . "'><div class='row'><div class='col-sm-4'>" . $items{"Release"} . ": <input type='text' class='form-control' name='release_version' required></div><div class='col-sm-6'>Notes or link: <input type='text' name='release_notes' class='form-control' required></div><div class='col-sm-2'><input class='btn btn-primary pull-right' type='submit' value='Add " . lc($items{"Release"}) . "'></div></div></form><hr><h4>Current " . lc($items{"Release"}) . "s</h4>\n";
+						print "<input type='hidden' name='m' value='view_product'><input type='hidden' name='p' value='" . to_int($q->param('p')) . "'><div class='row'><div class='col-sm-4'>" . $items{"Release"} . ": <input type='text' class='form-control' name='release_version' required></div><div class='col-sm-6'>Notes or link: <input type='text' name='release_notes' class='form-control' required></div><div class='col-sm-2'><input class='btn btn-primary pull-right' type='submit' name='add_release' value='Add " . lc($items{"Release"}) . "'></div></div></form><hr><h4>Current " . lc($items{"Release"}) . "s</h4>\n";
 					}
 					print "<table class='table table-striped' id='releases_table'>\n";
 					print "<thead><tr><th>" . $items{"Release"} . "</th><th>User</th><th>Notes</th><th>Date</th></tr></thead><tbody>\n";
@@ -4747,111 +4813,11 @@ elsif($q->param('m')) # Modules
 						if(lc(substr($res[4], 0, 4)) eq "http") { print "<a href='" . $res[4] . "'>" . $res[4] . "</a>"; }
 						else { print $res[4]; }
 						print "</td><td>" .  $res[5];
-						if($logged_lvl > 2) { print "<span class='pull-right'><form method='GET' action='.'><input type='hidden' name='product_id' value='" . to_int($q->param('p')) . "'><input type='hidden' name='m' value='delete_release'><input type='hidden' name='release_id' value=\"" . $res[0] . "\"><input class='btn btn-danger' type='submit' onclick='return confirm(\"Really remove this entry?\");' value='X'></form></span>"; } 
+						if($logged_lvl > 2) { print "<span class='pull-right'><form method='GET' action='.'><input type='hidden' name='m' value='view_product'><input type='hidden' name='p' value='" . to_int($q->param('p')) . "'><input type='hidden' name='m' value='delete_release'><input type='hidden' name='delete_release' value=\"" . $res[0] . "\"><input class='btn btn-danger' type='submit' onclick='return confirm(\"Really remove this entry?\");' value='X'></form></span>"; } 
 						print "</td></tr>\n";
 					}
 					print "</tbody></table><script>\$(document).ready(function(){\$('#releases_table').DataTable({'order':[[3,'desc']],pageLength:" .  to_int($cfg->load('page_len')). ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script></div></div>\n";
 				}
-			}
-		}
-	}
-	elsif($logged_lvl > 2 && $q->param('m') eq "delete_release")
-	{
-		headers($items{"Product"} . "s");
-		if(!$q->param('release_id') || !$q->param('product_id'))
-		{
-			my $text = "Required fields missing: ";
-			if(!$q->param('product_id')) { $text .= "<span class='label label-danger'>" . $items{"Product"} . " ID</span> "; }
-			if(!$q->param('release_id')) { $text .= "<span class='label label-danger'>" . $items{"Release"} . " ID</span> "; }
-			$text .= " Please go back and try again.";
-			msg($text, 0);	    
-		}
-		else
-		{
-			$sql = $db->prepare("DELETE FROM releases WHERE productid = ? AND ROWID = ?;");
-			$sql->execute(to_int($q->param('product_id')), to_int($q->param('release_id')));
-			msg("<meta http-equiv='REFRESH' content='1;url=./?m=view_product&p=" . to_int($q->param('product_id')) . "'>" . $items{"Release"} . " deleted from " . lc($items{"Product"}) . " <b>" . to_int($q->param('product_id')) . "</b>.", 3);
-		}	
-	}
-	elsif($logged_lvl >= to_int($cfg->load('tasks_lvl')) && $q->param('m') eq "add_step")
-	{
-		headers($items{"Product"} . "s");
-		if(!$q->param('product_id') || !$q->param('name') || !$q->param('due') || !$q->param('user'))
-		{
-			my $text = "Required fields missing: ";
-			if(!$q->param('product_id')) { $text .= "<span class='label label-danger'>" . $items{"Product"} . " ID</span> "; }
-			if(!$q->param('name')) { $text .= "<span class='label label-danger'>Description</span> "; }
-			if(!$q->param('due')) { $text .= "<span class='label label-danger'>Due date</span> "; }
-			if(!$q->param('user')) { $text .= "<span class='label label-danger'>Assigned user</span> "; }
-			$text .= " Please go back and try again.";
-			msg($text, 0);
-		}
-		elsif($q->param('due') !~ m/[0-9]{2}\/[0-9]{2}\/[0-9]{4}/)
-		{
-			msg("Due date must be in the format: mm/dd/yyyy. Please go back and try again.", 0);
-		}
-		else
-		{
-			$sql = $db->prepare("INSERT INTO steps VALUES (?, ?, ?, ?, ?);");
-			$sql->execute(to_int($q->param('product_id')), sanitize_html($q->param('name')), sanitize_alpha($q->param('user')), 0, sanitize_html($q->param('due')));
-			my $prod = "";
-			$sql = $db->prepare("SELECT name FROM products WHERE ROWID = ?;");
-			$sql->execute(to_int($q->param('product_id')));
-			while(my @res = $sql->fetchrow_array()) { $prod = $res[0]; }
-			notify(sanitize_alpha($q->param('user')), "New task assigned to you", "A new task has been added for you on " . lc($items{"Product"}) . " \"" . $prod . "\":\n\nTask description: " . sanitize_html($q->param('name')) . "\nDue by: " . sanitize_html($q->param('due')));
-			$sql = $db->prepare("INSERT INTO steps_log VALUES (?, ?, ?, ?)");
-			$sql->execute(to_int($q->param('product_id')), $logged_user, "Added new task <i>" . sanitize_html($q->param('name')) . "</i> to user <i>" . sanitize_alpha($q->param('user')) . "</i> due by <i>" . sanitize_html($q->param('due')) . "</i>", now());
-			msg("<meta http-equiv='REFRESH' content='1;url=./?m=view_product&tab=tasks&p=" . to_int($q->param('product_id')) . "'>Task added.", 3);
-		}
-	}
-	elsif($logged_lvl >= to_int($cfg->load('tasks_lvl')) && $q->param('m') eq "delete_step" && $q->param('step_id'))
-	{
-		headers($items{"Product"} . "s");
-		my $p = 0;
-		my $stepname = "";
-		$sql = $db->prepare("SELECT productid,name FROM steps WHERE ROWID = ?;");
-		$sql->execute(to_int($q->param('step_id')));
-		while(my @res = $sql->fetchrow_array()) { $p = to_int($res[0]); $stepname = $res[1]; }
-		$sql = $db->prepare("DELETE FROM steps WHERE ROWID = ?;");
-		$sql->execute(to_int($q->param('step_id')));
-		$sql = $db->prepare("INSERT INTO steps_log VALUES (?, ?, ?, ?)");
-		$sql->execute($p, $logged_user, "Deleted task <i>" . $stepname . "</i>", now());
-		msg("<meta http-equiv='REFRESH' content='1;url=./?m=view_product&tab=tasks&p=" . to_int($q->param('product_id')) . "'>Task removed.", 3);
-	}
-	elsif($logged_lvl > 2 && $q->param('m') eq "add_release")
-	{
-		headers($items{"Product"} . "s");
-		if(!$q->param('release_version') || !$q->param('release_notes') || !$q->param('product_id'))
-		{
-			my $text = "Required fields missing: ";
-			if(!$q->param('release_notes')) { $text .= "<span class='label label-danger'>" . $items{"Release"} . " notes</span> "; }
-			if(!$q->param('product_id')) { $text .= "<span class='label label-danger'>" . $items{"Product"} . " ID</span> "; }
-			if(!$q->param('release_version')) { $text .= "<span class='label label-danger'>" . $items{"Release"} . "</span> "; }
-			$text .= " Please go back and try again.";
-			msg($text, 0);	    
-		}
-		elsif(length(sanitize_html($q->param('release_version'))) > 50 || length(sanitize_html($q->param('release_notes'))) > 999)
-		{
-			msg("Version should be less than 50 characters, notes should be less than 1,000 characters. Please go back and try again.", 0);
-		}
-		else
-		{
-			$sql = $db->prepare("SELECT * FROM releases WHERE productid = ?;");
-			$sql->execute(to_int($q->param('product_id')));
-			my $found;
-			while(my @res = $sql->fetchrow_array())
-			{
-				if(lc($res[2]) eq lc(sanitize_html($q->param('release_version')))) { $found = 1; }
-			}
-			if($found)
-			{
-				msg("This " . lc($items{"Release"}) . " already exists. Please go back and try again.", 0);
-			}
-			else
-			{
-				$sql = $db->prepare("INSERT INTO releases VALUES (?, ?, ?, ?, ?);");
-				$sql->execute(to_int($q->param('product_id')), $logged_user, sanitize_html($q->param('release_version')), sanitize_html($q->param('release_notes')), now());
-				msg("<meta http-equiv='REFRESH' content='1;url=./?m=view_product&p=" . to_int($q->param('product_id')) . "'>" . $items{"Release"} . " added.", 3);
 			}
 		}
 	}
