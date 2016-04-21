@@ -3903,10 +3903,7 @@ elsif($q->param('m')) # Modules
 			if($logged_lvl >= to_int($cfg->load('events_lvl')))
 			{ 
 				print "<input type='submit' class='btn btn-primary pull-right' value='Update event'></form>";
-			}
-			if($logged_lvl > 5)
-			{ 
-				print "<form method='GET' action='.'><input type='hidden' name='m' value='view_client'><input type='hidden' name='c' value='" . to_int($q->param('c')) . "'><input type='hidden' name='delete_event' value='" . to_int($q->param('e')) . "'><input type='submit' class='btn btn-danger' value='Delete'></form>";
+				print "<form method='GET' action='.'><input type='hidden' name='m' value='view_client'><input type='hidden' name='c' value='" . to_int($q->param('c')) . "'><input type='hidden' name='delete_event' value='" . to_int($q->param('e')) . "'><input type='submit' class='btn btn-danger' onclick='return confirm(\"Are you sure?\");' value='Delete'></form>";
 			}
 		}
 		print "</div></div>\n";
