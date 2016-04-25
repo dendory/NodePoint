@@ -43,7 +43,7 @@ systemctl restart httpd
 # Adding automation schedule
 echo "* Adding automations schedule..."
 crontab -l > /tmp/mycron
-if grep -q nodepoint-automate /tmp/mycron; then
+if ! grep -q nodepoint-automate /tmp/mycron; then
 	echo "*/5 * * * * $installdir/nodepoint/www/nodepoint-automate" >> /tmp/mycron
 	crontab /tmp/mycron
 fi
