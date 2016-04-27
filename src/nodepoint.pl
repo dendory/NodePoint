@@ -8,7 +8,7 @@
 #
 
 use strict;
-use Config::Win32;
+use Config::Linux;
 use Digest::SHA qw(sha1_hex);
 use DBI;
 use CGI '-utf8';;
@@ -1296,11 +1296,11 @@ sub home
 # Connect to config
 eval
 {
-	$cfg = Config::Win32->new("NodePoint", "settings");
+	$cfg = Config::Linux->new("NodePoint", "settings");
 };
 if(!defined($cfg)) # Can't even use headers() if this fails.
 {
-	print "Content-type: text/html\n\nError: Could not access " . Config::Win32->type . ". Please ensure NodePoint has the proper permissions.";
+	print "Content-type: text/html\n\nError: Could not access " . Config::Linux->type . ". Please ensure NodePoint has the proper permissions.";
 	exit(0);
 };
 
@@ -4500,6 +4500,18 @@ elsif($q->param('m')) # Modules
 							$sql2->execute(to_int($q->param('p')), $logged_user, $res[0], "Viewed secret", now());
 						}
 					}
+					if($q->param('change_secret') && $q->param('new_secret') && $q->param('secret') && $logged_lvl >= to_int($cfg->load('add_secrets')) && ($isassigned == 1 || $cfg->load('need_assign') ne "on"))
+					{
+						my $account = "Unknown";
+						$sql = $db->prepare("SELECT account FROM secrets WHERE ROWID = ?;");
+						$sql->execute(to_int($q->param('secret')));
+						while(my @res = $sql->fetchrow_array()) { $account = $res[0]; }
+						$sql = $db->prepare("UPDATE secrets SET secret = ? WHERE ROWID = ?");
+						$sql->execute(encode_base64(RC4($cfg->load("enc_key"), $q->param('new_secret'))), to_int($q->param('secret')));
+						msg("Secret changed.", 3);
+						$sql = $db->prepare("INSERT INTO secrets_log VALUES (?, ?, ?, ?, ?)");
+						$sql->execute(to_int($q->param('p')), $logged_user, $account, "Changed secret", now());
+					}
 					if($q->param('delete_secret') && $q->param('secret') && $logged_lvl >= to_int($cfg->load('add_secrets')) && ($isassigned == 1 || $cfg->load('need_assign') ne "on"))
 					{
 						my $account = "Unknown";
@@ -4531,9 +4543,9 @@ elsif($q->param('m')) # Modules
 					$sql->execute(to_int($q->param('p')));
 					while(my @res = $sql->fetchrow_array())
 					{
-						print "<tr><td>" . $res[4] . "</td><td>" . $res[3] . "</td><td>" . $res[2] . "</td><td>" . $res[6] . "<span class='pull-right'><form method='POST' action='.'><input type='hidden' name='m' value='view_product'><input type='hidden' name='tab' value='secrets'><input type='hidden' name='p' value='" . to_int($q->param('p')) . "'><input type='hidden' name='secret' value=\"" . $res[0] . "\">";
+						print "<tr><td>" . $res[4] . "</td><td>" . $res[3] . "</td><td>" . $res[2] . "</td><td>" . $res[6] . "<span class='pull-right'><form method='POST' action='.'><input type='hidden' name='m' value='view_product'><input type='hidden' name='new_secret' value=''><input type='hidden' name='tab' value='secrets'><input type='hidden' name='p' value='" . to_int($q->param('p')) . "'><input type='hidden' name='secret' value=\"" . $res[0] . "\">";
 						if($logged_lvl >= to_int($cfg->load('view_secrets')) && ($isassigned == 1 || $cfg->load('need_assign') ne "on")) { print "<input class='btn btn-primary' name='view_secret' type='submit' value='View'>"; }
-						if($logged_lvl >= to_int($cfg->load('add_secrets')) && ($isassigned == 1 || $cfg->load('need_assign') ne "on")) { print " <input class='btn btn-danger' name='delete_secret' type='submit' onclick='return confirm(\"Really remove this secret?\");' value='X'>"; }
+						if($logged_lvl >= to_int($cfg->load('add_secrets')) && ($isassigned == 1 || $cfg->load('need_assign') ne "on")) { print " <input class='btn btn-primary' name='change_secret' type='submit' onclick='this.form.new_secret.value=window.prompt(\"Change secret to:\");' value='Change'> <input class='btn btn-danger' name='delete_secret' type='submit' onclick='return confirm(\"Really remove this secret?\");' value='X'>"; }
 						print "</form></nobr></span></td></tr>";
 					}				
 					print "</tbody></table><script>\$(document).ready(function(){\$('#secrets_table').DataTable({'order':[[0,'asc']],pageLength:" .  to_int($cfg->load('page_len')). ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script>";
