@@ -8,7 +8,7 @@
 #
 
 use strict;
-use Config::Linux;
+use Config::Win32;
 use Digest::SHA qw(sha1_hex);
 use DBI;
 use CGI '-utf8';;
@@ -1296,11 +1296,11 @@ sub home
 # Connect to config
 eval
 {
-	$cfg = Config::Linux->new("NodePoint", "settings");
+	$cfg = Config::Win32->new("NodePoint", "settings");
 };
 if(!defined($cfg)) # Can't even use headers() if this fails.
 {
-	print "Content-type: text/html\n\nError: Could not access " . Config::Linux->type . ". Please ensure NodePoint has the proper permissions.";
+	print "Content-type: text/html\n\nError: Could not access " . Config::Win32->type . ". Please ensure NodePoint has the proper permissions.";
 	exit(0);
 };
 
@@ -1333,7 +1333,7 @@ if($q->cookie('np_name') && $q->cookie('np_key'))
 			}
 			else
 			{
-				$sql2 = $db->prepare("SELECT * FROM users WHERE name = ?;");
+				$sql2 = $db->prepare("SELECT * FROM users WHERE name = ? COLLATE NOCASE;");
 				$sql2->execute($res[0]);
 				while(my @res2 = $sql2->fetchrow_array())
 				{

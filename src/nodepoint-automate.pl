@@ -8,7 +8,7 @@
 #
 
 use strict;
-use Config::Linux;
+use Config::Win32;
 use Digest::SHA qw(sha1_hex);
 use DBI;
 use Scalar::Util qw(looks_like_number);
@@ -167,7 +167,7 @@ sub logevent
 
 # Initial config
 chdir dirname($0);
-$cfg = Config::Linux->new("NodePoint", "settings");
+$cfg = Config::Win32->new("NodePoint", "settings");
 
 if($cfg->load("db_address"))
 {
@@ -495,13 +495,13 @@ while(my @res = $sql->fetchrow_array())
 								elsif($existing == 0 && $importemail == 1)
 								{
 									$sql2 = $db->prepare("INSERT INTO users VALUES(?, ?, ?, ?, ?, ?);");
-									$sql2->execute(sanitize_alpha($name), "*********", sanitize_email($mail), to_int($cfg->load('default_lvl')), "Never", "");
+									$sql2->execute(lc(sanitize_alpha($name)), "*********", sanitize_email($mail), to_int($cfg->load('default_lvl')), "Never", "");
 									$newcount += 1;
 								}
 								elsif($existing == 0 && $importemail == 0)
 								{
 									$sql2 = $db->prepare("INSERT INTO users VALUES(?, ?, ?, ?, ?, ?);");
-									$sql2->execute(sanitize_alpha($name), "*********", "", to_int($cfg->load('default_lvl')), "Never", "");
+									$sql2->execute(lc(sanitize_alpha($name)), "*********", "", to_int($cfg->load('default_lvl')), "Never", "");
 									$newcount += 1;
 								}
 								$rowcount += 1; 
