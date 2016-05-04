@@ -3674,7 +3674,7 @@ elsif($q->param('m')) # Modules
 			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Route " . to_int($q->param('r')) . "</h3></div><div class='panel-body'>\n";
 			print "<form method='POST' action='./' data-toggle='validator' role='form'><input type='hidden' name='m' value='routing'><input type='hidden' name='r' value='" . to_int($q->param('r')) . "'><div class='row'><div class='col-sm-8'>Route name: <input type='text' name='name' class='form-control' value=\"" . $res[0] . "\" maxlength='99' required></div><div class='col-sm-4'>Priority: <input type='number' class='form-control' name='priority' value=\"" . $res[1] . "\" required></div></div>\n";
 			print "<hr><h4>Conditions:</h4><table class='table table-stripped'>\n";
-			print "<tr><td>Ticket must have been created by a user level <select name='lvl_or_higher'><option></option><option";
+			print "<tr><td>Ticket must be created by a user level <select name='lvl_or_higher'><option></option><option";
 			if(exists($conditions{'lvl_or_higher'}) && $conditions{'lvl_or_higher'} eq "1") { print " selected"; }
 			print ">1</option><option";
 			if(exists($conditions{'lvl_or_higher'}) && $conditions{'lvl_or_higher'} eq "2") { print " selected"; }
@@ -3684,10 +3684,44 @@ elsif($q->param('m')) # Modules
 			if(exists($conditions{'lvl_or_higher'}) && $conditions{'lvl_or_higher'} eq "4") { print " selected"; }
 			print ">4</option><option";
 			if(exists($conditions{'lvl_or_higher'}) && $conditions{'lvl_or_higher'} eq "5") { print " selected"; }
-			print ">5</option></select> or higher.</td></tr>\n";
+			print ">5</option></select> and higher, or level <select name='lvl_or_lower'><option></option><option";
+			if(exists($conditions{'lvl_or_lower'}) && $conditions{'lvl_or_lower'} eq "1") { print " selected"; }
+			print ">1</option><option";
+			if(exists($conditions{'lvl_or_lower'}) && $conditions{'lvl_or_lower'} eq "2") { print " selected"; }
+			print ">2</option><option";
+			if(exists($conditions{'lvl_or_lower'}) && $conditions{'lvl_or_lower'} eq "3") { print " selected"; }
+			print ">3</option><option";
+			if(exists($conditions{'lvl_or_lower'}) && $conditions{'lvl_or_lower'} eq "4") { print " selected"; }
+			print ">4</option><option";
+			if(exists($conditions{'lvl_or_lower'}) && $conditions{'lvl_or_lower'} eq "5") { print " selected"; }
+			print ">5</option></select> and lower.</td></tr>\n";
 			print "<tr><td>Ticket creator must have <input type='text' name='username_match' value=\"";
 			if(exists($conditions{'username_match'})) { print $conditions{'username_match'}; }
 			print "\"> in their user name.</td></tr>\n";
+			print "<tr><td>Ticket must be filed against " . lc($items{"Product"}) . " ID <input type='number' name='project_match' value=\"";
+			if(exists($conditions{'project_match'})) { print $conditions{'project_match'}; }
+			print "\">.</td></tr>\n";
+			print "<tr><td>Custom form field <select name='field_match'><option></option><option";
+			if(exists($conditions{'field_match'}) && $conditions{'field_match'} eq "1") { print " selected"; }
+			print ">1</option><option";
+			if(exists($conditions{'field_match'}) && $conditions{'field_match'} eq "2") { print " selected"; }
+			print ">2</option><option";
+			if(exists($conditions{'field_match'}) && $conditions{'field_match'} eq "3") { print " selected"; }
+			print ">3</option><option";
+			if(exists($conditions{'field_match'}) && $conditions{'field_match'} eq "4") { print " selected"; }
+			print ">4</option><option";
+			if(exists($conditions{'field_match'}) && $conditions{'field_match'} eq "5") { print " selected"; }
+			print ">5</option><option";
+			if(exists($conditions{'field_match'}) && $conditions{'field_match'} eq "6") { print " selected"; }
+			print ">6</option><option";
+			if(exists($conditions{'field_match'}) && $conditions{'field_match'} eq "7") { print " selected"; }
+			print ">7</option><option";
+			if(exists($conditions{'field_match'}) && $conditions{'field_match'} eq "8") { print " selected"; }
+			print ">8</option><option";
+			if(exists($conditions{'field_match'}) && $conditions{'field_match'} eq "9") { print " selected"; }
+			print ">9</option></select> contains the text <input type='text' name='field_match_text' value=\"";
+			if(exists($conditions{'field_match_text'})) { print $conditions{'field_match_text'}; }
+			print "\">.</td></tr>\n";
 			print "</table><br><h4>Actions:</h4><table class='table table-stripped'>\n";
 			print "<tr><td>Set ticket status to <select name='status'><option></option><option";
 			if(exists($actions{'status'}) && $actions{'status'} eq "Open") { print " selected"; }
@@ -3705,6 +3739,31 @@ elsif($q->param('m')) # Modules
 			print "<tr><td>Set ticket resolution to <input type='text' name='resolution' value=\"";
 			if(exists($actions{'resolution'})) { print $actions{'resolution'}; }
 			print "\">.</td></tr>\n";
+			print "<tr><td>Append to the file <input type='text' name='output_file' value=\"";
+			if(exists($actions{'output_file'})) { print $actions{'output_file'}; }
+			print "\"> the following text:<br><textarea style='width:90%' rows=5 name='output_file_text'>";
+			if(exists($actions{'output_file_text'})) { print $actions{'output_file_text'}; }			
+			print "</textarea></td></tr>\n";
+			print "<tr><td>Open a new window with the following URL: <input type='text' name='open_url' value=\"";
+			if(exists($actions{'open_url'})) { print $actions{'open_url'}; }
+			print "\">.</td></tr>\n";
+			print "<tr><td>Redirect the user to this URL: <input type='text' name='redirect_url' value=\"";
+			if(exists($actions{'redirect_url'})) { print $actions{'redirect_url'}; }
+			print "\"> after ticket submission.</td></tr>\n";
+			print "<tr><td>Send a notification to user <select name='notify_user'><option></option>";
+			my $sql3 = $db->prepare("SELECT name FROM users ORDER BY name;");
+			$sql3->execute();
+			while(my @res3 = $sql3->fetchrow_array())
+			{
+				print "<option";
+				if(exists($actions{'notify_user'}) && $actions{'notify_user'} eq $res3[0]) { print " selected"; }			
+				print ">" . $res3[0] . "</option>"; 
+			}
+			print "</select> with the following title: <input type='text' name='notify_user_title' value=\"";
+			if(exists($actions{'notify_user_title'})) { print $actions{'notify_user_title'}; }
+			print "\"> and text:<br><textarea style='width:90%' rows=5 name='notify_user_text'>";
+			if(exists($actions{'notify_user_text'})) { print $actions{'notify_user_text'}; }
+			print "</textarea></td></tr>\n";
 			print "</table><hr><div class='row'><div class='col-sm-12'><input name='delete_route' type='submit' onclick='return confirm(\"Are you sure?\");' value='Delete' class='btn btn-danger'> <input name='save_route' type='submit' value='Save' class='btn btn-primary pull-right'></div></div></form></div></div>\n";
 		}
 	}
@@ -3726,10 +3785,30 @@ elsif($q->param('m')) # Modules
 				$sql = $db->prepare("INSERT INTO routing_conditions VALUES (?, ?, ?);");
 				$sql->execute(to_int($q->param('r')), "lvl_or_higher", to_int($q->param('lvl_or_higher')));				
 			}
+			if($q->param('lvl_or_lower'))
+			{
+				$sql = $db->prepare("INSERT INTO routing_conditions VALUES (?, ?, ?);");
+				$sql->execute(to_int($q->param('r')), "lvl_or_lower", to_int($q->param('lvl_or_lower')));				
+			}
+			if($q->param('project_match'))
+			{
+				$sql = $db->prepare("INSERT INTO routing_conditions VALUES (?, ?, ?);");
+				$sql->execute(to_int($q->param('r')), "project_match", to_int($q->param('project_match')));				
+			}
 			if($q->param('username_match'))
 			{
 				$sql = $db->prepare("INSERT INTO routing_conditions VALUES (?, ?, ?);");
 				$sql->execute(to_int($q->param('r')), "username_match", sanitize_html($q->param('username_match')));				
+			}
+			if($q->param('field_match'))
+			{
+				$sql = $db->prepare("INSERT INTO routing_conditions VALUES (?, ?, ?);");
+				$sql->execute(to_int($q->param('r')), "field_match", to_int($q->param('field_match')));				
+			}
+			if($q->param('field_match_text'))
+			{
+				$sql = $db->prepare("INSERT INTO routing_conditions VALUES (?, ?, ?);");
+				$sql->execute(to_int($q->param('r')), "field_match_text", sanitize_html($q->param('field_match_text')));				
 			}
 			if($q->param('status'))
 			{
@@ -3740,6 +3819,41 @@ elsif($q->param('m')) # Modules
 			{
 				$sql = $db->prepare("INSERT INTO routing_actions VALUES (?, ?, ?);");
 				$sql->execute(to_int($q->param('r')), "resolution", sanitize_html($q->param('resolution')));				
+			}
+			if($q->param('open_url'))
+			{
+				$sql = $db->prepare("INSERT INTO routing_actions VALUES (?, ?, ?);");
+				$sql->execute(to_int($q->param('r')), "open_url", sanitize_html($q->param('open_url')));				
+			}
+			if($q->param('redirect_url'))
+			{
+				$sql = $db->prepare("INSERT INTO routing_actions VALUES (?, ?, ?);");
+				$sql->execute(to_int($q->param('r')), "redirect_url", sanitize_html($q->param('redirect_url')));				
+			}
+			if($q->param('output_file'))
+			{
+				$sql = $db->prepare("INSERT INTO routing_actions VALUES (?, ?, ?);");
+				$sql->execute(to_int($q->param('r')), "output_file", sanitize_html($q->param('output_file')));				
+			}
+			if($q->param('output_file_text'))
+			{
+				$sql = $db->prepare("INSERT INTO routing_actions VALUES (?, ?, ?);");
+				$sql->execute(to_int($q->param('r')), "output_file_text", sanitize_html($q->param('output_file_text')));				
+			}
+			if($q->param('notify_user_title'))
+			{
+				$sql = $db->prepare("INSERT INTO routing_actions VALUES (?, ?, ?);");
+				$sql->execute(to_int($q->param('r')), "notify_user_title", sanitize_html($q->param('notify_user_title')));				
+			}
+			if($q->param('notify_user'))
+			{
+				$sql = $db->prepare("INSERT INTO routing_actions VALUES (?, ?, ?);");
+				$sql->execute(to_int($q->param('r')), "notify_user", sanitize_alpha($q->param('notify_user')));				
+			}
+			if($q->param('notify_user_text'))
+			{
+				$sql = $db->prepare("INSERT INTO routing_actions VALUES (?, ?, ?);");
+				$sql->execute(to_int($q->param('r')), "notify_user_text", sanitize_html($q->param('notify_user_text')));				
 			}
 			$sql = $db->prepare("END");
 			$sql->execute();
@@ -6536,6 +6650,7 @@ elsif($q->param('m')) # Modules
 		my $title;
 		my $assignedto = "";
 		my $lnk = "Normal";
+		my @field = ["", "", "", "", "", "", "", "", "", ""];
 		$sql = $db->prepare("SELECT * FROM forms WHERE productid = ?;");
 		$sql->execute(to_int($q->param('product_id')));
 		@customform = $sql->fetchrow_array();
@@ -6560,10 +6675,10 @@ elsif($q->param('m')) # Modules
 				if($customform[($i*2)+2])
 				{
 					$description .= $customform[($i*2)+2] . " \t ";
-					if(defined($q->param('field'.$i))) { $description .= $q->param('field'.$i); }
-					elsif($q->param('upload'.$i)) { $description .= $q->param('upload'.$i); }
-					elsif($q->param('priority'.$i)) { $description .= $q->param('priority'.$i); $lnk = sanitize_alpha($q->param('priority'.$i)); }
-					elsif($q->param('assign'.$i)) { $description .= $q->param('assign'.$i); $assignedto = sanitize_alpha($q->param('assign'.$i)) . " "; }
+					if(defined($q->param('field'.$i))) { $description .= $q->param('field'.$i); $field[$i] = sanitize_html($q->param('field'.$i)); }
+					elsif($q->param('upload'.$i)) { $description .= $q->param('upload'.$i); $field[$i] = sanitize_html($q->param('upload'.$i)); }
+					elsif($q->param('priority'.$i)) { $description .= $q->param('priority'.$i); $lnk = sanitize_alpha($q->param('priority'.$i)); $field[$i] = $lnk; }
+					elsif($q->param('assign'.$i)) { $description .= $q->param('assign'.$i); $assignedto .= sanitize_alpha($q->param('assign'.$i)) . " "; $field[$i] = sanitize_alpha($q->param('assign'.$i)); }
 					$description .= "\n\n"; 
 				}
 			}
@@ -6663,6 +6778,19 @@ elsif($q->param('m')) # Modules
 						}
 					}
 				}
+				my $redirect_url = "./?m=view_ticket&t=" . $lastrowid;
+				my $pj = to_int($q->param('product_id'));
+				my $field1 = $field[1];
+				my $field2 = $field[2];
+				my $field3 = $field[3];
+				my $field4 = $field[4];
+				my $field5 = $field[5];
+				my $field6 = $field[6];
+				my $field7 = $field[7];
+				my $field8 = $field[8];
+				my $field9 = $field[9];
+				$description = sanitize_html($description);
+				$title = sanitize_html($title);
 				my $sql2 = $db->prepare("SELECT ROWID FROM routing ORDER BY priority;");
 				$sql2->execute();
 				while(my @res2 = $sql2->fetchrow_array())
@@ -6679,9 +6807,24 @@ elsif($q->param('m')) # Modules
 						if($logged_lvl >= to_int($conditions{'lvl_or_higher'})) { $processactions += 1; }
 						else { $processactions = -999; }
 					}
+					if(exists($conditions{'lvl_or_lower'}))
+					{
+						if($logged_lvl <= to_int($conditions{'lvl_or_lower'})) { $processactions += 1; }
+						else { $processactions = -999; }
+					}
+					if(exists($conditions{'project_match'}))
+					{
+						if($pj == to_int($conditions{'project_match'})) { $processactions += 1; }
+						else { $processactions = -999; }
+					}
 					if(exists($conditions{'username_match'}))
 					{
 						if(index($logged_user, $conditions{'username_match'}) != -1) { $processactions += 1; }
+						else { $processactions = -999; }
+					}
+					if(exists($conditions{'field_match'}) && exists($conditions{'field_match_text'}))
+					{
+						if(index($field[$conditions{'field_match'}], $conditions{'field_match_text'}) != -1) { $processactions += 1; }
 						else { $processactions = -999; }
 					}
 					if($processactions > 0)
@@ -6700,11 +6843,133 @@ elsif($q->param('m')) # Modules
 							$sql = $db->prepare("UPDATE tickets SET resolution = ? WHERE ROWID = ?;");
 							$sql->execute($actions{'resolution'}, $lastrowid);
 						}
+						if(exists($actions{'output_file'}) && exists($actions{'output_file_text'}))
+						{
+							my $outf = $actions{'output_file'};
+							$outf =~ s/\%user\%/$logged_user/g;
+							$outf =~ s/\%ticket\%/$lastrowid/g;
+							$outf =~ s/\%title\%/$title/g;
+							$outf =~ s/\%description\%/$description/g;
+							$outf =~ s/\%priority\%/$lnk/g;
+							$outf =~ s/\%assigned\%/$assignedto/g;
+							$outf =~ s/\%product\%/$pj/g;
+							$outf =~ s/\%field1\%/$field1/g;
+							$outf =~ s/\%field2\%/$field2/g;
+							$outf =~ s/\%field3\%/$field3/g;
+							$outf =~ s/\%field4\%/$field4/g;
+							$outf =~ s/\%field5\%/$field5/g;
+							$outf =~ s/\%field6\%/$field6/g;
+							$outf =~ s/\%field7\%/$field7/g;
+							$outf =~ s/\%field8\%/$field8/g;
+							$outf =~ s/\%field9\%/$field9/g;
+							my $out = $actions{'output_file_text'};
+							$out =~ s/\%user\%/$logged_user/g;
+							$out =~ s/\%ticket\%/$lastrowid/g;
+							$out =~ s/\%title\%/$title/g;
+							$out =~ s/\%description\%/$description/g;
+							$out =~ s/\%priority\%/$lnk/g;
+							$out =~ s/\%assigned\%/$assignedto/g;
+							$out =~ s/\%product\%/$pj/g;
+							$out =~ s/\%field1\%/$field1/g;
+							$out =~ s/\%field2\%/$field2/g;
+							$out =~ s/\%field3\%/$field3/g;
+							$out =~ s/\%field4\%/$field4/g;
+							$out =~ s/\%field5\%/$field5/g;
+							$out =~ s/\%field6\%/$field6/g;
+							$out =~ s/\%field7\%/$field7/g;
+							$out =~ s/\%field8\%/$field8/g;
+							$out =~ s/\%field9\%/$field9/g;
+							if(open(my $OUTFILE, ">>", $outf))
+							{
+								print $OUTFILE $out;
+								close($OUTFILE);
+							}
+						}
+						if(exists($actions{'notify_user'}) && exists($actions{'notify_user_text'}) && exists($actions{'notify_user_title'}))
+						{
+							my $out = $actions{'notify_user_text'};
+							$out =~ s/\%user\%/$logged_user/g;
+							$out =~ s/\%ticket\%/$lastrowid/g;
+							$out =~ s/\%title\%/$title/g;
+							$out =~ s/\%description\%/$description/g;
+							$out =~ s/\%priority\%/$lnk/g;
+							$out =~ s/\%assigned\%/$assignedto/g;
+							$out =~ s/\%product\%/$pj/g;
+							$out =~ s/\%field1\%/$field1/g;
+							$out =~ s/\%field2\%/$field2/g;
+							$out =~ s/\%field3\%/$field3/g;
+							$out =~ s/\%field4\%/$field4/g;
+							$out =~ s/\%field5\%/$field5/g;
+							$out =~ s/\%field6\%/$field6/g;
+							$out =~ s/\%field7\%/$field7/g;
+							$out =~ s/\%field8\%/$field8/g;
+							$out =~ s/\%field9\%/$field9/g;
+							my $outt = $actions{'notify_user_title'};
+							$outt =~ s/\%user\%/$logged_user/g;
+							$outt =~ s/\%ticket\%/$lastrowid/g;
+							$outt =~ s/\%title\%/$title/g;
+							$outt =~ s/\%description\%/$description/g;
+							$outt =~ s/\%priority\%/$lnk/g;
+							$outt =~ s/\%assigned\%/$assignedto/g;
+							$outt =~ s/\%product\%/$pj/g;
+							$outt =~ s/\%field1\%/$field1/g;
+							$outt =~ s/\%field2\%/$field2/g;
+							$outt =~ s/\%field3\%/$field3/g;
+							$outt =~ s/\%field4\%/$field4/g;
+							$outt =~ s/\%field5\%/$field5/g;
+							$outt =~ s/\%field6\%/$field6/g;
+							$outt =~ s/\%field7\%/$field7/g;
+							$outt =~ s/\%field8\%/$field8/g;
+							$outt =~ s/\%field9\%/$field9/g;
+							notify($actions{'notify_user'}, $outt, $out);
+						}
+						if(exists($actions{'open_url'}))
+						{
+							my $out = $actions{'open_url'};
+							$out =~ s/\%user\%/$logged_user/g;
+							$out =~ s/\%ticket\%/$lastrowid/g;
+							$out =~ s/\%title\%/$title/g;
+							$out =~ s/\%description\%/$description/g;
+							$out =~ s/\%priority\%/$lnk/g;
+							$out =~ s/\%assigned\%/$assignedto/g;
+							$out =~ s/\%product\%/$pj/g;
+							$out =~ s/\%field1\%/$field1/g;
+							$out =~ s/\%field2\%/$field2/g;
+							$out =~ s/\%field3\%/$field3/g;
+							$out =~ s/\%field4\%/$field4/g;
+							$out =~ s/\%field5\%/$field5/g;
+							$out =~ s/\%field6\%/$field6/g;
+							$out =~ s/\%field7\%/$field7/g;
+							$out =~ s/\%field8\%/$field8/g;
+							$out =~ s/\%field9\%/$field9/g;
+							print "<script>window.open(\"" . $out . "\");</script>";
+						}
+						if(exists($actions{'redirect_url'}))
+						{
+							my $out = $actions{'redirect_url'};
+							$out =~ s/\%user\%/$logged_user/g;
+							$out =~ s/\%ticket\%/$lastrowid/g;
+							$out =~ s/\%title\%/$title/g;
+							$out =~ s/\%description\%/$description/g;
+							$out =~ s/\%priority\%/$lnk/g;
+							$out =~ s/\%assigned\%/$assignedto/g;
+							$out =~ s/\%product\%/$pj/g;
+							$out =~ s/\%field1\%/$field1/g;
+							$out =~ s/\%field2\%/$field2/g;
+							$out =~ s/\%field3\%/$field3/g;
+							$out =~ s/\%field4\%/$field4/g;
+							$out =~ s/\%field5\%/$field5/g;
+							$out =~ s/\%field6\%/$field6/g;
+							$out =~ s/\%field7\%/$field7/g;
+							$out =~ s/\%field8\%/$field8/g;
+							$out =~ s/\%field9\%/$field9/g;
+							$redirect_url = $out;
+						}
 						$sql = $db->prepare("UPDATE routing SET hits = hits + 1 WHERE ROWID = ?;");
 						$sql->execute(to_int($res2[0]));						
 					}
 				}
-				msg("<meta http-equiv='REFRESH' content='1;url=./?m=view_ticket&t=" . $lastrowid . "'>Ticket successfully added.", 3);
+				msg("<meta http-equiv='REFRESH' content='1;url=" . $redirect_url . "'>Ticket successfully added.", 3);
 			}
 		}
 		else

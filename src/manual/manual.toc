@@ -29,29 +29,29 @@
 \contentsline {section}{\numberline {4}Components}{14}{section.4}
 \contentsline {subsection}{\numberline {4.1}Tickets Management}{14}{subsection.4.1}
 \contentsline {subsubsection}{\numberline {4.1.1}Custom forms}{14}{subsubsection.4.1.1}
-\contentsline {subsubsection}{\numberline {4.1.2}Ticket routing}{15}{subsubsection.4.1.2}
-\contentsline {subsubsection}{\numberline {4.1.3}Favorites and assignment}{15}{subsubsection.4.1.3}
-\contentsline {subsection}{\numberline {4.2}Support Articles}{15}{subsection.4.2}
-\contentsline {subsection}{\numberline {4.3}Time Tracking}{15}{subsection.4.3}
+\contentsline {subsubsection}{\numberline {4.1.2}Favorites and assignment}{15}{subsubsection.4.1.2}
+\contentsline {subsubsection}{\numberline {4.1.3}Ticket routing}{15}{subsubsection.4.1.3}
+\contentsline {subsection}{\numberline {4.2}Support Articles}{16}{subsection.4.2}
+\contentsline {subsection}{\numberline {4.3}Time Tracking}{16}{subsection.4.3}
 \contentsline {subsection}{\numberline {4.4}Shoutbox}{16}{subsection.4.4}
 \contentsline {subsection}{\numberline {4.5}Tasks Management}{16}{subsection.4.5}
-\contentsline {subsection}{\numberline {4.6}Clients Directory}{16}{subsection.4.6}
+\contentsline {subsection}{\numberline {4.6}Clients Directory}{17}{subsection.4.6}
 \contentsline {subsection}{\numberline {4.7}Secrets Vault}{17}{subsection.4.7}
-\contentsline {subsection}{\numberline {4.8}Inventory Control}{17}{subsection.4.8}
-\contentsline {subsection}{\numberline {4.9}Billing}{18}{subsection.4.9}
-\contentsline {subsection}{\numberline {4.10}Files Management}{18}{subsection.4.10}
-\contentsline {subsection}{\numberline {4.11}Automation}{19}{subsection.4.11}
-\contentsline {subsubsection}{\numberline {4.11.1}Backup}{19}{subsubsection.4.11.1}
-\contentsline {subsubsection}{\numberline {4.11.2}Email to Ticket}{19}{subsubsection.4.11.2}
+\contentsline {subsection}{\numberline {4.8}Inventory Control}{18}{subsection.4.8}
+\contentsline {subsection}{\numberline {4.9}Billing}{19}{subsection.4.9}
+\contentsline {subsection}{\numberline {4.10}Files Management}{19}{subsection.4.10}
+\contentsline {subsection}{\numberline {4.11}Automation}{20}{subsection.4.11}
+\contentsline {subsubsection}{\numberline {4.11.1}Backup}{20}{subsubsection.4.11.1}
+\contentsline {subsubsection}{\numberline {4.11.2}Email to Ticket}{20}{subsubsection.4.11.2}
 \contentsline {subsubsection}{\numberline {4.11.3}Bulk export}{20}{subsubsection.4.11.3}
 \contentsline {subsubsection}{\numberline {4.11.4}Users sync}{20}{subsubsection.4.11.4}
 \contentsline {subsubsection}{\numberline {4.11.5}Computers sync}{20}{subsubsection.4.11.5}
-\contentsline {subsubsection}{\numberline {4.11.6}Ticket expiration}{20}{subsubsection.4.11.6}
-\contentsline {subsubsection}{\numberline {4.11.7}Reminder notifications}{20}{subsubsection.4.11.7}
-\contentsline {subsubsection}{\numberline {4.11.8}ServiceNow CMDB}{20}{subsubsection.4.11.8}
-\contentsline {subsubsection}{\numberline {4.11.9}Update MOTD}{20}{subsubsection.4.11.9}
-\contentsline {subsubsection}{\numberline {4.11.10}File expiration}{20}{subsubsection.4.11.10}
-\contentsline {subsubsection}{\numberline {4.11.11}Log export}{20}{subsubsection.4.11.11}
+\contentsline {subsubsection}{\numberline {4.11.6}Ticket expiration}{21}{subsubsection.4.11.6}
+\contentsline {subsubsection}{\numberline {4.11.7}Reminder notifications}{21}{subsubsection.4.11.7}
+\contentsline {subsubsection}{\numberline {4.11.8}ServiceNow CMDB}{21}{subsubsection.4.11.8}
+\contentsline {subsubsection}{\numberline {4.11.9}Update MOTD}{21}{subsubsection.4.11.9}
+\contentsline {subsubsection}{\numberline {4.11.10}File expiration}{21}{subsubsection.4.11.10}
+\contentsline {subsubsection}{\numberline {4.11.11}Log export}{21}{subsubsection.4.11.11}
 \contentsline {subsubsection}{\numberline {4.11.12}CSV inventory}{21}{subsubsection.4.11.12}
 \contentsline {subsubsection}{\numberline {4.11.13}CSV projects}{21}{subsubsection.4.11.13}
 \contentsline {section}{\numberline {5}JSON API}{22}{section.5}

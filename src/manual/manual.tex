@@ -443,11 +443,6 @@ Here is an example of a custom form being built along with the result:
 \includegraphics[scale=0.5]{customform2.jpg}
 \end{figure}
 
-\subsubsection{Ticket routing}
-A number of automatic actions can be applied to tickets based on a number of conditions. Note that this is different than the scheduled background processes provided by the Automation component. Routing is done every time a new ticket is submitted.
-
-An unlimited number of routes can be created under the \textbf{Tools} menu by users with the proper access level. Each route has a priority and will be evaluated in that order. When you edit a route, you have to specify which conditions the ticket has to evaluate against, and which actions to apply if the conditions are true. Any condition left blank will not be evaluated.
-
 \subsubsection{Favorites and assignment}
 Any logged in user can favorite a ticket by clicking the proper option on the ticket's screen, which will add that ticket to their home screen for easy reference. This is meant as a way to follow an issue you are not actively working on.
 
@@ -460,6 +455,32 @@ Auto assignment can also be used to assign specific users to any ticket filed ag
 \end{figure}
 
 Both favorite and assigned tickets are listed on the user's home page. Finally, email notifications are sent out when a ticket is created, modified or a comment is added. The notifications are sent to the ticket author and users assigned to that ticket.
+
+\subsubsection{Ticket routing}
+A number of automatic actions can be applied to tickets based on a number of conditions. Note that this is different than the scheduled background processes provided by the Automation component. Routing is done every time a new ticket is submitted.
+
+An unlimited number of routes can be created under the \textbf{Tools} menu by users with the proper access level. Each route has a priority and will be evaluated in that order. When you edit a route, you have to specify which conditions the ticket has to evaluate against, and which actions to apply if the conditions are true. Any condition left blank will not be evaluated.
+
+Some conditions and actions accept the following variables:
+
+\begin{itemize}
+\item \textbf{\%user\%} - The user who created the ticket.
+\item \textbf{\%priority\%} - The priority of the ticket.
+\item \textbf{\%ticket\%} - The ticket ID number.
+\item \textbf{\%assigned\%} - The people auto-assigned to the ticket.
+\item \textbf{\%title\%} - The title of the ticket.
+\item \textbf{\%description\%} - The description of the ticket.
+\item \textbf{\%product\%} - The project ID the ticket is filed with.
+\item \textbf{\%field1\%} - The content of field 1 (custom forms only).
+\item \textbf{\%field2\%} - The content of field 2 (custom forms only).
+\item \textbf{\%field3\%} - The content of field 3 (custom forms only).
+\item \textbf{\%field4\%} - The content of field 4 (custom forms only).
+\item \textbf{\%field5\%} - The content of field 5 (custom forms only).
+\item \textbf{\%field6\%} - The content of field 6 (custom forms only).
+\item \textbf{\%field7\%} - The content of field 7 (custom forms only).
+\item \textbf{\%field8\%} - The content of field 8 (custom forms only).
+\item \textbf{\%field9\%} - The content of field 9 (custom forms only).
+\end{itemize}
 
 \subsection{Support Articles}
 The \textbf{Articles} page hosts articles that can be used to document common use cases, common issues, or to build a knowledge base for your organization. Articles are created in \textit{draft} mode, which hides them from users with an access level lower than 4. Only once they are published are they visible to all users.
@@ -475,7 +496,7 @@ Time entries cannot be removed since it acts as a timestamp for work done. Corre
 The shoutbox is a simple chat area on the home page that all users can use. The box shows the last few entries made by users, and individual entries can be deleted by users with access level 5 or higher.
 
 \subsection{Tasks Management}
-The tasks management component can be used to manage products or projects, create new tasks needed to be completed, and assign these tasks to users with due dates. Users with access level 4 (configurable) or higher can create new tasks on the \textbf{Projects} page:
+The tasks management component can be used to manage products or projects, create new tasks needed to be completed, and assign these tasks to users with due dates. Users with access level 4 (configurable) or higher can create new tasks on the \textbf{Projects} page.
 
 \begin{figure}[h]
 \includegraphics{projectmanagement.jpg}
