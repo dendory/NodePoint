@@ -3701,6 +3701,12 @@ elsif($q->param('m')) # Modules
 			print "<tr><td>Ticket must be filed against " . lc($items{"Product"}) . " ID <input type='number' name='project_match' value=\"";
 			if(exists($conditions{'project_match'})) { print $conditions{'project_match'}; }
 			print "\">.</td></tr>\n";
+			print "<tr><td>The ticket title must contain the text <input type='text' name='title_match' value=\"";
+			if(exists($conditions{'title_match'})) { print $conditions{'title_match'}; }
+			print "\">.</td></tr>\n";
+			print "<tr><td>The ticket description must contain the text <input type='text' name='description_match' value=\"";
+			if(exists($conditions{'description_match'})) { print $conditions{'description_match'}; }
+			print "\">.</td></tr>\n";
 			print "<tr><td>Custom form field <select name='field_match'><option></option><option";
 			if(exists($conditions{'field_match'}) && $conditions{'field_match'} eq "1") { print " selected"; }
 			print ">1</option><option";
@@ -3719,7 +3725,7 @@ elsif($q->param('m')) # Modules
 			if(exists($conditions{'field_match'}) && $conditions{'field_match'} eq "8") { print " selected"; }
 			print ">8</option><option";
 			if(exists($conditions{'field_match'}) && $conditions{'field_match'} eq "9") { print " selected"; }
-			print ">9</option></select> contains the text <input type='text' name='field_match_text' value=\"";
+			print ">9</option></select> must contain the text <input type='text' name='field_match_text' value=\"";
 			if(exists($conditions{'field_match_text'})) { print $conditions{'field_match_text'}; }
 			print "\">.</td></tr>\n";
 			print "</table><br><h4>Actions:</h4><table class='table table-stripped'>\n";
@@ -3744,10 +3750,13 @@ elsif($q->param('m')) # Modules
 			print "\"> the following text:<br><textarea style='width:90%' rows=5 name='output_file_text'>";
 			if(exists($actions{'output_file_text'})) { print $actions{'output_file_text'}; }			
 			print "</textarea></td></tr>\n";
-			print "<tr><td>Open a new window with the following URL: <input type='text' name='open_url' value=\"";
+			print "<tr><td>Show a popup message with the text <input type='text' name='popup_message' value=\"";
+			if(exists($actions{'popup_message'})) { print $actions{'popup_message'}; }
+			print "\"> to the user.</td></tr>\n";
+			print "<tr><td>Open a new window with the URL <input type='text' name='open_url' value=\"";
 			if(exists($actions{'open_url'})) { print $actions{'open_url'}; }
 			print "\">.</td></tr>\n";
-			print "<tr><td>Redirect the user to this URL: <input type='text' name='redirect_url' value=\"";
+			print "<tr><td>Redirect the user to the URL <input type='text' name='redirect_url' value=\"";
 			if(exists($actions{'redirect_url'})) { print $actions{'redirect_url'}; }
 			print "\"> after ticket submission.</td></tr>\n";
 			print "<tr><td>Send a notification to user <select name='notify_user'><option></option>";
@@ -3759,9 +3768,9 @@ elsif($q->param('m')) # Modules
 				if(exists($actions{'notify_user'}) && $actions{'notify_user'} eq $res3[0]) { print " selected"; }			
 				print ">" . $res3[0] . "</option>"; 
 			}
-			print "</select> with the following title: <input type='text' name='notify_user_title' value=\"";
+			print "</select> with the title <input type='text' name='notify_user_title' value=\"";
 			if(exists($actions{'notify_user_title'})) { print $actions{'notify_user_title'}; }
-			print "\"> and text:<br><textarea style='width:90%' rows=5 name='notify_user_text'>";
+			print "\"> and the following text:<br><textarea style='width:90%' rows=5 name='notify_user_text'>";
 			if(exists($actions{'notify_user_text'})) { print $actions{'notify_user_text'}; }
 			print "</textarea></td></tr>\n";
 			print "</table><hr><div class='row'><div class='col-sm-12'><input name='delete_route' type='submit' onclick='return confirm(\"Are you sure?\");' value='Delete' class='btn btn-danger'> <input name='save_route' type='submit' value='Save' class='btn btn-primary pull-right'></div></div></form></div></div>\n";
@@ -3810,6 +3819,16 @@ elsif($q->param('m')) # Modules
 				$sql = $db->prepare("INSERT INTO routing_conditions VALUES (?, ?, ?);");
 				$sql->execute(to_int($q->param('r')), "field_match_text", sanitize_html($q->param('field_match_text')));				
 			}
+			if($q->param('title_match'))
+			{
+				$sql = $db->prepare("INSERT INTO routing_conditions VALUES (?, ?, ?);");
+				$sql->execute(to_int($q->param('r')), "title_match", sanitize_html($q->param('title_match')));				
+			}
+			if($q->param('description_match'))
+			{
+				$sql = $db->prepare("INSERT INTO routing_conditions VALUES (?, ?, ?);");
+				$sql->execute(to_int($q->param('r')), "description_match", sanitize_html($q->param('description_match')));				
+			}
 			if($q->param('status'))
 			{
 				$sql = $db->prepare("INSERT INTO routing_actions VALUES (?, ?, ?);");
@@ -3824,6 +3843,11 @@ elsif($q->param('m')) # Modules
 			{
 				$sql = $db->prepare("INSERT INTO routing_actions VALUES (?, ?, ?);");
 				$sql->execute(to_int($q->param('r')), "open_url", sanitize_html($q->param('open_url')));				
+			}
+			if($q->param('popup_message'))
+			{
+				$sql = $db->prepare("INSERT INTO routing_actions VALUES (?, ?, ?);");
+				$sql->execute(to_int($q->param('r')), "popup_message", sanitize_html($q->param('popup_message')));				
 			}
 			if($q->param('redirect_url'))
 			{
@@ -6822,6 +6846,16 @@ elsif($q->param('m')) # Modules
 						if(index($logged_user, $conditions{'username_match'}) != -1) { $processactions += 1; }
 						else { $processactions = -999; }
 					}
+					if(exists($conditions{'title_match'}))
+					{
+						if(index($title, $conditions{'title_match'}) != -1) { $processactions += 1; }
+						else { $processactions = -999; }
+					}
+					if(exists($conditions{'description_match'}))
+					{
+						if(index($description, $conditions{'description_match'}) != -1) { $processactions += 1; }
+						else { $processactions = -999; }
+					}
 					if(exists($conditions{'field_match'}) && exists($conditions{'field_match_text'}))
 					{
 						if(index($field[$conditions{'field_match'}], $conditions{'field_match_text'}) != -1) { $processactions += 1; }
@@ -6943,6 +6977,27 @@ elsif($q->param('m')) # Modules
 							$out =~ s/\%field8\%/$field8/g;
 							$out =~ s/\%field9\%/$field9/g;
 							print "<script>window.open(\"" . $out . "\");</script>";
+						}
+						if(exists($actions{'popup_message'}))
+						{
+							my $out = $actions{'popup_message'};
+							$out =~ s/\%user\%/$logged_user/g;
+							$out =~ s/\%ticket\%/$lastrowid/g;
+							$out =~ s/\%title\%/$title/g;
+							$out =~ s/\%description\%/$description/g;
+							$out =~ s/\%priority\%/$lnk/g;
+							$out =~ s/\%assigned\%/$assignedto/g;
+							$out =~ s/\%product\%/$pj/g;
+							$out =~ s/\%field1\%/$field1/g;
+							$out =~ s/\%field2\%/$field2/g;
+							$out =~ s/\%field3\%/$field3/g;
+							$out =~ s/\%field4\%/$field4/g;
+							$out =~ s/\%field5\%/$field5/g;
+							$out =~ s/\%field6\%/$field6/g;
+							$out =~ s/\%field7\%/$field7/g;
+							$out =~ s/\%field8\%/$field8/g;
+							$out =~ s/\%field9\%/$field9/g;
+							print "<script>alert(\"" . $out . "\");</script>";
 						}
 						if(exists($actions{'redirect_url'}))
 						{
