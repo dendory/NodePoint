@@ -29,7 +29,7 @@ my ($cfg, $db, $sql, $cn, $cp, $cgs, $last_login, $perf);
 my $logged_user = "";
 my $logged_lvl = -1;
 my $q = new CGI;
-my $VERSION = "1.6.6";
+my $VERSION = "1.7.0";
 my %items = ("Product", "Product", "Release", "Release", "Model", "SKU/Model");
 my @itemtypes = ("None");
 my @themes = ("primary", "default", "success", "info", "warning", "danger");
@@ -158,6 +158,7 @@ sub navbar
 			if($cfg->load('comp_files') eq "on") { print "   <li><a href='./?m=files'>Files</a></li>\n"; }
 			if($logged_lvl >= to_int($cfg->load("auto_lvl")) && $cfg->load('comp_auto') eq "on") { print "   <li><a href='./?m=auto'>Automation</a></li>\n"; }
 			if($logged_lvl >= to_int($cfg->load("customs_lvl")) && $cfg->load('comp_tickets') eq "on")	{ print "   <li><a href='./?m=customforms'>Custom forms</a></li>\n"; }
+			if($logged_lvl >= to_int($cfg->load("customs_lvl")) && $cfg->load('comp_tickets') eq "on")	{ print "   <li><a href='./?m=routing'>Ticket routing</a></li>\n"; }
 			if($logged_lvl >= to_int($cfg->load("summary_lvl"))) { print "   <li><a href='./?m=users'>Users management</a></li>\n"; }
 			if($logged_lvl > 5) { print "   <li><a href='./?m=log'>System log</a></li>\n"; }
 			print "  <li role='separator' class='divider'></li><li><a href='./?m=logout'>Logout</a></li></ul></li>\n";
@@ -176,11 +177,12 @@ sub navbar
 			if($cfg->load('comp_files') eq "on") { print "   <li><a href='./?m=files'>Files</a></li>\n"; }
 			if($logged_lvl >= to_int($cfg->load("auto_lvl")) && $cfg->load('comp_auto') eq "on") { print "   <li><a href='./?m=auto'>Automation</a></li>\n"; }
 			if($logged_lvl >= to_int($cfg->load("customs_lvl")) && $cfg->load('comp_tickets') eq "on")	{ print "   <li><a href='./?m=customforms'>Custom forms</a></li>\n"; }
+			if($logged_lvl >= to_int($cfg->load("customs_lvl")) && $cfg->load('comp_tickets') eq "on")	{ print "   <li><a href='./?m=routing'>Ticket routing</a></li>\n"; }
 			if($logged_lvl >= to_int($cfg->load("summary_lvl"))) { print "   <li><a href='./?m=users'>Users management</a></li>\n"; }
 			if($logged_lvl > 5) { print "   <li><a href='./?m=log'>System log</a></li>\n"; }
 			print "  <li role='separator' class='divider'></li><li><a href='./?m=logout'>Logout</a></li></ul></li>\n";
 		}
-		elsif($q->param('m') && ($q->param('m') eq "settings" || $q->param('m') eq "stats" || $q->param('m') eq "auto" || $q->param('m') eq "show_report" || $q->param('m') eq "triggers" || $q->param('m') eq "customforms" || $q->param('m') eq "users" || $q->param('m') eq "log" || $q->param('m') eq "confirm_delete" || $q->param('m') eq "clear_log" || $q->param('m') eq "stats" || $q->param('m') eq "change_lvl" || $q->param('m') eq "files" || $q->param('m') eq "confirm_email" || $q->param('m') eq "reset_pass" || $q->param('m') eq "logout" || $q->param('m') eq "summary") || $q->param('create_form') || $q->param('edit_form') || $q->param('save_form'))
+		elsif($q->param('m') && ($q->param('m') eq "settings" || $q->param('m') eq "stats" || $q->param('m') eq "auto" || $q->param('m') eq "show_report" || $q->param('m') eq "triggers" || $q->param('m') eq "customforms" || $q->param('m') eq "users" || $q->param('m') eq "log" || $q->param('m') eq "confirm_delete" || $q->param('m') eq "clear_log" || $q->param('m') eq "stats" || $q->param('m') eq "change_lvl" || $q->param('m') eq "files" || $q->param('m') eq "confirm_email" || $q->param('m') eq "reset_pass" || $q->param('m') eq "logout" || $q->param('m') eq "summary" || $q->param('m') eq "routing" || $q->param('m') eq "edit_route") || $q->param('create_form') || $q->param('edit_form') || $q->param('save_form'))
 		{
 			print "	 <li><a href='.'>Home</a></li>\n";
 			print "	 <li><a href='./?m=products'>" . $items{"Product"} . "s</a></li>\n";
@@ -194,6 +196,7 @@ sub navbar
 			if($cfg->load('comp_files') eq "on") { print "   <li><a href='./?m=files'>Files</a></li>\n"; }
 			if($logged_lvl >= to_int($cfg->load("auto_lvl")) && $cfg->load('comp_auto') eq "on") { print "   <li><a href='./?m=auto'>Automation</a></li>\n"; }
 			if($logged_lvl >= to_int($cfg->load("customs_lvl")) && $cfg->load('comp_tickets') eq "on")	{ print "   <li><a href='./?m=customforms'>Custom forms</a></li>\n"; }
+			if($logged_lvl >= to_int($cfg->load("customs_lvl")) && $cfg->load('comp_tickets') eq "on")	{ print "   <li><a href='./?m=routing'>Ticket routing</a></li>\n"; }
 			if($logged_lvl >= to_int($cfg->load("summary_lvl"))) { print "   <li><a href='./?m=users'>Users management</a></li>\n"; }
 			if($logged_lvl > 5) { print "   <li><a href='./?m=log'>System log</a></li>\n"; }
 			print "  <li role='separator' class='divider'></li><li><a href='./?m=logout'>Logout</a></li></ul></li>\n";
@@ -212,6 +215,7 @@ sub navbar
 			if($cfg->load('comp_files') eq "on") { print "   <li><a href='./?m=files'>Files</a></li>\n"; }
 			if($logged_lvl >= to_int($cfg->load("auto_lvl")) && $cfg->load('comp_auto') eq "on") { print "   <li><a href='./?m=auto'>Automation</a></li>\n"; }
 			if($logged_lvl >= to_int($cfg->load("customs_lvl")) && $cfg->load('comp_tickets') eq "on")	{ print "   <li><a href='./?m=customforms'>Custom forms</a></li>\n"; }
+			if($logged_lvl >= to_int($cfg->load("customs_lvl")) && $cfg->load('comp_tickets') eq "on")	{ print "   <li><a href='./?m=routing'>Ticket routing</a></li>\n"; }
 			if($logged_lvl >= to_int($cfg->load("summary_lvl"))) { print "   <li><a href='./?m=users'>Users management</a></li>\n"; }
 			if($logged_lvl > 5) { print "   <li><a href='./?m=log'>System log</a></li>\n"; }
 			print "  <li role='separator' class='divider'></li><li><a href='./?m=logout'>Logout</a></li></ul></li>\n";
@@ -230,6 +234,7 @@ sub navbar
 			if($cfg->load('comp_files') eq "on") { print "   <li><a href='./?m=files'>Files</a></li>\n"; }
 			if($logged_lvl >= to_int($cfg->load("auto_lvl")) && $cfg->load('comp_auto') eq "on") { print "   <li><a href='./?m=auto'>Automation</a></li>\n"; }
 			if($logged_lvl >= to_int($cfg->load("customs_lvl")) && $cfg->load('comp_tickets') eq "on")	{ print "   <li><a href='./?m=customforms'>Custom forms</a></li>\n"; }
+			if($logged_lvl >= to_int($cfg->load("customs_lvl")) && $cfg->load('comp_tickets') eq "on")	{ print "   <li><a href='./?m=routing'>Ticket routing</a></li>\n"; }
 			if($logged_lvl >= to_int($cfg->load("summary_lvl"))) { print "   <li><a href='./?m=users'>Users management</a></li>\n"; }
 			if($logged_lvl > 5) { print "   <li><a href='./?m=log'>System log</a></li>\n"; }
 			print "  <li role='separator' class='divider'></li><li><a href='./?m=logout'>Logout</a></li></ul></li>\n";
@@ -248,6 +253,7 @@ sub navbar
 			if($cfg->load('comp_files') eq "on") { print "   <li><a href='./?m=files'>Files</a></li>\n"; }
 			if($logged_lvl >= to_int($cfg->load("auto_lvl")) && $cfg->load('comp_auto') eq "on") { print "   <li><a href='./?m=auto'>Automation</a></li>\n"; }
 			if($logged_lvl >= to_int($cfg->load("customs_lvl")) && $cfg->load('comp_tickets') eq "on")	{ print "   <li><a href='./?m=customforms'>Custom forms</a></li>\n"; }
+			if($logged_lvl >= to_int($cfg->load("customs_lvl")) && $cfg->load('comp_tickets') eq "on")	{ print "   <li><a href='./?m=routing'>Ticket routing</a></li>\n"; }
 			if($logged_lvl >= to_int($cfg->load("summary_lvl"))) { print "   <li><a href='./?m=users'>Users management</a></li>\n"; }
 			if($logged_lvl > 5) { print "   <li><a href='./?m=log'>System log</a></li>\n"; }
 			print "  <li role='separator' class='divider'></li><li><a href='./?m=logout'>Logout</a></li></ul></li>\n";
@@ -266,6 +272,7 @@ sub navbar
 			if($cfg->load('comp_files') eq "on") { print "   <li><a href='./?m=files'>Files</a></li>\n"; }
 			if($logged_lvl >= to_int($cfg->load("auto_lvl")) && $cfg->load('comp_auto') eq "on") { print "   <li><a href='./?m=auto'>Automation</a></li>\n"; }
 			if($logged_lvl >= to_int($cfg->load("customs_lvl")) && $cfg->load('comp_tickets') eq "on")	{ print "   <li><a href='./?m=customforms'>Custom forms</a></li>\n"; }
+			if($logged_lvl >= to_int($cfg->load("customs_lvl")) && $cfg->load('comp_tickets') eq "on")	{ print "   <li><a href='./?m=routing'>Ticket routing</a></li>\n"; }
 			if($logged_lvl >= to_int($cfg->load("summary_lvl"))) { print "   <li><a href='./?m=users'>Users management</a></li>\n"; }
 			if($logged_lvl > 5) { print "   <li><a href='./?m=log'>System log</a></li>\n"; }
 			print "  <li role='separator' class='divider'></li><li><a href='./?m=logout'>Logout</a></li></ul></li>\n";
@@ -652,6 +659,22 @@ sub db_check
 	$sql = $db->prepare("SELECT * FROM secrets_log WHERE 0 = 1;") or do
 	{
 		$sql = $db->prepare("CREATE TABLE secrets_log (productid INT, user TEXT, account TEXT, event TEXT, time TEXT);");
+		$sql->execute();
+	};
+	$sql->finish();
+	$sql = $db->prepare("SELECT * FROM routing WHERE 0 = 1;") or do
+	{
+		$sql = $db->prepare("CREATE TABLE routing (name TEXT, priority INT, hits INT);");
+		$sql->execute();
+	};
+	$sql = $db->prepare("SELECT * FROM routing_conditions WHERE 0 = 1;") or do
+	{
+		$sql = $db->prepare("CREATE TABLE routing_conditions (route INT, key TEXT, value TEXT);");
+		$sql->execute();
+	};
+	$sql = $db->prepare("SELECT * FROM routing_actions WHERE 0 = 1;") or do
+	{
+		$sql = $db->prepare("CREATE TABLE routing_actions (route INT, key TEXT, value TEXT);");
 		$sql->execute();
 	};
 	$sql->finish();
@@ -3341,7 +3364,7 @@ elsif($q->param('m')) # Modules
 			print "<tr><td style='width:50%'>New users access level</td><td><input class='form-control' type='text' name='default_lvl' value=\"" . to_int($cfg->load("default_lvl")) . "\"></td></tr>\n";
 			print "<tr><td style='width:50%'>Can upload files</td><td><input class='form-control' type='text' name='upload_lvl' value=\"" . to_int($cfg->load("upload_lvl")) . "\"></td></tr>\n";
 			print "<tr><td style='width:50%'>Can modify past ticket changes</td><td><input class='form-control' type='text' name='past_lvl' value=\"" . to_int($cfg->load("past_lvl")) . "\"></td></tr>\n";
-			print "<tr><td style='width:50%'>Can make custom forms</td><td><input class='form-control' type='text' name='customs_lvl' value=\"" . to_int($cfg->load("customs_lvl")) . "\"></td></tr>\n";
+			print "<tr><td style='width:50%'>Can edit custom forms / routing</td><td><input class='form-control' type='text' name='customs_lvl' value=\"" . to_int($cfg->load("customs_lvl")) . "\"></td></tr>\n";
 			print "<tr><td style='width:50%'>Can view reports and statistics</td><td><input class='form-control' type='text' name='report_lvl' value=\"" . to_int($cfg->load("report_lvl")) . "\"></td></tr>\n";
 			print "<tr><td style='width:50%'>Can assign tasks to users</td><td><input class='form-control' type='text' name='tasks_lvl' value=\"" . to_int($cfg->load("tasks_lvl")) . "\"></td></tr>\n";
 			print "<tr><td style='width:50%'>Can view user details</td><td><input class='form-control' type='text' name='summary_lvl' value=\"" . to_int($cfg->load("summary_lvl")) . "\"></td></tr>\n";
@@ -3630,6 +3653,125 @@ elsif($q->param('m')) # Modules
 		if($cfg->load('comp_clients') eq "on") { print "<option value='16'>Clients per status</option><option value='20'>Client events per user</option>"; }
 		if($cfg->load('comp_items') eq "on") { print "<option value='15'>Items checked out per user</option><option value='18'>Item expiration dates</option>"; }
 		print "<option value='8'>Users per access level</option><option value='17'>Active user sessions</option><option value='19'>Disabled users</option></select></div><div class='col-sm-6'><span class='pull-right'><input class='btn btn-primary' type='submit' value='Show report'></span></div></div></form></p></div><div class='help-block with-errors'></div></div>\n";
+	}
+	elsif($q->param('m') eq "edit_route" && $q->param('r') && $logged_lvl >= to_int($cfg->load("customs_lvl")) && $cfg->load('comp_tickets') eq "on")
+	{
+		headers("Ticket routing");
+		my %actions;
+		my %conditions;
+		$sql = $db->prepare("SELECT key,value FROM routing_conditions WHERE route = ?;");
+		$sql->execute(to_int($q->param('r')));
+		while(my @res = $sql->fetchrow_array())
+		{ $conditions{$res[0]} = $res[1]; }
+		$sql = $db->prepare("SELECT key,value FROM routing_actions WHERE route = ?;");
+		$sql->execute(to_int($q->param('r')));
+		while(my @res = $sql->fetchrow_array())
+		{ $actions{$res[0]} = $res[1]; }
+		$sql = $db->prepare("SELECT name,priority FROM routing WHERE ROWID = ?;");
+		$sql->execute(to_int($q->param('r')));
+		while(my @res = $sql->fetchrow_array())
+		{
+			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Route " . to_int($q->param('r')) . "</h3></div><div class='panel-body'>\n";
+			print "<form method='POST' action='./' data-toggle='validator' role='form'><input type='hidden' name='m' value='routing'><input type='hidden' name='r' value='" . to_int($q->param('r')) . "'><div class='row'><div class='col-sm-8'>Route name: <input type='text' name='name' class='form-control' value=\"" . $res[0] . "\" maxlength='99' required></div><div class='col-sm-4'>Priority: <input type='number' class='form-control' name='priority' value=\"" . $res[1] . "\" required></div></div>\n";
+			print "<hr><h4>Conditions:</h4><table class='table table-stripped'>\n";
+			print "<tr><td>Ticket must have been created by a user level <select name='lvl_or_higher'><option></option><option";
+			if(exists($conditions{'lvl_or_higher'}) && $conditions{'lvl_or_higher'} eq "1") { print " selected"; }
+			print ">1</option><option";
+			if(exists($conditions{'lvl_or_higher'}) && $conditions{'lvl_or_higher'} eq "2") { print " selected"; }
+			print ">2</option><option";
+			if(exists($conditions{'lvl_or_higher'}) && $conditions{'lvl_or_higher'} eq "3") { print " selected"; }
+			print ">3</option><option";
+			if(exists($conditions{'lvl_or_higher'}) && $conditions{'lvl_or_higher'} eq "4") { print " selected"; }
+			print ">4</option><option";
+			if(exists($conditions{'lvl_or_higher'}) && $conditions{'lvl_or_higher'} eq "5") { print " selected"; }
+			print ">5</option></select> or higher.</td></tr>\n";
+			print "<tr><td>Ticket creator must have <input type='text' name='username_match' value=\"";
+			if(exists($conditions{'username_match'})) { print $conditions{'username_match'}; }
+			print "\"> in their user name.</td></tr>\n";
+			print "</table><br><h4>Actions:</h4><table class='table table-stripped'>\n";
+			print "<tr><td>Set ticket status to <select name='status'><option></option><option";
+			if(exists($actions{'status'}) && $actions{'status'} eq "Open") { print " selected"; }
+			print ">Open</option><option";
+			if(exists($actions{'status'}) && $actions{'status'} eq "Invalid") { print " selected"; }
+			print ">Invalid</option><option";
+			if(exists($actions{'status'}) && $actions{'status'} eq "Hold") { print " selected"; }
+			print ">Hold</option><option";
+			if(exists($actions{'status'}) && $actions{'status'} eq "Duplicate") { print " selected"; }
+			print ">Duplicate</option><option";
+			if(exists($actions{'status'}) && $actions{'status'} eq "Resolved") { print " selected"; }
+			print ">Resolved</option><option";
+			if(exists($actions{'status'}) && $actions{'status'} eq "Closed") { print " selected"; }
+			print ">Closed</option></select>.</td></tr>\n";
+			print "<tr><td>Set ticket resolution to <input type='text' name='resolution' value=\"";
+			if(exists($actions{'resolution'})) { print $actions{'resolution'}; }
+			print "\">.</td></tr>\n";
+			print "</table><hr><div class='row'><div class='col-sm-12'><input name='delete_route' type='submit' onclick='return confirm(\"Are you sure?\");' value='Delete' class='btn btn-danger'> <input name='save_route' type='submit' value='Save' class='btn btn-primary pull-right'></div></div></form></div></div>\n";
+		}
+	}
+	elsif($q->param('m') eq "routing" && $logged_lvl >= to_int($cfg->load("customs_lvl")) && $cfg->load('comp_tickets') eq "on")
+	{
+		headers("Ticket routing");
+		if($q->param('save_route') && $q->param('r') && $q->param('name') && $q->param('priority'))
+		{
+			$sql = $db->prepare("UPDATE routing SET name = ?, priority = ? WHERE ROWID = ?;");
+			$sql->execute(sanitize_html($q->param('name')), to_int($q->param('priority')), to_int($q->param('r')));
+			$sql = $db->prepare("DELETE FROM routing_conditions WHERE route = ?;");
+			$sql->execute(to_int($q->param('r')));
+			$sql = $db->prepare("DELETE FROM routing_actions WHERE route = ?;");
+			$sql->execute(to_int($q->param('r')));
+			$sql = $db->prepare("BEGIN");
+			$sql->execute();
+			if($q->param('lvl_or_higher'))
+			{
+				$sql = $db->prepare("INSERT INTO routing_conditions VALUES (?, ?, ?);");
+				$sql->execute(to_int($q->param('r')), "lvl_or_higher", to_int($q->param('lvl_or_higher')));				
+			}
+			if($q->param('username_match'))
+			{
+				$sql = $db->prepare("INSERT INTO routing_conditions VALUES (?, ?, ?);");
+				$sql->execute(to_int($q->param('r')), "username_match", sanitize_html($q->param('username_match')));				
+			}
+			if($q->param('status'))
+			{
+				$sql = $db->prepare("INSERT INTO routing_actions VALUES (?, ?, ?);");
+				$sql->execute(to_int($q->param('r')), "status", sanitize_html($q->param('status')));				
+			}
+			if($q->param('resolution'))
+			{
+				$sql = $db->prepare("INSERT INTO routing_actions VALUES (?, ?, ?);");
+				$sql->execute(to_int($q->param('r')), "resolution", sanitize_html($q->param('resolution')));				
+			}
+			$sql = $db->prepare("END");
+			$sql->execute();
+			msg("Route saved.", 3)
+		}
+		if($q->param('create_route') && $q->param('name') && $q->param('priority'))
+		{
+			$sql = $db->prepare("INSERT INTO routing VALUES (?, ?, ?);");
+			$sql->execute(sanitize_html($q->param('name')), to_int($q->param('priority')), 0);
+			msg("New route added.", 3)
+		}
+		if($q->param('delete_route') && $q->param('r'))
+		{
+			$sql = $db->prepare("DELETE FROM routing WHERE ROWID = ?;");
+			$sql->execute(to_int($q->param('r')));
+			$sql = $db->prepare("DELETE FROM routing_actions WHERE route = ?;");
+			$sql->execute(to_int($q->param('r')));
+			$sql = $db->prepare("DELETE FROM routing_conditions WHERE route = ?;");
+			$sql->execute(to_int($q->param('r')));
+			msg("Route removed.", 3)
+		}
+		print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Add route</h3></div><div class='panel-body'>\n";
+		print "<form method='POST' action='./' data-toggle='validator' role='form'><input type='hidden' name='m' value='routing'><div class='row'><div class='col-sm-8'><input type='text' name='name' class='form-control' placeholder='Route name' maxlength='99' required></div><div class='col-sm-4'><input type='number' class='form-control' name='priority' placeholder='Priority' required></div></div><br><div class='row'><div class='col-sm-12'><input name='create_route' type='submit' value='Create' class='btn btn-primary pull-right'></div></div></form></div></div>\n";
+		print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Ticket routing</h3></div><div class='panel-body'>\n";
+		print "<p><table class='table table-stripped' id='routing_table'><thead><tr><th>ID</th><th>Route name</th><th>Priority</th><th>Hits</th></tr></thead><tbody>";
+		$sql = $db->prepare("SELECT ROWID,* FROM routing;");
+		$sql->execute();
+		while(my @res = $sql->fetchrow_array())
+		{
+			print "<tr><td>" . $res[0] . "</td><td><a href='./?m=edit_route&r=" . $res[0] . "'>" . $res[1] . "</a></td><td>" . $res[2] . "</td><td>" . $res[3] . "</td></tr>\n";
+		}
+		print "</tbody></table><script>\$(document).ready(function(){\$('#routing_table').DataTable({'order':[[2,'asc']],pageLength:" . to_int($cfg->load('page_len')) . ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script></p></div></div>";
 	}
 	elsif($q->param('m') eq "customforms" && $logged_lvl >= to_int($cfg->load("customs_lvl")) && $cfg->load('comp_tickets') eq "on")
 	{
@@ -6519,6 +6661,47 @@ elsif($q->param('m')) # Modules
 								}
 							};
 						}
+					}
+				}
+				my $sql2 = $db->prepare("SELECT ROWID FROM routing ORDER BY priority;");
+				$sql2->execute();
+				while(my @res2 = $sql2->fetchrow_array())
+				{
+					my %actions;
+					my %conditions;
+					$sql = $db->prepare("SELECT key,value FROM routing_conditions WHERE route = ?;");
+					$sql->execute(to_int($res2[0]));
+					while(my @res = $sql->fetchrow_array())
+					{ $conditions{$res[0]} = $res[1]; }
+					my $processactions = 0;
+					if(exists($conditions{'lvl_or_higher'}))
+					{
+						if($logged_lvl >= to_int($conditions{'lvl_or_higher'})) { $processactions += 1; }
+						else { $processactions = -999; }
+					}
+					if(exists($conditions{'username_match'}))
+					{
+						if(index($logged_user, $conditions{'username_match'}) != -1) { $processactions += 1; }
+						else { $processactions = -999; }
+					}
+					if($processactions > 0)
+					{
+						$sql = $db->prepare("SELECT key,value FROM routing_actions WHERE route = ?;");
+						$sql->execute(to_int($res2[0]));
+						while(my @res = $sql->fetchrow_array())
+						{ $actions{$res[0]} = $res[1]; }
+						if(exists($actions{'status'}))
+						{
+							$sql = $db->prepare("UPDATE tickets SET status = ? WHERE ROWID = ?;");
+							$sql->execute($actions{'status'}, $lastrowid);
+						}
+						if(exists($actions{'resolution'}))
+						{
+							$sql = $db->prepare("UPDATE tickets SET resolution = ? WHERE ROWID = ?;");
+							$sql->execute($actions{'resolution'}, $lastrowid);
+						}
+						$sql = $db->prepare("UPDATE routing SET hits = hits + 1 WHERE ROWID = ?;");
+						$sql->execute(to_int($res2[0]));						
 					}
 				}
 				msg("<meta http-equiv='REFRESH' content='1;url=./?m=view_ticket&t=" . $lastrowid . "'>Ticket successfully added.", 3);
