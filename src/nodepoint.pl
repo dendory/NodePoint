@@ -8,7 +8,7 @@
 #
 
 use strict;
-use Config::Linux;
+use Config::Win32;
 use Digest::SHA qw(sha1_hex);
 use DBI;
 use CGI '-utf8';;
@@ -29,7 +29,7 @@ my ($cfg, $db, $sql, $cn, $cp, $cgs, $last_login, $perf);
 my $logged_user = "";
 my $logged_lvl = -1;
 my $q = new CGI;
-my $VERSION = "1.6.5";
+my $VERSION = "1.6.6";
 my %items = ("Product", "Product", "Release", "Release", "Model", "SKU/Model");
 my @itemtypes = ("None");
 my @themes = ("primary", "default", "success", "info", "warning", "danger");
@@ -1296,11 +1296,11 @@ sub home
 # Connect to config
 eval
 {
-	$cfg = Config::Linux->new("NodePoint", "settings");
+	$cfg = Config::Win32->new("NodePoint", "settings");
 };
 if(!defined($cfg)) # Can't even use headers() if this fails.
 {
-	print "Content-type: text/html\n\nError: Could not access " . Config::Linux->type . ". Please ensure NodePoint has the proper permissions.";
+	print "Content-type: text/html\n\nError: Could not access " . Config::Win32->type . ". Please ensure NodePoint has the proper permissions.";
 	exit(0);
 };
 
@@ -4346,7 +4346,7 @@ elsif($q->param('m')) # Modules
 				if($logged_lvl > 3 && $q->param('edit'))
 				{ 
 					print "<br>Add user: <select name='add_auto_assign'><option></option>";
-					my $sql3 = $db->prepare("SELECT name FROM users WHERE level > 0 ORDER BY name;");
+					my $sql3 = $db->prepare("SELECT name FROM users WHERE level > 2 ORDER BY name;");
 					$sql3->execute();
 					while(my @res3 = $sql3->fetchrow_array()) { print "<option>" . $res3[0] . "</option>"; }
 					print "</select> Remove: <select name='rem_auto_assign'><option></option>";
@@ -6392,6 +6392,7 @@ elsif($q->param('m')) # Modules
 		my @customform;
 		my $description = "";
 		my $title;
+		my $assignedto = "";
 		my $lnk = "Normal";
 		$sql = $db->prepare("SELECT * FROM forms WHERE productid = ?;");
 		$sql->execute(to_int($q->param('product_id')));
@@ -6420,6 +6421,7 @@ elsif($q->param('m')) # Modules
 					if(defined($q->param('field'.$i))) { $description .= $q->param('field'.$i); }
 					elsif($q->param('upload'.$i)) { $description .= $q->param('upload'.$i); }
 					elsif($q->param('priority'.$i)) { $description .= $q->param('priority'.$i); $lnk = sanitize_alpha($q->param('priority'.$i)); }
+					elsif($q->param('assign'.$i)) { $description .= $q->param('assign'.$i); $assignedto = sanitize_alpha($q->param('assign'.$i)) . " "; }
 					$description .= "\n\n"; 
 				}
 			}
@@ -6437,7 +6439,6 @@ elsif($q->param('m')) # Modules
 			}
 			else
 			{
-				my $assignedto = "";
 				$sql = $db->prepare("SELECT user FROM autoassign WHERE productid = ?;");
 				$sql->execute(to_int($q->param('product_id')));
 				while(my @res = $sql->fetchrow_array()) { $assignedto .= $res[0] . " "; }
@@ -6608,6 +6609,14 @@ elsif($q->param('m')) # Modules
 						{
 							print "<select class='form-control' name='field" . $i . "'>";
 							my $sql2 = $db->prepare("SELECT name FROM users ORDER BY name;");
+							$sql2->execute();
+							while(my @res2 = $sql2->fetchrow_array()) { print "<option>" . $res2[0] . "</option>"; }
+							print "</select>\n";
+						}
+						elsif(to_int($customform[($i*2)+3]) == 19)
+						{
+							print "<select class='form-control' name='assign" . $i . "'>";
+							my $sql2 = $db->prepare("SELECT name FROM users WHERE level > 2 ORDER BY name;");
 							$sql2->execute();
 							while(my @res2 = $sql2->fetchrow_array()) { print "<option>" . $res2[0] . "</option>"; }
 							print "</select>\n";
@@ -7661,7 +7670,9 @@ elsif(($q->param('create_form') || $q->param('edit_form') || $q->param('save_for
 			if(to_int($q->param('edit_form')) > 0) { if(to_int($res[($i*2)+3]) == 17) { print " selected"; } }
 			print ">Ticket priority</option><option value=18";
 			if(to_int($q->param('edit_form')) > 0) { if(to_int($res[($i*2)+3]) == 18) { print " selected"; } }
-			print ">Users list</option>";
+			print ">Users list</option><option value=19";
+			if(to_int($q->param('edit_form')) > 0) { if(to_int($res[($i*2)+3]) == 19) { print " selected"; } }
+			print ">Assign to user</option>";
 			if($cfg->load('comp_clients') eq "on")
 			{
 				print "<option value=11";

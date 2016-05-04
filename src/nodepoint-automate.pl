@@ -8,7 +8,7 @@
 #
 
 use strict;
-use Config::Linux;
+use Config::Win32;
 use Digest::SHA qw(sha1_hex);
 use DBI;
 use Scalar::Util qw(looks_like_number);
@@ -167,7 +167,7 @@ sub logevent
 
 # Initial config
 chdir dirname($0);
-$cfg = Config::Linux->new("NodePoint", "settings");
+$cfg = Config::Win32->new("NodePoint", "settings");
 
 if($cfg->load("db_address"))
 {
