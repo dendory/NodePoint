@@ -8,7 +8,7 @@
 #
 
 use strict;
-use Config::Win32;
+use Config::Linux;
 use Digest::SHA qw(sha1_hex);
 use DBI;
 use Scalar::Util qw(looks_like_number);
@@ -20,7 +20,7 @@ use File::Copy;
 use Archive::Zip;
 use Net::LDAP;
 use Net::LDAP::Control::Paged;
-use Net::LDAP::Constant qw( LDAP_CONTROL_PAGED );
+use Net::LDAP::Constant qw(LDAP_CONTROL_PAGED);
 use Net::SMTP;
 use Crypt::RC4;
 use Net::IMAP::Simple;
@@ -167,7 +167,7 @@ sub logevent
 
 # Initial config
 chdir dirname($0);
-$cfg = Config::Win32->new("NodePoint", "settings");
+$cfg = Config::Linux->new("NodePoint", "settings");
 
 if($cfg->load("db_address"))
 {

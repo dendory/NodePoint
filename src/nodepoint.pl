@@ -8,7 +8,7 @@
 #
 
 use strict;
-use Config::Win32;
+use Config::Linux;
 use Digest::SHA qw(sha1_hex);
 use DBI;
 use CGI '-utf8';;
@@ -18,6 +18,7 @@ use Data::GUID;
 use File::Type;
 use Scalar::Util qw(looks_like_number);
 use Net::LDAP;
+use Net::LDAP::Constant qw(LDAP_CONTROL_PAGED);
 use MIME::Base64;
 use Time::HiRes qw(time);
 use Time::Piece;
@@ -1319,11 +1320,11 @@ sub home
 # Connect to config
 eval
 {
-	$cfg = Config::Win32->new("NodePoint", "settings");
+	$cfg = Config::Linux->new("NodePoint", "settings");
 };
 if(!defined($cfg)) # Can't even use headers() if this fails.
 {
-	print "Content-type: text/html\n\nError: Could not access " . Config::Win32->type . ". Please ensure NodePoint has the proper permissions.";
+	print "Content-type: text/html\n\nError: Could not access " . Config::Linux->type . ". Please ensure NodePoint has the proper permissions.";
 	exit(0);
 };
 
@@ -3673,7 +3674,7 @@ elsif($q->param('m')) # Modules
 		{
 			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Route " . to_int($q->param('r')) . "</h3></div><div class='panel-body'>\n";
 			print "<form method='POST' action='./' data-toggle='validator' role='form'><input type='hidden' name='m' value='routing'><input type='hidden' name='r' value='" . to_int($q->param('r')) . "'><div class='row'><div class='col-sm-8'>Route name: <input type='text' name='name' class='form-control' value=\"" . $res[0] . "\" maxlength='99' required></div><div class='col-sm-4'>Priority: <input type='number' class='form-control' name='priority' value=\"" . $res[1] . "\" required></div></div>\n";
-			print "<hr><h4>Conditions:</h4><table class='table table-stripped'>\n";
+			print "<br><h4>Conditions:</h4><table class='table table-stripped'>\n";
 			print "<tr><td>Ticket must be created by a user level <select name='lvl_or_higher'><option></option><option";
 			if(exists($conditions{'lvl_or_higher'}) && $conditions{'lvl_or_higher'} eq "1") { print " selected"; }
 			print ">1</option><option";
@@ -3728,6 +3729,20 @@ elsif($q->param('m')) # Modules
 			print ">9</option></select> must contain the text <input type='text' name='field_match_text' value=\"";
 			if(exists($conditions{'field_match_text'})) { print $conditions{'field_match_text'}; }
 			print "\">.</td></tr>\n";
+			if($cfg->load("ad_domain") ne "")
+			{
+				print "<tr><td>Ticket creator must be a member of the Active Directory security group <input type='text' name='group_memberof' value=\"";
+				if(exists($conditions{'group_memberof'})) { print $conditions{'group_memberof'}; }
+				print "\"> and the Base DN <input type='text' name='group_basedn' value=\"";
+				if(exists($conditions{'group_basedn'})) { print $conditions{'group_basedn'}; }
+				else { print "CN=Users,DC=" . $cfg->load("ad_domain") . ",DC=com"; }
+				print "\">. Use the username <input type='text' name='group_creds_username' value=\"";
+				if(exists($conditions{'group_creds_username'})) { print $conditions{'group_creds_username'}; }
+				else { print "Administrator"; }
+				print "\"> and password <input type='password' name='group_creds_password' value=\"";
+				if(exists($conditions{'group_creds_password'})) { print RC4($cfg->load("enc_key"), decode_base64($conditions{'group_creds_password'})); }
+				print "\"> to do the query in AD.</td></tr>\n";
+			}
 			print "</table><br><h4>Actions:</h4><table class='table table-stripped'>\n";
 			print "<tr><td>Set ticket status to <select name='status'><option></option><option";
 			if(exists($actions{'status'}) && $actions{'status'} eq "Open") { print " selected"; }
@@ -3773,7 +3788,17 @@ elsif($q->param('m')) # Modules
 			print "\"> and the following text:<br><textarea style='width:90%' rows=5 name='notify_user_text'>";
 			if(exists($actions{'notify_user_text'})) { print $actions{'notify_user_text'}; }
 			print "</textarea></td></tr>\n";
-			print "</table><hr><div class='row'><div class='col-sm-12'><input name='delete_route' type='submit' onclick='return confirm(\"Are you sure?\");' value='Delete' class='btn btn-danger'> <input name='save_route' type='submit' value='Save' class='btn btn-primary pull-right'></div></div></form></div></div>\n";
+			print "<tr><td>Assign user <select name='assign_user'><option></option>";
+			my $sql3 = $db->prepare("SELECT name FROM users WHERE level > 2 ORDER BY name;");
+			$sql3->execute();
+			while(my @res3 = $sql3->fetchrow_array())
+			{
+				print "<option";
+				if(exists($actions{'assign_user'}) && $actions{'assign_user'} eq $res3[0]) { print " selected"; }			
+				print ">" . $res3[0] . "</option>"; 
+			}
+			print "</select> to the ticket.</td></tr>\n";
+			print "</table><br><div class='row'><div class='col-sm-12'><input name='delete_route' type='submit' onclick='return confirm(\"Are you sure?\");' value='Delete' class='btn btn-danger'> <input name='save_route' type='submit' value='Save' class='btn btn-primary pull-right'></div></div></form></div></div>\n";
 		}
 	}
 	elsif($q->param('m') eq "routing" && $logged_lvl >= to_int($cfg->load("customs_lvl")) && $cfg->load('comp_tickets') eq "on")
@@ -3792,22 +3817,42 @@ elsif($q->param('m')) # Modules
 			if($q->param('lvl_or_higher'))
 			{
 				$sql = $db->prepare("INSERT INTO routing_conditions VALUES (?, ?, ?);");
-				$sql->execute(to_int($q->param('r')), "lvl_or_higher", to_int($q->param('lvl_or_higher')));				
+				$sql->execute(to_int($q->param('r')), "lvl_or_higher", to_int($q->param('lvl_or_higher')));	
 			}
 			if($q->param('lvl_or_lower'))
 			{
 				$sql = $db->prepare("INSERT INTO routing_conditions VALUES (?, ?, ?);");
-				$sql->execute(to_int($q->param('r')), "lvl_or_lower", to_int($q->param('lvl_or_lower')));				
+				$sql->execute(to_int($q->param('r')), "lvl_or_lower", to_int($q->param('lvl_or_lower')));	
 			}
 			if($q->param('project_match'))
 			{
 				$sql = $db->prepare("INSERT INTO routing_conditions VALUES (?, ?, ?);");
-				$sql->execute(to_int($q->param('r')), "project_match", to_int($q->param('project_match')));				
+				$sql->execute(to_int($q->param('r')), "project_match", to_int($q->param('project_match')));	
 			}
 			if($q->param('username_match'))
 			{
 				$sql = $db->prepare("INSERT INTO routing_conditions VALUES (?, ?, ?);");
-				$sql->execute(to_int($q->param('r')), "username_match", sanitize_html($q->param('username_match')));				
+				$sql->execute(to_int($q->param('r')), "username_match", sanitize_html($q->param('username_match')));
+			}
+			if($q->param('group_memberof'))
+			{
+				$sql = $db->prepare("INSERT INTO routing_conditions VALUES (?, ?, ?);");
+				$sql->execute(to_int($q->param('r')), "group_memberof", sanitize_html($q->param('group_memberof')));
+			}
+			if($q->param('group_basedn'))
+			{
+				$sql = $db->prepare("INSERT INTO routing_conditions VALUES (?, ?, ?);");
+				$sql->execute(to_int($q->param('r')), "group_basedn", sanitize_html($q->param('group_basedn')));
+			}
+			if($q->param('group_creds_username'))
+			{
+				$sql = $db->prepare("INSERT INTO routing_conditions VALUES (?, ?, ?);");
+				$sql->execute(to_int($q->param('r')), "group_creds_username", sanitize_html($q->param('group_creds_username')));
+			}
+			if($q->param('group_creds_password'))
+			{
+				$sql = $db->prepare("INSERT INTO routing_conditions VALUES (?, ?, ?);");
+				$sql->execute(to_int($q->param('r')), "group_creds_password", encode_base64(RC4($cfg->load("enc_key"), $q->param('group_creds_password'))));
 			}
 			if($q->param('field_match'))
 			{
@@ -3873,6 +3918,11 @@ elsif($q->param('m')) # Modules
 			{
 				$sql = $db->prepare("INSERT INTO routing_actions VALUES (?, ?, ?);");
 				$sql->execute(to_int($q->param('r')), "notify_user", sanitize_alpha($q->param('notify_user')));				
+			}
+			if($q->param('assign_user'))
+			{
+				$sql = $db->prepare("INSERT INTO routing_actions VALUES (?, ?, ?);");
+				$sql->execute(to_int($q->param('r')), "assign_user", sanitize_alpha($q->param('assign_user')));				
 			}
 			if($q->param('notify_user_text'))
 			{
@@ -6861,6 +6911,36 @@ elsif($q->param('m')) # Modules
 						if(index($field[$conditions{'field_match'}], $conditions{'field_match_text'}) != -1) { $processactions += 1; }
 						else { $processactions = -999; }
 					}
+					if(exists($conditions{'group_memberof'}) && exists($conditions{'group_basedn'}) && $cfg->load("ad_server") ne "")
+					{
+						my $found = 0;
+						my $cookie;
+						my $ldap = Net::LDAP->new($cfg->load("ad_server")) or logevent("Could not connect to AD server to check group membership.");
+						if($ldap)
+						{
+							my $mesg;
+							if($conditions{'group_creds_username'} ne "" && $conditions{'group_creds_password'} ne "") { $mesg = $ldap->bind($cfg->load("ad_domain") . "\\" . $conditions{'group_creds_username'}, password => RC4($cfg->load("enc_key"), decode_base64($conditions{'group_creds_password'}))); }
+							else { $mesg = $ldap->bind; }
+							$mesg = $ldap->search(base => $conditions{'group_basedn'}, filter => "(&(objectClass=user)(memberOf=" . $conditions{'group_memberof'} . "))");
+							if($mesg->code)
+							{
+								logevent("LDAP: " . $mesg->error . " [" . $mesg->code . "]");
+							}
+							else
+							{
+								while (my $entry = $mesg->pop_entry())
+								{
+									if($entry->get_value('sAMAccountName') eq $logged_user)
+									{ 
+										$found = 1;
+									}
+								}
+							}
+							$mesg = $ldap->unbind;
+						}
+						if($found == 1) { $processactions += 1; }
+						else { $processactions = -999; }
+					}
 					if($processactions > 0)
 					{
 						$sql = $db->prepare("SELECT key,value FROM routing_actions WHERE route = ?;");
@@ -6876,6 +6956,13 @@ elsif($q->param('m')) # Modules
 						{
 							$sql = $db->prepare("UPDATE tickets SET resolution = ? WHERE ROWID = ?;");
 							$sql->execute($actions{'resolution'}, $lastrowid);
+						}
+						if(exists($actions{'assign_user'}))
+						{
+							$assignedto .= " " . $actions{'assign_user'};
+							$sql = $db->prepare("UPDATE tickets SET assignedto = ? WHERE ROWID = ?;");
+							$sql->execute($assignedto, $lastrowid);
+							notify($actions{'assign_user'}, "New ticket created", "A new ticket was created and routed to you:\n\nUser: " . $logged_user . "\nTitle: " . $title . "\nPriority: " . $lnk . "\nDescription: " . $description);
 						}
 						if(exists($actions{'output_file'}) && exists($actions{'output_file_text'}))
 						{
