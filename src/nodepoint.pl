@@ -3729,20 +3729,25 @@ elsif($q->param('m')) # Modules
 			print ">9</option></select> must contain the text <input type='text' name='field_match_text' value=\"";
 			if(exists($conditions{'field_match_text'})) { print $conditions{'field_match_text'}; }
 			print "\">.</td></tr>\n";
-			if($cfg->load("ad_domain") ne "")
-			{
-				print "<tr><td>Ticket creator must be a member of the Active Directory security group <input type='text' name='group_memberof' value=\"";
-				if(exists($conditions{'group_memberof'})) { print $conditions{'group_memberof'}; }
-				print "\"> and the Base DN <input type='text' name='group_basedn' value=\"";
-				if(exists($conditions{'group_basedn'})) { print $conditions{'group_basedn'}; }
-				else { print "CN=Users,DC=" . $cfg->load("ad_domain") . ",DC=com"; }
-				print "\">. Use the username <input type='text' name='group_creds_username' value=\"";
-				if(exists($conditions{'group_creds_username'})) { print $conditions{'group_creds_username'}; }
-				else { print "Administrator"; }
-				print "\"> and password <input type='password' name='group_creds_password' value=\"";
-				if(exists($conditions{'group_creds_password'})) { print RC4($cfg->load("enc_key"), decode_base64($conditions{'group_creds_password'})); }
-				print "\"> to do the query in AD.</td></tr>\n";
-			}
+			print "<tr><td>Ticket creator must be a member of the Active Directory security group <input type='text' name='group_memberof' value=\"";
+			if(exists($conditions{'group_memberof'})) { print $conditions{'group_memberof'}; }
+			print "\"";
+			if($cfg->load("ad_domain") eq "") { print " disabled"; }
+			print "> and the Base DN <input type='text' name='group_basedn' value=\"";
+			if(exists($conditions{'group_basedn'})) { print $conditions{'group_basedn'}; }
+			else { print "CN=Users,DC=" . $cfg->load("ad_domain") . ",DC=com"; }
+			print "\"";
+			if($cfg->load("ad_domain") eq "") { print " disabled"; }
+			print ">. Use the username <input type='text' name='group_creds_username' value=\"";
+			if(exists($conditions{'group_creds_username'})) { print $conditions{'group_creds_username'}; }
+			else { print "Administrator"; }
+			print "\"";
+			if($cfg->load("ad_domain") eq "") { print " disabled"; }
+			print "> and password <input type='password' name='group_creds_password' value=\"";
+			if(exists($conditions{'group_creds_password'})) { print RC4($cfg->load("enc_key"),decode_base64($conditions{'group_creds_password'})); }
+			print "\"";
+			if($cfg->load("ad_domain") eq "") { print " disabled"; }
+			print "> to do the query in AD.</td></tr>\n";
 			print "</table><br><h4>Actions:</h4><table class='table table-stripped'>\n";
 			print "<tr><td>Set ticket status to <select name='status'><option></option><option";
 			if(exists($actions{'status'}) && $actions{'status'} eq "Open") { print " selected"; }
@@ -3798,6 +3803,34 @@ elsif($q->param('m')) # Modules
 				print ">" . $res3[0] . "</option>"; 
 			}
 			print "</select> to the ticket.</td></tr>\n";
+			print "<tr><td>Modify the Active Directory attribute <input type='text' name='attr_name' value=\"";
+			if(exists($actions{'attr_name'})) { print $actions{'attr_name'}; }
+			print "\"";
+			if($cfg->load("ad_domain") eq "") { print " disabled"; }
+			print "> of user <input type='text' name='attr_user' value=\"";
+			if(exists($actions{'attr_user'})) { print $actions{'attr_user'}; }
+			else { print "\%user\%"; }
+			print "\"";
+			if($cfg->load("ad_domain") eq "") { print " disabled"; }
+			print "> of BaseDN <input type='text' name='attr_basedn' value=\"";
+			if(exists($actions{'attr_basedn'})) { print $actions{'attr_basedn'}; }
+			else { print "CN=Users,DC=" . $cfg->load("ad_domain") . ",DC=com"; }
+			print "\"";
+			if($cfg->load("ad_domain") eq "") { print " disabled"; }
+			print "> to <input type='text' name='attr_value' value=\"";
+			if(exists($actions{'attr_value'})) { print $actions{'attr_value'}; }
+			print "\"";
+			if($cfg->load("ad_domain") eq "") { print " disabled"; }
+			print ">. Use the username <input type='text' name='attr_creds_username' value=\"";
+			if(exists($actions{'attr_creds_username'})) { print $actions{'attr_creds_username'}; }
+			else { print "Administrator"; }
+			print "\"";
+			if($cfg->load("ad_domain") eq "") { print " disabled"; }
+			print "> and password <input type='password' name='attr_creds_password' value=\"";
+			if(exists($actions{'attr_creds_password'})) { print RC4($cfg->load("enc_key"),decode_base64($actions{'attr_creds_password'})); }
+			print "\"";
+			if($cfg->load("ad_domain") eq "") { print " disabled"; }
+			print "> to connect to AD.</td></tr>\n";
 			print "</table><br><div class='row'><div class='col-sm-12'><input name='delete_route' type='submit' onclick='return confirm(\"Are you sure?\");' value='Delete' class='btn btn-danger'> <input name='save_route' type='submit' value='Save' class='btn btn-primary pull-right'></div></div></form></div></div>\n";
 		}
 	}
@@ -3898,6 +3931,36 @@ elsif($q->param('m')) # Modules
 			{
 				$sql = $db->prepare("INSERT INTO routing_actions VALUES (?, ?, ?);");
 				$sql->execute(to_int($q->param('r')), "redirect_url", sanitize_html($q->param('redirect_url')));				
+			}
+			if($q->param('attr_name'))
+			{
+				$sql = $db->prepare("INSERT INTO routing_actions VALUES (?, ?, ?);");
+				$sql->execute(to_int($q->param('r')), "attr_name", sanitize_html($q->param('attr_name')));
+			}
+			if($q->param('attr_user'))
+			{
+				$sql = $db->prepare("INSERT INTO routing_actions VALUES (?, ?, ?);");
+				$sql->execute(to_int($q->param('r')), "attr_user", sanitize_html($q->param('attr_user')));
+			}
+			if($q->param('attr_basedn'))
+			{
+				$sql = $db->prepare("INSERT INTO routing_actions VALUES (?, ?, ?);");
+				$sql->execute(to_int($q->param('r')), "attr_basedn", sanitize_html($q->param('attr_basedn')));
+			}
+			if($q->param('attr_value'))
+			{
+				$sql = $db->prepare("INSERT INTO routing_actions VALUES (?, ?, ?);");
+				$sql->execute(to_int($q->param('r')), "attr_value", sanitize_html($q->param('attr_value')));
+			}
+			if($q->param('attr_creds_username'))
+			{
+				$sql = $db->prepare("INSERT INTO routing_actions VALUES (?, ?, ?);");
+				$sql->execute(to_int($q->param('r')), "attr_creds_username", sanitize_html($q->param('attr_creds_username')));
+			}
+			if($q->param('attr_creds_password'))
+			{
+				$sql = $db->prepare("INSERT INTO routing_actions VALUES (?, ?, ?);");
+				$sql->execute(to_int($q->param('r')), "attr_creds_password", encode_base64(RC4($cfg->load("enc_key"), $q->param('attr_creds_password'))));
 			}
 			if($q->param('output_file'))
 			{
@@ -6914,7 +6977,6 @@ elsif($q->param('m')) # Modules
 					if(exists($conditions{'group_memberof'}) && exists($conditions{'group_basedn'}) && $cfg->load("ad_server") ne "")
 					{
 						my $found = 0;
-						my $cookie;
 						my $ldap = Net::LDAP->new($cfg->load("ad_server")) or logevent("Could not connect to AD server to check group membership.");
 						if($ldap)
 						{
@@ -7064,6 +7126,72 @@ elsif($q->param('m')) # Modules
 							$out =~ s/\%field8\%/$field8/g;
 							$out =~ s/\%field9\%/$field9/g;
 							print "<script>window.open(\"" . $out . "\");</script>";
+						}
+						if($cfg->load("ad_domain") ne "" && exists($actions{'attr_basedn'}) && exists($actions{'attr_user'}) && exists($actions{'attr_name'}) && exists($actions{'attr_value'}) && exists($actions{'attr_creds_username'}) && exists($actions{'attr_creds_password'}))
+						{
+							my $out = $actions{'attr_value'};
+							$out =~ s/\%user\%/$logged_user/g;
+							$out =~ s/\%ticket\%/$lastrowid/g;
+							$out =~ s/\%title\%/$title/g;
+							$out =~ s/\%description\%/$description/g;
+							$out =~ s/\%priority\%/$lnk/g;
+							$out =~ s/\%assigned\%/$assignedto/g;
+							$out =~ s/\%product\%/$pj/g;
+							$out =~ s/\%field1\%/$field1/g;
+							$out =~ s/\%field2\%/$field2/g;
+							$out =~ s/\%field3\%/$field3/g;
+							$out =~ s/\%field4\%/$field4/g;
+							$out =~ s/\%field5\%/$field5/g;
+							$out =~ s/\%field6\%/$field6/g;
+							$out =~ s/\%field7\%/$field7/g;
+							$out =~ s/\%field8\%/$field8/g;
+							$out =~ s/\%field9\%/$field9/g;
+							my $uout = $actions{'attr_user'};
+							$uout =~ s/\%user\%/$logged_user/g;
+							$uout =~ s/\%ticket\%/$lastrowid/g;
+							$uout =~ s/\%title\%/$title/g;
+							$uout =~ s/\%description\%/$description/g;
+							$uout =~ s/\%priority\%/$lnk/g;
+							$uout =~ s/\%assigned\%/$assignedto/g;
+							$uout =~ s/\%product\%/$pj/g;
+							$uout =~ s/\%field1\%/$field1/g;
+							$uout =~ s/\%field2\%/$field2/g;
+							$uout =~ s/\%field3\%/$field3/g;
+							$uout =~ s/\%field4\%/$field4/g;
+							$uout =~ s/\%field5\%/$field5/g;
+							$uout =~ s/\%field6\%/$field6/g;
+							$uout =~ s/\%field7\%/$field7/g;
+							$uout =~ s/\%field8\%/$field8/g;
+							$uout =~ s/\%field9\%/$field9/g;
+							my $ldap = Net::LDAP->new($cfg->load("ad_server")) or logevent("Could not connect to AD server to check group membership.");
+							if($ldap)
+							{
+								my $mesg;
+								my $dn = "";
+								$mesg = $ldap->bind($cfg->load("ad_domain") . "\\" . $actions{'attr_creds_username'}, password => RC4($cfg->load("enc_key"), decode_base64($actions{'attr_creds_password'})));
+								$mesg = $ldap->search(base => $actions{'attr_basedn'}, filter => "(&(objectCategory=person)(objectClass=user))");
+								if($mesg->code)
+								{
+									logevent("LDAP: " . $mesg->error . " [" . $mesg->code . "]");
+								}
+								else
+								{
+									while (my $entry = $mesg->pop_entry())
+									{
+										if($entry->get_value('sAMAccountName') eq $uout) { $dn = $entry->get_value('distinguishedName'); }
+									}
+									if($dn ne "")
+									{
+										logevent("LDAP: Updating attribute [" . $actions{'attr_name'} . "] of user [" . $dn . "]");
+										$mesg = $ldap->modify($dn, replace => { $actions{'attr_name'} => $out });
+										if($mesg->code)
+										{
+											logevent("LDAP: " . $mesg->error . " [" . $mesg->code . "]");
+										}
+									}
+								}
+								$mesg = $ldap->unbind;
+							}
 						}
 						if(exists($actions{'popup_message'}))
 						{
