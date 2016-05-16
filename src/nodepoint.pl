@@ -8,7 +8,7 @@
 #
 
 use strict;
-use Config::Linux;
+use Config::Win32;
 use Digest::SHA qw(sha1_hex);
 use DBI;
 use CGI '-utf8';;
@@ -30,7 +30,7 @@ my ($cfg, $db, $sql, $cn, $cp, $cgs, $last_login, $perf);
 my $logged_user = "";
 my $logged_lvl = -1;
 my $q = new CGI;
-my $VERSION = "1.7.0";
+my $VERSION = "1.7.1";
 my %items = ("Product", "Product", "Release", "Release", "Model", "SKU/Model");
 my @itemtypes = ("None");
 my @themes = ("primary", "default", "success", "info", "warning", "danger");
@@ -1320,11 +1320,11 @@ sub home
 # Connect to config
 eval
 {
-	$cfg = Config::Linux->new("NodePoint", "settings");
+	$cfg = Config::Win32->new("NodePoint", "settings");
 };
 if(!defined($cfg)) # Can't even use headers() if this fails.
 {
-	print "Content-type: text/html\n\nError: Could not access " . Config::Linux->type . ". Please ensure NodePoint has the proper permissions.";
+	print "Content-type: text/html\n\nError: Could not access " . Config::Win32->type . ". Please ensure NodePoint has the proper permissions.";
 	exit(0);
 };
 
@@ -4793,7 +4793,7 @@ elsif($q->param('m')) # Modules
 						print "<hr><h4>Completion log</h4>";
 						if($logged_lvl > 5) { print "<p><form style='display:inline' method='POST' action='./?m=auto'><input type='hidden' name='m' value='view_product'><input type='hidden' name='tab' value='tasks'><input type='hidden' name='p' value='" . to_int($q->param('p')) . "'><input class='btn btn-danger pull-right' name='clear_log' onclick='return confirm(\"Are you sure?\");' type='submit' value='Clear log'><br></form></p>"; }
 						print "<table class='table table-stripped' id='steps_log_table'><thead><tr><th>User</th><th>Event</th><th>Date</tr></thead><tbody>";
-						$sql = $db->prepare("SELECT * FROM steps_log WHERE productid = ? LIMIT 5000;");
+						$sql = $db->prepare("SELECT * FROM steps_log WHERE productid = ? ORDER BY ROWID DESC LIMIT 5000;");
 						$sql->execute(to_int($q->param('p')));
 						while(my @res = $sql->fetchrow_array())
 						{
@@ -4884,7 +4884,7 @@ elsif($q->param('m')) # Modules
 						print "<hr><h4>Transaction log</h4>";
 						if($logged_lvl > 5) { print "<p><form style='display:inline' method='POST' action='./?m=auto'><input type='hidden' name='m' value='view_product'><input type='hidden' name='tab' value='secrets'><input type='hidden' name='p' value='" . to_int($q->param('p')) . "'><input class='btn btn-danger pull-right' name='clear_log' onclick='return confirm(\"Are you sure?\");' type='submit' value='Clear log'><br></form></p>"; }
 						print "<table class='table table-stripped' id='secrets_log_table'><thead><tr><th>User</th><th>Account</th><th>Event</th><th>Date</tr></thead><tbody>";
-						$sql = $db->prepare("SELECT * FROM secrets_log WHERE productid = ? LIMIT 5000;");
+						$sql = $db->prepare("SELECT * FROM secrets_log WHERE productid = ? ORDER BY ROWID DESC LIMIT 5000;");
 						$sql->execute(to_int($q->param('p')));
 						while(my @res = $sql->fetchrow_array())
 						{
@@ -6205,7 +6205,7 @@ elsif($q->param('m')) # Modules
 			{
 				print "<p>Last automation result: <b>" . $res[1] . "</b></p>";
 			}
-			$sql = $db->prepare("SELECT * FROM auto_log LIMIT 5000;");
+			$sql = $db->prepare("SELECT * FROM auto_log ORDER BY ROWID DESC LIMIT 5000;");
 			$sql->execute();
 			print "<table class='table table-striped' id='autolog_table'><thead><tr><th>Module</th><th>Event</th><th>Date</th></tr></thead><tbody>\n";
 			while(my @res = $sql->fetchrow_array())
@@ -6302,7 +6302,7 @@ elsif($q->param('m')) # Modules
 				$sql->execute();
 			}			
 			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Access log</h3></div><div class='panel-body'>\n";
-			$sql = $db->prepare("SELECT * FROM file_access LIMIT 5000;");
+			$sql = $db->prepare("SELECT * FROM file_access ORDER BY ROWID DESC LIMIT 5000;");
 			$sql->execute();
 			print "<form style='display:inline' method='POST' action='./?m=files'><input type='hidden' name='m' value='files'><input type='hidden' name='clear_log' value='1'><input class='btn btn-danger pull-right' type='submit' onclick='return confirm(\"Are you sure?\");' value='Clear log'><br></form>";
 			print "<table class='table table-striped' id='files_log'><thead><tr><th>IP address</th><th>File ID</th><th>Date</th></tr></thead><tbody>\n";
