@@ -1101,7 +1101,7 @@ sub home
 		{
 			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Tickets you created</h3></div><div class='panel-body'><table class='table table-striped' id='home1_table'>\n";
 			print "<thead><tr><th>ID</th><th>" . $items{"Product"} . "</th><th>Title</th><th>Status</th><th>Last modified</th></tr></thead><tbody>\n";
-			$sql = $db->prepare("SELECT ROWID,* FROM tickets WHERE status != 'Closed' ORDER BY ROWID DESC");
+			$sql = $db->prepare("SELECT ROWID,* FROM tickets WHERE status != 'Closed' ORDER BY ROWID DESC LIMIT 5000");
 			$sql->execute();
 			while(my @res = $sql->fetchrow_array())
 			{
@@ -1128,7 +1128,7 @@ sub home
 		{
 			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Favorite tickets</h3></div><div class='panel-body'><table class='table table-striped' id='home2_table'>\n";
 			print "<thead><tr><th>ID</th><th>" . $items{"Product"} . "</th><th>Title</th><th>Status</th><th>Last modified</th></tr></thead><tbody>\n";
-			$sql = $db->prepare("SELECT ROWID,* FROM tickets WHERE status != 'Closed' ORDER BY ROWID DESC;");
+			$sql = $db->prepare("SELECT ROWID,* FROM tickets WHERE status != 'Closed' ORDER BY ROWID DESC LIMIT 5000;");
 			$sql->execute();
 			while(my @res = $sql->fetchrow_array())
 			{
@@ -1155,7 +1155,7 @@ sub home
 		{
 			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Tickets assigned to you</h3></div><div class='panel-body'><table class='table table-striped' id='home3_table'>\n";
 			print "<thead><tr><th>ID</th><th>" . $items{"Product"} . "</th><th>Title</th><th>Status</th><th>Last modified</th></tr></thead><tbody>\n";
-			$sql = $db->prepare("SELECT ROWID,* FROM tickets WHERE status != 'Closed' ORDER BY ROWID DESC;");
+			$sql = $db->prepare("SELECT ROWID,* FROM tickets WHERE status != 'Closed' ORDER BY ROWID DESC LIMIT 5000;");
 			$sql->execute();
 			while(my @res = $sql->fetchrow_array())
 			{
@@ -1299,7 +1299,7 @@ sub home
 		{	
 			print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>Checked out items</h3></div><div class='panel-body'><table class='table table-striped' id='home6_table'>\n";
 			print "<thead><tr><th>Type</th><th>Name</th><th>Serial</th></tr></thead><tbody>\n";
-			$sql = $db->prepare("SELECT ROWID,* FROM items WHERE user = ?");
+			$sql = $db->prepare("SELECT ROWID,* FROM items WHERE user = ?;");
 			$sql->execute($logged_user);
 			while(my @res = $sql->fetchrow_array())
 			{
@@ -1679,7 +1679,8 @@ elsif($q->param('api')) # API calls
 			print " \"status\": \"OK\",\n";
 			print " \"tickets\": [\n";
 			my $found = 0;
-			$sql = $db->prepare("SELECT ROWID,* FROM tickets WHERE productid = ?;");
+			if($cfg->load("hide_close") eq "on") { $sql = $db->prepare("SELECT ROWID,* FROM tickets WHERE productid = ? AND status != 'Closed';"); }
+			else { $sql = $db->prepare("SELECT ROWID,* FROM tickets WHERE productid = ?;"); }
 			$sql->execute(to_int($q->param('product_id')));
 			while(my @res = $sql->fetchrow_array())
 			{
@@ -1690,6 +1691,47 @@ elsif($q->param('api')) # API calls
 				print "   \"product_id\": \"" . $res[1] . "\",\n";
 				print "   \"release_id\": \"" . $res[2] . "\",\n";
 				print "   \"title\": \"" . $res[5] . "\"\n";
+				print "  }";
+			}
+			print "\n ]\n";
+			print "}\n";
+		}
+	}
+	elsif($q->param('api') eq "list_files")
+	{
+		if(!$q->param('key'))
+		{
+			print "{\n";
+			print " \"message\": \"Missing 'key' argument.\",\n";
+			print " \"status\": \"ERR_MISSING_ARGUMENT\"\n";
+			print "}\n";
+		}
+		elsif($q->param('key') ne $cfg->load('api_read'))
+		{
+			print "{\n";
+			print " \"message\": \"Invalid 'key' value.\",\n";
+			print " \"status\": \"ERR_INVALID_KEY\"\n";
+			print "}\n";
+		}
+		else
+		{
+			print "{\n";
+			print " \"message\": \"Files list.\",\n";
+			print " \"status\": \"OK\",\n";
+			print " \"files\": [\n";
+			my $found = 0;
+			$sql = $db->prepare("SELECT * FROM files;");
+			$sql->execute();
+			while(my @res = $sql->fetchrow_array())
+			{
+				if($found) { print ",\n"; }
+				$found = 1;
+				print "  {\n";
+				print "   \"id\": \"" . $res[1] . "\",\n";
+				print "   \"file_name\": \"" . $res[2] . "\",\n";
+				print "   \"uploaded_by\": \"" . $res[0] . "\",\n";
+				print "   \"uploaded_on\": \"" . $res[3] . "\",\n";
+				print "   \"size\": \"" . $res[4] . "\"\n";
 				print "  }";
 			}
 			print "\n ]\n";

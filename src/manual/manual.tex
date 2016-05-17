@@ -11,10 +11,10 @@
 % Conditional compilation for Windows and Linux
 \usepackage{ifthen}
 \newboolean{Windows}
-\setboolean{Windows}{false} % change to false for Linux
+\setboolean{Windows}{true} % change to false for Linux
 \ifthenelse{\boolean{Windows}}
-{\def\NodePointManual{NodePoint IT System - Windows version 1.7.0}}
-{\def\NodePointManual{NodePoint IT System - Linux version 1.7.0}}
+{\def\NodePointManual{NodePoint IT System - Windows version 1.7.1}}
+{\def\NodePointManual{NodePoint IT System - Linux version 1.7.1}}
 
 % Margins and paper type
 \geometry{a4paper, right=1.5cm, left=1.5cm, top=2cm, bottom=1.5cm}
@@ -805,6 +805,13 @@ Here is a list of commands. Arguments in \textit{italics} are optional:
 \item name=<item name>
 \item serial=<serial number>
 \item info=<additional information>
+\end{itemize}
+
+\subsection{List files}
+
+\begin{itemize}
+\item api=list\_files
+\item key=<read key>
 \end{itemize}
 
 \subsection{List items}
