@@ -168,6 +168,7 @@ sub logevent
 # Initial config
 chdir dirname($0);
 $cfg = Config::Win32->new("NodePoint", "settings");
+my $perf = time;
 
 if($cfg->load("db_address"))
 {
@@ -795,8 +796,6 @@ while(my @res = $sql->fetchrow_array())
 			my $mapserial = "";
 			my $mapinfo = "";
 			my $approval = 0;
-			my $cmdbuser = "";
-			my $cmdbpass = "";
 			my $sql2 = $db->prepare("SELECT * FROM auto_config WHERE module = 'ServiceNow CMDB';");
 			$sql2->execute();
 			while(my @res2 = $sql2->fetchrow_array())
@@ -855,6 +854,78 @@ while(my @res = $sql->fetchrow_array())
 							{
 								$sql2 = $db->prepare("UPDATE items SET name = ?, info = ? WHERE serial = ?");
 								$sql2->execute(sanitize_html($rec->{$mapname}), sanitize_html($rec->{$mapinfo}), sanitize_html($rec->{$mapserial}));
+								$updcount += 1;
+							}
+						}
+					}
+					$sql2 = $db->prepare("END");
+					$sql2->execute();
+					$result = "Success";
+					logevent($res[0], "Listed " . $rowcount . " items, updated " . $updcount . ", created " . $crtcount . ".");
+				}
+			}
+		}
+		elsif($res[0] eq 'ODBC inventory')
+		{
+			my $type = "";
+			my $odbcdsn = "";
+			my $odbctable = "";
+			my $mapname = "";
+			my $mapserial = "";
+			my $mapinfo = "";
+			my $approval = 0;
+			my $odbcuser = "";
+			my $odbcpass = "";
+			my $sql2 = $db->prepare("SELECT * FROM auto_config WHERE module = 'ODBC inventory';");
+			$sql2->execute();
+			while(my @res2 = $sql2->fetchrow_array())
+			{
+				if($res2[1] eq 'type') { $type = $res2[2]; }
+				if($res2[1] eq 'odbcdsn') { $odbcdsn = $res2[2]; }
+				if($res2[1] eq 'odbctable') { $odbctable = $res2[2]; }
+				if($res2[1] eq 'mapname') { $mapname = to_int($res2[2]); }
+				if($res2[1] eq 'mapserial') { $mapserial = to_int($res2[2]); }
+				if($res2[1] eq 'mapinfo') { $mapinfo = to_int($res2[2]); }
+				if($res2[1] eq 'odbcuser') { $odbcuser = $res2[2]; }
+				if($res2[1] eq 'odbcpass') { $odbcpass = RC4($cfg->load("enc_key"), decode_base64($res2[2])); }
+				if($res2[1] eq 'approval') { $approval = to_int($res2[2]); }
+			}
+			if($odbcdsn eq "" || $odbctable eq "")
+			{
+				logevent($res[0], "Missing ODBC DSN or table configuration value.");
+			}
+			else
+			{
+				my $rowcount = 0;
+				my $updcount = 0;
+				my $crtcount = 0;
+				my $dbh = DBI->connect("DBI:ODBC:" . $odbcdsn, $odbcuser, $odbcpass, {RaiseError => 0, PrintError => 1}) or logevent($res[0], "Could not establish ODBC connection. [" . $@ . "]");
+				if($dbh)
+				{
+					$sql2 = $db->prepare("BEGIN");
+					$sql2->execute();
+					my $sql3 = $dbh->prepare("SELECT * FROM ?;");
+					$sql3->execute($odbctable);
+					while(my @res3 = $sql3->fetchrow_array)
+					{
+						$rowcount += 1;
+						if($res3[$mapserial] ne "" && $res3[$mapname] ne "")
+						{
+							$sql2 = $db->prepare("SELECT name,info FROM items WHERE serial = ?;");
+							$sql2->execute(sanitize_html($res3[$mapserial]));
+							my $existingname = "";
+							my $existinginfo = "";
+							while(my @res2 = $sql2->fetchrow_array()) { $existingname = $res2[0]; $existinginfo = $res2[1]; }
+							if($existingname eq "")
+							{
+								$sql2 = $db->prepare("INSERT INTO items VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);");
+								$sql2->execute(sanitize_html($res3[$mapname]), sanitize_alpha($type), sanitize_html($res3[$mapserial]), 0, 0, $approval, 1, "", sanitize_html($res3[$mapinfo]));
+								$crtcount += 1;
+							}
+							elsif($existingname ne sanitize_html($res3[$mapname]) || $existinginfo ne sanitize_html($res3[$mapinfo]))
+							{
+								$sql2 = $db->prepare("UPDATE items SET name = ?, info = ? WHERE serial = ?");
+								$sql2->execute(sanitize_html($res3[$mapname]), sanitize_html($res3[$mapinfo]), sanitize_html($res3[$mapserial]));
 								$updcount += 1;
 							}
 						}
@@ -1026,7 +1097,7 @@ while(my @res = $sql->fetchrow_array())
 						{
 							foreach my $assign (split(' ', $res2[2]))
 							{
-								notify($assign, "Ticket (" . $res2[0] . ") requires your attention", "Ticket " . $res2[1] . " assigned to you has reached its expiration threshold and requires your attention.");
+								notify($assign, "Ticket (" . $res2[0] . ") requires your attention", "Ticket " . $res2[1] . " assigned to you is over " . $numdays . " days old and requires your attention.");
 							}
 						}
 					}
@@ -1142,6 +1213,8 @@ while(my @res = $sql->fetchrow_array())
 		$sql2->execute(now(), time(), $result, $res[0]);
 	}
 }
+
 # Finish
-$sql = $db->prepare("INSERT INTO auto VALUES (?, 'Ran " . $runcount . " modules at " . now() . ".');");
+$perf = time - $perf;
+$sql = $db->prepare("INSERT INTO auto VALUES (?, 'Ran " . $runcount . " modules in " . to_int($perf) . " seconds on " . now() . ".');");
 $sql->execute(time());

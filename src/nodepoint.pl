@@ -637,6 +637,8 @@ sub db_check
 		$sql->execute();
 		$sql = $db->prepare("INSERT INTO auto_modules VALUES ('CSV projects', 0, 'Never', 0, '', \"This module fetches projects, releases and auto-assignments from a CSV file. You must specific column mappings and whether current assignments should be overwritten. The CSV should contain one line per release. Assignments must be comma separated usernames. Non-existent projects or releases will be created.\", 0);");
 		$sql->execute();
+		$sql = $db->prepare("INSERT INTO auto_modules VALUES ('ODBC inventory', 0, 'Never', 0, '', \"This module will connect to an ODBC database using the specified DSN or connection string and the credentials provided. You also need to supply the column numbers (in order retrieved by a SELECT statement, starting at 0) to map against the inventory component.\", 0);");
+		$sql->execute();
 	};
 	$sql->finish();
 	$sql = $db->prepare("SELECT * FROM auto_log WHERE 0 = 1;") or do
@@ -5715,12 +5717,12 @@ elsif($q->param('m')) # Modules
 					print ">Yes</option><option";
 					if($ovrassign == 0) { print " selected"; }
 					print ">No</option></select></div></div></p>";
-					print "<p><div class='row'><div class='col-sm-4'>Column mapping for '" . lc($items{"Product"}) . " name':</div><div class='col-sm-8'><input class='form-control' type='text' name='mapname' value=\"" . $mapname . "\"></div></div></p>";
-					print "<p><div class='row'><div class='col-sm-4'>Column mapping for '" . lc($items{"Product"}) . " " . lc($items{"Model"}) . "':</div><div class='col-sm-8'><input class='form-control' type='text' name='mapgoal' value=\"" . $mapgoal . "\"></div></div></p>";
-					print "<p><div class='row'><div class='col-sm-4'>Column mapping for '" . lc($items{"Product"}) . " description':</div><div class='col-sm-8'><input class='form-control' type='text' name='mapdesc' value=\"" . $mapdesc . "\"></div></div></p>";
-					print "<p><div class='row'><div class='col-sm-4'>Column mapping for '" . lc($items{"Release"}) . " name':</div><div class='col-sm-8'><input class='form-control' type='text' name='maprel' value=\"" . $maprel . "\"></div></div></p>";
-					print "<p><div class='row'><div class='col-sm-4'>Column mapping for '" . lc($items{"Release"}) . " note':</div><div class='col-sm-8'><input class='form-control' type='text' name='mapnote' value=\"" . $mapnote . "\"></div></div></p>";
-					print "<p><div class='row'><div class='col-sm-4'>Column mapping for 'auto-assignment':</div><div class='col-sm-8'><input class='form-control' type='text' name='mapassign' value=\"" . $mapassign . "\"></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>Column mapping for '" . lc($items{"Product"}) . " name':</div><div class='col-sm-8'><input class='form-control' type='number' name='mapname' value=\"" . $mapname . "\"></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>Column mapping for '" . lc($items{"Product"}) . " " . lc($items{"Model"}) . "':</div><div class='col-sm-8'><input class='form-control' type='number' name='mapgoal' value=\"" . $mapgoal . "\"></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>Column mapping for '" . lc($items{"Product"}) . " description':</div><div class='col-sm-8'><input class='form-control' type='number' name='mapdesc' value=\"" . $mapdesc . "\"></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>Column mapping for '" . lc($items{"Release"}) . " name':</div><div class='col-sm-8'><input class='form-control' type='number' name='maprel' value=\"" . $maprel . "\"></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>Column mapping for '" . lc($items{"Release"}) . " note':</div><div class='col-sm-8'><input class='form-control' type='number' name='mapnote' value=\"" . $mapnote . "\"></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>Column mapping for 'auto-assignment':</div><div class='col-sm-8'><input class='form-control' type='number' name='mapassign' value=\"" . $mapassign . "\"></div></div></p>";
 				}
 				elsif($res[0] eq "Update MOTD")
 				{
@@ -5985,6 +5987,71 @@ elsif($q->param('m')) # Modules
 					print "<p><div class='row'><div class='col-sm-4'>Mapping for 'serial':</div><div class='col-sm-8'><input class='form-control' type='text' name='mapserial' value=\"" . $mapserial . "\"></div></div></p>";
 					print "<p><div class='row'><div class='col-sm-4'>Mapping for 'info':</div><div class='col-sm-8'><input class='form-control' type='text' name='mapinfo' value=\"" . $mapinfo . "\"></div></div></p>";
 				}
+				elsif($res[0] eq "ODBC inventory")
+				{
+					my $type = "Server";
+					my $odbcdsn = "";
+					my $odbctable = "items";
+					my $mapname = "0";
+					my $mapserial = "1";
+					my $mapinfo = "2";
+					my $approval = 0;
+					my $odbcuser = "sa";
+					my $odbcpass = "";
+					my $sql2 = $db->prepare("SELECT * FROM auto_config WHERE module = 'ODBC inventory';");
+					$sql2->execute();
+					while(my @res2 = $sql2->fetchrow_array())
+					{
+						if($res2[1] eq 'type') { $type = $res2[2]; }
+						if($res2[1] eq 'odbcdsn') { $odbcdsn = $res2[2]; }
+						if($res2[1] eq 'odbctable') { $odbctable = $res2[2]; }
+						if($res2[1] eq 'mapname') { $mapname = to_int($res2[2]); }
+						if($res2[1] eq 'mapserial') { $mapserial = to_int($res2[2]); }
+						if($res2[1] eq 'mapinfo') { $mapinfo = to_int($res2[2]); }
+						if($res2[1] eq 'odbcuser') { $odbcuser = $res2[2]; }
+						if($res2[1] eq 'odbcpass') { $odbcpass = RC4($cfg->load("enc_key"), decode_base64($res2[2])); }
+						if($res2[1] eq 'approval') { $approval = to_int($res2[2]); }
+					}
+					print "<p><div class='row'><div class='col-sm-4'>Connection string:</div><div class='col-sm-8'><input class='form-control' type='text' name='odbcdsn' value=\"" . $odbcdsn . "\"></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>Table name:</div><div class='col-sm-8'><input class='form-control' type='text' name='odbctable' value=\"" . $odbctable . "\"></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>Username:</div><div class='col-sm-8'><input class='form-control' type='text' name='odbcuser' value=\"" . $odbcuser . "\"></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>Password:</div><div class='col-sm-8'><input class='form-control' type='password' name='odbcpass' value=\"" . $odbcpass . "\"></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>Require checkout approval:</div><div class='col-sm-8'><select class='form-control' name='approval'><option";
+					if($approval == 1) { print " selected"; }
+					print ">Yes</option><option";
+					if($approval == 0) { print " selected"; }
+					print ">No</option></select></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>Asset type:</div><div class='col-sm-8'><select class='form-control' name='type'><option";
+					if($type eq "Desktop") { print " selected"; }
+					print ">Desktop</option><option";
+					if($type eq "Laptop") { print " selected"; }
+					print ">Laptop</option><option";
+					if($type eq "Server") { print " selected"; }
+					print ">Server</option><option";
+					if($type eq "Keyboard") { print " selected"; }
+					print ">Keyboard</option><option";
+					if($type eq "Mouse") { print " selected"; }
+					print ">Mouse</option><option";
+					if($type eq "Display") { print " selected"; }
+					print ">Display</option><option";
+					if($type eq "Phone") { print " selected"; }
+					print ">Phone</option><option";
+					if($type eq "Software") { print " selected"; }
+					print ">Software</option><option";
+					if($type eq "Printer") { print " selected"; }
+					print ">Printer</option><option";
+					if($type eq "Peripheral") { print " selected"; }
+					print ">Peripheral</option><option";
+					if($type eq "Furniture") { print " selected"; }
+					print ">Furniture</option><option";
+					if($type eq "Tool") { print " selected"; }
+					print ">Tool</option><option";
+					if($type eq "Other") { print " selected"; }
+					print ">Other</option></select></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>Column mapping for 'name':</div><div class='col-sm-8'><input class='form-control' type='number' name='mapname' value=\"" . $mapname . "\"></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>Column mapping for 'serial':</div><div class='col-sm-8'><input class='form-control' type='number' name='mapserial' value=\"" . $mapserial . "\"></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>Column mapping for 'info':</div><div class='col-sm-8'><input class='form-control' type='number' name='mapinfo' value=\"" . $mapinfo . "\"></div></div></p>";
+				}
 				elsif($res[0] eq "CSV inventory")
 				{
 					my $type = "Server";
@@ -6037,9 +6104,9 @@ elsif($q->param('m')) # Modules
 					print ">Tool</option><option";
 					if($type eq "Other") { print " selected"; }
 					print ">Other</option></select></div></div></p>";
-					print "<p><div class='row'><div class='col-sm-4'>Column number for 'name':</div><div class='col-sm-8'><input class='form-control' type='text' name='mapname' value=\"" . $mapname . "\"></div></div></p>";
-					print "<p><div class='row'><div class='col-sm-4'>Column number for 'serial':</div><div class='col-sm-8'><input class='form-control' type='text' name='mapserial' value=\"" . $mapserial . "\"></div></div></p>";
-					print "<p><div class='row'><div class='col-sm-4'>Column number for 'info':</div><div class='col-sm-8'><input class='form-control' type='text' name='mapinfo' value=\"" . $mapinfo . "\"></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>Column mapping for 'name':</div><div class='col-sm-8'><input class='form-control' type='number' name='mapname' value=\"" . $mapname . "\"></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>Column mapping for 'serial':</div><div class='col-sm-8'><input class='form-control' type='number' name='mapserial' value=\"" . $mapserial . "\"></div></div></p>";
+					print "<p><div class='row'><div class='col-sm-4'>Column mapping for 'info':</div><div class='col-sm-8'><input class='form-control' type='number' name='mapinfo' value=\"" . $mapinfo . "\"></div></div></p>";
 				}
 				print "<p><input type='hidden' name='m' value='auto'><input type='hidden' name='save' value='" . sanitize_html($q->param('config')) . "'><input class='btn btn-primary pull-right' type='submit' value='Save'></p>";
 				print "</form></div></div>\n";
@@ -6165,6 +6232,30 @@ elsif($q->param('m')) # Modules
 					$sql = $db->prepare("INSERT INTO auto_config VALUES ('ServiceNow CMDB', 'cmdbpass', ?);");
 					$sql->execute(encode_base64(RC4($cfg->load("enc_key"), $q->param('cmdbpass'))));
 					$sql = $db->prepare("INSERT INTO auto_config VALUES ('ServiceNow CMDB', 'approval', ?);");
+					if($q->param('approval') eq "Yes") { $sql->execute(1); }
+					else { $sql->execute(0); }
+				}
+				elsif($q->param('save') eq "ODBC inventory")
+				{
+					$sql = $db->prepare("DELETE FROM auto_config WHERE module = 'ODBC inventory';");
+					$sql->execute();
+					$sql = $db->prepare("INSERT INTO auto_config VALUES ('ODBC inventory', 'odbcdsn', ?);");
+					$sql->execute(sanitize_html($q->param('odbcdsn')));
+					$sql = $db->prepare("INSERT INTO auto_config VALUES ('ODBC inventory', 'odbctable', ?);");
+					$sql->execute(sanitize_html($q->param('odbctable')));
+					$sql = $db->prepare("INSERT INTO auto_config VALUES ('ODBC inventory', 'mapname', ?);");
+					$sql->execute(to_int($q->param('mapname')));
+					$sql = $db->prepare("INSERT INTO auto_config VALUES ('ODBC inventory', 'mapserial', ?);");
+					$sql->execute(to_int($q->param('mapserial')));
+					$sql = $db->prepare("INSERT INTO auto_config VALUES ('ODBC inventory', 'mapinfo', ?);");
+					$sql->execute(to_int($q->param('mapinfo')));
+					$sql = $db->prepare("INSERT INTO auto_config VALUES ('ODBC inventory', 'odbcuser', ?);");
+					$sql->execute(sanitize_html($q->param('odbcuser')));
+					$sql = $db->prepare("INSERT INTO auto_config VALUES ('ODBC inventory', 'type', ?);");
+					$sql->execute(sanitize_html($q->param('type')));
+					$sql = $db->prepare("INSERT INTO auto_config VALUES ('ODBC inventory', 'odbcpass', ?);");
+					$sql->execute(encode_base64(RC4($cfg->load("enc_key"), $q->param('odbcpass'))));
+					$sql = $db->prepare("INSERT INTO auto_config VALUES ('ODBC inventory', 'approval', ?);");
 					if($q->param('approval') eq "Yes") { $sql->execute(1); }
 					else { $sql->execute(0); }
 				}

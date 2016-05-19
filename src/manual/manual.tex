@@ -600,6 +600,9 @@ This module will import items from a CSV file. You must specify the file name an
 \subsubsection{CSV projects}
 This module fetches projects, releases and auto-assignments from a CSV file. You must specific column mappings and whether current assignments should be overwritten. The CSV should contain one line per release. Assignments must be comma separated usernames. Non-existent projects or releases will be created.
 
+\subsubsection{ODBC inventory}
+This module will connect to an ODBC database using the specified DSN or connection string and the credentials provided. You also need to supply the column numbers (in order retrieved by a SELECT statement, starting at 0) to map against the inventory component.
+
 \clearpage
 \section{JSON API}
 NodePoint provides a JSON based REST API that can be used to accomplish some basic tasks. This can be useful to integrate the system with existing products, or to use with custom scripts. Each API call requires either the \textit{read} or \textit{write} key. The calls can be made using GET or POST.
