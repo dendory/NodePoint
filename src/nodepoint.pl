@@ -8,7 +8,7 @@
 #
 
 use strict;
-use Config::Win32;
+use Config::Linux;
 use Digest::SHA qw(sha1_hex);
 use DBI;
 use CGI '-utf8';;
@@ -1322,11 +1322,11 @@ sub home
 # Connect to config
 eval
 {
-	$cfg = Config::Win32->new("NodePoint", "settings");
+	$cfg = Config::Linux->new("NodePoint", "settings");
 };
 if(!defined($cfg)) # Can't even use headers() if this fails.
 {
-	print "Content-type: text/html\n\nError: Could not access " . Config::Win32->type . ". Please ensure NodePoint has the proper permissions.";
+	print "Content-type: text/html\n\nError: Could not access " . Config::Linux->type . ". Please ensure NodePoint has the proper permissions.";
 	exit(0);
 };
 
@@ -1500,7 +1500,7 @@ elsif(!$cfg->load("db_address") || !$cfg->load("site_name")) # first use
 #			if($q->remote_addr eq "127.0.0.1" || $q->remote_addr eq "::1")
 #			{
 				msg("Initial configuration not found! Create it now.", 2);
-				print "<h3>Initial configuration</h3><p>These settings will be saved in the " . $cfg->type . ". It allows NodePoint to connect to the database server and sets various default values.</p>\n";
+				print "<h3>Initial configuration</h3><p>These settings will be saved in the " . $cfg->type . ". It allows NodePoint to connect to the database and sets various default values.</p>\n";
 				print "<form method='POST' action='.'>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Database file name:</div><div class='col-sm-4'><input type='text' style='width:300px' name='db_address' value='.." . $cfg->sep . "db" . $cfg->sep . "nodepoint.db'></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Site name:</div><div class='col-sm-4'><input style='width:300px' type='text' name='site_name' value='NodePoint'></div></div></p>\n";
@@ -6816,8 +6816,7 @@ elsif($q->param('m')) # Modules
 		{
 			print "<h4>Tickets</h4>";
 			print "<table class='table table-stripped' id='search1'><thead><tr><th>ID</th><th>User</th><th>" . $items{"Product"} . "</th><th>Title</th><th>Status</th><th>Date</th></tr></thead><tbody>\n";
-			if($cfg->load("hide_close") eq "on") { $sql = $db->prepare("SELECT ROWID,* FROM tickets WHERE status != 'Closed' ORDER BY ROWID DESC;"); }
-			else { $sql = $db->prepare("SELECT ROWID,* FROM tickets ORDER BY ROWID DESC;"); }
+			$sql = $db->prepare("SELECT ROWID,* FROM tickets ORDER BY ROWID DESC LIMIT 1000;");
 			$sql->execute();
 			while(my @res = $sql->fetchrow_array())
 			{
@@ -6836,8 +6835,8 @@ elsif($q->param('m')) # Modules
 		{
 			print "<h4>Support articles</h4>";
 			print "<table class='table table-striped' id='search2'><thead><tr><th>ID</th><th>" . $items{"Product"} . "</th><th>Title</th><th>Last update</th></tr></thead><tbody>\n";
-			if($logged_lvl > 3) { $sql = $db->prepare("SELECT ROWID,* FROM kb;"); }
-			else { $sql = $db->prepare("SELECT ROWID,* FROM kb WHERE published = 1;"); }
+			if($logged_lvl > 3) { $sql = $db->prepare("SELECT ROWID,* FROM kb ORDER BY ROWID DESC LIMIT 1000;"); }
+			else { $sql = $db->prepare("SELECT ROWID,* FROM kb WHERE published = 1 ORDER BY ROWID DESC LIMIT 1000;"); }
 			$sql->execute();
 			my $product = "";
 			while(my @res = $sql->fetchrow_array())
@@ -6862,7 +6861,7 @@ elsif($q->param('m')) # Modules
 			my $d = localtime->strftime('%d');
 			print "<h4>Inventory items</h4>";
 			print "<table class='table table-striped' id='search3'><thead><tr><th>Type</th><th>Name</th><th>Serial</th><th>Status</th></tr></thead><tbody>\n";
-			$sql = $db->prepare("SELECT ROWID,* FROM items;"); 
+			$sql = $db->prepare("SELECT ROWID,* FROM items ORDER BY ROWID DESC LIMIT 1000;"); 
 			$sql->execute();
 			while(my @res = $sql->fetchrow_array())
 			{
@@ -6894,7 +6893,7 @@ elsif($q->param('m')) # Modules
 		{
 			print "<h4>Clients directory</h4>";
 			print "<table class='table table-stripped' id='search4'><thead><tr><th>ID</th><th>Name</th><th>Contact</th><th>Status</th></tr></thead><tbody>\n";
-			$sql = $db->prepare("SELECT ROWID,* FROM clients;");
+			$sql = $db->prepare("SELECT ROWID,* FROM clients ORDER BY ROWID DESC LIMIT 1000;");
 			$sql->execute();
 			while(my @res = $sql->fetchrow_array())
 			{
