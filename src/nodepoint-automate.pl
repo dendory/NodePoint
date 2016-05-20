@@ -899,13 +899,14 @@ while(my @res = $sql->fetchrow_array())
 				my $rowcount = 0;
 				my $updcount = 0;
 				my $crtcount = 0;
-				my $dbh = DBI->connect("DBI:ODBC:" . $odbcdsn, $odbcuser, $odbcpass, {RaiseError => 0, PrintError => 1}) or logevent($res[0], "Could not establish ODBC connection. [" . $@ . "]");
+				my $dbh = DBI->connect("DBI:ODBC:" . $odbcdsn, $odbcuser, $odbcpass, {RaiseError => 0, PrintError => 0}) or logevent($res[0], "Could not establish ODBC connection. " . $DBI::errstr);
 				if($dbh)
 				{
 					$sql2 = $db->prepare("BEGIN");
 					$sql2->execute();
-					my $sql3 = $dbh->prepare("SELECT * FROM ?;");
-					$sql3->execute($odbctable);
+					my $sql3 = $dbh->prepare("SELECT * FROM " . $odbctable . ";");
+					$sql3->execute();
+					if($DBI::errstr) { logevent($res[0], "Could not access specified table. " . $DBI::errstr); }
 					while(my @res3 = $sql3->fetchrow_array)
 					{
 						$rowcount += 1;

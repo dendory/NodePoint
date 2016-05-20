@@ -5990,8 +5990,8 @@ elsif($q->param('m')) # Modules
 				elsif($res[0] eq "ODBC inventory")
 				{
 					my $type = "Server";
-					my $odbcdsn = "";
-					my $odbctable = "items";
+					my $odbcdsn = "Driver={SQL Server};Server=127.0.0.1;Database=my_data;";
+					my $odbctable = "dbo.my_items";
 					my $mapname = "0";
 					my $mapserial = "1";
 					my $mapinfo = "2";
