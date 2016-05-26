@@ -164,7 +164,7 @@ sub navbar
 			if($logged_lvl > 5) { print "   <li><a href='./?m=log'>System log</a></li>\n"; }
 			print "  <li role='separator' class='divider'></li><li><a href='./?m=logout'>Logout</a></li></ul></li>\n";
 		}
-		elsif($q->param('m') && ($q->param('m') eq "products" || $q->param('m') eq "add_product" ||$q->param('m') eq "view_product" || $q->param('m') eq "edit_product" || $q->param('m') eq "add_release" || $q->param('m') eq "add_step" || $q->param('m') eq "delete_step" || $q->param('m') eq "delete_release"))
+		elsif($q->param('m') && ($q->param('m') eq "products" || $q->param('m') eq "add_product" || $q->param('m') eq "ctables" ||$q->param('m') eq "view_product" || $q->param('m') eq "edit_product" || $q->param('m') eq "add_release" || $q->param('m') eq "add_step" || $q->param('m') eq "delete_step" || $q->param('m') eq "delete_release"))
 		{
 			print "	 <li><a href='.'>Home</a></li>\n";
 			print "	 <li class='active'><a href='./?m=products'>" . $items{"Product"} . "s</a></li>\n";
@@ -183,7 +183,7 @@ sub navbar
 			if($logged_lvl > 5) { print "   <li><a href='./?m=log'>System log</a></li>\n"; }
 			print "  <li role='separator' class='divider'></li><li><a href='./?m=logout'>Logout</a></li></ul></li>\n";
 		}
-		elsif($q->param('m') && ($q->param('m') eq "settings" || $q->param('m') eq "stats" || $q->param('m') eq "auto" || $q->param('m') eq "show_report" || $q->param('m') eq "triggers" || $q->param('m') eq "customforms" || $q->param('m') eq "users" || $q->param('m') eq "log" || $q->param('m') eq "confirm_delete" || $q->param('m') eq "clear_log" || $q->param('m') eq "stats" || $q->param('m') eq "change_lvl" || $q->param('m') eq "files" || $q->param('m') eq "confirm_email" || $q->param('m') eq "reset_pass" || $q->param('m') eq "logout" || $q->param('m') eq "summary" || $q->param('m') eq "routing" || $q->param('m') eq "ctables" || $q->param('m') eq "edit_route") || $q->param('create_form') || $q->param('edit_form') || $q->param('save_form'))
+		elsif($q->param('m') && ($q->param('m') eq "settings" || $q->param('m') eq "stats" || $q->param('m') eq "auto" || $q->param('m') eq "show_report" || $q->param('m') eq "triggers" || $q->param('m') eq "customforms" || $q->param('m') eq "users" || $q->param('m') eq "log" || $q->param('m') eq "confirm_delete" || $q->param('m') eq "clear_log" || $q->param('m') eq "stats" || $q->param('m') eq "change_lvl" || $q->param('m') eq "files" || $q->param('m') eq "confirm_email" || $q->param('m') eq "reset_pass" || $q->param('m') eq "logout" || $q->param('m') eq "summary" || $q->param('m') eq "routing" || $q->param('m') eq "edit_route") || $q->param('create_form') || $q->param('edit_form') || $q->param('save_form'))
 		{
 			print "	 <li><a href='.'>Home</a></li>\n";
 			print "	 <li><a href='./?m=products'>" . $items{"Product"} . "s</a></li>\n";
@@ -378,7 +378,7 @@ sub login
 sub sanitize_html
 {
 	my ($text) = @_;
-	if($text)
+	if(defined($text))
 	{
 		$text =~ s/</&lt;/g;
 		$text =~ s/"/&quot;/g;
@@ -390,7 +390,7 @@ sub sanitize_html
 sub sanitize_alpha
 {
 	my ($text) = @_;
-	if($text)
+	if(defined($text))
 	{
 		$text =~ s/[^A-Za-z0-9\.\-\_\@]//g;
 		return $text;
@@ -401,7 +401,7 @@ sub sanitize_alpha
 sub sanitize_email
 {
 	my ($text) = @_;
-	if($text)
+	if(defined($text))
 	{
 		if(valid($text)) { return $text; }
 		else { return ""; }
@@ -4730,11 +4730,120 @@ elsif($q->param('m')) # Modules
 		headers("Checklists");
 		if($q->param('c'))
 		{
-			
+			if($q->param('save') && defined($q->param('edit_lvl')) && defined($q->param('modify_lvl')) && defined($q->param('view_lvl')))
+			{
+				my $old_edit_lvl = 999;
+				$sql = $db->prepare("SELECT edit FROM ctables WHERE ROWID = ?;");
+				$sql->execute(to_int($q->param('c')));
+				while(my @res = $sql->fetchrow_array())
+				{
+					$old_edit_lvl = to_int($res[0]);
+				}
+				if($logged_lvl >= $old_edit_lvl)
+				{
+					$sql = $db->prepare("UPDATE ctables SET edit = ?, modify = ?, read = ?, time = ? WHERE ROWID = ?;");
+					$sql->execute(to_int($q->param('edit_lvl')), to_int($q->param('modify_lvl')), to_int($q->param('view_lvl')), now(), to_int($q->param('c')));
+					msg("Permissions updated.", 3)
+				}
+			}
+			my $cname = "";
+			my $edit_lvl;
+			my $modify_lvl;
+			my $view_lvl = 999;
+			my $product;
+			$sql = $db->prepare("SELECT ROWID,* FROM ctables WHERE ROWID = ?;");
+			$sql->execute(to_int($q->param('c')));
+			while(my @res = $sql->fetchrow_array())
+			{
+				$cname = $res[1];
+				$product = to_int($res[2]);
+				$edit_lvl = to_int($res[3]);
+				$modify_lvl = to_int($res[4]);
+				$view_lvl = to_int($res[5]);
+			}
+			if($logged_lvl >= $edit_lvl && $q->param('name') && $q->param('key') && $q->param('new_key'))
+			{
+				$sql = $db->prepare("INSERT INTO ctables_data VALUES (?, ?, ?, ?, ?);");
+				$sql->execute(sanitize_html($q->param('name')), sanitize_html($q->param('key')), '', $logged_user, now());
+				$sql = $db->prepare("UPDATE ctables SET time = ? WHERE ROWID = ?;");
+				$sql->execute(now(), to_int($q->param('c')));
+				msg("New key added.", 3);
+			}
+			if($logged_lvl >= $modify_lvl && $q->param('key') && $q->param('edit_value') && defined($q->param('change_value')))
+			{
+				$sql = $db->prepare("UPDATE ctables_data SET value = ?, user = ?, time = ? WHERE ROWID = ?");
+				$sql->execute(sanitize_html($q->param('change_value')), $logged_user, now(), to_int($q->param('key')));
+				msg("Value updated to <b>" . sanitize_html($q->param('change_value')) . "</b>.", 3);
+			}
+			if($logged_lvl >= $edit_lvl && $q->param('key') && $q->param('delete_key'))
+			{
+				$sql = $db->prepare("DELETE FROM ctables_data WHERE ROWID = ?;");
+				$sql->execute(to_int($q->param('key')));
+				$sql = $db->prepare("UPDATE ctables SET time = ? WHERE ROWID = ?;");
+				$sql->execute(now(), to_int($q->param('c')));
+				msg("Key/value pair removed.", 3);
+			}
+			if($logged_lvl >= $view_lvl)
+			{
+				print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>" . $cname . "</h3></div><div class='panel-body'>\n";
+				if($logged_lvl >= $edit_lvl)
+				{
+					print "<h4>Add a new key:</h4><form method='POST' action='.' data-toggle='validator' role='form'><p><div class='row'><div class='col-sm-8'><input type='hidden' name='m' value='ctables'><input type='hidden' name='name' value='" . $cname . "'><input type='hidden' name='c' value='" . to_int($q->param('c')) . "'><input placeholder='Key name' class='form-control' type='text' name='key' maxlength='100' required></div><div class='col-sm-4'><input type='submit' name='new_key' class='btn btn-primary pull-right' value='Add key'></div></div></p></form>\n";
+					print "<h4>Change permissions:</h4><form method='POST' action='.' data-toggle='validator' role='form'><input type='hidden' name='m' value='ctables'><input type='hidden' name='c' value='" . to_int($q->param('c')) . "'><p><div class='row'><div class='col-sm-4'>Edit keys: <select name='edit_lvl' class='form-control'><option>0</option><option";
+					if($edit_lvl == 1) { print " selected"; }
+					print ">1</option><option";
+					if($edit_lvl == 2) { print " selected"; }
+					print ">2</option><option";
+					if($edit_lvl == 3) { print " selected"; }
+					print ">3</option><option";
+					if($edit_lvl == 4) { print " selected"; }
+					print ">4</option><option";
+					if($edit_lvl == 5) { print " selected"; }
+					print ">5</option></select></div><div class='col-sm-4'>Modify values: <select name='modify_lvl' class='form-control'><option>0</option><option";
+					if($modify_lvl == 1) { print " selected"; }
+					print ">1</option><option";
+					if($modify_lvl == 2) { print " selected"; }
+					print ">2</option><option";
+					if($modify_lvl == 3) { print " selected"; }
+					print ">3</option><option";
+					if($modify_lvl == 4) { print " selected"; }
+					print ">4</option><option";
+					if($modify_lvl == 5) { print " selected"; }
+					print ">5</option></select></div><div class='col-sm-4'>View results: <select name='view_lvl' class='form-control'><option>0</option><option";
+					if($view_lvl == 1) { print " selected"; }
+					print ">1</option><option";
+					if($view_lvl == 2) { print " selected"; }
+					print ">2</option><option";
+					if($view_lvl == 3) { print " selected"; }
+					print ">3</option><option";
+					if($view_lvl == 4) { print " selected"; }
+					print ">4</option><option";
+					if($view_lvl == 5) { print " selected"; }
+					print ">5</option></select></div></div></p><p><div class='row'><div class='col-sm-12'><input type='submit' name='save' class='btn btn-primary pull-right' value='Save'></div></div></p></form><hr>\n";
+				}
+				print "<table class='table table-stripped' id='ctable_table'><thead><tr><th>ID</th><th>Key</th><th>Value</th></tr></thead><tbody>";
+				$sql = $db->prepare("SELECT ROWID,* FROM ctables_data WHERE name = ?;");
+				$sql->execute($cname);
+				while(my @res = $sql->fetchrow_array())
+				{
+					print "<tr><td>" . $res[0] . "</td><td>" . $res[2] . "</td><td>" . $res[3];
+					print "<span class='pull-right'><form method='POST' action='.'><input type='hidden' name='m' value='ctables'><input type='hidden' name='change_value' value=''><input type='hidden' name='c' value='" . to_int($q->param('c')) . "'><input type='hidden' name='key' value='" . $res[0] . "'><nobr>";
+					if($logged_lvl >= $modify_lvl) { print "<input class='btn btn-primary' name='edit_value' type='submit' onclick='this.form.change_value.value=window.prompt(\"Change value to:\");' value='Edit'> "; }
+					if($logged_lvl >= $edit_lvl) { print " <input class='btn btn-danger' name='delete_key' type='submit' onclick='return confirm(\"Are you sure you want to remove this row?\");' value='X'>"; }
+					print "</nobr></form></span>";
+					print "</td></tr>";
+				}				
+				print "</tbody></table><script>\$(document).ready(function(){\$('#ctable_table').DataTable({'order':[[1,'asc']],pageLength:" .  to_int($cfg->load('page_len')). ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script>";
+				print "</div></div>";
+			}
+			else
+			{
+				msg("You do not have access to this checklist.", 0);
+			}
 		}
 		else
 		{
-			msg("Please specify a checklist.", 1);
+			msg("Please specify a checklist.", 0);
 		}
 	}
 	elsif($q->param('m') eq "articles")
@@ -5077,7 +5186,7 @@ elsif($q->param('m')) # Modules
 
 					if($logged_lvl >= to_int($cfg->load('create_ctables')) && ($isassigned == 1 || $cfg->load('need_assign') ne "on"))
 					{
-						print "<form method='POST' action='.' data-toggle='validator' role='form'><input type='hidden' name='m' value='view_product'><input type='hidden' name='tab' value='ctables'><input type='hidden' name='p' value='" . to_int($q->param('p')) . "'><h4>Add a new checklist</h4><p><div class='row'><div class='col-sm-12'><input placeholder='Checklist name' class='form-control' name='name' maxlength='30' required></div></div></p><p>Access level required to...</p><p><div class='row'><div class='col-sm-4'>Edit keys: <select name='edit_lvl' class='form-control'><option>0</option><option>1</option><option>2</option><option>3</option><option selected>4</option><option>5</option></select></div><div class='col-sm-4'>Modify values: <select name='modify_lvl' class='form-control'><option>0</option><option>1</option><option>2</option><option selected>3</option><option>4</option><option>5</option></select></div><div class='col-sm-4'>View results: <select name='view_lvl' class='form-control'><option>0</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select></div></div></p><p><input class='btn btn-primary pull-right' type='submit' name='add_ctable' value='Add checklist'></p></form><br><hr><h4>Checklists</h4>\n";
+						print "<form method='POST' action='.' data-toggle='validator' role='form'><input type='hidden' name='m' value='view_product'><input type='hidden' name='tab' value='ctables'><input type='hidden' name='p' value='" . to_int($q->param('p')) . "'><h4>Add a new checklist</h4><p><div class='row'><div class='col-sm-12'><input placeholder='Checklist name' class='form-control' name='name' maxlength='100' required></div></div></p><p>Access level required to...</p><p><div class='row'><div class='col-sm-4'>Edit keys: <select name='edit_lvl' class='form-control'><option>0</option><option>1</option><option>2</option><option>3</option><option selected>4</option><option>5</option></select></div><div class='col-sm-4'>Modify values: <select name='modify_lvl' class='form-control'><option>0</option><option>1</option><option>2</option><option selected>3</option><option>4</option><option>5</option></select></div><div class='col-sm-4'>View results: <select name='view_lvl' class='form-control'><option>0</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select></div></div></p><p><input class='btn btn-primary pull-right' type='submit' name='add_ctable' value='Add checklist'></p></form><br><hr><h4>Checklists</h4>\n";
 					}
 					print "<table class='table table-stripped' id='ctables_table'><thead><tr><th>Name</th><th>Created by</th><th>Last modified on</th></tr></thead><tbody>";
 					$sql = $db->prepare("SELECT ROWID,* FROM ctables WHERE productid = ?;");
