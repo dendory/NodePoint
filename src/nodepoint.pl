@@ -7254,6 +7254,7 @@ elsif($q->param('m')) # Modules
 				}
 				my $redirect_url = "./?m=view_ticket&t=" . $lastrowid;
 				my $pj = to_int($q->param('product_id'));
+				my $rj = sanitize_html($q->param('release_id'));
 				my $field1 = $field[1];
 				my $field2 = $field[2];
 				my $field3 = $field[3];
@@ -7373,6 +7374,7 @@ elsif($q->param('m')) # Modules
 							$outf =~ s/\%priority\%/$lnk/g;
 							$outf =~ s/\%assigned\%/$assignedto/g;
 							$outf =~ s/\%product\%/$pj/g;
+							$outf =~ s/\%release\%/$rj/g;
 							$outf =~ s/\%field1\%/$field1/g;
 							$outf =~ s/\%field2\%/$field2/g;
 							$outf =~ s/\%field3\%/$field3/g;
@@ -7390,6 +7392,7 @@ elsif($q->param('m')) # Modules
 							$out =~ s/\%priority\%/$lnk/g;
 							$out =~ s/\%assigned\%/$assignedto/g;
 							$out =~ s/\%product\%/$pj/g;
+							$out =~ s/\%release\%/$rj/g;
 							$out =~ s/\%field1\%/$field1/g;
 							$out =~ s/\%field2\%/$field2/g;
 							$out =~ s/\%field3\%/$field3/g;
@@ -7416,6 +7419,7 @@ elsif($q->param('m')) # Modules
 							$out =~ s/\%assigned\%/$assignedto/g;
 							$out =~ s/\%product\%/$pj/g;
 							$out =~ s/\%field1\%/$field1/g;
+							$out =~ s/\%release\%/$rj/g;
 							$out =~ s/\%field2\%/$field2/g;
 							$out =~ s/\%field3\%/$field3/g;
 							$out =~ s/\%field4\%/$field4/g;
@@ -7431,6 +7435,7 @@ elsif($q->param('m')) # Modules
 							$outt =~ s/\%description\%/$description/g;
 							$outt =~ s/\%priority\%/$lnk/g;
 							$outt =~ s/\%assigned\%/$assignedto/g;
+							$outt =~ s/\%release\%/$rj/g;
 							$outt =~ s/\%product\%/$pj/g;
 							$outt =~ s/\%field1\%/$field1/g;
 							$outt =~ s/\%field2\%/$field2/g;
@@ -7455,6 +7460,7 @@ elsif($q->param('m')) # Modules
 							$out =~ s/\%priority\%/$lnk/g;
 							$out =~ s/\%assigned\%/$assignedto/g;
 							$out =~ s/\%product\%/$pj/g;
+							$out =~ s/\%release\%/$rj/g;
 							$out =~ s/\%field1\%/$field1/g;
 							$out =~ s/\%field2\%/$field2/g;
 							$out =~ s/\%field3\%/$field3/g;
@@ -7476,6 +7482,7 @@ elsif($q->param('m')) # Modules
 							$out =~ s/\%priority\%/$lnk/g;
 							$out =~ s/\%assigned\%/$assignedto/g;
 							$out =~ s/\%product\%/$pj/g;
+							$out =~ s/\%release\%/$rj/g;
 							$out =~ s/\%field1\%/$field1/g;
 							$out =~ s/\%field2\%/$field2/g;
 							$out =~ s/\%field3\%/$field3/g;
@@ -7493,6 +7500,7 @@ elsif($q->param('m')) # Modules
 							$uout =~ s/\%priority\%/$lnk/g;
 							$uout =~ s/\%assigned\%/$assignedto/g;
 							$uout =~ s/\%product\%/$pj/g;
+							$uout =~ s/\%release\%/$rj/g;
 							$uout =~ s/\%field1\%/$field1/g;
 							$uout =~ s/\%field2\%/$field2/g;
 							$uout =~ s/\%field3\%/$field3/g;
@@ -7542,6 +7550,7 @@ elsif($q->param('m')) # Modules
 							$out =~ s/\%priority\%/$lnk/g;
 							$out =~ s/\%assigned\%/$assignedto/g;
 							$out =~ s/\%product\%/$pj/g;
+							$out =~ s/\%release\%/$rj/g;
 							$out =~ s/\%field1\%/$field1/g;
 							$out =~ s/\%field2\%/$field2/g;
 							$out =~ s/\%field3\%/$field3/g;
@@ -7563,6 +7572,7 @@ elsif($q->param('m')) # Modules
 							$out =~ s/\%priority\%/$lnk/g;
 							$out =~ s/\%assigned\%/$assignedto/g;
 							$out =~ s/\%product\%/$pj/g;
+							$out =~ s/\%release\%/$rj/g;
 							$out =~ s/\%field1\%/$field1/g;
 							$out =~ s/\%field2\%/$field2/g;
 							$out =~ s/\%field3\%/$field3/g;
