@@ -11,10 +11,10 @@
 % Conditional compilation for Windows and Linux
 \usepackage{ifthen}
 \newboolean{Windows}
-\setboolean{Windows}{false} % change to false for Linux
+\setboolean{Windows}{true} % change to false for Linux
 \ifthenelse{\boolean{Windows}}
-{\def\NodePointManual{NodePoint IT System - Windows version 1.7.1}}
-{\def\NodePointManual{NodePoint IT System - Linux version 1.7.1}}
+{\def\NodePointManual{NodePoint IT System - Windows version 1.7.2}}
+{\def\NodePointManual{NodePoint IT System - Linux version 1.7.2}}
 
 % Margins and paper type
 \geometry{a4paper, right=1.5cm, left=1.5cm, top=2cm, bottom=1.5cm}
@@ -327,7 +327,7 @@ These are the configuration options for NodePoint. They have to be defined durin
 \item \textbf{Allow registrations:} Allow guest users to register a new account. If set to no, the only way to add new accounts is if a user with Users Management access adds one.
 \item \textbf{Allow guest tickets:} Allow guest users to file tickets.
 \item \textbf{Maximum file upload:} Maximum file size for uploads to project images, ticket comments and the File Management component.
-\item \textbf{Must be assigned to project:} Project specific functions like adding releases, adding tasks, adding, deleting or viewing secrets or uploading files are only available to users auto-assigned to the project.
+\item \textbf{Must be assigned to project:} Project specific functions like adding releases, adding tasks, adding, deleting or viewing secrets, editing checklists or uploading files are only available to users auto-assigned to the project.
 \item \textbf{Number of row per page:} Number of rows to show per page on tables.
 \item \textbf{Session expiry time:} Number of hours before a user session is invalidated.
 \item \textbf{API read key:} Used for some API operations.
@@ -354,6 +354,7 @@ These are the configuration options for NodePoint. They have to be defined durin
 \item \textbf{Can configure automation:} Users of this level can configure automation modules.
 \item \textbf{Can add secrets:} Users of this level can add project secrets if the proper component is turned on.
 \item \textbf{Can view secrets:} Users of this level can view project secrets if the proper component is turned on.
+\item \textbf{Can create checklists:} Users of this level can create new checklists on a project's page.
 \item \textbf{Authentication plugin:} Use an external script or application to authenticate users. This can be used instead of the built-in users management or Active Directory integration if you have some other process to authenticate users. It must return 0 for success, 1 for failure. The following variables can be used: \textit{\%user\%} and \textit{\%pass\%}. For example: \texttt{python auth.py -userid \%user\% -passwd \%pass\%}
 \item \textbf{Notifications plugin:} Call an application or script when a notification is sent. You can use the following variables here: \textit{\%user\%}, \textit{\%title\%} and \textit{\%message\%}. For example: \texttt{echo \%message\% >> ..\textbackslash \%user\%.log}
 \item \textbf{Checkout plugin:} Call an application or script when an inventory item is checked out or approved. You can use the following variables here: \textit{\%user\%} and \textit{\%serial\%}. For example: \texttt{python add\_license.py -item \%serial\% -user \%user\%}
@@ -602,6 +603,11 @@ This module fetches projects, releases and auto-assignments from a CSV file. You
 
 \subsubsection{ODBC inventory}
 This module will connect to an ODBC database using the specified DSN or connection string and the credentials provided. You also need to supply the column numbers (in order retrieved by a SELECT statement, starting at 0) to map against the inventory component.
+
+\subsection{Checklists}
+Checklists are key/value data pairs that can be added to custom tables. These tables are linked to specific projects on that project's page. Each checklist can given a name with access level restrictions for who can read the values, modify the values, and edit the keys. This component is useful to create checklists related to your projects, or keep arbitrary data easily accessible.
+
+If \textit{Must be assigned to project} is on, users also need to be auto-assigned to that particular project to edit checklists or modify values.
 
 \clearpage
 \section{JSON API}
