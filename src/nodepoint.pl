@@ -1715,6 +1715,137 @@ elsif($q->param('api')) # API calls
 			print "}\n";
 		}
 	}
+	elsif($q->param('api') eq "show_checklist")
+	{
+		if(!$q->param('name'))
+		{
+			print "{\n";
+			print " \"message\": \"Missing 'name' argument.\",\n";
+			print " \"status\": \"ERR_MISSING_ARGUMENT\"\n";
+			print "}\n";
+		}
+		elsif(!$q->param('key'))
+		{
+			print "{\n";
+			print " \"message\": \"Missing 'key' argument.\",\n";
+			print " \"status\": \"ERR_MISSING_ARGUMENT\"\n";
+			print "}\n";
+		}
+		elsif($q->param('key') ne $cfg->load('api_read'))
+		{
+			print "{\n";
+			print " \"message\": \"Invalid 'key' value.\",\n";
+			print " \"status\": \"ERR_INVALID_KEY\"\n";
+			print "}\n";
+		}
+		else
+		{
+			print "{\n";
+			print " \"message\": \"Checklist data.\",\n";
+			print " \"status\": \"OK\",\n";
+			print " \"data\": [\n";
+			my $found = 0;
+			$sql = $db->prepare("SELECT ROWID,* FROM ctables_data WHERE name = ?;");
+			$sql->execute(sanitize_html($q->param('name')));
+			while(my @res = $sql->fetchrow_array())
+			{
+				if($found) { print ",\n"; }
+				$found = 1;
+				print "  {\n";
+				print "   \"id\": \"" . $res[0] . "\",\n";
+				print "   \"key\": \"" . $res[2] . "\",\n";
+				print "   \"value\": \"" . $res[3] . "\",\n";
+				print "   \"user\": \"" . $res[4] . "\",\n";
+				print "   \"date\": \"" . $res[5] . "\"\n";
+				print "  }";
+			}
+			print "\n ]\n";
+			print "}\n";
+		}
+	}
+	elsif($q->param('api') eq "update_checklist")
+	{
+		if(!$q->param('key_id'))
+		{
+			print "{\n";
+			print " \"message\": \"Missing 'key_id' argument.\",\n";
+			print " \"status\": \"ERR_MISSING_ARGUMENT\"\n";
+			print "}\n";
+		}
+		elsif(!$q->param('value'))
+		{
+			print "{\n";
+			print " \"message\": \"Missing 'value' argument.\",\n";
+			print " \"status\": \"ERR_MISSING_ARGUMENT\"\n";
+			print "}\n";
+		}
+		elsif(!$q->param('key'))
+		{
+			print "{\n";
+			print " \"message\": \"Missing 'key' argument.\",\n";
+			print " \"status\": \"ERR_MISSING_ARGUMENT\"\n";
+			print "}\n";
+		}
+		elsif($q->param('key') ne $cfg->load('api_write'))
+		{
+			print "{\n";
+			print " \"message\": \"Invalid 'key' value.\",\n";
+			print " \"status\": \"ERR_INVALID_KEY\"\n";
+			print "}\n";
+		}
+		else
+		{
+			print "{\n";
+			print " \"message\": \"Data pair updated.\",\n";
+			print " \"status\": \"OK\"\n";
+			$sql = $db->prepare("UPDATE ctables_data SET value = ?, user = ?, time = ? WHERE ROWID = ?");
+			$sql->execute(sanitize_html($q->param('value')), 'api', now(), to_int($q->param('key_id')));
+			print "}\n";
+		}
+	}
+	elsif($q->param('api') eq "list_checklists")
+	{
+		if(!$q->param('key'))
+		{
+			print "{\n";
+			print " \"message\": \"Missing 'key' argument.\",\n";
+			print " \"status\": \"ERR_MISSING_ARGUMENT\"\n";
+			print "}\n";
+		}
+		elsif($q->param('key') ne $cfg->load('api_read'))
+		{
+			print "{\n";
+			print " \"message\": \"Invalid 'key' value.\",\n";
+			print " \"status\": \"ERR_INVALID_KEY\"\n";
+			print "}\n";
+		}
+		else
+		{
+			print "{\n";
+			print " \"message\": \"List checklists.\",\n";
+			print " \"status\": \"OK\",\n";
+			print " \"checklists\": [\n";
+			my $found = 0;
+			$sql = $db->prepare("SELECT * FROM ctables;");
+			$sql->execute();
+			while(my @res = $sql->fetchrow_array())
+			{
+				if($found) { print ",\n"; }
+				$found = 1;
+				print "  {\n";
+				print "   \"name\": \"" . $res[0] . "\",\n";
+				print "   \"product_id\": \"" . $res[1] . "\",\n";
+				print "   \"edit_lvl\": \"" . $res[2] . "\",\n";
+				print "   \"modify_lvl\": \"" . $res[3] . "\",\n";
+				print "   \"view_lvl\": \"" . $res[4] . "\",\n";
+				print "   \"user\": \"" . $res[5] . "\",\n";
+				print "   \"date\": \"" . $res[6] . "\"\n";
+				print "  }";
+			}
+			print "\n ]\n";
+			print "}\n";
+		}
+	}
 	elsif($q->param('api') eq "list_files")
 	{
 		if(!$q->param('key'))

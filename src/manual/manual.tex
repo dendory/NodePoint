@@ -11,7 +11,7 @@
 % Conditional compilation for Windows and Linux
 \usepackage{ifthen}
 \newboolean{Windows}
-\setboolean{Windows}{true} % change to false for Linux
+\setboolean{Windows}{false} % change to false for Linux
 \ifthenelse{\boolean{Windows}}
 {\def\NodePointManual{NodePoint IT System - Windows version 1.7.2}}
 {\def\NodePointManual{NodePoint IT System - Linux version 1.7.2}}
@@ -608,7 +608,7 @@ This module will connect to an ODBC database using the specified DSN or connecti
 \subsection{Checklists}
 Checklists are key/value data pairs that can be added to custom tables. These tables are linked to specific projects on that project's page. Each checklist can given a name with access level restrictions for who can read the values, modify the values, and edit the keys. This component is useful to create checklists related to your projects, or keep arbitrary data easily accessible.
 
-If \textit{Must be assigned to project} is on, users also need to be auto-assigned to that particular project to edit checklists or modify values.
+If \textit{Must be assigned to project} is on, users also need to be auto-assigned to that particular project to edit checklists.
 
 \clearpage
 \section{JSON API}
@@ -864,8 +864,35 @@ Here is a list of commands. Arguments in \textit{italics} are optional:
 \item \textit{expiration=<mm/dd/yyyy>}
 \end{itemize}
 
-\subsection{Code example}
-The following code snippet is a Python 3.x example of how to access the API. This script connects to a local NodePoint instance and lists all the users:
+\subsection{List checklists}
+
+\begin{itemize}
+\item api=list\_checklists
+\item key=<read key>
+\end{itemize}
+
+\subsection{Show checklist}
+
+\begin{itemize}
+\item api=show\_checklist
+\item key=<read key>
+\item name=<checklist name>
+\end{itemize}
+
+\subsection{Update checklist}
+
+\begin{itemize}
+\item api=update\_checklist
+\item key=<read key>
+\item key\_id=<checklist key to update>
+\item value=<new value>
+\end{itemize}
+
+\subsection{Code samples}
+The following code snippets are Python 3.x examples of how to access the API. 
+
+\subsubsection{List users}
+This script connects to a local NodePoint instance and lists all the users:
 
 \begin{lstlisting}
 import json
@@ -882,6 +909,25 @@ charset = stream.info().get_param('charset', 'utf8')
 users = json.loads(result.decode(charset))
 for user in users['users']:
     print(user['name'])
+\end{lstlisting}
+
+\subsubsection{Add ticket}
+This script connects to a local NodePoint instance and adds a ticket:
+
+\begin{lstlisting}
+import json
+import urllib.request
+import urllib.parse
+
+post_params = {'api': "add_ticket", 'key': "c5BT44108cYxBRHOYLnykazACsjkkQP3",
+ 'product_id': "1", 'release_id': "1.0", 'title': "This is a test ticket",
+ 'description': "Some description"}
+
+data = urllib.parse.urlencode(post_params)
+conn = urllib.request.urlopen("http://127.0.0.1/nodepoint/?" + data)
+stream = conn.read()
+result = json.loads(stream.decode(conn.info().get_param('charset', 'utf8')))
+print(str(result))
 \end{lstlisting}
 
 \clearpage
