@@ -8,7 +8,7 @@
 #
 
 use strict;
-use Config::Linux;
+use Config::Win32;
 use Digest::SHA qw(sha1_hex);
 use DBI;
 use CGI '-utf8';;
@@ -30,7 +30,7 @@ my ($cfg, $db, $sql, $cn, $cp, $cgs, $last_login, $perf);
 my $logged_user = "";
 my $logged_lvl = -1;
 my $q = new CGI;
-my $VERSION = "1.7.2";
+my $VERSION = "1.7.3";
 my %items = ("Product", "Product", "Release", "Release", "Model", "SKU/Model");
 my @itemtypes = ("None");
 my @themes = ("primary", "default", "success", "info", "warning", "danger");
@@ -1335,11 +1335,11 @@ sub home
 # Connect to config
 eval
 {
-	$cfg = Config::Linux->new("NodePoint", "settings");
+	$cfg = Config::Win32->new("NodePoint", "settings");
 };
 if(!defined($cfg)) # Can't even use headers() if this fails.
 {
-	print "Content-type: text/html\n\nError: Could not access " . Config::Linux->type . ". Please ensure NodePoint has the proper permissions.";
+	print "Content-type: text/html\n\nError: Could not access " . Config::Win32->type . ". Please ensure NodePoint has the proper permissions.";
 	exit(0);
 };
 
@@ -6090,6 +6090,7 @@ elsif($q->param('m')) # Modules
 						if($res2[1] eq 'adpass') { $adpass = RC4($cfg->load("enc_key"), decode_base64($res2[2])); }
 						if($res2[1] eq 'importemail') { $importemail = to_int($res2[2]); }
 					}
+					if($cfg->load("ad_server") eq "") { msg("Active Directory integration is not configured.", 1); }
 					print "<p><div class='row'><div class='col-sm-4'>Base DN:</div><div class='col-sm-8'><input class='form-control' type='text' name='basedn' value=\"" . $basedn . "\"></div></div></p>";
 					print "<p><div class='row'><div class='col-sm-4'>Filter:</div><div class='col-sm-8'><input class='form-control' type='text' name='searchfilter' value=\"" . $searchfilter . "\"></div></div></p>";
 					print "<p><div class='row'><div class='col-sm-4'>Username:</div><div class='col-sm-8'><input class='form-control' type='text' name='aduser' value=\"" . $aduser . "\"></div></div></p>";
@@ -6175,6 +6176,7 @@ elsif($q->param('m')) # Modules
 						if($res2[1] eq 'adpass') { $adpass = RC4($cfg->load("enc_key"), decode_base64($res2[2])); }
 						if($res2[1] eq 'approval') { $approval = to_int($res2[2]); }
 					}
+					if($cfg->load("ad_server") eq "") { msg("Active Directory integration is not configured.", 1); }
 					print "<p><div class='row'><div class='col-sm-4'>Base DN:</div><div class='col-sm-8'><input class='form-control' type='text' name='basedn' value=\"" . $basedn . "\"></div></div></p>";
 					print "<p><div class='row'><div class='col-sm-4'>Filter:</div><div class='col-sm-8'><input class='form-control' type='text' name='searchfilter' value=\"" . $searchfilter . "\"></div></div></p>";
 					print "<p><div class='row'><div class='col-sm-4'>Username:</div><div class='col-sm-8'><input class='form-control' type='text' name='aduser' value=\"" . $aduser . "\"></div></div></p>";
@@ -6206,6 +6208,7 @@ elsif($q->param('m')) # Modules
 						if($res2[1] eq 'closeticket') { $closeticket = to_int($res2[2]); }
 						if($res2[1] eq 'remindticket') { $remindticket = to_int($res2[2]); }
 					}
+					if($cfg->load("smtp_server") eq "") { msg("Email server is not configured.", 1); }
 					print "<p><div class='row'><div class='col-sm-4'>Number of days old:</div><div class='col-sm-8'><input class='form-control' type='number' name='numdays' value='" . $numdays . "'></div></div></p>";
 					print "<p><div class='row'><div class='col-sm-4'>Notify assigned users:</div><div class='col-sm-8'><select class='form-control' name='remindticket'><option";
 					if($remindticket == 1) { print " selected"; }
@@ -6242,6 +6245,7 @@ elsif($q->param('m')) # Modules
 						if($res2[1] eq 'remindtasks') { $remindtasks = to_int($res2[2]); }
 						if($res2[1] eq 'remindtickets') { $remindtickets = to_int($res2[2]); }
 					}
+					if($cfg->load("smtp_server") eq "") { msg("Email server is not configured.", 1); }
 					print "<p><div class='row'><div class='col-sm-4'>Expired checkout items:</div><div class='col-sm-8'><select class='form-control' name='reminditems'><option";
 					if($reminditems == 1) { print " selected"; }
 					print ">Yes</option><option";
