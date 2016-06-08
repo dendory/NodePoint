@@ -11,10 +11,10 @@
 % Conditional compilation for Windows and Linux
 \usepackage{ifthen}
 \newboolean{Windows}
-\setboolean{Windows}{false} % change to false for Linux
+\setboolean{Windows}{true} % change to false for Linux
 \ifthenelse{\boolean{Windows}}
-{\def\NodePointManual{NodePoint IT System - Windows version 1.7.2}}
-{\def\NodePointManual{NodePoint IT System - Linux version 1.7.2}}
+{\def\NodePointManual{NodePoint IT System - Windows version 1.7.3}}
+{\def\NodePointManual{NodePoint IT System - Linux version 1.7.3}}
 
 % Margins and paper type
 \geometry{a4paper, right=1.5cm, left=1.5cm, top=2cm, bottom=1.5cm}
@@ -269,7 +269,7 @@ Using SSL is highly recommended and does not impact the operation of NodePoint a
 
 The API provided uses a read and write key. This means that all operations are done as a special \textit{api} user. Different amounts of secrecy can be used for the two keys, such as users having access to a script that exposes the read key, but the write key only being used on a server side script. If \textbf{User Impersonation} is configured, the API calls can specify a specific user for a number of operations as well.
 
-NodePoint provides a file upload system. This can be used to upload project images, file attachments to comments, and file upload fields on custom forms. Users may use this feature to upload malicious files. You should use an anti-virus software to scan for potential threats. You can also restrict the access level required to upload files on the \textbf{Settings} page, or disable uploads completely.
+NodePoint provides a file upload system. This can be used to upload project images, file attachments to comments, and file upload fields on custom forms. Users may use this feature to upload malicious files. You should use an anti-virus software to scan for potential threats. You can also restrict the access level required to upload files on the \textbf{Settings} page, what file extensions are allowed, or disable uploads completely.
 
 Finally, while NodePoint offers Active Directory integration, note that this is done using LDAP Simple Bind, not Kerberos, in order to allow both the Windows and Linux version to support this feature. LDAP over SSL can be implemented to provide encryption.
 
@@ -328,6 +328,7 @@ These are the configuration options for NodePoint. They have to be defined durin
 \item \textbf{Allow guest tickets:} Allow guest users to file tickets.
 \item \textbf{Maximum file upload:} Maximum file size for uploads to project images, ticket comments and the File Management component.
 \item \textbf{Must be assigned to project:} Project specific functions like adding releases, adding tasks, adding, deleting or viewing secrets, editing checklists or uploading files are only available to users auto-assigned to the project.
+\item \textbf{Allowed upload extensions:} A space separated list of file extensions allowed for uploads. All file types are allowed if left empty.
 \item \textbf{Number of row per page:} Number of rows to show per page on tables.
 \item \textbf{Session expiry time:} Number of hours before a user session is invalidated.
 \item \textbf{API read key:} Used for some API operations.
@@ -339,7 +340,7 @@ These are the configuration options for NodePoint. They have to be defined durin
 \item \textbf{SMTP username:} User for SMTP connections, if your mail server requires authentication.
 \item \textbf{SMTP password:} Password for SMTP connections, if your mail server requires authentication.
 \item \textbf{Support email:} The email from which email notifications come from.
-\item \textbf{Items managed:} The type of items NodePoint should manage. This is purely a UI customization.
+\item \textbf{Type of portal:} The type of items NodePoint should manage. This is purely a UI customization.
 \item \textbf{Active Directory server:} Enter your domain controller address to enable AD integration. Users will be created dynamically as they first log on, and passwords will be checked against AD using LDAP.
 \item \textbf{Active Directory domain:} The domain to use for AD integration (in NT4 format).
 \item \textbf{New users access level:} The access level for new users. The default is 1.

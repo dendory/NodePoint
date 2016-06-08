@@ -730,6 +730,7 @@ sub save_config
 	$cfg->save("create_ctables", to_int($q->param('create_ctables')));
 	$cfg->save("view_secrets", to_int($q->param('view_secrets')));
 	$cfg->save("upload_lvl", to_int($q->param('upload_lvl')));
+	$cfg->save("upload_exts", sanitize_html($q->param('upload_exts')));
 	$cfg->save("page_len", to_int($q->param('page_len')));
 	$cfg->save("max_size", to_int($q->param('max_size')));
 	$cfg->save("session_expiry", to_int($q->param('session_expiry')));
@@ -1550,7 +1551,7 @@ elsif(!$cfg->load("db_address") || !$cfg->load("site_name")) # first use
 				print "<p><div class='row'><div class='col-sm-4'>Public notice:</div><div class='col-sm-4'><input type='text' style='width:300px' name='motd' value='Welcome to NodePoint. Remember to be courteous when writing tickets. Contact the help desk for any problem.'></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Upload folder:</div><div class='col-sm-4'><input type='text' style='width:300px' name='upload_folder' value='.." . $cfg->sep . "uploads'></div></div></p>\n";
 				print "<p>The upload folder should be a local folder with write access and is used for product images and comment attachments. If left empty, uploads will be disabled.</p>\n";
-				print "<p><div class='row'><div class='col-sm-4'>Items managed:</div><div class='col-sm-4'><select style='width:300px' name='items_managed'><option selected>Products with models and releases</option><option selected>Projects with goals and milestones</option><option>Resources with locations and updates</option><option>Applications with platforms and versions</option><option>Assets with types and instances</option><option>Projects with types and phases</option></select></div></div></p>\n";
+				print "<p><div class='row'><div class='col-sm-4'>Type of portal:</div><div class='col-sm-4'><select style='width:300px' name='items_managed'><option selected>Products with models and releases</option><option selected>Projects with goals and milestones</option><option>Resources with locations and updates</option><option>Applications with platforms and versions</option><option>Assets with types and instances</option><option>Projects with types and phases</option></select></div></div></p>\n";
 				print "<p>To validate logins against an Active Directory domain, enter your domain controller address and domain name (NT4 format) here:</p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Active Directory server:</div><div class='col-sm-4'><input type='text' style='width:300px' name='ad_server' value=''></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Active Directory domain:</div><div class='col-sm-4'><input type='text' style='width:300px' name='ad_domain' value=''></div></div></p>\n";
@@ -3492,7 +3493,7 @@ elsif($q->param('m')) # Modules
 			print "<tr><td style='width:50%'>Favicon</td><td><input class='form-control' type='text' name='favicon' value=\"" . $cfg->load("favicon") . "\"></td></tr>\n";
 			print "<tr><td style='width:50%'>Main page logo</td><td><input class='form-control' type='text' name='logo' value=\"" . $cfg->load("logo") . "\"></td></tr>\n";
 			print "<tr><td style='width:50%'>Pinned article</td><td><input class='form-control' type='number' name='pinned_article' value=\"" . $cfg->load("pinned_article") . "\"></td></tr>\n";
-			print "<tr><td style='width:50%'>Items managed</td><td><select class='form-control' name='items_managed'>";
+			print "<tr><td style='width:50%'>Type of portal</td><td><select class='form-control' name='items_managed'>";
 			if($cfg->load("items_managed") eq "Projects with goals and milestones") { print "<option>Products with models and releases</option><option selected>Projects with goals and milestones</option><option>Resources with locations and updates</option><option>Applications with platforms and versions</option><option>Assets with types and instances</option><option>Projects with types and phases</option>"; }
 			elsif($cfg->load("items_managed") eq "Resources with locations and updates") { print "<option>Products with models and releases</option><option>Projects with goals and milestones</option><option selected>Resources with locations and updates</option><option>Applications with platforms and versions</option><option>Assets with types and instances</option><option>Projects with types and phases</option>"; }
 			elsif($cfg->load("items_managed") eq "Applications with platforms and versions") { print "<option>Products with models and releases</option><option>Projects with goals and milestones</option><option>Resources with locations and updates</option><option selected>Applications with platforms and versions</option><option>Assets with types and instances</option><option>Projects with types and phases</option>"; }
@@ -3536,6 +3537,7 @@ elsif($q->param('m')) # Modules
 			if($cfg->load("need_assign") eq "on") { print "<option selected>on</option><option>off</option>"; }
 			else { print "<option>on</option><option selected>off</option>"; }
 			print "</select></td></tr>\n";
+			print "<tr><td style='width:50%'>Allowed upload extensions</td><td><input class='form-control' type='text' name='upload_exts' value=\"" . $cfg->load("upload_exts") . "\"></td></tr>\n";
 			print "</table><h4>API access</h4><table class='table table-striped'>";
 			print "<tr><td style='width:50%'>API read key</td><td><input class='form-control' type='text' name='api_read' value=\"" . $cfg->load("api_read") . "\"></td></tr>\n";
 			print "<tr><td style='width:50%'>API write key</td><td><input class='form-control' type='text' name='api_write' value=\"" . $cfg->load("api_write") . "\"></td></tr>\n";
@@ -5482,18 +5484,22 @@ elsif($q->param('m')) # Modules
 							if(defined $lightweight_fh)
 							{
 								my $tmpfilename = $q->tmpFileName($lightweight_fh);
+								$filedata = Data::GUID->new;
+								$filename = substr(sanitize_html($q->param('attach_file')), 0, 40);
 								my $file_size = (-s $tmpfilename);
 								if($file_size > to_int($cfg->load('max_size')))
 								{
 									msg("File size is larger than accepted value.", 0);
+								}
+								elsif($cfg->load('upload_exts') ne "" && index($cfg->load('upload_exts'), (split /\./, $filename)[-1]) == -1)
+								{
+									msg("File type is not in the list of allowed extensions.", 0);
 								}
 								else
 								{
 									my $io_handle = $lightweight_fh->handle;
 									binmode($io_handle);
 									my ($buffer, $bytesread);
-									$filedata = Data::GUID->new;
-									$filename = substr(sanitize_html($q->param('attach_file')), 0, 40);
 									open(my $OUTFILE, ">", $cfg->load('upload_folder') . $cfg->sep . $filedata) or die $@;
 									while($bytesread = $io_handle->read($buffer,1024))
 									{
@@ -6779,18 +6785,22 @@ elsif($q->param('m')) # Modules
 				if(defined $lightweight_fh)
 				{
 					my $tmpfilename = $q->tmpFileName($lightweight_fh);
+					$filedata = Data::GUID->new;
+					$filename = substr(sanitize_html($q->param('attach_file')), 0, 40);
 					my $file_size = (-s $tmpfilename);
 					if($file_size > to_int($cfg->load('max_size')))
 					{
 						msg("File size is larger than accepted value.", 0);
+					}
+					elsif($cfg->load('upload_exts') ne "" && index($cfg->load('upload_exts'), (split /\./, $filename)[-1]) == -1)
+					{
+						msg("File type is not in the list of allowed extensions.", 0);
 					}
 					else
 					{
 						my $io_handle = $lightweight_fh->handle;
 						binmode($io_handle);
 						my ($buffer, $bytesread);
-						$filedata = Data::GUID->new;
-						$filename = substr(sanitize_html($q->param('attach_file')), 0, 40);
 						open(my $OUTFILE, ">", $cfg->load('upload_folder') . $cfg->sep . $filedata) or die $@;
 						while($bytesread = $io_handle->read($buffer,1024))
 						{
@@ -6865,10 +6875,18 @@ elsif($q->param('m')) # Modules
 					if(defined $lightweight_fh)
 					{
 						my $tmpfilename = $q->tmpFileName($lightweight_fh);
+						$filedata = Data::GUID->new;
+						$filename = substr(sanitize_html($q->param('attach_file')), 0, 40);
 						my $file_size = (-s $tmpfilename);
 						if($file_size > to_int($cfg->load('max_size')))
 						{
 							msg("File size is larger than accepted value. Please go back and try again.", 0);
+							footers();
+							exit(0);
+						}
+						elsif($cfg->load('upload_exts') ne "" && index($cfg->load('upload_exts'), (split /\./, $filename)[-1]) == -1)
+						{
+							msg("File type is not in the list of allowed extensions. Please go back and try again.", 0);
 							footers();
 							exit(0);
 						}
@@ -6877,8 +6895,6 @@ elsif($q->param('m')) # Modules
 							my $io_handle = $lightweight_fh->handle;
 							binmode($io_handle);
 							my ($buffer, $bytesread);
-							$filedata = Data::GUID->new;
-							$filename = substr(sanitize_html($q->param('attach_file')), 0, 40);
 							open(my $OUTFILE, ">", $cfg->load('upload_folder') . $cfg->sep . $filedata) or die $@;
 							while($bytesread = $io_handle->read($buffer,1024))
 							{
@@ -7362,18 +7378,22 @@ elsif($q->param('m')) # Modules
 								if(defined $lightweight_fh)
 								{
 									my $tmpfilename = $q->tmpFileName($lightweight_fh);
+									my $filedata = Data::GUID->new;
+									my $filename = substr(sanitize_html($q->param('upload'.$i)), 0, 40);
 									my $file_size = (-s $tmpfilename);
 									if($file_size > to_int($cfg->load('max_size')))
 									{
 										msg("File size is too large, upload aborted for: " . sanitize_html($q->param('upload'.$i)), 4);
+									}
+									elsif($cfg->load('upload_exts') ne "" && index($cfg->load('upload_exts'), (split /\./, $filename)[-1]) == -1)
+									{
+										msg("File type is not in the list of allowed extensions, upload aborted for: " . sanitize_html($q->param('upload'.$i)), 4);
 									}
 									else
 									{
 										my $io_handle = $lightweight_fh->handle;
 										binmode($io_handle);
 										my ($buffer, $bytesread);
-										my $filedata = Data::GUID->new;
-										my $filename = substr(sanitize_html($q->param('upload'.$i)), 0, 40);
 										open(my $OUTFILE, ">", $cfg->load('upload_folder') . $cfg->sep . $filedata) or die $@;
 										while($bytesread = $io_handle->read($buffer,1024))
 										{
