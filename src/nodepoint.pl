@@ -334,10 +334,10 @@ sub by_month
 sub msg
 {
 	my ($text, $code) = @_;
-	if($code == 0) { print "<div class='alert alert-danger' role='alert'><b>Error:</b> " . $text . "</div>\n"; }
-	elsif($code == 2) { print "<div class='alert alert-info' role='alert'><b>Info:</b> " . $text . "</div>\n"; }
-	elsif($code == 3) { print "<div class='alert alert-success' role='alert'><b>Success:</b> " . $text . "</div>\n"; }
-	else { print "<div class='alert alert-warning' role='alert'><b>Warning:</b> " . $text . "</div>\n"; }
+	if($code == 0) { print "<div class='alert alert-danger' role='alert'><span class='glyphicon glyphicon-remove' aria-hidden='true'></span> <span class='sr-only'>Error:</span> " . $text . "</div>\n"; }
+	elsif($code == 2) { print "<div class='alert alert-info' role='alert'><span class='glyphicon glyphicon-info-sign' aria-hidden='true'></span> <span class='sr-only'>Info:</span> " . $text . "</div>\n"; }
+	elsif($code == 3) { print "<div class='alert alert-success' role='alert'><span class='glyphicon glyphicon-ok' aria-hidden='true'></span> <span class='sr-only'>Success:</span> " . $text . "</div>\n"; }
+	else { print "<div class='alert alert-warning' role='alert'><span class='glyphicon glyphicon-warning-sign' aria-hidden='true'></span> <span class='sr-only'>Warning:</span> " . $text . "</div>\n"; }
 }
 
 # Login form
