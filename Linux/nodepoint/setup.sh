@@ -33,12 +33,16 @@ chmod 755 $installdir/nodepoint/www/nodepoint-automate
 # Add Apache config
 echo "* Adding Apache config..."
 ln -s $installdir/nodepoint/www $wwwroot/nodepoint
+sed -i.bak '/AllowOverride None/d' $conf
 echo "<Directory />" >> $conf
 echo " AllowOverride All" >> $conf
 echo " Options FollowSymLinks" >> $conf
 echo " Require all granted" >> $conf
 echo "</Directory>" >> $conf
-systemctl restart httpd
+a2enmod cgi > /dev/null 2>&1
+if ! systemctl restart httpd 2> /dev/null ; then
+	systemctl restart apache2
+fi
 
 # Adding automation schedule
 echo "* Adding automations schedule..."
