@@ -11,7 +11,7 @@
 % Conditional compilation for Windows and Linux
 \usepackage{ifthen}
 \newboolean{Windows}
-\setboolean{Windows}{true} % change to false for Linux
+\setboolean{Windows}{false} % change to false for Linux
 \ifthenelse{\boolean{Windows}}
 {\def\NodePointManual{NodePoint IT System - Windows version 1.7.4}}
 {\def\NodePointManual{NodePoint IT System - Linux version 1.7.4}}
@@ -576,7 +576,7 @@ The Secrets Vault is a component that allows users assigned to a project to stor
 Both the level to add and to view secrets are configured in the product base configuration. If \textit{Must be assigned to project} is on, users also need to be auto-assigned to that particular project to be able to add or view secrets. The secrets are encrypted inside of the database using the encryption key. Changing that key will make the data irretrievable.
 
 \subsection{Inventory Control}
-The Inventory Control component allows users with access level 4 or higher to add items to the \textbf{Items} page. These items can be linked to projects or clients, and can be checked out by other users. Approval can also be required, in which case users will need to request access, and someone with access level 4 or higher will need to approve the request. This component can be used to keep track of physical items such as computers, keyboards and phones, or even software licenses.
+The Inventory Control component allows users with access level 4 or higher to add items to the \textbf{Items} page. These items can be linked to projects or clients, and can be checked out by other users. Approval can also be required, in which case users will need to request access, and someone with access level 4 or higher will need to approve the request. This component can be used to keep track of physical items such as computers, keyboards and phones, or even software licenses. Bulk items can be added with a script using the API, or from a number of sources using Automation modules.
 
 \begin{figure}[h]
 \includegraphics{items.jpg}
