@@ -11,10 +11,10 @@
 % Conditional compilation for Windows and Linux
 \usepackage{ifthen}
 \newboolean{Windows}
-\setboolean{Windows}{false} % change to false for Linux
+\setboolean{Windows}{true} % change to false for Linux
 \ifthenelse{\boolean{Windows}}
-{\def\NodePointManual{NodePoint IT System - Windows version 1.7.3}}
-{\def\NodePointManual{NodePoint IT System - Linux version 1.7.3}}
+{\def\NodePointManual{NodePoint IT System - Windows version 1.7.4}}
+{\def\NodePointManual{NodePoint IT System - Linux version 1.7.4}}
 
 % Margins and paper type
 \geometry{a4paper, right=1.5cm, left=1.5cm, top=2cm, bottom=1.5cm}
@@ -236,7 +236,7 @@ This is typically because of permission issues. Make sure that:
 \end{itemize}
 
 \subsection{Best practices}
-\subsubsection{Backups}
+\subsubsection{Backup and restore}
 NodePoint is likely to hold data you may not want to lose. The product stores information in three different locations:
 
 \ifthenelse{\boolean{Windows}}{First, configuration data is stored in the Windows Registry.}{First, configuration data is stored in the \texttt{nodepoint.cfg} file.} There is very little information stored there, and you can view all of it on the \textbf{Settings} screen. Some of the information you may wish to backup includes:
@@ -252,9 +252,8 @@ The most important data is held in the database file. This includes tickets, art
 
 Finally, all uploads are stored in the \texttt{../uploads} folder. This includes both images used with products, along with files uploaded by users as part of ticket comments. These should also be backed up as part of any backup strategy you may have.
 
-If you use the \textbf{Automation} component, a backup module is provided that will make regular backups of your database and uploads.
+If you use \textbf{Automation}, a backup module is provided that will make regular backups of your database and uploads.
 
-\subsubsection{Restores}
 Restoring a NodePoint installation is fairly simple. Once you have finished a new installation, simply restore your backed up data before accessing the NodePoint site. There is nothing to restart and no service to worry about.
 
 \subsubsection{Data integrity}
@@ -327,7 +326,7 @@ These are the configuration options for NodePoint. They have to be defined durin
 \item \textbf{Allow registrations:} Allow guest users to register a new account. If set to no, the only way to add new accounts is if a user with Users Management access adds one.
 \item \textbf{Allow guest tickets:} Allow guest users to file tickets.
 \item \textbf{Maximum file upload:} Maximum file size for uploads to project images, ticket comments and the File Management component.
-\item \textbf{Must be assigned to project:} Project specific functions like adding releases, adding tasks, adding, deleting or viewing secrets, editing checklists or uploading files are only available to users auto-assigned to the project.
+\item \textbf{Must be assigned to project:} Project specific functions like adding releases, adding tasks, adding, deleting or viewing secrets or uploading files are only available to users auto-assigned to the project.
 \item \textbf{Allowed upload extensions:} A space separated list of file extensions allowed for uploads. All file types are allowed if left empty.
 \item \textbf{Number of row per page:} Number of rows to show per page on tables.
 \item \textbf{Session expiry time:} Number of hours before a user session is invalidated.
@@ -355,7 +354,6 @@ These are the configuration options for NodePoint. They have to be defined durin
 \item \textbf{Can configure automation:} Users of this level can configure automation modules.
 \item \textbf{Can add secrets:} Users of this level can add project secrets if the proper component is turned on.
 \item \textbf{Can view secrets:} Users of this level can view project secrets if the proper component is turned on.
-\item \textbf{Can create checklists:} Users of this level can create new checklists on a project's page.
 \item \textbf{Authentication plugin:} Use an external script or application to authenticate users. This can be used instead of the built-in users management or Active Directory integration if you have some other process to authenticate users. It must return 0 for success, 1 for failure. The following variables can be used: \textit{\%user\%} and \textit{\%pass\%}. For example: \texttt{python auth.py -userid \%user\% -passwd \%pass\%}
 \item \textbf{Notifications plugin:} Call an application or script when a notification is sent. You can use the following variables here: \textit{\%user\%}, \textit{\%title\%} and \textit{\%message\%}. For example: \texttt{echo \%message\% >> ..\textbackslash \%user\%.log}
 \item \textbf{Checkout plugin:} Call an application or script when an inventory item is checked out or approved. You can use the following variables here: \textit{\%user\%} and \textit{\%serial\%}. For example: \texttt{python add\_license.py -item \%serial\% -user \%user\%}
@@ -420,6 +418,57 @@ User activity can be monitored through two graphs along with a number of reports
 \includegraphics{reports.jpg}
 \end{figure}
 
+\subsection{Automation}
+NodePoint ships with an automation engine called \textbf{nodepoint-automate}. This engine is set as a scheduled task during the installation process and controls the background automation modules, processes that can run without user intervention. Note that this is different from Ticket Routing which defines actions applied whenever someone submits a ticket. Automation modules instead run in the background on a specific schedule.
+
+Each module can be enabled or disabled individually, and scheduled on its own schedule of 5 minutes, 15 minutes, hourly, daily or weekly. Configuration is done under the \textbf{Tools} menu by users with the proper access level. A log of these processes is also available there.
+
+Note that some tasks may take a significant amount of time to run and slow the interface down for users while they are running. It is recommended that you set up resource intensive tasks outside of peak hours. You can also run the automation binary manually from the command line to get an idea of the time delay, or to troubleshoot any unexpected error. Clicking the \textit{Process all modules on next run} button will run every enabled module regardless of whether their schedule is up or not.
+
+These are the available automation modules:
+
+\subsubsection{Backup}
+This module allows you to backup the database along with the uploads folder to another location for safe keeping. The folder must be a local or network path, and the type of backup can be a single archive file or a series of time stamped files.
+
+\subsubsection{Email to Ticket}
+This module can fetch emails from an IMAP account and turn them into tickets automatically. The mail server and inbox information must be provided in order to log in, along with information about the ticket to create, and whether to delete the email afterward.
+
+\subsubsection{Bulk export}
+This module will export a specific table to a file location automatically in CSV format. Specify the full path of a local file and the table to export.
+
+\subsubsection{Users sync}
+This module can keep the internal users list in sync with your Active Directory server. This requires credentials of a user with object listing rights. The Base DN should be the OU where your users are kept, and the filter can be used to filter specific object types. Emails can optionally be updated for all users as well.
+
+\subsubsection{Computers sync}
+This module will list computer objects from your Active Directory server and create entries in the Inventory Control component. The Base DN should be the OU where your computers are kept. The serial will be set to the machine's hostname. This requires credentials of a user with object listing rights.
+
+\subsubsection{Ticket expiration}
+This module interacts with active tickets that were modified more than x days ago. It can notify assigned users, and close the ticket.
+
+\subsubsection{Reminder notifications}
+This module will notify users about expired items checked out, overdue tasks and tickets requiring attention.
+
+\subsubsection{ServiceNow CMDB}
+This module can import CMDB data from a ServiceNow instance and import the data into the Inventory Control component. You need to enter valid credentials and the name of the table to read, along with the table header mappings.
+
+\subsubsection{Update MOTD}
+This module will dynamically update the MOTD from a text file.
+
+\subsubsection{File expiration}
+This module can remove files uploaded using the Files component after a set amount of days.
+
+\subsubsection{Log export}
+This module will export the system log, access log and automation log to a CSV file, and optionally clear the logs afterward.
+
+\subsubsection{CSV inventory}
+This module will import items from a CSV file. You must specify the file name and the column mappings.
+
+\subsubsection{CSV projects}
+This module fetches projects, releases and auto-assignments from a CSV file. You must specific column mappings and whether current assignments should be overwritten. The CSV should contain one line per release. Assignments must be comma separated usernames. Non-existent projects or releases will be created.
+
+\subsubsection{ODBC inventory}
+This module will connect to an ODBC database using the specified DSN or connection string and the credentials provided. You also need to supply the column numbers (in order retrieved by a SELECT statement, starting at 0) to map against the inventory component.
+
 \clearpage
 \section{Components}
 NodePoint is divided into multiple components that you can enable or disable in the configuration as a product administrator. You can turn them on or off depending on your needs. For example, a help desk portal could have the \textbf{Tickets Management}, \textbf{Time Tracking} and \textbf{Support Articles} components enabled, while a project management portal could have only the \textbf{Tasks Management} component enabled.
@@ -459,7 +508,7 @@ Auto assignment can also be used to assign specific users to any ticket filed ag
 Both favorite and assigned tickets are listed on the user's home page. Finally, email notifications are sent out when a ticket is created, modified or a comment is added. The notifications are sent to the ticket author and users assigned to that ticket.
 
 \subsubsection{Ticket routing}
-A number of automatic actions can be applied to new tickets based on a number of conditions. Note that this is different than the scheduled background processes provided by the Automation component. Routing is done every time a new ticket is submitted through the web interface.
+A number of automatic actions can be applied to new tickets based on a number of conditions. Note that this is different than the scheduled background processes provided by Automation modules. Routing is done every time a new ticket is submitted through the web interface.
 
 An unlimited number of routes can be created under the \textbf{Tools} menu by users with the proper access level. Each route has a priority and will be evaluated in that order. When you edit a route, you have to specify which conditions the ticket has to evaluate against, and which actions to apply if the conditions are true. Any condition left blank will not be evaluated.
 
@@ -554,62 +603,6 @@ NodePoint provides a files upload feature for things like project images and fil
 Note that the files uploaded here, along with those attached to projects or tickets, must be below the configured maximum file size value. Also, only users with an access level above the one configured in the initial settings will be able to upload files. The files themselves will be available to anyone with the link.
 
 Files can also be uploaded on a project specific basis on the project page, and will show up both under \textit{Tools} and that project's page.  If \textit{Must be assigned to project} is on, users also need to be auto-assigned to that particular project to upload files.
-
-\subsection{Automation}
-NodePoint ships with an automation engine called \textbf{nodepoint-automate}. This engine is set as a scheduled task during the installation process and controls the background automation modules, processes that can run without user intervention. Note that this is different from Ticket Routing which defines actions applied whenever someone submits a ticket. Automation modules instead run in the background on a specific schedule.
-
-Each module can be enabled or disabled individually, and scheduled on its own schedule of 5 minutes, 15 minutes, hourly, daily or weekly. Configuration is done under the \textbf{Tools} menu by users with the proper access level. A log of these processes is also available there.
-
-Note that some tasks may take a significant amount of time to run and slow the interface down for users while they are running. It is recommended that you set up resource intensive tasks outside of peak hours. You can also run the automation binary manually from the command line to get an idea of the time delay, or to troubleshoot any unexpected error. Clicking the \textit{Process all modules on next run} button will run every enabled module regardless of whether their schedule is up or not.
-
-These are the available automation modules:
-
-\subsubsection{Backup}
-This module allows you to backup the database along with the uploads folder to another location for safe keeping. The folder must be a local or network path, and the type of backup can be a single archive file or a series of time stamped files.
-
-\subsubsection{Email to Ticket}
-This module can fetch emails from an IMAP account and turn them into tickets automatically. The mail server and inbox information must be provided in order to log in, along with information about the ticket to create, and whether to delete the email afterward.
-
-\subsubsection{Bulk export}
-This module will export a specific table to a file location automatically in CSV format. Specify the full path of a local file and the table to export.
-
-\subsubsection{Users sync}
-This module can keep the internal users list in sync with your Active Directory server. This requires credentials of a user with object listing rights. The Base DN should be the OU where your users are kept, and the filter can be used to filter specific object types. Emails can optionally be updated for all users as well.
-
-\subsubsection{Computers sync}
-This module will list computer objects from your Active Directory server and create entries in the Inventory Control component. The Base DN should be the OU where your computers are kept. The serial will be set to the machine's hostname. This requires credentials of a user with object listing rights.
-
-\subsubsection{Ticket expiration}
-This module interacts with active tickets that were modified more than x days ago. It can notify assigned users, and close the ticket.
-
-\subsubsection{Reminder notifications}
-This module will notify users about expired items checked out, overdue tasks and tickets requiring attention.
-
-\subsubsection{ServiceNow CMDB}
-This module can import CMDB data from a ServiceNow instance and import the data into the Inventory Control component. You need to enter valid credentials and the name of the table to read, along with the table header mappings.
-
-\subsubsection{Update MOTD}
-This module will dynamically update the MOTD from a text file.
-
-\subsubsection{File expiration}
-This module can remove files uploaded using the Files component after a set amount of days.
-
-\subsubsection{Log export}
-This module will export the system log, access log and automation log to a CSV file, and optionally clear the logs afterward.
-
-\subsubsection{CSV inventory}
-This module will import items from a CSV file. You must specify the file name and the column mappings.
-
-\subsubsection{CSV projects}
-This module fetches projects, releases and auto-assignments from a CSV file. You must specific column mappings and whether current assignments should be overwritten. The CSV should contain one line per release. Assignments must be comma separated usernames. Non-existent projects or releases will be created.
-
-\subsubsection{ODBC inventory}
-This module will connect to an ODBC database using the specified DSN or connection string and the credentials provided. You also need to supply the column numbers (in order retrieved by a SELECT statement, starting at 0) to map against the inventory component.
-
-\subsection{Checklists}
-Checklists are key/value data pairs that can be added to custom tables. These tables are linked to specific projects on that project's page. Each checklist can given a name with access level restrictions for who can read the values, modify the values, and edit the keys. This component is useful to create checklists related to your projects, or keep arbitrary data easily accessible.
-
-If \textit{Must be assigned to project} is on, users also need to be auto-assigned to that particular project to edit checklists.
 
 \clearpage
 \section{JSON API}
@@ -863,30 +856,6 @@ Here is a list of commands. Arguments in \textit{italics} are optional:
 \item \textit{serial=<serial number>}
 \item \textit{info=<additional information>}
 \item \textit{expiration=<mm/dd/yyyy>}
-\end{itemize}
-
-\subsection{List checklists}
-
-\begin{itemize}
-\item api=list\_checklists
-\item key=<read key>
-\end{itemize}
-
-\subsection{Show checklist}
-
-\begin{itemize}
-\item api=show\_checklist
-\item key=<read key>
-\item name=<checklist name>
-\end{itemize}
-
-\subsection{Update checklist}
-
-\begin{itemize}
-\item api=update\_checklist
-\item key=<read key>
-\item key\_id=<checklist key to update>
-\item value=<new value>
 \end{itemize}
 
 \subsection{Code samples}

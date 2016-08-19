@@ -19,7 +19,7 @@ echo * Configuring IIS
 %windir%\system32\inetsrv\appcmd set config /section:handlers /accessPolicy:Execute,Read,Script
 echo.
 echo * Adding scheduled task
-schtasks /create /tn "NodePoint Automation" /sc minute /mo 5 /tr "%CD%/www/nodepoint-automate.exe" /ru %id% /rp %pass% /f
+schtasks /create /tn "NodePoint Automation" /sc minute /mo 5 /tr "%CD%/www/nodepoint-automate.exe" /ru "SYSTEM" /f
 echo * Restarting IIS
 iisreset
 echo.

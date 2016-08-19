@@ -8,7 +8,7 @@
 #
 
 use strict;
-use Config::Linux;
+use Config::Win32;
 use Digest::SHA qw(sha1_hex);
 use DBI;
 use CGI '-utf8';;
@@ -30,7 +30,7 @@ my ($cfg, $db, $sql, $cn, $cp, $cgs, $last_login, $perf);
 my $logged_user = "";
 my $logged_lvl = -1;
 my $q = new CGI;
-my $VERSION = "1.7.3";
+my $VERSION = "1.7.4";
 my %items = ("Product", "Product", "Release", "Release", "Model", "SKU/Model");
 my @itemtypes = ("None");
 my @themes = ("primary", "default", "success", "info", "warning", "danger");
@@ -157,14 +157,14 @@ sub navbar
 			print "   <li><a href='./?m=settings'>Settings</a></li>\n";
 			if($logged_lvl >= to_int($cfg->load("report_lvl"))) { print "   <li><a href='./?m=stats'>Statistics</a></li>\n"; }
 			if($cfg->load('comp_files') eq "on") { print "   <li><a href='./?m=files'>Files</a></li>\n"; }
-			if($logged_lvl >= to_int($cfg->load("auto_lvl")) && $cfg->load('comp_auto') eq "on") { print "   <li><a href='./?m=auto'>Automation</a></li>\n"; }
+			if($logged_lvl >= to_int($cfg->load("auto_lvl"))) { print "   <li><a href='./?m=auto'>Automation</a></li>\n"; }
 			if($logged_lvl >= to_int($cfg->load("customs_lvl")) && $cfg->load('comp_tickets') eq "on")	{ print "   <li><a href='./?m=customforms'>Custom forms</a></li>\n"; }
 			if($logged_lvl >= to_int($cfg->load("customs_lvl")) && $cfg->load('comp_tickets') eq "on")	{ print "   <li><a href='./?m=routing'>Ticket routing</a></li>\n"; }
 			if($logged_lvl >= to_int($cfg->load("summary_lvl"))) { print "   <li><a href='./?m=users'>Users management</a></li>\n"; }
 			if($logged_lvl > 5) { print "   <li><a href='./?m=log'>System log</a></li>\n"; }
 			print "  <li role='separator' class='divider'></li><li><a href='./?m=logout'>Logout</a></li></ul></li>\n";
 		}
-		elsif($q->param('m') && ($q->param('m') eq "products" || $q->param('m') eq "add_product" || $q->param('m') eq "ctables" ||$q->param('m') eq "view_product" || $q->param('m') eq "edit_product" || $q->param('m') eq "add_release" || $q->param('m') eq "add_step" || $q->param('m') eq "delete_step" || $q->param('m') eq "delete_release"))
+		elsif($q->param('m') && ($q->param('m') eq "products" || $q->param('m') eq "add_product" || $q->param('m') eq "view_product" || $q->param('m') eq "edit_product" || $q->param('m') eq "add_release" || $q->param('m') eq "add_step" || $q->param('m') eq "delete_step" || $q->param('m') eq "delete_release"))
 		{
 			print "	 <li><a href='.'>Home</a></li>\n";
 			print "	 <li class='active'><a href='./?m=products'>" . $items{"Product"} . "s</a></li>\n";
@@ -176,7 +176,7 @@ sub navbar
 			print "   <li><a href='./?m=settings'>Settings</a></li>\n";
 			if($logged_lvl >= to_int($cfg->load("report_lvl"))) { print "   <li><a href='./?m=stats'>Statistics</a></li>\n"; }
 			if($cfg->load('comp_files') eq "on") { print "   <li><a href='./?m=files'>Files</a></li>\n"; }
-			if($logged_lvl >= to_int($cfg->load("auto_lvl")) && $cfg->load('comp_auto') eq "on") { print "   <li><a href='./?m=auto'>Automation</a></li>\n"; }
+			if($logged_lvl >= to_int($cfg->load("auto_lvl"))) { print "   <li><a href='./?m=auto'>Automation</a></li>\n"; }
 			if($logged_lvl >= to_int($cfg->load("customs_lvl")) && $cfg->load('comp_tickets') eq "on")	{ print "   <li><a href='./?m=customforms'>Custom forms</a></li>\n"; }
 			if($logged_lvl >= to_int($cfg->load("customs_lvl")) && $cfg->load('comp_tickets') eq "on")	{ print "   <li><a href='./?m=routing'>Ticket routing</a></li>\n"; }
 			if($logged_lvl >= to_int($cfg->load("summary_lvl"))) { print "   <li><a href='./?m=users'>Users management</a></li>\n"; }
@@ -195,7 +195,7 @@ sub navbar
 			print "   <li><a href='./?m=settings'>Settings</a></li>\n";
 			if($logged_lvl >= to_int($cfg->load("report_lvl"))) { print "   <li><a href='./?m=stats'>Statistics</a></li>\n"; }
 			if($cfg->load('comp_files') eq "on") { print "   <li><a href='./?m=files'>Files</a></li>\n"; }
-			if($logged_lvl >= to_int($cfg->load("auto_lvl")) && $cfg->load('comp_auto') eq "on") { print "   <li><a href='./?m=auto'>Automation</a></li>\n"; }
+			if($logged_lvl >= to_int($cfg->load("auto_lvl"))) { print "   <li><a href='./?m=auto'>Automation</a></li>\n"; }
 			if($logged_lvl >= to_int($cfg->load("customs_lvl")) && $cfg->load('comp_tickets') eq "on")	{ print "   <li><a href='./?m=customforms'>Custom forms</a></li>\n"; }
 			if($logged_lvl >= to_int($cfg->load("customs_lvl")) && $cfg->load('comp_tickets') eq "on")	{ print "   <li><a href='./?m=routing'>Ticket routing</a></li>\n"; }
 			if($logged_lvl >= to_int($cfg->load("summary_lvl"))) { print "   <li><a href='./?m=users'>Users management</a></li>\n"; }
@@ -214,7 +214,7 @@ sub navbar
 			print "   <li><a href='./?m=settings'>Settings</a></li>\n";
 			if($logged_lvl >= to_int($cfg->load("report_lvl"))) { print "   <li><a href='./?m=stats'>Statistics</a></li>\n"; }
 			if($cfg->load('comp_files') eq "on") { print "   <li><a href='./?m=files'>Files</a></li>\n"; }
-			if($logged_lvl >= to_int($cfg->load("auto_lvl")) && $cfg->load('comp_auto') eq "on") { print "   <li><a href='./?m=auto'>Automation</a></li>\n"; }
+			if($logged_lvl >= to_int($cfg->load("auto_lvl"))) { print "   <li><a href='./?m=auto'>Automation</a></li>\n"; }
 			if($logged_lvl >= to_int($cfg->load("customs_lvl")) && $cfg->load('comp_tickets') eq "on")	{ print "   <li><a href='./?m=customforms'>Custom forms</a></li>\n"; }
 			if($logged_lvl >= to_int($cfg->load("customs_lvl")) && $cfg->load('comp_tickets') eq "on")	{ print "   <li><a href='./?m=routing'>Ticket routing</a></li>\n"; }
 			if($logged_lvl >= to_int($cfg->load("summary_lvl"))) { print "   <li><a href='./?m=users'>Users management</a></li>\n"; }
@@ -233,7 +233,7 @@ sub navbar
 			print "   <li><a href='./?m=settings'>Settings</a></li>\n";
 			if($logged_lvl >= to_int($cfg->load("report_lvl"))) { print "   <li><a href='./?m=stats'>Statistics</a></li>\n"; }
 			if($cfg->load('comp_files') eq "on") { print "   <li><a href='./?m=files'>Files</a></li>\n"; }
-			if($logged_lvl >= to_int($cfg->load("auto_lvl")) && $cfg->load('comp_auto') eq "on") { print "   <li><a href='./?m=auto'>Automation</a></li>\n"; }
+			if($logged_lvl >= to_int($cfg->load("auto_lvl"))) { print "   <li><a href='./?m=auto'>Automation</a></li>\n"; }
 			if($logged_lvl >= to_int($cfg->load("customs_lvl")) && $cfg->load('comp_tickets') eq "on")	{ print "   <li><a href='./?m=customforms'>Custom forms</a></li>\n"; }
 			if($logged_lvl >= to_int($cfg->load("customs_lvl")) && $cfg->load('comp_tickets') eq "on")	{ print "   <li><a href='./?m=routing'>Ticket routing</a></li>\n"; }
 			if($logged_lvl >= to_int($cfg->load("summary_lvl"))) { print "   <li><a href='./?m=users'>Users management</a></li>\n"; }
@@ -252,7 +252,7 @@ sub navbar
 			print "   <li><a href='./?m=settings'>Settings</a></li>\n";
 			if($logged_lvl >= to_int($cfg->load("report_lvl"))) { print "   <li><a href='./?m=stats'>Statistics</a></li>\n"; }
 			if($cfg->load('comp_files') eq "on") { print "   <li><a href='./?m=files'>Files</a></li>\n"; }
-			if($logged_lvl >= to_int($cfg->load("auto_lvl")) && $cfg->load('comp_auto') eq "on") { print "   <li><a href='./?m=auto'>Automation</a></li>\n"; }
+			if($logged_lvl >= to_int($cfg->load("auto_lvl"))) { print "   <li><a href='./?m=auto'>Automation</a></li>\n"; }
 			if($logged_lvl >= to_int($cfg->load("customs_lvl")) && $cfg->load('comp_tickets') eq "on")	{ print "   <li><a href='./?m=customforms'>Custom forms</a></li>\n"; }
 			if($logged_lvl >= to_int($cfg->load("customs_lvl")) && $cfg->load('comp_tickets') eq "on")	{ print "   <li><a href='./?m=routing'>Ticket routing</a></li>\n"; }
 			if($logged_lvl >= to_int($cfg->load("summary_lvl"))) { print "   <li><a href='./?m=users'>Users management</a></li>\n"; }
@@ -271,7 +271,7 @@ sub navbar
 			print "   <li><a href='./?m=settings'>Settings</a></li>\n";
 			if($logged_lvl >= to_int($cfg->load("report_lvl"))) { print "   <li><a href='./?m=stats'>Statistics</a></li>\n"; }
 			if($cfg->load('comp_files') eq "on") { print "   <li><a href='./?m=files'>Files</a></li>\n"; }
-			if($logged_lvl >= to_int($cfg->load("auto_lvl")) && $cfg->load('comp_auto') eq "on") { print "   <li><a href='./?m=auto'>Automation</a></li>\n"; }
+			if($logged_lvl >= to_int($cfg->load("auto_lvl"))) { print "   <li><a href='./?m=auto'>Automation</a></li>\n"; }
 			if($logged_lvl >= to_int($cfg->load("customs_lvl")) && $cfg->load('comp_tickets') eq "on")	{ print "   <li><a href='./?m=customforms'>Custom forms</a></li>\n"; }
 			if($logged_lvl >= to_int($cfg->load("customs_lvl")) && $cfg->load('comp_tickets') eq "on")	{ print "   <li><a href='./?m=routing'>Ticket routing</a></li>\n"; }
 			if($logged_lvl >= to_int($cfg->load("summary_lvl"))) { print "   <li><a href='./?m=users'>Users management</a></li>\n"; }
@@ -670,25 +670,16 @@ sub db_check
 		$sql = $db->prepare("CREATE TABLE routing (name TEXT, priority INT, hits INT);");
 		$sql->execute();
 	};
+	$sql->finish();
 	$sql = $db->prepare("SELECT * FROM routing_conditions WHERE 0 = 1;") or do
 	{
 		$sql = $db->prepare("CREATE TABLE routing_conditions (route INT, key TEXT, value TEXT);");
 		$sql->execute();
 	};
+	$sql->finish();
 	$sql = $db->prepare("SELECT * FROM routing_actions WHERE 0 = 1;") or do
 	{
 		$sql = $db->prepare("CREATE TABLE routing_actions (route INT, key TEXT, value TEXT);");
-		$sql->execute();
-	};
-	$sql = $db->prepare("SELECT * FROM ctables WHERE 0 = 1;") or do
-	{
-		$sql = $db->prepare("CREATE TABLE ctables (name TEXT, productid INT, edit INT, modify INT, read INT, user TEXT, time TEXT);");
-		$sql->execute();
-	};
-	$sql->finish();
-	$sql = $db->prepare("SELECT * FROM ctables_data WHERE 0 = 1;") or do
-	{
-		$sql = $db->prepare("CREATE TABLE ctables_data (name TEXT, key TEXT, value TEXT, user TEXT, time TEXT);");
 		$sql->execute();
 	};
 	$sql->finish();
@@ -727,7 +718,6 @@ sub save_config
 	$cfg->save("summary_lvl", to_int($q->param('summary_lvl')));
 	$cfg->save("auto_lvl", to_int($q->param('auto_lvl')));
 	$cfg->save("add_secrets", to_int($q->param('add_secrets')));
-	$cfg->save("create_ctables", to_int($q->param('create_ctables')));
 	$cfg->save("view_secrets", to_int($q->param('view_secrets')));
 	$cfg->save("upload_lvl", to_int($q->param('upload_lvl')));
 	$cfg->save("upload_exts", sanitize_html($q->param('upload_exts')));
@@ -767,13 +757,11 @@ sub save_config
 	$cfg->save("comp_shoutbox", $q->param('comp_shoutbox'));
 	$cfg->save("pinned_article", to_int($q->param('pinned_article')));
 	$cfg->save("comp_billing", $q->param('comp_billing'));
-	$cfg->save("comp_ctables", $q->param('comp_ctables'));
 	$cfg->save("comp_steps", $q->param('comp_steps'));
 	$cfg->save("comp_secrets", $q->param('comp_secrets'));
 	$cfg->save("comp_clients", $q->param('comp_clients'));
 	$cfg->save("comp_items", $q->param('comp_items'));
 	$cfg->save("comp_files", $q->param('comp_files'));
-	$cfg->save("comp_auto", $q->param('comp_auto'));
 }
 
 # Check login credentials
@@ -1336,11 +1324,11 @@ sub home
 # Connect to config
 eval
 {
-	$cfg = Config::Linux->new("NodePoint", "settings");
+	$cfg = Config::Win32->new("NodePoint", "settings");
 };
 if(!defined($cfg)) # Can't even use headers() if this fails.
 {
-	print "Content-type: text/html\n\nError: Could not access " . Config::Linux->type . ". Please ensure NodePoint has the proper permissions.";
+	print "Content-type: text/html\n\nError: Could not access " . Config::Win32->type . ". Please ensure NodePoint has the proper permissions.";
 	exit(0);
 };
 
@@ -1433,7 +1421,6 @@ if(to_int($cfg->load("summary_lvl")) < 1 || to_int($cfg->load("summary_lvl")) > 
 if(to_int($cfg->load("auto_lvl")) < 1 || to_int($cfg->load("auto_lvl")) > 6) { $cfg->save("auto_lvl", 5); }
 if(to_int($cfg->load("add_secrets")) < 1 || to_int($cfg->load("add_secrets")) > 6) { $cfg->save("add_secrets", 4); }
 if(to_int($cfg->load("view_secrets")) < 1 || to_int($cfg->load("view_secrets")) > 6) { $cfg->save("view_secrets", 2); }
-if(to_int($cfg->load("create_ctables")) < 1 || to_int($cfg->load("create_ctables")) > 6) { $cfg->save("create_ctables", 4); }
 if(to_int($cfg->load("page_len")) < 1) { $cfg->save("page_len", 50); }
 if(to_int($cfg->load("session_expiry")) < 1) { $cfg->save("session_expiry", 12); }
 if(to_int($cfg->load("max_size")) < 1) { $cfg->save("max_size", 999000); }
@@ -1443,7 +1430,7 @@ if(!$cfg->load("enc_key")) { $cfg->save("enc_key", $cfg->load("api_write")); }
 if($q->param('site_name') && $q->param('db_address') && $logged_user ne "" && $logged_user eq $cfg->load('admin_name')) # Save config by admin
 {
 	headers("Settings");
-	if($q->param('site_name') && $q->param('db_address') && $q->param('admin_name') && defined($q->param('default_lvl')) && $q->param('default_vis') && $q->param('hide_close') && $q->param('article_html') && $q->param('api_write') && defined($q->param('theme_color')) &&  $q->param('api_imp') && $q->param('api_read') && $q->param('comp_tickets') && $q->param('comp_articles') && $q->param('comp_time') && $q->param('comp_shoutbox') && $q->param('comp_billing') && $q->param('comp_ctables') && $q->param('comp_clients') && $q->param('comp_items') && $q->param('comp_files') && $q->param('comp_auto') && $q->param('comp_steps') && $q->param('comp_secrets')) # All required values have been filled out
+	if($q->param('site_name') && $q->param('db_address') && $q->param('admin_name') && defined($q->param('default_lvl')) && $q->param('default_vis') && $q->param('hide_close') && $q->param('article_html') && $q->param('api_write') && defined($q->param('theme_color')) &&  $q->param('api_imp') && $q->param('api_read') && $q->param('comp_tickets') && $q->param('comp_articles') && $q->param('comp_time') && $q->param('comp_shoutbox') && $q->param('comp_billing') && $q->param('comp_clients') && $q->param('comp_items') && $q->param('comp_files') && $q->param('comp_steps') && $q->param('comp_secrets')) # All required values have been filled out
 	{
 		# Test database settings
 		$db = DBI->connect("dbi:SQLite:dbname=" . $q->param('db_address'), '', '', { RaiseError => 0, PrintError => 0 }) or do { msg("Could not verify database settings. Please hit back and try again.<br><br>" . $DBI::errstr, 0); exit(0); };
@@ -1471,13 +1458,11 @@ if($q->param('site_name') && $q->param('db_address') && $logged_user ne "" && $l
 		if(!$q->param('comp_time')) { $text .= "<span class='label label-danger'>Component: Time tracking</span> "; }
 		if(!$q->param('comp_shoutbox')) { $text .= "<span class='label label-danger'>Component: Shoutbox</span> "; }
 		if(!$q->param('comp_billing')) { $text .= "<span class='label label-danger'>Component: Billing</span> "; }
-		if(!$q->param('comp_ctables')) { $text .= "<span class='label label-danger'>Component: Checklists</span> "; }
 		if(!$q->param('comp_items')) { $text .= "<span class='label label-danger'>Component: Inventory Control</span> "; }
 		if(!$q->param('comp_files')) { $text .= "<span class='label label-danger'>Component: Files Management</span> "; }
 		if(!$q->param('comp_clients')) { $text .= "<span class='label label-danger'>Component: Clients Directory</span> "; }
 		if(!$q->param('comp_steps')) { $text .= "<span class='label label-danger'>Component: Tasks Management</span> "; }
 		if(!$q->param('comp_secrets')) { $text .= "<span class='label label-danger'>Component: Secrets Vault</span> "; }
-		if(!$q->param('comp_auto')) { $text .= "<span class='label label-danger'>Component: Automation</span> "; }
 		$text .= " Please go back and try again.";
 		msg($text, 0);
 	}
@@ -1562,19 +1547,18 @@ elsif(!$cfg->load("db_address") || !$cfg->load("site_name")) # first use
 				print "<p><div class='row'><div class='col-sm-4'>Task completion plugin:</div><div class='col-sm-4'><input type='text' style='width:300px' name='task_plugin' value=''></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>New ticket plugin:</div><div class='col-sm-4'><input type='text' style='width:300px' name='newticket_plugin' value=''></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Ticket resolution plugin:</div><div class='col-sm-4'><input type='text' style='width:300px' name='ticket_plugin' value=''></div></div></p>\n";
-				print "<p>Select which major components of NodePoint you want to activate:</p>";
+				print "<p>Select which major components of NodePoint you want to activate:</p><p><b>Major components</b></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Component: Tickets Management (Allow users to file tickets against projects and track work done on open issues)</div><div class='col-sm-4'><input type='checkbox' name='comp_tickets' checked></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Component: Support Articles (Create a knowledge base and provide documentation to your users)</div><div class='col-sm-4'><input type='checkbox' name='comp_articles' checked></div></div></p>\n";
-				print "<p><div class='row'><div class='col-sm-4'>Component: Time Tracking (Track time spent on individual tickets)</div><div class='col-sm-4'><input type='checkbox' name='comp_time' checked></div></div></p>\n";
-				print "<p><div class='row'><div class='col-sm-4'>Component: Shoutbox (Chat in real time between users)</div><div class='col-sm-4'><input type='checkbox' name='comp_shoutbox' checked></div></div></p>\n";
-				print "<p><div class='row'><div class='col-sm-4'>Component: Clients Directory (Create a directory of contacts linked to items, billable tickets, and to track events)</div><div class='col-sm-4'><input type='checkbox' name='comp_clients' checked></div></div></p>\n";
-				print "<p><div class='row'><div class='col-sm-4'>Component: Tasks Management (Create and assign tasks to your users with completion rates and due dates)</div><div class='col-sm-4'><input type='checkbox' name='comp_steps' checked></div></div></p>\n";
-				print "<p><div class='row'><div class='col-sm-4'>Component: Secrets Vault (Keep credentials or other project related secrets)</div><div class='col-sm-4'><input type='checkbox' name='comp_secrets' checked></div></div></p>\n";
 				print "<p><div class='row'><div class='col-sm-4'>Component: Inventory Control (Track your assets, allow users to request item checkout with full approval process)</div><div class='col-sm-4'><input type='checkbox' name='comp_items' checked></div></div></p>\n";
-				print "<p><div class='row'><div class='col-sm-4'>Component: Files Management (Allow users to upload files for clients or suppliers and track downloads)</div><div class='col-sm-4'><input type='checkbox' name='comp_files' checked></div></div></p>\n";
-				print "<p><div class='row'><div class='col-sm-4'>Component: Billing (Track billable tickets for your clients and assign fixed or per hour rates)</div><div class='col-sm-4'><input type='checkbox' name='comp_billing' checked></div></div></p>\n";
-				print "<p><div class='row'><div class='col-sm-4'>Component: Automation (Run background processes to synchronize AD users or items, create backups, bulk exports, monitor emails for tickets, etc)</div><div class='col-sm-4'><input type='checkbox' name='comp_auto' checked></div></div></p>\n";
-				print "<p><div class='row'><div class='col-sm-4'>Component: Checklists (Add key/value data pairs to projects)</div><div class='col-sm-4'><input type='checkbox' name='comp_ctables' checked></div></div></p>\n";
+				print "<p><div class='row'><div class='col-sm-4'>Component: Clients Directory (Create a directory of contacts linked to items, billable tickets, and to track events)</div><div class='col-sm-4'><input type='checkbox' name='comp_clients' checked></div></div></p>\n";
+				print "<p><b>Minor components</b></p>\n";
+				print "<p><div class='row'><div class='col-sm-4'>Component: Time Tracking (Track time spent on individual tickets)</div><div class='col-sm-4'><input type='checkbox' name='comp_time'></div></div></p>\n";
+				print "<p><div class='row'><div class='col-sm-4'>Component: Shoutbox (Chat in real time between users)</div><div class='col-sm-4'><input type='checkbox' name='comp_shoutbox'></div></div></p>\n";
+				print "<p><div class='row'><div class='col-sm-4'>Component: Tasks Management (Create and assign tasks to your users with completion rates and due dates)</div><div class='col-sm-4'><input type='checkbox' name='comp_steps'></div></div></p>\n";
+				print "<p><div class='row'><div class='col-sm-4'>Component: Secrets Vault (Keep credentials or other project related secrets)</div><div class='col-sm-4'><input type='checkbox' name='comp_secrets'></div></div></p>\n";
+				print "<p><div class='row'><div class='col-sm-4'>Component: Files Management (Allow users to upload files for clients or suppliers and track downloads)</div><div class='col-sm-4'><input type='checkbox' name='comp_files'></div></div></p>\n";
+				print "<p><div class='row'><div class='col-sm-4'>Component: Billing (Track billable tickets for your clients and assign fixed or per hour rates)</div><div class='col-sm-4'><input type='checkbox' name='comp_billing'></div></div></p>\n";
 				print "<p>See the <a href='./manual.pdf'>manual</a> file for detailed information.<input class='btn btn-primary pull-right' type='submit' value='Save'></p></form>\n"; 
 #			}
 #			else
@@ -1710,137 +1694,6 @@ elsif($q->param('api')) # API calls
 				print "   \"product_id\": \"" . $res[1] . "\",\n";
 				print "   \"release_id\": \"" . $res[2] . "\",\n";
 				print "   \"title\": \"" . $res[5] . "\"\n";
-				print "  }";
-			}
-			print "\n ]\n";
-			print "}\n";
-		}
-	}
-	elsif($q->param('api') eq "show_checklist")
-	{
-		if(!$q->param('name'))
-		{
-			print "{\n";
-			print " \"message\": \"Missing 'name' argument.\",\n";
-			print " \"status\": \"ERR_MISSING_ARGUMENT\"\n";
-			print "}\n";
-		}
-		elsif(!$q->param('key'))
-		{
-			print "{\n";
-			print " \"message\": \"Missing 'key' argument.\",\n";
-			print " \"status\": \"ERR_MISSING_ARGUMENT\"\n";
-			print "}\n";
-		}
-		elsif($q->param('key') ne $cfg->load('api_read'))
-		{
-			print "{\n";
-			print " \"message\": \"Invalid 'key' value.\",\n";
-			print " \"status\": \"ERR_INVALID_KEY\"\n";
-			print "}\n";
-		}
-		else
-		{
-			print "{\n";
-			print " \"message\": \"Checklist data.\",\n";
-			print " \"status\": \"OK\",\n";
-			print " \"data\": [\n";
-			my $found = 0;
-			$sql = $db->prepare("SELECT ROWID,* FROM ctables_data WHERE name = ?;");
-			$sql->execute(sanitize_html($q->param('name')));
-			while(my @res = $sql->fetchrow_array())
-			{
-				if($found) { print ",\n"; }
-				$found = 1;
-				print "  {\n";
-				print "   \"id\": \"" . $res[0] . "\",\n";
-				print "   \"key\": \"" . $res[2] . "\",\n";
-				print "   \"value\": \"" . $res[3] . "\",\n";
-				print "   \"user\": \"" . $res[4] . "\",\n";
-				print "   \"date\": \"" . $res[5] . "\"\n";
-				print "  }";
-			}
-			print "\n ]\n";
-			print "}\n";
-		}
-	}
-	elsif($q->param('api') eq "update_checklist")
-	{
-		if(!$q->param('key_id'))
-		{
-			print "{\n";
-			print " \"message\": \"Missing 'key_id' argument.\",\n";
-			print " \"status\": \"ERR_MISSING_ARGUMENT\"\n";
-			print "}\n";
-		}
-		elsif(!$q->param('value'))
-		{
-			print "{\n";
-			print " \"message\": \"Missing 'value' argument.\",\n";
-			print " \"status\": \"ERR_MISSING_ARGUMENT\"\n";
-			print "}\n";
-		}
-		elsif(!$q->param('key'))
-		{
-			print "{\n";
-			print " \"message\": \"Missing 'key' argument.\",\n";
-			print " \"status\": \"ERR_MISSING_ARGUMENT\"\n";
-			print "}\n";
-		}
-		elsif($q->param('key') ne $cfg->load('api_write'))
-		{
-			print "{\n";
-			print " \"message\": \"Invalid 'key' value.\",\n";
-			print " \"status\": \"ERR_INVALID_KEY\"\n";
-			print "}\n";
-		}
-		else
-		{
-			print "{\n";
-			print " \"message\": \"Data pair updated.\",\n";
-			print " \"status\": \"OK\"\n";
-			$sql = $db->prepare("UPDATE ctables_data SET value = ?, user = ?, time = ? WHERE ROWID = ?");
-			$sql->execute(sanitize_html($q->param('value')), 'api', now(), to_int($q->param('key_id')));
-			print "}\n";
-		}
-	}
-	elsif($q->param('api') eq "list_checklists")
-	{
-		if(!$q->param('key'))
-		{
-			print "{\n";
-			print " \"message\": \"Missing 'key' argument.\",\n";
-			print " \"status\": \"ERR_MISSING_ARGUMENT\"\n";
-			print "}\n";
-		}
-		elsif($q->param('key') ne $cfg->load('api_read'))
-		{
-			print "{\n";
-			print " \"message\": \"Invalid 'key' value.\",\n";
-			print " \"status\": \"ERR_INVALID_KEY\"\n";
-			print "}\n";
-		}
-		else
-		{
-			print "{\n";
-			print " \"message\": \"List checklists.\",\n";
-			print " \"status\": \"OK\",\n";
-			print " \"checklists\": [\n";
-			my $found = 0;
-			$sql = $db->prepare("SELECT * FROM ctables;");
-			$sql->execute();
-			while(my @res = $sql->fetchrow_array())
-			{
-				if($found) { print ",\n"; }
-				$found = 1;
-				print "  {\n";
-				print "   \"name\": \"" . $res[0] . "\",\n";
-				print "   \"product_id\": \"" . $res[1] . "\",\n";
-				print "   \"edit_lvl\": \"" . $res[2] . "\",\n";
-				print "   \"modify_lvl\": \"" . $res[3] . "\",\n";
-				print "   \"view_lvl\": \"" . $res[4] . "\",\n";
-				print "   \"user\": \"" . $res[5] . "\",\n";
-				print "   \"date\": \"" . $res[6] . "\"\n";
 				print "  }";
 			}
 			print "\n ]\n";
@@ -3567,7 +3420,6 @@ elsif($q->param('m')) # Modules
 			print "<tr><td style='width:50%'>Can configure automation</td><td><input class='form-control' type='number' name='auto_lvl' value=\"" . to_int($cfg->load("auto_lvl")) . "\"></td></tr>\n";
 			print "<tr><td style='width:50%'>Can add secrets</td><td><input class='form-control' type='number' name='add_secrets' value=\"" . to_int($cfg->load("add_secrets")) . "\"></td></tr>\n";
 			print "<tr><td style='width:50%'>Can view secrets</td><td><input class='form-control' type='number' name='view_secrets' value=\"" . to_int($cfg->load("view_secrets")) . "\"></td></tr>\n";
-			print "<tr><td style='width:50%'>Can create checklists</td><td><input class='form-control' type='number' name='create_ctables' value=\"" . to_int($cfg->load("create_ctables")) . "\"></td></tr>\n";
 			print "</table><h4>Plugins</h4><table class='table table-striped'>";
 			print "<tr><td style='width:50%'>Authentication</td><td><input class='form-control' type='text' name='auth_plugin' value=\"" . $cfg->load("auth_plugin") . "\"></td></tr>\n";
 			print "<tr><td style='width:50%'>Notifications</td><td><input class='form-control' type='text' name='ext_plugin' value=\"" . $cfg->load("ext_plugin") . "\"></td></tr>\n";
@@ -3575,7 +3427,7 @@ elsif($q->param('m')) # Modules
 			print "<tr><td style='width:50%'>Task completion</td><td><input class='form-control' type='text' name='task_plugin' value=\"" . $cfg->load("task_plugin") . "\"></td></tr>\n";
 			print "<tr><td style='width:50%'>New tickets</td><td><input class='form-control' type='text' name='newticket_plugin' value=\"" . $cfg->load("newticket_plugin") . "\"></td></tr>\n";
 			print "<tr><td style='width:50%'>Ticket resolution</td><td><input class='form-control' type='text' name='ticket_plugin' value=\"" . $cfg->load("ticket_plugin") . "\"></td></tr>\n";
-			print "</table><h4>Components</h4><table class='table table-striped'>";
+			print "</table><h4>Components</h4><h5><b>Major components</b></h5><table class='table table-striped'>";
 			print "<tr><td style='width:50%'>Tickets Management</td><td><select class='form-control' name='comp_tickets'>";
 			if($cfg->load("comp_tickets") eq "on") { print "<option selected>on</option><option>off</option>"; }
 			else { print "<option>on</option><option selected>off</option>"; }
@@ -3584,16 +3436,21 @@ elsif($q->param('m')) # Modules
 			if($cfg->load("comp_articles") eq "on") { print "<option selected>on</option><option>off</option>"; }
 			else { print "<option>on</option><option selected>off</option>"; }
 			print "</select></td></tr>\n";
+			print "<tr><td style='width:50%'>Inventory Control</td><td><select class='form-control' name='comp_items'>";
+			if($cfg->load("comp_items") eq "on") { print "<option selected>on</option><option>off</option>"; }
+			else { print "<option>on</option><option selected>off</option>"; }
+			print "</select></td></tr>\n";
+			print "<tr><td style='width:50%'>Clients Directory</td><td><select class='form-control' name='comp_clients'>";
+			if($cfg->load("comp_clients") eq "on") { print "<option selected>on</option><option>off</option>"; }
+			else { print "<option>on</option><option selected>off</option>"; }
+			print "</select></td></tr>\n";
+			print "</table><h5><b>Minor components</b></h5><table class='table table-striped'>";
 			print "<tr><td style='width:50%'>Time Tracking</td><td><select class='form-control' name='comp_time'>";
 			if($cfg->load("comp_time") eq "on") { print "<option selected>on</option><option>off</option>"; }
 			else { print "<option>on</option><option selected>off</option>"; }
 			print "</select></td></tr>\n";
 			print "<tr><td style='width:50%'>Shoutbox</td><td><select class='form-control' name='comp_shoutbox'>";
 			if($cfg->load("comp_shoutbox") eq "on") { print "<option selected>on</option><option>off</option>"; }
-			else { print "<option>on</option><option selected>off</option>"; }
-			print "</select></td></tr>\n";
-			print "<tr><td style='width:50%'>Clients Directory</td><td><select class='form-control' name='comp_clients'>";
-			if($cfg->load("comp_clients") eq "on") { print "<option selected>on</option><option>off</option>"; }
 			else { print "<option>on</option><option selected>off</option>"; }
 			print "</select></td></tr>\n";
 			print "<tr><td style='width:50%'>Tasks Management</td><td><select class='form-control' name='comp_steps'>";
@@ -3604,24 +3461,12 @@ elsif($q->param('m')) # Modules
 			if($cfg->load("comp_secrets") eq "on") { print "<option selected>on</option><option>off</option>"; }
 			else { print "<option>on</option><option selected>off</option>"; }
 			print "</select></td></tr>\n";
-			print "<tr><td style='width:50%'>Inventory Control</td><td><select class='form-control' name='comp_items'>";
-			if($cfg->load("comp_items") eq "on") { print "<option selected>on</option><option>off</option>"; }
-			else { print "<option>on</option><option selected>off</option>"; }
-			print "</select></td></tr>\n";
 			print "<tr><td style='width:50%'>Files Management</td><td><select class='form-control' name='comp_files'>";
 			if($cfg->load("comp_files") eq "on") { print "<option selected>on</option><option>off</option>"; }
 			else { print "<option>on</option><option selected>off</option>"; }
 			print "</select></td></tr>\n";
 			print "<tr><td style='width:50%'>Billing</td><td><select class='form-control' name='comp_billing'>";
 			if($cfg->load("comp_billing") eq "on") { print "<option selected>on</option><option>off</option>"; }
-			else { print "<option>on</option><option selected>off</option>"; }
-			print "</select></td></tr>\n";
-			print "<tr><td style='width:50%'>Automation</td><td><select class='form-control' name='comp_auto'>";
-			if($cfg->load("comp_auto") eq "on") { print "<option selected>on</option><option>off</option>"; }
-			else { print "<option>on</option><option selected>off</option>"; }
-			print "</select></td></tr>\n";
-			print "<tr><td style='width:50%'>Checklists</td><td><select class='form-control' name='comp_ctables'>";
-			if($cfg->load("comp_ctables") eq "on") { print "<option selected>on</option><option>off</option>"; }
 			else { print "<option>on</option><option selected>off</option>"; }
 			print "</select></td></tr>\n";
 			print "</table>The admin password will be left unchanged if empty.<br>See the <a href='./manual.pdf'>manual</a> file for detailed information.<input class='btn btn-primary pull-right' type='submit' value='Save settings'></form></div></div>\n";
@@ -4858,127 +4703,6 @@ elsif($q->param('m')) # Modules
 			msg("<meta http-equiv='REFRESH' content='1;url=./?kb=" . $lastrowid . "'>New draft article <b>" . sanitize_html($q->param('title')) . "</b> added.", 3);
 		}
 	}
-	elsif($q->param('m') eq "ctables")
-	{
-		headers("Checklists");
-		if($q->param('c'))
-		{
-			if($q->param('save') && defined($q->param('edit_lvl')) && defined($q->param('modify_lvl')) && defined($q->param('view_lvl')))
-			{
-				my $old_edit_lvl = 999;
-				$sql = $db->prepare("SELECT edit FROM ctables WHERE ROWID = ?;");
-				$sql->execute(to_int($q->param('c')));
-				while(my @res = $sql->fetchrow_array())
-				{
-					$old_edit_lvl = to_int($res[0]);
-				}
-				if($logged_lvl >= $old_edit_lvl)
-				{
-					$sql = $db->prepare("UPDATE ctables SET edit = ?, modify = ?, read = ?, time = ? WHERE ROWID = ?;");
-					$sql->execute(to_int($q->param('edit_lvl')), to_int($q->param('modify_lvl')), to_int($q->param('view_lvl')), now(), to_int($q->param('c')));
-					msg("Permissions updated.", 3)
-				}
-			}
-			my $cname = "";
-			my $edit_lvl;
-			my $modify_lvl;
-			my $view_lvl = 999;
-			my $product;
-			$sql = $db->prepare("SELECT ROWID,* FROM ctables WHERE ROWID = ?;");
-			$sql->execute(to_int($q->param('c')));
-			while(my @res = $sql->fetchrow_array())
-			{
-				$cname = $res[1];
-				$product = to_int($res[2]);
-				$edit_lvl = to_int($res[3]);
-				$modify_lvl = to_int($res[4]);
-				$view_lvl = to_int($res[5]);
-			}
-			if($logged_lvl >= $edit_lvl && $q->param('name') && $q->param('key') && $q->param('new_key'))
-			{
-				$sql = $db->prepare("INSERT INTO ctables_data VALUES (?, ?, ?, ?, ?);");
-				$sql->execute(sanitize_html($q->param('name')), sanitize_html($q->param('key')), '', $logged_user, now());
-				$sql = $db->prepare("UPDATE ctables SET time = ? WHERE ROWID = ?;");
-				$sql->execute(now(), to_int($q->param('c')));
-				msg("New key added.", 3);
-			}
-			if($logged_lvl >= $modify_lvl && $q->param('key') && $q->param('edit_value') && defined($q->param('change_value')))
-			{
-				$sql = $db->prepare("UPDATE ctables_data SET value = ?, user = ?, time = ? WHERE ROWID = ?");
-				$sql->execute(sanitize_html($q->param('change_value')), $logged_user, now(), to_int($q->param('key')));
-				msg("Value updated to <b>" . sanitize_html($q->param('change_value')) . "</b>.", 3);
-			}
-			if($logged_lvl >= $edit_lvl && $q->param('key') && $q->param('delete_key'))
-			{
-				$sql = $db->prepare("DELETE FROM ctables_data WHERE ROWID = ?;");
-				$sql->execute(to_int($q->param('key')));
-				$sql = $db->prepare("UPDATE ctables SET time = ? WHERE ROWID = ?;");
-				$sql->execute(now(), to_int($q->param('c')));
-				msg("Key/value pair removed.", 3);
-			}
-			if($logged_lvl >= $view_lvl)
-			{
-				print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-heading'><h3 class='panel-title'>" . $cname . "</h3></div><div class='panel-body'>\n";
-				if($logged_lvl >= $edit_lvl)
-				{
-					print "<h4>Add a new key:</h4><form method='POST' action='.' data-toggle='validator' role='form'><p><div class='row'><div class='col-sm-8'><input type='hidden' name='m' value='ctables'><input type='hidden' name='name' value='" . $cname . "'><input type='hidden' name='c' value='" . to_int($q->param('c')) . "'><input placeholder='Key name' class='form-control' type='text' name='key' maxlength='100' required></div><div class='col-sm-4'><input type='submit' name='new_key' class='btn btn-primary pull-right' value='Add key'></div></div></p></form>\n";
-					print "<h4>Change permissions:</h4><form method='POST' action='.' data-toggle='validator' role='form'><input type='hidden' name='m' value='ctables'><input type='hidden' name='c' value='" . to_int($q->param('c')) . "'><p><div class='row'><div class='col-sm-4'>Edit keys: <select name='edit_lvl' class='form-control'><option>0</option><option";
-					if($edit_lvl == 1) { print " selected"; }
-					print ">1</option><option";
-					if($edit_lvl == 2) { print " selected"; }
-					print ">2</option><option";
-					if($edit_lvl == 3) { print " selected"; }
-					print ">3</option><option";
-					if($edit_lvl == 4) { print " selected"; }
-					print ">4</option><option";
-					if($edit_lvl == 5) { print " selected"; }
-					print ">5</option></select></div><div class='col-sm-4'>Modify values: <select name='modify_lvl' class='form-control'><option>0</option><option";
-					if($modify_lvl == 1) { print " selected"; }
-					print ">1</option><option";
-					if($modify_lvl == 2) { print " selected"; }
-					print ">2</option><option";
-					if($modify_lvl == 3) { print " selected"; }
-					print ">3</option><option";
-					if($modify_lvl == 4) { print " selected"; }
-					print ">4</option><option";
-					if($modify_lvl == 5) { print " selected"; }
-					print ">5</option></select></div><div class='col-sm-4'>View results: <select name='view_lvl' class='form-control'><option>0</option><option";
-					if($view_lvl == 1) { print " selected"; }
-					print ">1</option><option";
-					if($view_lvl == 2) { print " selected"; }
-					print ">2</option><option";
-					if($view_lvl == 3) { print " selected"; }
-					print ">3</option><option";
-					if($view_lvl == 4) { print " selected"; }
-					print ">4</option><option";
-					if($view_lvl == 5) { print " selected"; }
-					print ">5</option></select></div></div></p><p><div class='row'><div class='col-sm-12'><input type='submit' name='save' class='btn btn-primary pull-right' value='Save'></div></div></p></form><hr>\n";
-				}
-				print "<table class='table table-stripped' id='ctable_table'><thead><tr><th>ID</th><th>Key</th><th>Value</th></tr></thead><tbody>";
-				$sql = $db->prepare("SELECT ROWID,* FROM ctables_data WHERE name = ?;");
-				$sql->execute($cname);
-				while(my @res = $sql->fetchrow_array())
-				{
-					print "<tr><td>" . $res[0] . "</td><td>" . $res[2] . "</td><td>" . $res[3];
-					print "<span class='pull-right'><form method='POST' action='.'><input type='hidden' name='m' value='ctables'><input type='hidden' name='change_value' value=''><input type='hidden' name='c' value='" . to_int($q->param('c')) . "'><input type='hidden' name='key' value='" . $res[0] . "'><nobr>";
-					if($logged_lvl >= $modify_lvl) { print "<input class='btn btn-primary' name='edit_value' type='submit' onclick='this.form.change_value.value=window.prompt(\"Change value to:\");' value='Edit'> "; }
-					if($logged_lvl >= $edit_lvl) { print " <input class='btn btn-danger' name='delete_key' type='submit' onclick='return confirm(\"Are you sure you want to remove this row?\");' value='X'>"; }
-					print "</nobr></form></span>";
-					print "</td></tr>";
-				}				
-				print "</tbody></table><script>\$(document).ready(function(){\$('#ctable_table').DataTable({'order':[[1,'asc']],pageLength:" .  to_int($cfg->load('page_len')). ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script>";
-				print "</div></div>";
-			}
-			else
-			{
-				msg("You do not have access to this checklist.", 0);
-			}
-		}
-		else
-		{
-			msg("Please specify a checklist.", 0);
-		}
-	}
 	elsif($q->param('m') eq "articles")
 	{
 		headers("Articles");
@@ -5110,7 +4834,6 @@ elsif($q->param('m')) # Modules
 					print "<ul class='nav nav-pills nav-tabs'><li role='presentation'><a href='./?m=view_product&p=" . to_int($q->param('p')) . "#productdata'>" . $items{"Release"} . "s</a></li>";
 					if($cfg->load('comp_steps') eq "on" && $logged_user ne "") { print "<li role='presentation' class='active'><a href='./?m=view_product&tab=tasks&p=" . to_int($q->param('p')) . "#productdata'>Tasks</a></li>"; }
 					if($cfg->load('comp_secrets') eq "on" && $logged_user ne "") { print "<li role='presentation'><a href='./?m=view_product&tab=secrets&p=" . to_int($q->param('p')) . "#productdata'>Secrets</a></li>"; }
-					if($cfg->load('comp_ctables') eq "on" && $logged_user ne "") { print "<li role='presentation'><a href='./?m=view_product&tab=ctables&p=" . to_int($q->param('p')) . "#productdata'>Checklists</a></li>"; }
 					if($cfg->load('comp_tickets') eq "on") { print "<li role='presentation'><a href='./?m=view_product&tab=tickets&p=" . to_int($q->param('p')) . "#productdata'>Tickets</a></li>"; }
 					if($cfg->load('comp_articles') eq "on") { print "<li role='presentation'><a href='./?m=view_product&tab=articles&p=" . to_int($q->param('p')) . "#productdata'>Articles</a></li>"; }
 					if($cfg->load('comp_items') eq "on" && $logged_user ne "") { print "<li role='presentation'><a href='./?m=view_product&tab=items&p=" . to_int($q->param('p')) . "#productdata'>Items</a></li>"; }
@@ -5200,7 +4923,6 @@ elsif($q->param('m')) # Modules
 					print "<ul class='nav nav-pills nav-tabs'><li role='presentation'><a href='./?m=view_product&p=" . to_int($q->param('p')) . "#productdata'>" . $items{"Release"} . "s</a></li>";
 					if($cfg->load('comp_steps') eq "on" && $logged_user ne "") { print "<li role='presentation'><a href='./?m=view_product&tab=tasks&p=" . to_int($q->param('p')) . "#productdata'>Tasks</a></li>"; }
 					if($cfg->load('comp_secrets') eq "on" && $logged_user ne "") { print "<li role='presentation' class='active'><a href='./?m=view_product&tab=secrets&p=" . to_int($q->param('p')) . "#productdata'>Secrets</a></li>"; }
-					if($cfg->load('comp_ctables') eq "on" && $logged_user ne "") { print "<li role='presentation'><a href='./?m=view_product&tab=ctables&p=" . to_int($q->param('p')) . "#productdata'>Checklists</a></li>"; }
 					if($cfg->load('comp_tickets') eq "on") { print "<li role='presentation'><a href='./?m=view_product&tab=tickets&p=" . to_int($q->param('p')) . "#productdata'>Tickets</a></li>"; }
 					if($cfg->load('comp_articles') eq "on") { print "<li role='presentation'><a href='./?m=view_product&tab=articles&p=" . to_int($q->param('p')) . "#productdata'>Articles</a></li>"; }
 					if($cfg->load('comp_items') eq "on" && $logged_user ne "") { print "<li role='presentation'><a href='./?m=view_product&tab=items&p=" . to_int($q->param('p')) . "#productdata'>Items</a></li>"; }
@@ -5287,59 +5009,11 @@ elsif($q->param('m')) # Modules
 					}					
 					print "</div></div>\n";
 				}
-				elsif($q->param('tab') eq "ctables")
-				{
-					print "<ul class='nav nav-pills nav-tabs'><li role='presentation'><a href='./?m=view_product&p=" . to_int($q->param('p')) . "#productdata'>" . $items{"Release"} . "s</a></li>";
-					if($cfg->load('comp_steps') eq "on" && $logged_user ne "") { print "<li role='presentation'><a href='./?m=view_product&tab=tasks&p=" . to_int($q->param('p')) . "#productdata'>Tasks</a></li>"; }
-					if($cfg->load('comp_secrets') eq "on" && $logged_user ne "") { print "<li role='presentation'><a href='./?m=view_product&tab=secrets&p=" . to_int($q->param('p')) . "#productdata'>Secrets</a></li>"; }
-					if($cfg->load('comp_ctables') eq "on" && $logged_user ne "") { print "<li role='presentation' class='active'><a href='./?m=view_product&tab=ctables&p=" . to_int($q->param('p')) . "#productdata'>Checklists</a></li>"; }
-					if($cfg->load('comp_tickets') eq "on") { print "<li role='presentation'><a href='./?m=view_product&tab=tickets&p=" . to_int($q->param('p')) . "#productdata'>Tickets</a></li>"; }
-					if($cfg->load('comp_articles') eq "on") { print "<li role='presentation'><a href='./?m=view_product&tab=articles&p=" . to_int($q->param('p')) . "#productdata'>Articles</a></li>"; }
-					if($cfg->load('comp_items') eq "on" && $logged_user ne "") { print "<li role='presentation'><a href='./?m=view_product&tab=items&p=" . to_int($q->param('p')) . "#productdata'>Items</a></li>"; }
-					if($cfg->load('comp_files') eq "on" && $logged_user ne "") { print "<li role='presentation'><a href='./?m=view_product&tab=files&p=" . to_int($q->param('p')) . "#productdata'>Files</a></li>"; }
-					print "</ul>\n";
-					print "<div class='panel panel-" . $themes[to_int($cfg->load('theme_color'))] . "'><div class='panel-body'>";
-					if($q->param('add_ctable') && $q->param('name') && defined($q->param('view_lvl')) && defined($q->param('modify_lvl')) && defined($q->param('edit_lvl')) && $logged_lvl >= to_int($cfg->load('create_ctables')) && ($isassigned == 1 || $cfg->load('need_assign') ne "on"))
-					{
-						$sql = $db->prepare("SELECT ROWID FROM ctables WHERE name = ?;");
-						$sql->execute(sanitize_html($q->param('name')));
-						my $found = 0;
-						while(my @res = $sql->fetchrow_array())
-						{
-							msg("This checklist already exists.", 0);
-							$found = 1;
-						}
-						if($found != 1)
-						{
-							my $sql2 = $db->prepare("INSERT INTO ctables VALUES (?, ?, ?, ?, ?, ?, ?)");
-							$sql2->execute(sanitize_html($q->param('name')), to_int($q->param('p')), to_int($q->param('edit_lvl')), to_int($q->param('modify_lvl')), to_int($q->param('view_lvl')), $logged_user, now());
-							msg("Checklist created.", 3);
-						}
-					}
-
-					if($logged_lvl >= to_int($cfg->load('create_ctables')) && ($isassigned == 1 || $cfg->load('need_assign') ne "on"))
-					{
-						print "<form method='POST' action='.' data-toggle='validator' role='form'><input type='hidden' name='m' value='view_product'><input type='hidden' name='tab' value='ctables'><input type='hidden' name='p' value='" . to_int($q->param('p')) . "'><h4>Add a new checklist</h4><p><div class='row'><div class='col-sm-12'><input placeholder='Checklist name' class='form-control' name='name' maxlength='100' required></div></div></p><p>Access level required to...</p><p><div class='row'><div class='col-sm-4'>Edit keys: <select name='edit_lvl' class='form-control'><option>0</option><option>1</option><option>2</option><option>3</option><option selected>4</option><option>5</option></select></div><div class='col-sm-4'>Modify values: <select name='modify_lvl' class='form-control'><option>0</option><option>1</option><option>2</option><option selected>3</option><option>4</option><option>5</option></select></div><div class='col-sm-4'>View results: <select name='view_lvl' class='form-control'><option>0</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select></div></div></p><p><input class='btn btn-primary pull-right' type='submit' name='add_ctable' value='Add checklist'></p></form><br><hr><h4>Checklists</h4>\n";
-					}
-					print "<table class='table table-stripped' id='ctables_table'><thead><tr><th>Name</th><th>Created by</th><th>Last modified on</th></tr></thead><tbody>";
-					$sql = $db->prepare("SELECT ROWID,* FROM ctables WHERE productid = ?;");
-					$sql->execute(to_int($q->param('p')));
-					while(my @res = $sql->fetchrow_array())
-					{
-						print "<tr><td>";
-						if($logged_lvl >= to_int($res[5])) { print "<a href='./?m=ctables&c=" . $res[0] . "'>" . $res[1] . "</a>"; }
-						else { print $res[1]; }
-						print "</td><td>" . $res[6] . "</td><td>" . $res[7] . "</td></tr>";
-					}				
-					print "</tbody></table><script>\$(document).ready(function(){\$('#ctables_table').DataTable({'order':[[0,'asc']],pageLength:" .  to_int($cfg->load('page_len')). ",dom:'Bfrtip',buttons:['copy','csv','pdf','print']});});</script>";
-					print "</div></div>\n";
-				}
 				elsif($q->param('tab') eq "articles")
 				{
 					print "<ul class='nav nav-pills nav-tabs'><li role='presentation'><a href='./?m=view_product&p=" . to_int($q->param('p')) . "#productdata'>" . $items{"Release"} . "s</a></li>";
 					if($cfg->load('comp_steps') eq "on" && $logged_user ne "") { print "<li role='presentation'><a href='./?m=view_product&tab=tasks&p=" . to_int($q->param('p')) . "#productdata'>Tasks</a></li>"; }
 					if($cfg->load('comp_secrets') eq "on" && $logged_user ne "") { print "<li role='presentation'><a href='./?m=view_product&tab=secrets&p=" . to_int($q->param('p')) . "#productdata'>Secrets</a></li>"; }
-					if($cfg->load('comp_ctables') eq "on" && $logged_user ne "") { print "<li role='presentation'><a href='./?m=view_product&tab=ctables&p=" . to_int($q->param('p')) . "#productdata'>Checklists</a></li>"; }
 					if($cfg->load('comp_tickets') eq "on") { print "<li role='presentation'><a href='./?m=view_product&tab=tickets&p=" . to_int($q->param('p')) . "#productdata'>Tickets</a></li>"; }
 					if($cfg->load('comp_articles') eq "on") { print "<li role='presentation' class='active'><a href='./?m=view_product&tab=articles&p=" . to_int($q->param('p')) . "#productdata'>Articles</a></li>"; }
 					if($cfg->load('comp_items') eq "on" && $logged_user ne "") { print "<li role='presentation'><a href='./?m=view_product&tab=items&p=" . to_int($q->param('p')) . "#productdata'>Items</a></li>"; }
@@ -5381,7 +5055,6 @@ elsif($q->param('m')) # Modules
 					print "<ul class='nav nav-pills nav-tabs'><li role='presentation'><a href='./?m=view_product&p=" . to_int($q->param('p')) . "#productdata'>" . $items{"Release"} . "s</a></li>";
 					if($cfg->load('comp_steps') eq "on" && $logged_user ne "") { print "<li role='presentation'><a href='./?m=view_product&tab=tasks&p=" . to_int($q->param('p')) . "#productdata'>Tasks</a></li>"; }
 					if($cfg->load('comp_secrets') eq "on" && $logged_user ne "") { print "<li role='presentation'><a href='./?m=view_product&tab=secrets&p=" . to_int($q->param('p')) . "#productdata'>Secrets</a></li>"; }
-					if($cfg->load('comp_ctables') eq "on" && $logged_user ne "") { print "<li role='presentation'><a href='./?m=view_product&tab=ctables&p=" . to_int($q->param('p')) . "#productdata'>Checklists</a></li>"; }
 					if($cfg->load('comp_tickets') eq "on") { print "<li role='presentation'><a href='./?m=view_product&tab=tickets&p=" . to_int($q->param('p')) . "#productdata'>Tickets</a></li>"; }
 					if($cfg->load('comp_articles') eq "on") { print "<li role='presentation'><a href='./?m=view_product&tab=articles&p=" . to_int($q->param('p')) . "#productdata'>Articles</a></li>"; }
 					if($cfg->load('comp_items') eq "on" && $logged_user ne "") { print "<li role='presentation' class='active'><a href='./?m=view_product&tab=items&p=" . to_int($q->param('p')) . "#productdata'>Items</a></li>"; }
@@ -5416,7 +5089,6 @@ elsif($q->param('m')) # Modules
 					print "<ul class='nav nav-pills nav-tabs'><li role='presentation'><a href='./?m=view_product&p=" . to_int($q->param('p')) . "#productdata'>" . $items{"Release"} . "s</a></li>";
 					if($cfg->load('comp_steps') eq "on" && $logged_user ne "") { print "<li role='presentation'><a href='./?m=view_product&tab=tasks&p=" . to_int($q->param('p')) . "#productdata'>Tasks</a></li>"; }
 					if($cfg->load('comp_secrets') eq "on" && $logged_user ne "") { print "<li role='presentation'><a href='./?m=view_product&tab=secrets&p=" . to_int($q->param('p')) . "#productdata'>Secrets</a></li>"; }
-					if($cfg->load('comp_ctables') eq "on" && $logged_user ne "") { print "<li role='presentation'><a href='./?m=view_product&tab=ctables&p=" . to_int($q->param('p')) . "#productdata'>Checklists</a></li>"; }
 					if($cfg->load('comp_tickets') eq "on") { print "<li role='presentation' class='active'><a href='./?m=view_product&tab=tickets&p=" . to_int($q->param('p')) . "#productdata'>Tickets</a></li>"; }
 					if($cfg->load('comp_articles') eq "on") { print "<li role='presentation'><a href='./?m=view_product&tab=articles&p=" . to_int($q->param('p')) . "#productdata'>Articles</a></li>"; }
 					if($cfg->load('comp_items') eq "on" && $logged_user ne "") { print "<li role='presentation'><a href='./?m=view_product&tab=items&p=" . to_int($q->param('p')) . "#productdata'>Items</a></li>"; }
@@ -5452,7 +5124,6 @@ elsif($q->param('m')) # Modules
 					print "<ul class='nav nav-pills nav-tabs'><li role='presentation'><a href='./?m=view_product&p=" . to_int($q->param('p')) . "#productdata'>" . $items{"Release"} . "s</a></li>";
 					if($cfg->load('comp_steps') eq "on" && $logged_user ne "") { print "<li role='presentation'><a href='./?m=view_product&tab=tasks&p=" . to_int($q->param('p')) . "#productdata'>Tasks</a></li>"; }
 					if($cfg->load('comp_secrets') eq "on" && $logged_user ne "") { print "<li role='presentation'><a href='./?m=view_product&tab=secrets&p=" . to_int($q->param('p')) . "#productdata'>Secrets</a></li>"; }
-					if($cfg->load('comp_ctables') eq "on" && $logged_user ne "") { print "<li role='presentation'><a href='./?m=view_product&tab=ctables&p=" . to_int($q->param('p')) . "#productdata'>Checklists</a></li>"; }
 					if($cfg->load('comp_tickets') eq "on") { print "<li role='presentation'><a href='./?m=view_product&tab=tickets&p=" . to_int($q->param('p')) . "#productdata'>Tickets</a></li>"; }
 					if($cfg->load('comp_articles') eq "on") { print "<li role='presentation'><a href='./?m=view_product&tab=articles&p=" . to_int($q->param('p')) . "#productdata'>Articles</a></li>"; }
 					if($cfg->load('comp_items') eq "on" && $logged_user ne "") { print "<li role='presentation'><a href='./?m=view_product&tab=items&p=" . to_int($q->param('p')) . "#productdata'>Items</a></li>"; }
@@ -5546,7 +5217,6 @@ elsif($q->param('m')) # Modules
 					print "<ul class='nav nav-pills nav-tabs'><li role='presentation' class='active'><a href='./?m=view_product&p=" . to_int($q->param('p')) . "#productdata'>" . $items{"Release"} . "s</a></li>";
 					if($cfg->load('comp_steps') eq "on" && $logged_user ne "") { print "<li role='presentation'><a href='./?m=view_product&tab=tasks&p=" . to_int($q->param('p')) . "#productdata'>Tasks</a></li>"; }
 					if($cfg->load('comp_secrets') eq "on" && $logged_user ne "") { print "<li role='presentation'><a href='./?m=view_product&tab=secrets&p=" . to_int($q->param('p')) . "#productdata'>Secrets</a></li>"; }
-					if($cfg->load('comp_ctables') eq "on" && $logged_user ne "") { print "<li role='presentation'><a href='./?m=view_product&tab=ctables&p=" . to_int($q->param('p')) . "#productdata'>Checklists</a></li>"; }
 					if($cfg->load('comp_tickets') eq "on") { print "<li role='presentation'><a href='./?m=view_product&tab=tickets&p=" . to_int($q->param('p')) . "#productdata'>Tickets</a></li>"; }
 					if($cfg->load('comp_articles') eq "on") { print "<li role='presentation'><a href='./?m=view_product&tab=articles&p=" . to_int($q->param('p')) . "#productdata'>Articles</a></li>"; }
 					if($cfg->load('comp_items') eq "on" && $logged_user ne "") { print "<li role='presentation'><a href='./?m=view_product&tab=items&p=" . to_int($q->param('p')) . "#productdata'>Items</a></li>"; }
@@ -5940,7 +5610,7 @@ elsif($q->param('m')) # Modules
 			msg("Comment missing or too long. Please go back and try again.", 0);		
 		}
 	}
-	elsif($q->param('m') eq "auto" && $cfg->load('comp_auto') eq "on" && $logged_lvl >= to_int($cfg->load('auto_lvl')))
+	elsif($q->param('m') eq "auto" && $logged_lvl >= to_int($cfg->load('auto_lvl')))
 	{
 		headers("Automation");
 		if($q->param('config'))
