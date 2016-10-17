@@ -480,7 +480,7 @@ while(my @res = $sql->fetchrow_array())
 								my $mail = $entry->get_value('mail');
 								my $existing = 0;
 								$sql2 = $db->prepare("SELECT COUNT(*) FROM users WHERE name = ?;");
-								$sql2->execute(sanitize_alpha($name));
+								$sql2->execute(lc(sanitize_alpha($name)));
 								while(my @res2 = $sql2->fetchrow_array())
 								{
 									$existing = to_int($res2[0]);
