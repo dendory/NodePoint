@@ -46,4 +46,4 @@ Please see the `manual.pdf` file in either the Windows or Linux folder.
 
 Home page
 ---------
-See: [http://nodepoint.ca](http://nodepoint.ca)
+See: [https://dendory.net/nodepoint](https://dendory.net/nodepoint)
